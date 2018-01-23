@@ -6,7 +6,7 @@ Requires OpenTX 2.2 and a recent release of arducoper, arduplane or rover.
 
 Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4
 
-![Taranis X9D+](https://github.com/yaapu/FrskyTelemetry/blob/master/IMAGES/screenshot_x9.JPG)
+![Taranis X9D+](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/screenshot_x9.JPG)
 
 
 ## Features
