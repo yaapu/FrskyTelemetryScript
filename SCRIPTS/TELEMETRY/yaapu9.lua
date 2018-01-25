@@ -199,79 +199,79 @@ local soundFiles = {}
 	soundFiles["armed"] = "armed.wav"
 	soundFiles["disarmed"] = "disarmed.wav"
 
-local soundFilesByFrameTypeAndFlightMode = {}
-	soundFilesByFrameTypeAndFlightMode["copter"] = {}
-	soundFilesByFrameTypeAndFlightMode["plane"] = {}
-	soundFilesByFrameTypeAndFlightMode["rover"] = {}
+local soundByFrameAndMode = {}
+	soundByFrameAndMode["copter"] = {}
+	soundByFrameAndMode["plane"] = {}
+	soundByFrameAndMode["rover"] = {}
 	-- Copter
-	soundFilesByFrameTypeAndFlightMode["copter"][0]=""
-	soundFilesByFrameTypeAndFlightMode["copter"][1]="stabilize.wav"	
-	soundFilesByFrameTypeAndFlightMode["copter"][2]="acro.wav"
-	soundFilesByFrameTypeAndFlightMode["copter"][3]="althold.wav"
-	soundFilesByFrameTypeAndFlightMode["copter"][4]="auto.wav"
-	soundFilesByFrameTypeAndFlightMode["copter"][5]="guided.wav"
-	soundFilesByFrameTypeAndFlightMode["copter"][6]="loiter.wav"
-	soundFilesByFrameTypeAndFlightMode["copter"][7]="rtl.wav"
-	soundFilesByFrameTypeAndFlightMode["copter"][8]="circle.wav"
-	soundFilesByFrameTypeAndFlightMode["copter"][9]=""
-	soundFilesByFrameTypeAndFlightMode["copter"][10]="land.wav"
-	soundFilesByFrameTypeAndFlightMode["copter"][11]=""
-	soundFilesByFrameTypeAndFlightMode["copter"][12]="drift.wav"
-	soundFilesByFrameTypeAndFlightMode["copter"][13]=""
-	soundFilesByFrameTypeAndFlightMode["copter"][14]="sport.wav"
-	soundFilesByFrameTypeAndFlightMode["copter"][15]="flip.wav"
-	soundFilesByFrameTypeAndFlightMode["copter"][16]="loiter.wav"
-	soundFilesByFrameTypeAndFlightMode["copter"][17]="poshold.wav"
-	soundFilesByFrameTypeAndFlightMode["copter"][18]="brake"
-	soundFilesByFrameTypeAndFlightMode["copter"][19]="throw.wav"
-	soundFilesByFrameTypeAndFlightMode["copter"][20]="avoidadbs"
-	soundFilesByFrameTypeAndFlightMode["copter"][21]="guidednogps"
+	soundByFrameAndMode["copter"][0]=""
+	soundByFrameAndMode["copter"][1]="stabilize.wav"	
+	soundByFrameAndMode["copter"][2]="acro.wav"
+	soundByFrameAndMode["copter"][3]="althold.wav"
+	soundByFrameAndMode["copter"][4]="auto.wav"
+	soundByFrameAndMode["copter"][5]="guided.wav"
+	soundByFrameAndMode["copter"][6]="loiter.wav"
+	soundByFrameAndMode["copter"][7]="rtl.wav"
+	soundByFrameAndMode["copter"][8]="circle.wav"
+	soundByFrameAndMode["copter"][9]=""
+	soundByFrameAndMode["copter"][10]="land.wav"
+	soundByFrameAndMode["copter"][11]=""
+	soundByFrameAndMode["copter"][12]="drift.wav"
+	soundByFrameAndMode["copter"][13]=""
+	soundByFrameAndMode["copter"][14]="sport.wav"
+	soundByFrameAndMode["copter"][15]="flip.wav"
+	soundByFrameAndMode["copter"][16]="loiter.wav"
+	soundByFrameAndMode["copter"][17]="poshold.wav"
+	soundByFrameAndMode["copter"][18]="brake"
+	soundByFrameAndMode["copter"][19]="throw.wav"
+	soundByFrameAndMode["copter"][20]="avoidadbs"
+	soundByFrameAndMode["copter"][21]="guidednogps"
 	-- Plane
-	soundFilesByFrameTypeAndFlightMode["plane"][0]="manual.wav"
-	soundFilesByFrameTypeAndFlightMode["plane"][1]="circle.wav"
-	soundFilesByFrameTypeAndFlightMode["plane"][2]="stabilize.wav"
-	soundFilesByFrameTypeAndFlightMode["plane"][3]="training.wav"
-	soundFilesByFrameTypeAndFlightMode["plane"][4]="acro.wav"
-	soundFilesByFrameTypeAndFlightMode["plane"][5]="flybywirea.wav"
-	soundFilesByFrameTypeAndFlightMode["plane"][6]="flybywireb.wav"
-	soundFilesByFrameTypeAndFlightMode["plane"][7]="cruise.wav"
-	soundFilesByFrameTypeAndFlightMode["plane"][8]="autotune.wav"
-	soundFilesByFrameTypeAndFlightMode["plane"][9]=""
-	soundFilesByFrameTypeAndFlightMode["plane"][10]="auto.wav"
-	soundFilesByFrameTypeAndFlightMode["plane"][11]="rtl.wav"
-	soundFilesByFrameTypeAndFlightMode["plane"][12]="loiter.wav"
-	soundFilesByFrameTypeAndFlightMode["plane"][13]=""
-	soundFilesByFrameTypeAndFlightMode["plane"][14]="avoidadbs"
-	soundFilesByFrameTypeAndFlightMode["plane"][15]="guided.wav"
-	soundFilesByFrameTypeAndFlightMode["plane"][16]="initializing.wav"
-	soundFilesByFrameTypeAndFlightMode["plane"][17]="qstabilize.wav"
-	soundFilesByFrameTypeAndFlightMode["plane"][18]="qhover.wav"
-	soundFilesByFrameTypeAndFlightMode["plane"][19]="qloiter.wav"
-	soundFilesByFrameTypeAndFlightMode["plane"][20]="qland.wav"
-	soundFilesByFrameTypeAndFlightMode["plane"][21]="qrtl.wav"
+	soundByFrameAndMode["plane"][0]="manual.wav"
+	soundByFrameAndMode["plane"][1]="circle.wav"
+	soundByFrameAndMode["plane"][2]="stabilize.wav"
+	soundByFrameAndMode["plane"][3]="training.wav"
+	soundByFrameAndMode["plane"][4]="acro.wav"
+	soundByFrameAndMode["plane"][5]="flybywirea.wav"
+	soundByFrameAndMode["plane"][6]="flybywireb.wav"
+	soundByFrameAndMode["plane"][7]="cruise.wav"
+	soundByFrameAndMode["plane"][8]="autotune.wav"
+	soundByFrameAndMode["plane"][9]=""
+	soundByFrameAndMode["plane"][10]="auto.wav"
+	soundByFrameAndMode["plane"][11]="rtl.wav"
+	soundByFrameAndMode["plane"][12]="loiter.wav"
+	soundByFrameAndMode["plane"][13]=""
+	soundByFrameAndMode["plane"][14]="avoidadbs"
+	soundByFrameAndMode["plane"][15]="guided.wav"
+	soundByFrameAndMode["plane"][16]="initializing.wav"
+	soundByFrameAndMode["plane"][17]="qstabilize.wav"
+	soundByFrameAndMode["plane"][18]="qhover.wav"
+	soundByFrameAndMode["plane"][19]="qloiter.wav"
+	soundByFrameAndMode["plane"][20]="qland.wav"
+	soundByFrameAndMode["plane"][21]="qrtl.wav"
 	-- Rover
-	soundFilesByFrameTypeAndFlightMode["rover"][0]="manual_r.wav"
-	soundFilesByFrameTypeAndFlightMode["rover"][1]="acro_r.wav"
-	soundFilesByFrameTypeAndFlightMode["rover"][2]=""
-	soundFilesByFrameTypeAndFlightMode["rover"][3]="steering_r.wav"
-	soundFilesByFrameTypeAndFlightMode["rover"][4]="hold_r.wav"
-	soundFilesByFrameTypeAndFlightMode["rover"][5]=""
-	soundFilesByFrameTypeAndFlightMode["rover"][6]=""
-	soundFilesByFrameTypeAndFlightMode["rover"][7]=""
-	soundFilesByFrameTypeAndFlightMode["rover"][8]=""
-	soundFilesByFrameTypeAndFlightMode["rover"][9]=""
-	soundFilesByFrameTypeAndFlightMode["rover"][10]="auto_r.wav"
-	soundFilesByFrameTypeAndFlightMode["rover"][11]="rtl_r.wav"
-	soundFilesByFrameTypeAndFlightMode["rover"][12]="smartrtl_r.wav"
-	soundFilesByFrameTypeAndFlightMode["rover"][13]=""
-	soundFilesByFrameTypeAndFlightMode["rover"][14]=""
-	soundFilesByFrameTypeAndFlightMode["rover"][15]="guided_r.wav"
-	soundFilesByFrameTypeAndFlightMode["rover"][16]="initializing.wav"
-	soundFilesByFrameTypeAndFlightMode["rover"][17]=""
-	soundFilesByFrameTypeAndFlightMode["rover"][18]=""
-	soundFilesByFrameTypeAndFlightMode["rover"][19]=""
-	soundFilesByFrameTypeAndFlightMode["rover"][20]=""
-	soundFilesByFrameTypeAndFlightMode["rover"][21]=""
+	soundByFrameAndMode["rover"][0]="manual_r.wav"
+	soundByFrameAndMode["rover"][1]="acro_r.wav"
+	soundByFrameAndMode["rover"][2]=""
+	soundByFrameAndMode["rover"][3]="steering_r.wav"
+	soundByFrameAndMode["rover"][4]="hold_r.wav"
+	soundByFrameAndMode["rover"][5]=""
+	soundByFrameAndMode["rover"][6]=""
+	soundByFrameAndMode["rover"][7]=""
+	soundByFrameAndMode["rover"][8]=""
+	soundByFrameAndMode["rover"][9]=""
+	soundByFrameAndMode["rover"][10]="auto_r.wav"
+	soundByFrameAndMode["rover"][11]="rtl_r.wav"
+	soundByFrameAndMode["rover"][12]="smartrtl_r.wav"
+	soundByFrameAndMode["rover"][13]=""
+	soundByFrameAndMode["rover"][14]=""
+	soundByFrameAndMode["rover"][15]="guided_r.wav"
+	soundByFrameAndMode["rover"][16]="initializing.wav"
+	soundByFrameAndMode["rover"][17]=""
+	soundByFrameAndMode["rover"][18]=""
+	soundByFrameAndMode["rover"][19]=""
+	soundByFrameAndMode["rover"][20]=""
+	soundByFrameAndMode["rover"][21]=""
 
 
 local gpsStatuses = {}
@@ -375,6 +375,7 @@ local maxY = 55
 local noTelemetryData = 1
 --
 local radio = "x9"
+local flagSim = false
 --[[]]--
 -- DEFAULT YAAPU LAYOUT
 local battVoltPos = {
@@ -387,7 +388,9 @@ local battVoltPos = {
 
 local battCellPos = {
   x = 212 - 39,
-  y = 9,
+  y = 8,
+  yV = 10,
+  yS = 18,
   flags = DBLSIZE+PREC2
 }
 
@@ -400,7 +403,7 @@ local battCurrPos = {
 }
 
 local battPercPos = {
-  x = 212 - 66,
+  x = 147,
   y = 12,
   yPerc = 17,
   flags = MIDSIZE,
@@ -408,15 +411,16 @@ local battPercPos = {
 }
 
 local battGaugePos = {
-  x = 212 - 64,
-  y = 26,
-  width = 58, -- must be multiple of 4
-  height = 6
+  x = 150,
+  y = 27,
+  width = 59, -- must be multiple of 4
+  height = 5,
+  steps = 10
 }
 
 local battMahPos = {
   x = 212 - 55,
-  y = 34,
+  y = 35,
   flags = SMLSIZE+PREC1
 }
 
@@ -427,18 +431,27 @@ local flightModePos = {
 }
 
 local homeAnglePos = {
-  x = 66, -- right aligned
-  y = 26,
-  xLabel = 1,
-  yLabel = 26,
+  x = 60, -- right aligned
+  y = 28,
+  xLabel = 3,
+  yLabel = 28,
   flags = SMLSIZE
 }
 
 local homeDistPos = {
-  x = 66, --right aligned
-  y = 17,
-  xLabel = 1,
-  yLabel = 18,
+  x = 55, --right aligned
+  y = 10,
+  xLabel = 2,
+  yLabel = 11,
+  flags = SMLSIZE,
+  arrowWidth = 8
+}
+
+local hSpeedPos = {
+  x = 58, -- right aligned
+  y = 31,
+  xLabel = 5,
+  yLabel = 31,
   flags = SMLSIZE,
   arrowWidth = 10
 }
@@ -450,16 +463,16 @@ local gpsStatusPos = {
 }
 
 local altAslPos = {
-	x = 66, -- right aligned
-	y = 9,
-	xLabel = 1,
-	yLabel = 9
+	x = 55, -- right aligned
+	y = 20,
+	xLabel = 5,
+	yLabel = 20
 }
 
 local homeDirectionPos = {
 	x = 54,
-	y = 45,
-	r = 9
+	y = 46,
+	r = 7
 }
 
 local hudPos = {
@@ -474,7 +487,7 @@ local flightTimePos = {
 }
 
 local rssiPos = {
-	x = 106 - 36,
+	x = 69,
 	y = 1,
 	flags = SMLSIZE+INVERS
 }
@@ -512,24 +525,70 @@ local function playSound(soundFile)
 end
 
 local function playSoundByFrameTypeAndFlightMode(frameType,flightMode)
-	playFile(soundFileBasePath .. "/" .. soundFilesByFrameTypeAndFlightMode[frameTypes[frameType]][flightMode])
+	playFile(soundFileBasePath .. "/" .. soundByFrameAndMode[frameTypes[frameType]][flightMode])
 end
 
 local function roundTo(val,int)
 	return math.floor(val/int) * int
 end
 
--- draws a line centered at ox,oy with given angle and length W/O CROPPING
-local function drawLine(ox,oy,angle,len,style,maxX,maxY)
-	local xx = math.cos(math.rad(angle)) * len * 0.5
-	local yy = math.sin(math.rad(angle)) * len * 0.5
+local function drawRightArrow(x,y,width)
+	lcd.drawLine(x, y, x + width,y, SOLID, 0)
+	lcd.drawLine(x + width - 1,y  - 1,x + width - 2,y  - 2, SOLID, 0)
+	lcd.drawLine(x + width - 1,y  + 1,x + width - 2,y  + 2, SOLID, 0)
+end
 
-	local x1 = ox - xx
-	local x2 = ox + xx
-	local y1 = oy - yy
-	local y2 = oy + yy
-	--
-	lcd.drawLine(x1,y1,x2,y2, style,0)
+local function drawHArrow(x,y,width)
+	lcd.drawLine(x, y, x + width,y, SOLID, 0)
+	lcd.drawLine(x + 1,y  - 1,x + 2,y  - 2, SOLID, 0)
+	lcd.drawLine(x + 1,y  + 1,x + 2,y  + 2, SOLID, 0)
+	lcd.drawLine(x + width - 1,y  - 1,x + width - 2,y  - 2, SOLID, 0)
+	lcd.drawLine(x + width - 1,y  + 1,x + width - 2,y  + 2, SOLID, 0)
+end
+
+local function drawVArrow(x,y,h)
+	lcd.drawLine(x,y,x,y + h, SOLID, 0)
+	lcd.drawLine(x - 1,y + 1,x - 2,y  + 2, SOLID, 0)
+	lcd.drawLine(x + 1,y + 1,x + 2,y  + 2, SOLID, 0)
+	lcd.drawLine(x - 1,y  + h - 1,x - 2,y + h - 2, SOLID, 0)
+	lcd.drawLine(x + 1,y  + h - 1,x + 2,y + h - 2, SOLID, 0)
+end
+
+local function drawHomeIcon(x,y,size)
+	lcd.drawLine(x,y,x + size,y, SOLID, 0)
+	lcd.drawLine(x + size,y - 1,x + size,y - size, SOLID, 0)
+	lcd.drawLine(x,y - 1,x,y - size, SOLID, 0)
+	lcd.drawLine(x-1,y-size+1,x + size/2,y-size - size/4,SOLID,0)
+	lcd.drawLine(x + size + 1,y-size+1,x + size/2 + 1,y-size - size/4 + 1,SOLID,0)
+	lcd.drawRectangle(x + size/2 - 1,y - size/2,size/2,size/2,SOLID)
+	lcd.drawFilledRectangle(x + size/2 - 1,y - size/2,size/2,size/2,SOLID)		
+end
+
+local function draw8(x0,y0,x,y)
+	lcd.drawPoint(x0 + x, y0 + y);
+	lcd.drawPoint(x0 + y, y0 + x);
+	lcd.drawPoint(x0 - y, y0 + x);
+	lcd.drawPoint(x0 - x, y0 + y);
+	lcd.drawPoint(x0 - x, y0 - y);
+	lcd.drawPoint(x0 - y, y0 - x);
+	lcd.drawPoint(x0 + y, y0 - x);
+	lcd.drawPoint(x0 + x, y0 - y);
+end
+
+local function drawCircle10(x0,y0)
+	draw8(x0,y0,5,1)
+	draw8(x0,y0,5,2)
+	draw8(x0,y0,4,3)
+	draw8(x0,y0,4,4)
+	lcd.drawPoint(x0 + 5,y0)
+	lcd.drawPoint(x0 - 5,y0)
+	lcd.drawPoint(x0,y0 + 5)
+	lcd.drawPoint(x0,y0 - 5)	
+end
+
+local function drawHomePad(x0,y0)
+	drawCircle(x0 + 5,y0,5,2)
+	lcd.drawText(x0 + 5 - 2,y0 - 3,"H")
 end
 
 -- draws a line centered at ox,oy with given angle and length WITH CROPPING
@@ -573,23 +632,21 @@ local function drawCroppedLine(ox,oy,angle,len,style,minX,maxX)
 	lcd.drawLine(x1,y1,x2,y2, style,0)
 end
 
-local function drawCircle(x0,y0,radius)
+local function drawCircle(x0,y0,radius,delta)
     local x = radius-1
     local y = 0
-    local dx = 1
-    local dy = 1
-    local err = dx - bit32.lshift(radius,1)--(radius << 1)
-
+    local dx = delta
+    local dy = delta
+    local err = dx - bit32.lshift(radius,1)
     while (x >= y) do
-        lcd.drawPoint(x0 + x, y0 + y);
-        lcd.drawPoint(x0 + y, y0 + x);
-        lcd.drawPoint(x0 - y, y0 + x);
-        lcd.drawPoint(x0 - x, y0 + y);
-        lcd.drawPoint(x0 - x, y0 - y);
-        lcd.drawPoint(x0 - y, y0 - x);
-        lcd.drawPoint(x0 + y, y0 - x);
-        lcd.drawPoint(x0 + x, y0 - y);
-
+		lcd.drawPoint(x0 + x, y0 + y);
+		lcd.drawPoint(x0 + y, y0 + x);
+		lcd.drawPoint(x0 - y, y0 + x);
+		lcd.drawPoint(x0 - x, y0 + y);
+		lcd.drawPoint(x0 - x, y0 - y);
+		lcd.drawPoint(x0 - y, y0 - x);
+		lcd.drawPoint(x0 + y, y0 - x);
+		lcd.drawPoint(x0 + x, y0 - y);
         if err <= 0 then
             y=y+1
             err = err + dy
@@ -599,9 +656,21 @@ local function drawCircle(x0,y0,radius)
         
             x=x-1
             dx = dx + 2
-            err = err + dx - bit32.lshift(radius,1)--(radius << 1);
+            err = err + dx - bit32.lshift(radius,1)
         end
     end
+end
+
+local function drawNumberWith2Dims(x,y,yTop,yBottom,number,topDim,bottomDim,flags,topFlags,bottomFlags)
+	lcd.drawNumber(x, y, number, flags)    
+	local lx = lcd.getLastRightPos()
+	lcd.drawText(lx, yTop, topDim, topFlags)
+	lcd.drawText(lx, yBottom, bottomDim, bottomFlags)
+end
+
+local function drawNumberWithDim(x,y,yDim,number,dim,flags,dimFlags)
+	lcd.drawNumber(x, y, number,flags) 
+	lcd.drawText(lcd.getLastRightPos(), yDim, dim, dimFlags)
 end
 
 local function pushMessage(severity, msg)
@@ -616,13 +685,13 @@ local function pushMessage(severity, msg)
 		if messageDuplicate > 1 then
 			if string.len(mm) > 33 then
 				mm = string.sub(mm,1,33)
-				messageHistory[messageIdx - 1] = string.format("[%02d:%s] %-33s (x%d)", messageIdx - 1, mavSeverity[severity], mm, messageDuplicate)
+				messageHistory[messageIdx - 1] = string.format("[%02d.%s] %-33s (x%d)", messageIdx - 1, mavSeverity[severity], mm, messageDuplicate)
 			else
-				messageHistory[messageIdx - 1] = string.format("[%02d:%s] %s (x%d)", messageIdx - 1, mavSeverity[severity], msg, messageDuplicate)
+				messageHistory[messageIdx - 1] = string.format("[%02d.%s] %s (x%d)", messageIdx - 1, mavSeverity[severity], msg, messageDuplicate)
 			end
 		end
 	else
-		messageHistory[messageIdx] = string.format("[%02d:%s] %s", messageIdx, mavSeverity[severity], msg)
+		messageHistory[messageIdx] = string.format("[%02d.%s] %s", messageIdx, mavSeverity[severity], msg)
 		messageIdx = messageIdx + 1
 		lastMessage = msg
 		messageDuplicate = 1
@@ -662,7 +731,7 @@ local function stopTimer()
 end
 
 local function symTimer()
-	seconds = 60 * 999 + 30
+	seconds = 60 * 9 + 30
 	thrOut = getValue("thr")
 	if (thrOut > -500 ) then
 		landComplete = 1
@@ -753,6 +822,7 @@ local function symHome()
 	yawCh = getValue("ch4")
 	homeAlt = yawCh
 	vSpeed = yawCh * 0.1
+	hSpeed = vSpeed
 	if ( yawCh >= 0) then
 		yawCh = yawCh * 0.175
 	else
@@ -854,11 +924,13 @@ local function processTelemetry()
 end
 
 local function telemetryEnabled()
+	if flagSim then
+		return true
+	end
 	if getValue("RxBt") == 0 then
 		noTelemetryData = 1
 	end
 	return noTelemetryData == 0
-	--return true
 end
 
 local function calcBattery()
@@ -942,31 +1014,21 @@ local function calcFlightTime()
 	flightTime = elapsed + seconds
 end
 
-local function drawBatteryVoltage()
-	-- display battery voltage
-	lcd.drawNumber(battVoltPos.x, battVoltPos.y, LIPObatt/10,battVoltPos.flags ) 
-	lcd.drawText(lcd.getLastRightPos(), battVoltPos.yV, "V", battVoltPos.flagsV)
-end
-
 local function drawCellVoltage()
-	-- display lowest cell voltage
 	local rightX = 0
 	if LIPOcelm < 350 then
-		lcd.drawNumber(battCellPos.x, battCellPos.y, LIPOcelm, battCellPos.flags+BLINK)    
-		rightX = lcd.getLastRightPos()
-		lcd.drawText(rightX, battCellPos.y, "V", SMLSIZE+BLINK)
-		lcd.drawText(rightX, battCellPos.y+10, battSource, SMLSIZE+BLINK)
+		drawNumberWith2Dims(battCellPos.x, battCellPos.y, battCellPos.yV, battCellPos.yS,LIPOcelm,"V",battSource,battCellPos.flags+BLINK,SMLSIZE+BLINK,SMLSIZE+BLINK)
 	else
-		lcd.drawNumber(battCellPos.x, battCellPos.y, LIPOcelm, battCellPos.flags)
-		rightX = lcd.getLastRightPos()		
-		lcd.drawText(rightX, battCellPos.y, "V", SMLSIZE)
-		lcd.drawText(rightX, battCellPos.y+10, battSource, SMLSIZE)
+		drawNumberWith2Dims(battCellPos.x, battCellPos.y, battCellPos.yV, battCellPos.yS,LIPOcelm,"V",battSource,battCellPos.flags,SMLSIZE,SMLSIZE)
 	end
 end
 
+local function drawBatteryVoltage()
+	drawNumberWithDim(battVoltPos.x,battVoltPos.y,battVoltPos.yV,LIPObatt/10,"V",battVoltPos.flags,battVoltPos.flagsV)
+end
+
 local function drawBatteryCurrent()
-	lcd.drawNumber(battCurrPos.x, battCurrPos.y, battCurrent, battCurrPos.flags)
-	lcd.drawText(lcd.getLastRightPos(), battCurrPos.yA, "A", battCurrPos.flagsA)
+	drawNumberWithDim(battCurrPos.x,battCurrPos.y,battCurrPos.yA,battCurrent,"A",battCurrPos.flags,battCurrPos.flagsA)
 end
 
 local function drawBatteryPerc()
@@ -982,11 +1044,25 @@ end
 
 local function drawBatteryGauge()
 	-- display capacity bar %
-	lcd.drawGauge(battGaugePos.x, battGaugePos.y, battGaugePos.width + 3, battGaugePos.height, LIPOperc, 100)
-	local step = battGaugePos.width/4 
-	for s=1,3 do
-		lcd.drawPoint(battGaugePos.x + s*step + 1, battGaugePos.y)
-		lcd.drawPoint(battGaugePos.x + s*step + 1, battGaugePos.y + battGaugePos.height - 1)
+	local perc = 0
+	if (battCapacity > 0) then
+		perc = (1 - (battMah/battCapacity))*100
+		if (perc) < 0 then
+			perc = 1
+		end
+		if perc > 100 then
+			perc = 99
+		end
+	else
+		perc = 0
+	end
+	--
+	lcd.drawFilledRectangle(battGaugePos.x, battGaugePos.y, 2 + math.floor(perc * 0.01 * (battGaugePos.width - 3)), battGaugePos.height, SOLID)
+	lcd.drawRectangle(battGaugePos.x, battGaugePos.y, 2 + math.floor(perc * 0.01 * (battGaugePos.width - 3)), battGaugePos.height, SOLID)
+	--
+	local step = battGaugePos.width/battGaugePos.steps
+	for s=1,battGaugePos.steps - 1 do
+		lcd.drawLine(battGaugePos.x + s*step ,battGaugePos.y, battGaugePos.x + s*step, battGaugePos.y + battGaugePos.height - 1,SOLID,0)
 	end
 end
 
@@ -1024,7 +1100,8 @@ local function drawFlightMode()
 end
 
 local function drawHomeAngle()
-	lcd.drawText(homeAnglePos.xLabel, homeAnglePos.yLabel, "Angle",homeAnglePos.flags)
+	drawHomeIcon(homeAnglePos.xLabel + 1,homeAnglePos.yLabel + 6,6)
+	lcd.drawText(homeAnglePos.xLabel + 10, homeAnglePos.yLabel, "Angle",homeAnglePos.flags)
 
 	if homeAngle == -1 then
 		lcd.drawNumber(homeAnglePos.x, homeAnglePos.y, 0, homeAnglePos.flags+RIGHT+BLINK)
@@ -1034,15 +1111,8 @@ local function drawHomeAngle()
 end
 
 local function drawHomeDist()
-	local alen = homeDistPos.arrowWidth
-	lcd.drawLine(homeDistPos.xLabel ,homeDistPos.yLabel + 2,homeDistPos.xLabel + alen,homeDistPos.yLabel + 2, SOLID, 0)
-	-- left arrow
-	lcd.drawLine(homeDistPos.xLabel + 1,homeDistPos.yLabel + 2-1,homeDistPos.xLabel + 2,homeDistPos.yLabel + 2-2, SOLID, 0)
-	lcd.drawLine(homeDistPos.xLabel + 1,homeDistPos.yLabel + 2+1,homeDistPos.xLabel + 2,homeDistPos.yLabel + 2+2, SOLID, 0)
-	-- right arrow
-	lcd.drawLine(homeDistPos.xLabel + alen - 1,homeDistPos.yLabel + 2-1,homeDistPos.xLabel + alen - 2,homeDistPos.yLabel + 2-2, SOLID, 0)
-	lcd.drawLine(homeDistPos.xLabel + alen - 1,homeDistPos.yLabel + 2+1,homeDistPos.xLabel + alen - 2,homeDistPos.yLabel + 2+2, SOLID, 0)
-	
+	drawHomeIcon(homeDistPos.xLabel + 1,homeDistPos.yLabel + 5,6)
+	drawHArrow(homeDistPos.xLabel + 10,homeDistPos.yLabel + 2,homeDistPos.arrowWidth)
 	if homeAngle == -1 then
 		lcd.drawText(homeDistPos.x, homeDistPos.y, "m",homeDistPos.flags+RIGHT+BLINK)
 		lcd.drawNumber(lcd.getLastLeftPos(), homeDistPos.y, homeDist, homeDistPos.flags+RIGHT+BLINK)
@@ -1053,9 +1123,22 @@ local function drawHomeDist()
 
 end
 
+local function drawHSpeed()
+	drawRightArrow(hSpeedPos.xLabel + 4,hSpeedPos.yLabel,4)
+	drawRightArrow(hSpeedPos.xLabel + 6,hSpeedPos.yLabel + 4,5)
+	lcd.drawPoint(hSpeedPos.xLabel + 2,hSpeedPos.yLabel)
+	lcd.drawPoint(hSpeedPos.xLabel,hSpeedPos.yLabel)
+	lcd.drawPoint(hSpeedPos.xLabel + 4,hSpeedPos.yLabel + 4)
+	lcd.drawPoint(hSpeedPos.xLabel + 2,hSpeedPos.yLabel + 4)
+	lcd.drawText(hSpeedPos.x - 4, hSpeedPos.y - 2, "m",hSpeedPos.flags+RIGHT)
+	lcd.drawText(hSpeedPos.x + 1, hSpeedPos.y + 2, "s",hSpeedPos.flags+RIGHT)
+	lcd.drawNumber(hSpeedPos.x - 10, hSpeedPos.y, hSpeed, hSpeedPos.flags+RIGHT+PREC1)
+	lcd.drawLine(hSpeedPos.x -6,hSpeedPos.y + 5,hSpeedPos.x -3,hSpeedPos.y + 2,SOLID,0)
+end
+
 local function drawMessage()
 	local now = getTime()
-	if (now - lastMessageTime ) > 300 then
+	if (now - lastMessageTime ) > 150 then
 		lcd.drawText(1, 56, messageHistory[messageIdx-1],SMLSIZE+INVERS)
 	else
 		lcd.drawText(1, 56, messageHistory[messageIdx-1],SMLSIZE+INVERS+BLINK)
@@ -1085,6 +1168,8 @@ local function drawGPSStatus()
 	--
 	local strStatus = gpsStatuses[gpsStatus] 
 	--
+	lcd.drawText(altAslPos.xLabel + 4, altAslPos.yLabel, "Asl", SMLSIZE)
+	drawVArrow(altAslPos.xLabel,altAslPos.yLabel - 1,7)
 	local flags = BLINK
 	if gpsStatus  > 2 then
 		lcd.drawFilledRectangle(xx,yy,40 + 2*gpsStatusPos.border,15 + 2 * gpsStatusPos.border,SOLID)
@@ -1100,12 +1185,10 @@ local function drawGPSStatus()
 		else
 			lcd.drawNumber(xx + 40, yy + 8 + gpsStatusPos.border, gpsHdopC , SMLSIZE+INVERS+RIGHT+PREC1+flags)
 		end
-		lcd.drawText(altAslPos.xLabel, altAslPos.yLabel, "AltAsl", SMLSIZE)
 		lcd.drawText(altAslPos.x , altAslPos.y , "m", SMLSIZE+RIGHT)
 		lcd.drawNumber(lcd.getLastLeftPos(), altAslPos.y, gpsAlt/10, SMLSIZE+RIGHT)
 	else
 		lcd.drawText(xx+5, yy+5, strStatus, INVERS+BLINK)
-		lcd.drawText(altAslPos.xLabel, altAslPos.yLabel, "AltAsl", SMLSIZE)
 		lcd.drawText(altAslPos.x, altAslPos.y , "m", SMLSIZE+RIGHT+BLINK)
 		lcd.drawNumber(lcd.getLastLeftPos(), altAslPos.y, 0, SMLSIZE+RIGHT+BLINK)
 	end
@@ -1311,8 +1394,8 @@ local function drawHud()
 	else
 		lcd.drawText(hudPos.x + hudPos.width/2 - 18, 47, "DISARMED", SMLSIZE+INVERS+BLINK)
 	end
-	lcd.drawLine(hudPos.x - 1, 7 ,hudPos.x - 1, 54, SOLID, 0)
-	lcd.drawLine(hudPos.x + hudPos.width, 7, hudPos.x + hudPos.width, 54, SOLID, 0)
+	lcd.drawLine(hudPos.x - 1, 8 ,hudPos.x - 1, 54, SOLID, 0)
+	lcd.drawLine(hudPos.x + hudPos.width, 8, hudPos.x + hudPos.width, 54, SOLID, 0)
 end
 
 local function drawHomeDirection()
@@ -1331,6 +1414,17 @@ local function drawHomeDirection()
 	lcd.drawLine(x1,y1,x2,y2,SOLID,1)
 	lcd.drawLine(x1,y1,x3,y3,SOLID,1)
 	lcd.drawLine(x2,y2,x3,y3,SOLID,1)
+end
+
+local function drawRoverSide(x,y,angle)
+	local width = 30
+	local height = 16
+	local wheelRadius = 5
+	local ox = x + width/2
+	local oy = 0
+end
+
+local function drawRoverFront(x,y,angle)
 end
 
 local function drawFlightTime()
@@ -1438,11 +1532,13 @@ local function run(event)
 		do
 			processTelemetry()
 			lcd.clear()
-			--symMode()
-			drawHud()
-			drawTopBar()
-			drawBottomBar()
+			if flagSim then
+				symMode()
+			end
 			drawCustomBoxes()
+			drawHud()
+			drawBottomBar()
+			drawTopBar()
 			drawCellVoltage()
 			drawBatteryVoltage()
 			drawBatteryCurrent()
@@ -1454,7 +1550,8 @@ local function run(event)
 			drawMessage()
 			drawHomeDirection()
 			drawHomeDist()
-			drawHomeAngle()
+			--drawHomeAngle()
+			drawHSpeed()
 			drawFlightMode()
 			drawFlightTime()
 			drawTxVoltage()
@@ -1466,8 +1563,19 @@ local function run(event)
 end
 
 local function init()
-	pushMessage(6,"Yaapu X9D+ telemetry script v1.2")
+	pushMessage(6,"Yaapu X9D+ telemetry script v1.2.1")
 	playSound("yaapu")
+	--
+	local ver, radio, maj, minor, rev = getVersion()
+	if string.find(radio,"-simu") then
+		flagSim = true
+	end
+	--
+	if string.find(radio,"x9") then
+		radio = "x9"
+	elseif string.find(radio,"x7") then
+		radio = "x7"
+	end
 end
 
 --------------------------------------------------------------------------------

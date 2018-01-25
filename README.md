@@ -28,6 +28,7 @@ Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4
  - rssi value
  - transmitter voltage
  - home distance
+ - horizontal speed
  - home heading as rotating triangle
  - mavlink messages with history accessible with +/- buttons short press
  - english sound files for selected events: battery levels, failsafe, flightmodes and landing
@@ -37,7 +38,7 @@ Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4
 The script is quite big and compilation on your radio may fail.
 The safest way is to compile it on Companion and then copy the .luac compiled version to the SD card in the /SCRIPTS/TELEMETRY folder.
 
-On radios without the luac option enabled it is necessary to rename the script from yaapu9.luac to yaapu9.lua and from yaapu7.luac to yaapu7.lua
+Note:On radios without the luac option enabled it is necessary to rename the script from yaapu9.luac to yaapu9.lua and from yaapu7.luac to yaapu7.lua
 
 To enable sound files playback copy them to /SOUNDS/yaapu0/en folder.
 
@@ -52,34 +53,21 @@ For information on how to connect the FrSky equipment together, please refer to
 
 ## Test Mode
 
-The script can be run in TEST mode. By using TEST mode you can control the telemetry values by moving the radio sticks.
+The script can be run in TEST mode. 
+TEST mode is automatically enabled when you run the script in companion.
+By using TEST mode you can control the telemetry values by moving the radio sticks.
 
 PLEASE DO NOT FLY IN THIS MODE
 
-To enable TEST mode you need to uncomment some code and recompile the script.
+To enable TEST mode you need to uncomment one line and recompile the script.
 
-the first change is in function telemetryEnabled which should be as below
-
+search for the following code
 ```lua
-local function telemetryEnabled()
-	if getValue("RxBt") == 0 then
-		noTelemetryData = 1
-	end
-	return true
-	--return noTelemetryData == 0
-end
+local flagSim = false
 ```
-
-the second part that needs to be changed is in the run() function where the line symMode() must be uncommented
-
+and change it to
 ```lua
-local function run(event) 
-   ...
-			processTelemetry()
-			lcd.clear()
-			symMode()
-			drawHud()
-   ...
+local flagSim = true
 ```
 Now you can test how the script behaves by using your radio channels 1,2,3,4,10 and 12.
 
