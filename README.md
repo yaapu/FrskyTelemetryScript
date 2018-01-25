@@ -37,6 +37,8 @@ Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4
 The script is quite big and compilation on your radio may fail.
 The safest way is to compile it on Companion and then copy the .luac compiled version to the SD card in the /SCRIPTS/TELEMETRY folder.
 
+On radios without the luac option enabled it is necessary to rename the script from yaapu9.luac to yaapu9.lua and from yaapu7.luac to yaapu7.lua
+
 To enable sound files playback copy them to /SOUNDS/yaapu0/en folder.
 
 ## Hardware requirements
