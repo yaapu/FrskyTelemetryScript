@@ -685,13 +685,13 @@ local function pushMessage(severity, msg)
 		if messageDuplicate > 1 then
 			if string.len(mm) > 33 then
 				mm = string.sub(mm,1,33)
-				messageHistory[messageIdx - 1] = string.format("[%02d.%s] %-33s (x%d)", messageIdx - 1, mavSeverity[severity], mm, messageDuplicate)
+				messageHistory[messageIdx - 1] = string.format("%d:%s %-33s (x%d)", messageIdx - 1, mavSeverity[severity], mm, messageDuplicate)
 			else
-				messageHistory[messageIdx - 1] = string.format("[%02d.%s] %s (x%d)", messageIdx - 1, mavSeverity[severity], msg, messageDuplicate)
+				messageHistory[messageIdx - 1] = string.format("%d:%s %s (x%d)", messageIdx - 1, mavSeverity[severity], msg, messageDuplicate)
 			end
 		end
 	else
-		messageHistory[messageIdx] = string.format("[%02d.%s] %s", messageIdx, mavSeverity[severity], msg)
+		messageHistory[messageIdx] = string.format("%d:%s %s", messageIdx, mavSeverity[severity], msg)
 		messageIdx = messageIdx + 1
 		lastMessage = msg
 		messageDuplicate = 1
