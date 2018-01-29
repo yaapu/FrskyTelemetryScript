@@ -15,7 +15,8 @@ Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4
 
  - flight mode (modes are displayed based on the frame type:copter,plane or rover)
  - artificial horizon with roll,pitch and yaw with numeric compass heading
- - battery voltage from 3 sources (in order of priority)
+ - mini home icon on yaw compass at home angle position
+ - battery voltage from 3 sources (in order of priority), short pressing ENTER cycles between the sources
  - - frsky FLVSS voltage sensor if available (vs is displayed next to voltage)
  - - frsky analog port if available (a2 is displayed next to voltage)
  - - flight controller via telemetry (fc is displayed next to voltage)
@@ -37,10 +38,15 @@ Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4
 
 ## Installation
 
+
+For the X9D and X9D+ use the yaapu9.lua script.
+For the QX7 radio use the yaapu7.lua script.
+
 The script is quite big and compilation on your radio may fail.
 The safest way is to compile it on Companion and then copy the .luac compiled version to the SD card in the /SCRIPTS/TELEMETRY folder.
+I do provide already compiled versions for both X9D and QX7.
 
-Note:On radios without the luac option enabled it is necessary to rename the script from yaapu9.luac to yaapu9.lua and from yaapu7.luac to yaapu7.lua
+Note: On radios without the luac option enabled it is necessary to rename the script from yaapu9.luac to yaapu9.lua and from yaapu7.luac to yaapu7.lua
 
 To enable sound files playback copy them to /SOUNDS/yaapu0/en folder.
 
