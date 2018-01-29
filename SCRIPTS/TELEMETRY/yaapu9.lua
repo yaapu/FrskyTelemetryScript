@@ -23,46 +23,37 @@
 -- Borrowed some code from the LI-xx BATTCHECK v3.30 script
 --  http://frskytaranis.forumactif.org/t2800-lua-download-un-testeur-de-batterie-sur-la-radio
 
-
-local cellfull, cellempty = 4.2, 3.00       
-local cell = {0, 0, 0, 0, 0 ,0}                                                  
-local cellsumfull, cellsumempty, cellsumtype, cellsum = 0, 0, 0, 0               
-
-local i, cellmin, cellresult = 0, cellfull, 0, 0                                  
-local thrOut = 0
-local voltage = 0
-
 --[[
-	MAV_TYPE_GENERIC=0, /* Generic micro air vehicle. | */
-	MAV_TYPE_FIXED_WING=1, /* Fixed wing aircraft. | */
-	MAV_TYPE_QUADROTOR=2, /* Quadrotor | */
-	MAV_TYPE_COAXIAL=3, /* Coaxial helicopter | */
-	MAV_TYPE_HELICOPTER=4, /* Normal helicopter with tail rotor. | */
-	MAV_TYPE_ANTENNA_TRACKER=5, /* Ground installation | */
-	MAV_TYPE_GCS=6, /* Operator control unit / ground control station | */
-	MAV_TYPE_AIRSHIP=7, /* Airship, controlled | */
-	MAV_TYPE_FREE_BALLOON=8, /* Free balloon, uncontrolled | */
-	MAV_TYPE_ROCKET=9, /* Rocket | */
-	MAV_TYPE_GROUND_ROVER=10, /* Ground rover | */
-	MAV_TYPE_SURFACE_BOAT=11, /* Surface vessel, boat, ship | */
-	MAV_TYPE_SUBMARINE=12, /* Submarine | */
-	MAV_TYPE_HEXAROTOR=13, /* Hexarotor | */
-	MAV_TYPE_OCTOROTOR=14, /* Octorotor | */
-	MAV_TYPE_TRICOPTER=15, /* Tricopter | */
-	MAV_TYPE_FLAPPING_WING=16, /* Flapping wing | */
-	MAV_TYPE_KITE=17, /* Kite | */
-	MAV_TYPE_ONBOARD_CONTROLLER=18, /* Onboard companion controller | */
-	MAV_TYPE_VTOL_DUOROTOR=19, /* Two-rotor VTOL using control surfaces in vertical operation in addition. Tailsitter. | */
-	MAV_TYPE_VTOL_QUADROTOR=20, /* Quad-rotor VTOL using a V-shaped quad config in vertical operation. Tailsitter. | */
-	MAV_TYPE_VTOL_TILTROTOR=21, /* Tiltrotor VTOL | */
-	MAV_TYPE_VTOL_RESERVED2=22, /* VTOL reserved 2 | */
-	MAV_TYPE_VTOL_RESERVED3=23, /* VTOL reserved 3 | */
-	MAV_TYPE_VTOL_RESERVED4=24, /* VTOL reserved 4 | */
-	MAV_TYPE_VTOL_RESERVED5=25, /* VTOL reserved 5 | */
-	MAV_TYPE_GIMBAL=26, /* Onboard gimbal | */
-	MAV_TYPE_ADSB=27, /* Onboard ADSB peripheral | */
-	MAV_TYPE_PARAFOIL=28, /* Steerable, nonrigid airfoil | */
-	MAV_TYPE_DODECAROTOR=29, /* Dodecarotor | */
+	MAV_TYPE_GENERIC=0,               /* Generic micro air vehicle. | */
+	MAV_TYPE_FIXED_WING=1,            /* Fixed wing aircraft. | */
+	MAV_TYPE_QUADROTOR=2,             /* Quadrotor | */
+	MAV_TYPE_COAXIAL=3,               /* Coaxial helicopter | */
+	MAV_TYPE_HELICOPTER=4,            /* Normal helicopter with tail rotor. | */
+	MAV_TYPE_ANTENNA_TRACKER=5,       /* Ground installation | */
+	MAV_TYPE_GCS=6,                   /* Operator control unit / ground control station | */
+	MAV_TYPE_AIRSHIP=7,               /* Airship, controlled | */
+	MAV_TYPE_FREE_BALLOON=8,          /* Free balloon, uncontrolled | */
+	MAV_TYPE_ROCKET=9,                /* Rocket | */
+	MAV_TYPE_GROUND_ROVER=10,         /* Ground rover | */
+	MAV_TYPE_SURFACE_BOAT=11,         /* Surface vessel, boat, ship | */
+	MAV_TYPE_SUBMARINE=12,            /* Submarine | */
+	MAV_TYPE_HEXAROTOR=13,            /* Hexarotor | */
+	MAV_TYPE_OCTOROTOR=14,            /* Octorotor | */
+	MAV_TYPE_TRICOPTER=15,            /* Tricopter | */
+	MAV_TYPE_FLAPPING_WING=16,        /* Flapping wing | */
+	MAV_TYPE_KITE=17,                 /* Kite | */
+	MAV_TYPE_ONBOARD_CONTROLLER=18,   /* Onboard companion controller | */
+	MAV_TYPE_VTOL_DUOROTOR=19,        /* Two-rotor VTOL using control surfaces in vertical operation in addition. Tailsitter. | */
+	MAV_TYPE_VTOL_QUADROTOR=20,       /* Quad-rotor VTOL using a V-shaped quad config in vertical operation. Tailsitter. | */
+	MAV_TYPE_VTOL_TILTROTOR=21,       /* Tiltrotor VTOL | */
+	MAV_TYPE_VTOL_RESERVED2=22,       /* VTOL reserved 2 | */
+	MAV_TYPE_VTOL_RESERVED3=23,       /* VTOL reserved 3 | */
+	MAV_TYPE_VTOL_RESERVED4=24,       /* VTOL reserved 4 | */
+	MAV_TYPE_VTOL_RESERVED5=25,       /* VTOL reserved 5 | */
+	MAV_TYPE_GIMBAL=26,               /* Onboard gimbal | */
+	MAV_TYPE_ADSB=27,                 /* Onboard ADSB peripheral | */
+	MAV_TYPE_PARAFOIL=28,             /* Steerable, nonrigid airfoil | */
+	MAV_TYPE_DODECAROTOR=29,          /* Dodecarotor | */
 ]]--
 
 local frameTypes = {}
@@ -125,6 +116,7 @@ local flightModes = {}
 	flightModes["copter"][19]="Throw"
 	flightModes["copter"][20]="Avoid ADSB"
 	flightModes["copter"][21]="Guided NO GPS"
+	flightModes["copter"][22]="Smart RTL"
 	-- plane flight modes
 	flightModes["plane"][0]=""
 	flightModes["plane"][1]="Manual"
@@ -228,7 +220,6 @@ local soundByFrameAndMode = {}
 	soundByFrameAndMode["copter"][19]="throw.wav"
 	soundByFrameAndMode["copter"][20]="avoidadbs"
 	soundByFrameAndMode["copter"][21]="guidednogps"
-	soundByFrameAndMode["copter"][22]="smartrtl.wav"
 	-- Plane
 	soundByFrameAndMode["plane"][0]=""
   soundByFrameAndMode["plane"][1]="manual.wav"
@@ -278,11 +269,12 @@ local soundByFrameAndMode = {}
 	soundByFrameAndMode["rover"][21]=""
 	soundByFrameAndMode["rover"][22]=""
 
+
 local gpsStatuses = {}
   gpsStatuses[0]="NoGPS"
   gpsStatuses[1]="NoLock"
-  gpsStatuses[2]="2DFIX"
-  gpsStatuses[3]="3DFix"
+  gpsStatuses[2]="2D"
+  gpsStatuses[3]="3D"
 
 local mavSeverity = {}
   mavSeverity[0]="EMR"
@@ -294,13 +286,32 @@ local mavSeverity = {}
   mavSeverity[6]="INF"
   mavSeverity[7]="DBG"
 
-  -- STATUS
+-- FLVSS
+local cell = {0, 0, 0, 0, 0 ,0}                                                  
+local cellsumtype = 0
+local cellfull = 4.2
+--
+local cellmin = 0
+local cellsum = 0             
+--
+local cellminA2 = 0
+local cellsumA2 = 0
+--
+local cellminFC = 0
+local cellsumFC = 0
+--
+local battSources = {
+    a2 = false,
+    vs = false,
+    fc = false
+  }
+-- STATUS
 local flightMode = 0
 local simpleMode = 0
 local landComplete = 0
 local statusArmed = 0
-local batteryFailsafe = 0
-local lastBatteryFailsafe = 0
+local battFailsafe = 0
+local lastBattFailsafe = 0
 local ekfFailsafe = 0
 local lastEkfFailsafe = 0
 local battSource = "na"
@@ -317,19 +328,20 @@ local battMah = 0
 local battVolt2 = 0
 local battCurrent2 = 0
 local battMah2 = 0
+local LIPObatt = 0
+local LIPOcelm = 0
 -- HOME
 local homeDist = 0
 local homeAlt = 0
 local homeAngle = -1
 -- MESSAGES
-local messageBuffer = "" 
-local messageHistory = {}
-local severity = 0
-local messageIdx = 1
-local messageDuplicate = 1
-local lastMessage = ""
-local lastMessageValue = 0
-local lastMessageTime = 0
+local msgBuffer = "" 
+local msgHistory = {}
+local msgIdx = 1
+local msgDuplicate = 1
+local lastMsg = ""
+local lastMsgValue = 0
+local lastMsgTime = 0
 -- VELANDYAW
 local vSpeed = 0
 local hSpeed = 0
@@ -339,7 +351,6 @@ local roll = 0
 local pitch = 0
 -- TELEMETRY
 local SENSOR_ID,FRAME_ID,DATA_ID,VALUE
-local mult = 0
 local c1,c2,c3,c4
 -- PARAMS
 local paramId,paramValue
@@ -372,142 +383,41 @@ local batLevels = {}
 	batLevels[2]=70
 	batLevels[1]=80
 	batLevels[0]=90
--- DISPLAY mix/max leaving room for top and bottom bar
-local minY = 8
-local maxY = 55
+-- DISPLAY mix
 --
 local noTelemetryData = 1
 --
-local radio = "x9"
+local radioModel = "x9"
+-- TEST MODE
 local flagSim = false
+local thrOut = 0
+
 --[[]]--
 -- DEFAULT YAAPU LAYOUT
-local battVoltPos = {
-  x = 212 - 65,
-  y = 43,
-  yV = 43,
-  flags = MIDSIZE+PREC1,
-  flagsV = SMLSIZE
-}
-
-local battCellPos = {
-  x = 212 - 39,
-  y = 8,
-  yV = 10,
-  yS = 18,
-  flags = DBLSIZE+PREC2
-}
-
-local battCurrPos = {
-  x = 212 - 29,
-  y = 43,
-  yA = 43,
-  flags = MIDSIZE+PREC1,
-  flagsA = SMLSIZE
-}
-
-local battPercPos = {
-  x = 147,
-  y = 12,
-  yPerc = 17,
-  flags = MIDSIZE,
-  flagsPerc = SMLSIZE
-}
-
-local battGaugePos = {
-  x = 150,
-  y = 27,
-  width = 59, -- must be multiple of 4
-  height = 5,
-  steps = 10
-}
-
-local battMahPos = {
-  x = 212 - 55,
-  y = 35,
-  flags = SMLSIZE+PREC1
-}
-
-local flightModePos = {
-  x = 1,
-  y = 1,
-  flags = SMLSIZE+INVERS
-}
-
-local homeAnglePos = {
-  x = 60, -- right aligned
-  y = 28,
-  xLabel = 3,
-  yLabel = 28,
-  flags = SMLSIZE
-}
-
-local homeDistPos = {
-  x = 55, --right aligned
-  y = 10,
-  xLabel = 2,
-  yLabel = 11,
-  flags = SMLSIZE,
-  arrowWidth = 8
-}
-
-local hSpeedPos = {
-  x = 58, -- right aligned
-  y = 31,
-  xLabel = 5,
-  yLabel = 31,
-  flags = SMLSIZE,
-  arrowWidth = 10
-}
-
-local gpsStatusPos = {
-	x = 0,
-	y = 39,
-	border = 0
-}
-
-local altAslPos = {
-	x = 55, -- right aligned
-	y = 20,
-	xLabel = 5,
-	yLabel = 20
-}
-
-local homeDirectionPos = {
-	x = 54,
-	y = 46,
-	r = 7
-}
-
 local hudPos = {
-	x = 106 - 38,
+	x = 68,
 	width = 76
 }
 
-local flightTimePos = {
-	x = 180,
-	y = 1,
-	flags = SMLSIZE+INVERS
+local leftPanePos = {
+	x = 68,
 }
 
-local rssiPos = {
-	x = 69,
-	y = 1,
-	flags = SMLSIZE+INVERS
+local rightPanePos = {
+	x = 68,
 }
 
-local txVoltagePos = {
-	x = 106 - 40 + 50,
-	y = 1,
-	flags = SMLSIZE+INVERS
-}
 
 local topBarPos = {
-	width = 212
+	y = 0,
+  height = 7,
+  width = 212
 }
 
 local bottomBarPos = {
-	width = 212
+	y = 57,
+  height = 7,
+  width = 212
 }
 
 local box1Pos = {
@@ -523,6 +433,124 @@ local box2Pos = {
 	width = 17,
 	height = 12
 }
+
+local battVoltPos = {
+  x = 212 - 65,
+  y = 44,
+  yV = 44,
+  flags = MIDSIZE+PREC1,
+  flagsV = SMLSIZE
+}
+
+local battCellPos = {
+  x = 212 - 39,
+  y = 7,
+  yV = 9,
+  yS = 17,
+  flags = DBLSIZE+PREC2
+}
+
+local battCurrPos = {
+  x = 212 - 29,
+  y = 44,
+  yA = 44,
+  flags = MIDSIZE+PREC1,
+  flagsA = SMLSIZE
+}
+
+local battPercPos = {
+  x = 147,
+  y = 11,
+  yPerc = 16,
+  flags = MIDSIZE,
+  flagsPerc = SMLSIZE
+}
+
+local battGaugePos = {
+  x = 150,
+  y = 26,
+  width = 59, -- must be multiple of 4
+  height = 5,
+  steps = 10
+}
+
+local battMahPos = {
+  x = 212 - 55,
+  y = 34,
+  flags = SMLSIZE+PREC1
+}
+
+local flightModePos = {
+  x = 1,
+  y = 0,
+  flags = SMLSIZE+INVERS
+}
+
+local homeAnglePos = {
+  x = 60, -- right aligned
+  y = 27,
+  xLabel = 3,
+  yLabel = 27,
+  flags = SMLSIZE
+}
+
+local hSpeedPos = {
+  x = 44, -- right aligned
+  y = 50,
+  xLabel = 2,
+  yLabel = 49,
+  xDim = 45,
+  yDim = 49, 
+  flags = SMLSIZE,
+  arrowWidth = 10
+}
+
+local gpsStatusPos = {
+	x = 0,
+	y = 6,
+	border = 0
+}
+
+local altAslPos = {
+	x = 2, -- right aligned
+	y = 32,
+	xLabel = 3,
+	yLabel = 24
+}
+
+local homeDistPos = {
+  x = 35, --right aligned
+  y = 32,
+  xLabel = 34,
+  yLabel = 25,
+  flags = SMLSIZE,
+  arrowWidth = 8
+}
+
+local homeDirectionPos = {
+	x = 75,
+	y = 49,
+	r = 7
+}
+
+local flightTimePos = {
+	x = 180,
+	y = 0,
+	flags = SMLSIZE+INVERS
+}
+
+local rssiPos = {
+	x = 69,
+	y = 0,
+	flags = SMLSIZE+INVERS
+}
+
+local txVoltagePos = {
+	x = 106 - 40 + 50,
+	y = 0,
+	flags = SMLSIZE+INVERS
+}
+
 --
 local function playSound(soundFile)
 	playFile(soundFileBasePath .. "/" .. sounds[soundFile])
@@ -568,6 +596,15 @@ local function drawHomeIcon(x,y,size)
 	lcd.drawFilledRectangle(x + size/2 - 1,y - size/2,size/2,size/2,SOLID)		
 end
 
+local function drawHomeMiniIcon(x,y)
+	lcd.drawLine(x,y,x + 4,y, SOLID, 0)
+	lcd.drawLine(x + 4,y - 1,x + 4,y - 4, SOLID, 0)
+	lcd.drawLine(x,y - 1,x,y - 4, SOLID, 0)
+	lcd.drawLine(x-1,y-4+1,x + 2,y-4 - 1,SOLID,0)
+	lcd.drawLine(x + 4 + 1,y - 4 + 1,x + 2 + 1,y-4 - 4/4 + 1,SOLID,0)
+	lcd.drawLine(x + 2,y - 2,x + 2,y-1,SOLID,0)
+end
+
 local function draw8(x0,y0,x,y)
 	lcd.drawPoint(x0 + x, y0 + y);
 	lcd.drawPoint(x0 + y, y0 + x);
@@ -590,13 +627,8 @@ local function drawCircle10(x0,y0)
 	lcd.drawPoint(x0,y0 - 5)	
 end
 
-local function drawHomePad(x0,y0)
-	drawCircle(x0 + 5,y0,5,2)
-	lcd.drawText(x0 + 5 - 2,y0 - 3,"H")
-end
-
 -- draws a line centered at ox,oy with given angle and length WITH CROPPING
-local function drawCroppedLine(ox,oy,angle,len,style,minX,maxX)
+local function drawCroppedLine(ox,oy,angle,len,style,minX,maxX,minY,maxY)
 	--
 	local xx = math.cos(math.rad(angle)) * len * 0.5
 	local yy = math.sin(math.rad(angle)) * len * 0.5
@@ -610,6 +642,7 @@ local function drawCroppedLine(ox,oy,angle,len,style,minX,maxX)
 	if (x1 >= maxX and x2 >= maxX) then
 		return
 	end
+  
 	if (x1 >= maxX) then
 		y1 = y1 - math.tan(math.rad(angle)) * (maxX - x1)
 		x1 = maxX - 1
@@ -623,7 +656,8 @@ local function drawCroppedLine(ox,oy,angle,len,style,minX,maxX)
 	if (x1 <= minX and x2 <= minX) then
 		return
 	end
-	if (x1 <= minX) then
+	
+  if (x1 <= minX) then
 		y1 = y1 - math.tan(math.rad(angle)) * (x1 - minX)
 		x1 = minX + 1
 	end
@@ -633,6 +667,35 @@ local function drawCroppedLine(ox,oy,angle,len,style,minX,maxX)
 		x2 = minX + 1
 	end
 	--
+	-- crop right
+	if (y1 >= maxY and y2 >= maxY) then
+		return
+	end
+  
+	if (y1 >= maxY) then
+		x1 = x1 - (y1 - maxY)/math.tan(math.rad(angle))
+		y1 = maxY - 1
+	end
+
+	if (y2 >= maxY) then
+		x2 = x2 -  (y2 - maxY)/math.tan(math.rad(angle))
+		y2 = maxY - 1
+	end
+	-- crop left
+	if (y1 <= minY and y2 <= minY) then
+		return
+	end
+	
+  if (y1 <= minY) then
+		x1 = x1 + (minY - y1)/math.tan(math.rad(angle))
+		y1 = minY + 1
+	end
+
+	if (y2 <= minY) then
+		x2 = x2 + (minY - y2)/math.tan(math.rad(angle))
+		y2 = minY + 1
+	end
+  
 	lcd.drawLine(x1,y1,x2,y2, style,0)
 end
 
@@ -665,7 +728,12 @@ local function drawCircle(x0,y0,radius,delta)
     end
 end
 
-local function drawNumberWith2Dims(x,y,yTop,yBottom,number,topDim,bottomDim,flags,topFlags,bottomFlags)
+local function drawHomePad(x0,y0)
+	drawCircle(x0 + 5,y0,5,2)
+	lcd.drawText(x0 + 5 - 2,y0 - 3,"H")
+end
+
+local function drawNumberWithTwoDims(x,y,yTop,yBottom,number,topDim,bottomDim,flags,topFlags,bottomFlags)
 	lcd.drawNumber(x, y, number, flags)    
 	local lx = lcd.getLastRightPos()
 	lcd.drawText(lx, yTop, topDim, topFlags)
@@ -684,23 +752,23 @@ local function pushMessage(severity, msg)
 		playTone(600,300,0)
 	end
 	local mm = msg
-	if msg == lastMessage then
-		messageDuplicate = messageDuplicate + 1
-		if messageDuplicate > 1 then
+	if msg == lastMsg then
+		msgDuplicate = msgDuplicate + 1
+		if msgDuplicate > 1 then
 			if string.len(mm) > 33 then
 				mm = string.sub(mm,1,33)
-				messageHistory[messageIdx - 1] = string.format("%d:%s %-33s (x%d)", messageIdx - 1, mavSeverity[severity], mm, messageDuplicate)
+				msgHistory[msgIdx - 1] = string.format("%02d:%s %-33s (x%d)", msgIdx - 1, mavSeverity[severity], mm, msgDuplicate)
 			else
-				messageHistory[messageIdx - 1] = string.format("%d:%s %s (x%d)", messageIdx - 1, mavSeverity[severity], msg, messageDuplicate)
+				msgHistory[msgIdx - 1] = string.format("%02d:%s %s (x%d)", msgIdx - 1, mavSeverity[severity], msg, msgDuplicate)
 			end
 		end
 	else
-		messageHistory[messageIdx] = string.format("%d:%s %s", messageIdx, mavSeverity[severity], msg)
-		messageIdx = messageIdx + 1
-		lastMessage = msg
-		messageDuplicate = 1
+		msgHistory[msgIdx] = string.format("%02d:%s %s", msgIdx, mavSeverity[severity], msg)
+		msgIdx = msgIdx + 1
+    lastMsg = msg
+		msgDuplicate = 1
 	end
-	lastMessageTime = getTime() 
+	lastMsgTime = getTime() 
 end
 
 local function logTelemetryToFile(S_ID,F_ID,D_ID,VA)
@@ -747,11 +815,11 @@ end
 local function symGPS()
 	thrOut = getValue("thr")
 	if (thrOut > 0 ) then
-		numSats = 9
+		numSats = 17
 		gpsStatus = 3
-		gpsHdopC = 11
+		gpsHdopC = 6
 		ekfFailsafe = 0
-		batteryFailsafe = 0
+		battFailsafe = 0
 		noTelemetryData = 0
 		statusArmed = 1
 	elseif thrOut > -500  then
@@ -759,7 +827,7 @@ local function symGPS()
 		gpsStatus = 3
 		gpsHdopC = 17
 		ekfFailsafe = 1
-		batteryFailsafe = 1
+		battFailsafe = 1
 		noTelemetryData = 0
 		statusArmed = 0
 	else
@@ -767,7 +835,7 @@ local function symGPS()
 		gpsStatus = 0
 		gpsHdopC = 100
 		ekfFailsafe = 0
-		batteryFailsafe = 0
+		battFailsafe = 0
 		noTelemetryData = 1
 		statusArmed = 0
 	end
@@ -794,6 +862,10 @@ local function symBatt()
 		battCapacity = 5200
 		battMah = math.abs(1000*(thrOut/200))
 		flightMode = math.floor(20 * math.abs(thrOut)*0.001)
+		gpsAlt = math.floor(10 * math.abs(thrOut)*0.1)
+		homeDist = math.floor(10 * math.abs(thrOut)*0.1)
+  else
+		battMah = 0
 	end
 end
 
@@ -869,7 +941,7 @@ local function processTelemetry()
 			simpleMode = bit32.extract(VALUE,5,2)
 			landComplete = bit32.extract(VALUE,7,1)
 			statusArmed = bit32.extract(VALUE,8,1)
-			batteryFailsafe = bit32.extract(VALUE,9,1)
+			battFailsafe = bit32.extract(VALUE,9,1)
 			ekfFailsafe = bit32.extract(VALUE,10,2)
 		elseif ( DATA_ID == 0x5002) then -- GPS STATUS 
 			numSats = bit32.extract(VALUE,0,4)
@@ -895,20 +967,20 @@ local function processTelemetry()
 			end
 			homeAngle = bit32.extract(VALUE, 25,  7) * 3
 		elseif ( DATA_ID == 0x5000) then -- MESSAGES 
-			if (VALUE ~= lastMessageValue) then
-				lastMessageValue = VALUE
+			if (VALUE ~= lastMsgValue) then
+				lastMsgValue = VALUE
 				c1 = bit32.extract(VALUE,0,7)
 				c2 = bit32.extract(VALUE,8,7)
 				c3 = bit32.extract(VALUE,16,7)
 				c4 = bit32.extract(VALUE,24,7)
-				messageBuffer = messageBuffer .. string.char(c4)
-				messageBuffer = messageBuffer .. string.char(c3)
-				messageBuffer = messageBuffer .. string.char(c2)
-				messageBuffer = messageBuffer .. string.char(c1)
+				msgBuffer = msgBuffer .. string.char(c4)
+				msgBuffer = msgBuffer .. string.char(c3)
+				msgBuffer = msgBuffer .. string.char(c2)
+				msgBuffer = msgBuffer .. string.char(c1)
 				if (c1 == 0 or c2 == 0 or c3 == 0 or c4 == 0) then
-					severity = (bit32.extract(VALUE,15,1) * 4) + (bit32.extract(VALUE,23,1) * 2) + (bit32.extract(VALUE,30,1) * 1)
-					pushMessage( severity, messageBuffer)
-					messageBuffer = ""
+					local severity = (bit32.extract(VALUE,15,1) * 4) + (bit32.extract(VALUE,23,1) * 2) + (bit32.extract(VALUE,30,1) * 1)
+					pushMessage( severity, msgBuffer)
+					msgBuffer = ""
 				end
 			end
 		elseif ( DATA_ID == 0x5007) then -- PARAMS
@@ -941,11 +1013,10 @@ local function calcBattery()
 	local battA2 = 0
 	local cellCount = 3;
 	--
-	cellmin = cellfull
 	cellResult = getValue("Cels")                          
 
 	if type(cellResult) == "table" then                     
-		battSource="vs"
+    cellmin = cellfull
 		cellsum = 0                                         
 		for i = 1, #cell do cell[i] = 0 end                 
 			cellsumtype = #cellResult                           
@@ -956,47 +1027,72 @@ local function calcBattery()
 				cellmin = v
 			end
 		end -- end for
+    -- it was not connected at boot
+    if battSources.vs == false then
+      battSource = "na"
+    end
+    if battSource == "na" then
+      battSource = "vs"
+    end
+    battSources.vs = true
 	else
-		-- cels is not defined let's check if A2 is defined
-		cellmin = 0
-		battA2 = getValue("A2")
+    battSources.vs = false
+    cellmin = 0
+    cellsum = 0
+  end
+  
+	-- let's check if A2 is defined
+	battA2 = getValue("A2")
 		--
-		if battA2 > 0 then
-			battSource="a2"
-				if battA2 > 21 then
-					cellCount = 6
-				elseif battA2 > 17 then
-					cellCount = 5
-				elseif battA2 > 13 then
-					cellCount = 4
-				else
-					cellCount = 3
-				end
-			--
-			cellmin = battA2/cellCount
-			cellsum = battA2
-		else
-			-- A2 is not defined, last chance is battVolt
-			if battVolt > 0 then
-				battSource="fc"
-				cellsum = battVolt*0.1
-				if cellsum > 21 then
-					cellCount = 6
-				elseif cellsum > 17 then
-					cellCount = 5
-				elseif cellsum > 13 then
-					cellCount = 4
-				else
-					cellCount = 3
-				end
-				--
-				cellmin = cellsum/cellCount
-			end
-		end
-	end -- end if
-	--
-	LIPOcelm = cellmin*100
-	LIPObatt = cellsum*100
+  if battA2 > 0 then
+      if battA2 > 21 then
+        cellCount = 6
+      elseif battA2 > 17 then
+        cellCount = 5
+      elseif battA2 > 13 then
+        cellCount = 4
+      else
+        cellCount = 3
+      end
+    --
+    cellminA2 = battA2/cellCount
+    cellsumA2 = battA2
+    
+    battSources.a2 = true
+    
+    if battSource == "na" then
+      battSource = "a2"
+    end
+  else
+    battSources.a2 = false
+    cellminA2 = 0
+    cellsumA2 = 0
+  end
+  
+	-- A2 is not defined, last chance is battVolt
+  if battVolt > 0 then
+    cellsumFC = battVolt*0.1
+    if cellsumFC > 21 then
+      cellCount = 6
+    elseif cellsumFC > 17 then
+      cellCount = 5
+    elseif cellsumFC > 13 then
+      cellCount = 4
+    else
+      cellCount = 3
+    end
+    --
+    cellminFC = cellsumFC/cellCount
+    
+    if battSource == "na" then
+      battSource = "fc"
+    end
+    battSources.fc = true
+  else
+    battSources.fc = false
+    cellminFC = 0
+    cellsumFC = 0
+  end
 end
 
 local function checkLandingStatus()
@@ -1019,15 +1115,32 @@ local function calcFlightTime()
 end
 
 local function drawCellVoltage()
-	local rightX = 0
+ 	
+  if battSource == "vs" then
+    LIPOcelm = cellmin*100
+  elseif battSource == "fc" then
+    LIPOcelm = cellminFC*100
+  elseif battSource == "a2" then
+    LIPOcelm = cellminA2*100
+  end
+  --
 	if LIPOcelm < 350 then
-		drawNumberWith2Dims(battCellPos.x, battCellPos.y, battCellPos.yV, battCellPos.yS,LIPOcelm,"V",battSource,battCellPos.flags+BLINK,SMLSIZE+BLINK,SMLSIZE+BLINK)
+		drawNumberWithTwoDims(battCellPos.x, battCellPos.y, battCellPos.yV, battCellPos.yS,LIPOcelm,"V",battSource,battCellPos.flags+BLINK,SMLSIZE+BLINK,SMLSIZE+BLINK)
 	else
-		drawNumberWith2Dims(battCellPos.x, battCellPos.y, battCellPos.yV, battCellPos.yS,LIPOcelm,"V",battSource,battCellPos.flags,SMLSIZE,SMLSIZE)
+		drawNumberWithTwoDims(battCellPos.x, battCellPos.y, battCellPos.yV, battCellPos.yS,LIPOcelm,"V",battSource,battCellPos.flags,SMLSIZE,SMLSIZE)
 	end
 end
 
 local function drawBatteryVoltage()
+	--
+	if battSource == "vs" then
+    LIPObatt = cellsum*100
+  elseif battSource == "fc" then
+    LIPObatt = cellsumFC*100
+  elseif battSource == "a2" then
+    LIPObatt = cellsumA2*100
+  end
+  --
 	drawNumberWithDim(battVoltPos.x,battVoltPos.y,battVoltPos.yV,LIPObatt/10,"V",battVoltPos.flags,battVoltPos.flagsV)
 end
 
@@ -1065,26 +1178,37 @@ local function drawBatteryGauge()
 	lcd.drawRectangle(battGaugePos.x, battGaugePos.y, 2 + math.floor(perc * 0.01 * (battGaugePos.width - 3)), battGaugePos.height, SOLID)
 	--
 	local step = battGaugePos.width/battGaugePos.steps
-	for s=1,battGaugePos.steps - 1 do
-		lcd.drawLine(battGaugePos.x + s*step ,battGaugePos.y, battGaugePos.x + s*step, battGaugePos.y + battGaugePos.height - 1,SOLID,0)
+	-- 75 - 50 - 30 - 20 - 10
+  for s=1,battGaugePos.steps - 1 do
+		lcd.drawLine(battGaugePos.x + s*step - 1,battGaugePos.y, battGaugePos.x + s*step - 1, battGaugePos.y + battGaugePos.height - 1,SOLID,0)
 	end
+
+	--lcd.drawRectangle(battGaugePos.x, battGaugePos.y, battGaugePos.width, battGaugePos.height, ERASE)
+	--lcd.drawRectangle(battGaugePos.x, battGaugePos.y, battGaugePos.width, battGaugePos.height, SOLID)
 end
 
 local function drawBatteryMah()
-	lcd.drawNumber(battMahPos.x, battMahPos.y, battMah/100, battMahPos.flags)  
-	lcd.drawText(lcd.getLastRightPos(), battMahPos.y, "/", SMLSIZE)
-	lcd.drawNumber(lcd.getLastRightPos(), battMahPos.y, battCapacity/100, battMahPos.flags)  
-	lcd.drawText(lcd.getLastRightPos(), battMahPos.y, "Ah", SMLSIZE)
+  if battMahPos.vert then
+    lcd.drawText(battMahPos.x, battMahPos.y, "Ah", SMLSIZE+RIGHT)
+    lcd.drawNumber(lcd.getLastLeftPos(), battMahPos.y, battMah/100, battMahPos.flags+RIGHT)
+    lcd.drawText(battMahPos.x, battMahPos.y+8, "Ah", SMLSIZE+RIGHT+INVERS)
+    lcd.drawNumber(lcd.getLastLeftPos(), battMahPos.y+8, battCapacity/100, battMahPos.flags+RIGHT+INVERS)  
+  else
+    lcd.drawNumber(battMahPos.x, battMahPos.y, battMah/100, battMahPos.flags)
+    lcd.drawText(lcd.getLastRightPos(), battMahPos.y, "/", SMLSIZE)
+    lcd.drawNumber(lcd.getLastRightPos(), battMahPos.y, battCapacity/100, battMahPos.flags)  
+    lcd.drawText(lcd.getLastRightPos(), battMahPos.y, "Ah", SMLSIZE)
+  end
 end
 
 local function drawTopBar()
-	lcd.drawFilledRectangle(0,0, topBarPos.width, 8, SOLID)
-	lcd.drawRectangle(0, 0, topBarPos.width, 8, SOLID)
+	lcd.drawFilledRectangle(0,topBarPos.y, topBarPos.width, 7, SOLID)
+	lcd.drawRectangle(0, topBarPos.y, topBarPos.width, 7, SOLID)
 end
 
 local function drawBottomBar()
-	lcd.drawFilledRectangle(0,55, bottomBarPos.width, 9, SOLID)
-	lcd.drawRectangle(0, 55, bottomBarPos.width, 9, SOLID)
+	lcd.drawFilledRectangle(0,bottomBarPos.y, bottomBarPos.width, 7, SOLID)
+	lcd.drawRectangle(0, bottomBarPos.y, bottomBarPos.width, 7, SOLID)
 end
 
 local function drawFlightMode()
@@ -1115,16 +1239,19 @@ local function drawHomeAngle()
 end
 
 local function drawHomeDist()
-	drawHomeIcon(homeDistPos.xLabel + 1,homeDistPos.yLabel + 5,6)
-	drawHArrow(homeDistPos.xLabel + 10,homeDistPos.yLabel + 2,homeDistPos.arrowWidth)
+	if radioModel == "x7" then
+    drawHArrow(homeDistPos.xLabel,homeDistPos.yLabel + 2,homeDistPos.arrowWidth)
+  else
+    drawHomeIcon(homeDistPos.xLabel + 1,homeDistPos.yLabel + 5,6)
+    drawHArrow(homeDistPos.xLabel + 10,homeDistPos.yLabel + 2,homeDistPos.arrowWidth)
+  end
 	if homeAngle == -1 then
-		lcd.drawText(homeDistPos.x, homeDistPos.y, "m",homeDistPos.flags+RIGHT+BLINK)
-		lcd.drawNumber(lcd.getLastLeftPos(), homeDistPos.y, homeDist, homeDistPos.flags+RIGHT+BLINK)
+		lcd.drawNumber(homeDistPos.x, homeDistPos.y, homeDist, homeDistPos.flags+BLINK)
+		lcd.drawText(lcd.getLastRightPos(), homeDistPos.y, "m",homeDistPos.flags+BLINK)
 	else
-		lcd.drawText(homeDistPos.x, homeDistPos.y, "m",homeDistPos.flags+RIGHT)
-		lcd.drawNumber(lcd.getLastLeftPos(), homeDistPos.y, homeDist, homeDistPos.flags+RIGHT)
+		lcd.drawNumber(homeDistPos.x, homeDistPos.y, homeDist, homeDistPos.flags)
+		lcd.drawText(lcd.getLastRightPos(), homeDistPos.y, "m",homeDistPos.flags)
 	end
-
 end
 
 local function drawHSpeed()
@@ -1134,67 +1261,79 @@ local function drawHSpeed()
 	lcd.drawPoint(hSpeedPos.xLabel,hSpeedPos.yLabel)
 	lcd.drawPoint(hSpeedPos.xLabel + 4,hSpeedPos.yLabel + 4)
 	lcd.drawPoint(hSpeedPos.xLabel + 2,hSpeedPos.yLabel + 4)
-	lcd.drawText(hSpeedPos.x - 4, hSpeedPos.y - 2, "m",hSpeedPos.flags+RIGHT)
-	lcd.drawText(hSpeedPos.x + 1, hSpeedPos.y + 2, "s",hSpeedPos.flags+RIGHT)
-	lcd.drawNumber(hSpeedPos.x - 10, hSpeedPos.y, hSpeed, hSpeedPos.flags+RIGHT+PREC1)
-	lcd.drawLine(hSpeedPos.x -6,hSpeedPos.y + 5,hSpeedPos.x -3,hSpeedPos.y + 2,SOLID,0)
+	
+  lcd.drawNumber(hSpeedPos.x - 10, hSpeedPos.y - 1, hSpeed, hSpeedPos.flags+RIGHT+PREC1)
+  
+  lcd.drawText(hSpeedPos.xDim - 4, hSpeedPos.yDim - 4, "m",hSpeedPos.flags+RIGHT)
+	lcd.drawText(hSpeedPos.xDim + 1, hSpeedPos.yDim, "s",hSpeedPos.flags+RIGHT)
+	lcd.drawLine(hSpeedPos.xDim -6,hSpeedPos.yDim + 3,hSpeedPos.xDim -3,hSpeedPos.yDim,SOLID,0)
 end
 
 local function drawMessage()
 	local now = getTime()
-	if (now - lastMessageTime ) > 150 then
-		lcd.drawText(1, 56, messageHistory[messageIdx-1],SMLSIZE+INVERS)
+	if (now - lastMsgTime ) > 150 then
+		lcd.drawText(1, 58, msgHistory[msgIdx-1],SMLSIZE+INVERS)
 	else
-		lcd.drawText(1, 56, messageHistory[messageIdx-1],SMLSIZE+INVERS+BLINK)
+		lcd.drawText(1, 58, msgHistory[msgIdx-1],SMLSIZE+INVERS+BLINK)
 	end
 end
 
 local function drawAllMessages()
 	local idx = 1
-	if (messageIdx <= 6) then
-		for i = 1, messageIdx - 1 do
-			lcd.drawText(1, 1+10*(idx - 1), messageHistory[i],SMLSIZE)
+	if (msgIdx <= 8) then
+		for i = 1, msgIdx - 1 do
+			lcd.drawText(1, 8*(idx - 1), msgHistory[i],SMLSIZE)
 			idx = idx+1
 		end
 	else
-		for i = messageIdx - 6,messageIdx - 1 do
-			lcd.drawText(1, 1+10*(idx-1), messageHistory[i],SMLSIZE)
+		for i = msgIdx - 8,msgIdx - 1 do
+			lcd.drawText(1, 8*(idx-1), msgHistory[i],SMLSIZE)
 			idx = idx+1
 		end
 	end
+end
+
+local function drawAltAsl()
+	lcd.drawText(altAslPos.xLabel + 4, altAslPos.yLabel, "Asl", SMLSIZE)
+	drawVArrow(altAslPos.xLabel,altAslPos.yLabel - 1,7)
+	if gpsStatus  > 2 then
+		lcd.drawNumber(altAslPos.x, altAslPos.y, gpsAlt/10, SMLSIZE)
+		lcd.drawText(lcd.getLastRightPos(), altAslPos.y , "m", SMLSIZE)
+  else
+		lcd.drawNumber(altAslPos.x, altAslPos.y, 0, SMLSIZE+BLINK)
+		lcd.drawText(lcd.getLastRightPos(), altAslPos.y , "m", SMLSIZE+BLINK)
+  end
 end
 
 local function drawGPSStatus()
 	local xx = gpsStatusPos.x
 	local yy = gpsStatusPos.y
 	--
-	lcd.drawRectangle(xx,yy,40 + 2*gpsStatusPos.border,15 + 2 * gpsStatusPos.border,SOLID)
-	--
+  --if radioModel == "x7" then
+  lcd.drawLine(xx ,yy + 13,xx+66,yy + 13,SOLID,0)
+  --else
+  --  lcd.drawLine(xx ,yy,xx+66,yy,SOLID,0)
+	--end
+    lcd.drawLine(xx + 34,yy+1,xx+34,yy+12,SOLID,0)
 	local strStatus = gpsStatuses[gpsStatus] 
 	--
-	lcd.drawText(altAslPos.xLabel + 4, altAslPos.yLabel, "Asl", SMLSIZE)
-	drawVArrow(altAslPos.xLabel,altAslPos.yLabel - 1,7)
 	local flags = BLINK
 	if gpsStatus  > 2 then
-		lcd.drawFilledRectangle(xx,yy,40 + 2*gpsStatusPos.border,15 + 2 * gpsStatusPos.border,SOLID)
 		if homeAngle ~= -1 then
 			flags = 0
 		end
-		lcd.drawText(xx + gpsStatusPos.border, yy + 1 + gpsStatusPos.border, strStatus, SMLSIZE+INVERS)
-		lcd.drawNumber(xx + 39, yy + 1 + gpsStatusPos.border, numSats, SMLSIZE+INVERS+RIGHT)
-		lcd.drawText(xx+gpsStatusPos.border, yy + 8 + gpsStatusPos.border, "Hdop ", SMLSIZE+INVERS)
+		lcd.drawText(xx + 4,yy + 6, strStatus, SMLSIZE)
+		lcd.drawNumber(lcd.getLastRightPos() + 1, yy + 1, numSats, MIDSIZE)
+		
+    lcd.drawText(xx + 39, yy + 6 , "H", SMLSIZE)
 		--
 		if gpsHdopC > 100 then
-			lcd.drawNumber(xx + 40, yy + 8 + gpsStatusPos.border, gpsHdopC , SMLSIZE+INVERS+RIGHT+PREC1+flags)
+			lcd.drawNumber(lcd.getLastRightPos() + 1, yy + 1, gpsHdopC , MIDSIZE+PREC1+flags)
 		else
-			lcd.drawNumber(xx + 40, yy + 8 + gpsStatusPos.border, gpsHdopC , SMLSIZE+INVERS+RIGHT+PREC1+flags)
+			lcd.drawNumber(lcd.getLastRightPos() + 1, yy + 1, gpsHdopC , MIDSIZE+PREC1+flags)
 		end
-		lcd.drawText(altAslPos.x , altAslPos.y , "m", SMLSIZE+RIGHT)
-		lcd.drawNumber(lcd.getLastLeftPos(), altAslPos.y, gpsAlt/10, SMLSIZE+RIGHT)
 	else
-		lcd.drawText(xx+5, yy+5, strStatus, INVERS+BLINK)
-		lcd.drawText(altAslPos.x, altAslPos.y , "m", SMLSIZE+RIGHT+BLINK)
-		lcd.drawNumber(lcd.getLastLeftPos(), altAslPos.y, 0, SMLSIZE+RIGHT+BLINK)
+		lcd.drawText(xx + 5, yy + 4, strStatus, SMLSIZE+INVERS+BLINK)
 	end
 end
 
@@ -1203,16 +1342,18 @@ local function drawFailsafe()
 		if lastEkfFailsafe == 0 then
 			playSound("ekf")
 		end
-		lcd.drawText(hudPos.x + hudPos.width/2 - 28, 47, "EKF FAILSAFE", SMLSIZE+INVERS+BLINK)
+		lcd.drawText(hudPos.x + hudPos.width/2 - 6, 40, "EKF", SMLSIZE+INVERS+BLINK)
+		lcd.drawText(hudPos.x + hudPos.width/2 - 17, 49, "FAILSAFE", SMLSIZE+INVERS+BLINK)
 	end
-	if batteryFailsafe > 0 then
-		if lastBatteryFailsafe == 0 then
+	if battFailsafe > 0 then
+		if lastBattFailsafe == 0 then
 			playSound("lowbat")
 		end
-		lcd.drawText(hudPos.x + hudPos.width/2 - 30, 47, "BATT FAILSAFE", SMLSIZE+INVERS+BLINK)
+		lcd.drawText(hudPos.x + hudPos.width/2 - 8, 40, "BATT", SMLSIZE+INVERS+BLINK)
+		lcd.drawText(hudPos.x + hudPos.width/2 - 17, 49, "FAILSAFE", SMLSIZE+INVERS+BLINK)
 	end
 	lastEkfFailsafe = ekfFailsafe
-	lastBatteryFailsafe = batteryFailsafe
+	lastBattFailsafe = battFailsafe
 end
 
 local function drawPitch()
@@ -1231,21 +1372,33 @@ local function drawPitch()
 	-- y normalized at 32 +/-20  (0.75 = 20/32)
 	y = 32 + 0.75*p
 	-- center indicators for vSpeed and alt
-	local indicatorWidth = 17
+	local leftIndicatorWidth = 15
+	local rightIndicatorWidth = 17
 	
-	lcd.drawLine(hudPos.x,32 - 5,hudPos.x + indicatorWidth,32 - 5, SOLID, 0)
-	lcd.drawLine(hudPos.x,32 + 4,hudPos.x + indicatorWidth,32 + 4, SOLID, 0)
-	lcd.drawLine(hudPos.x + indicatorWidth + 1,32 + 4,hudPos.x + indicatorWidth + 5,32, SOLID, 0)
-	lcd.drawLine(hudPos.x + indicatorWidth + 1,32 - 4,hudPos.x + indicatorWidth + 5,32, SOLID, 0)
-	lcd.drawPoint(hudPos.x + indicatorWidth + 5,32)
+  -- lets erase to hide the artificial horizon lines
+  for ly=0,5 do
+    lcd.drawLine(hudPos.x,32 - ly,hudPos.x + leftIndicatorWidth + (5 - ly),32 - ly, SOLID, ERASE)
+    lcd.drawLine(hudPos.x + hudPos.width - rightIndicatorWidth - 1 - (5 - ly),32 - ly,hudPos.x + hudPos.width - 1,32 - ly,SOLID,ERASE)
+  end
+  for ly=1,4 do
+    lcd.drawLine(hudPos.x,32 + ly,hudPos.x + leftIndicatorWidth + (5 - ly),32 + ly, SOLID, ERASE)
+    lcd.drawLine(hudPos.x + hudPos.width - rightIndicatorWidth - 1 - (5 - ly),32 + ly,hudPos.x + hudPos.width - 1,32 + ly,SOLID,ERASE)
+  end
+  --
+  --
+	lcd.drawLine(hudPos.x,32 - 5,hudPos.x + leftIndicatorWidth,32 - 5, SOLID, 0)
+	lcd.drawLine(hudPos.x,32 + 4,hudPos.x + leftIndicatorWidth,32 + 4, SOLID, 0)
+	lcd.drawLine(hudPos.x + leftIndicatorWidth + 1,32 + 4,hudPos.x + leftIndicatorWidth + 5,32, SOLID, 0)
+	lcd.drawLine(hudPos.x + leftIndicatorWidth + 1,32 - 4,hudPos.x + leftIndicatorWidth + 5,32, SOLID, 0)
+	lcd.drawPoint(hudPos.x + leftIndicatorWidth + 5,32)
 	--
-	lcd.drawLine(hudPos.x + hudPos.width - indicatorWidth - 1,32 - 5,hudPos.x + hudPos.width - 1,32 - 5,SOLID,0)
-	lcd.drawLine(hudPos.x + hudPos.width - indicatorWidth - 1,32 + 4,hudPos.x + hudPos.width - 1,32 + 4,SOLID,0)
-	lcd.drawLine(hudPos.x + hudPos.width - indicatorWidth - 2,32 + 4,hudPos.x + hudPos.width - indicatorWidth - 6,32, SOLID, 0)
-	lcd.drawLine(hudPos.x + hudPos.width - indicatorWidth - 2,32 - 4,hudPos.x + hudPos.width - indicatorWidth - 6,32, SOLID, 0)
-	lcd.drawPoint(hudPos.x + hudPos.width - indicatorWidth - 6,32)
+	lcd.drawLine(hudPos.x + hudPos.width - rightIndicatorWidth - 1,32 - 5,hudPos.x + hudPos.width - 1,32 - 5,SOLID,0)
+	lcd.drawLine(hudPos.x + hudPos.width - rightIndicatorWidth - 1,32 + 4,hudPos.x + hudPos.width - 1,32 + 4,SOLID,0)
+	lcd.drawLine(hudPos.x + hudPos.width - rightIndicatorWidth - 2,32 + 4,hudPos.x + hudPos.width - rightIndicatorWidth - 6,32, SOLID, 0)
+	lcd.drawLine(hudPos.x + hudPos.width - rightIndicatorWidth - 2,32 - 4,hudPos.x + hudPos.width - rightIndicatorWidth - 6,32, SOLID, 0)
+	lcd.drawPoint(hudPos.x + hudPos.width - rightIndicatorWidth - 6,32)
 	--
-	local xx = hudPos.x + hudPos.width - indicatorWidth - 2
+	local xx = hudPos.x + hudPos.width - rightIndicatorWidth - 2
 	
 	if homeAlt > 0 then
 		if homeAlt < 10 then -- 2 digits with decimal
@@ -1270,15 +1423,18 @@ local function drawPitch()
 	end
 	-- up pointing center arrow
 	local arrowX = math.floor(hudPos.x + hudPos.width/2)
-	lcd.drawLine(arrowX - 10,34 + 5,arrowX ,34 ,SOLID,0)
-	lcd.drawLine(arrowX + 1 ,34 ,arrowX + 10, 34 + 5,SOLID,0)
+ 	lcd.drawLine(arrowX - 5,34 + 5,arrowX ,34 ,SOLID,ERASE)
+	lcd.drawLine(arrowX - 5,34 + 5,arrowX ,34 ,SOLID,0)
+ 	lcd.drawLine(arrowX,34 ,arrowX + 5, 34 + 5,SOLID,ERASE)
+	lcd.drawLine(arrowX,34 ,arrowX + 5, 34 + 5,SOLID,0)
 end
 
 local function drawRoll()
 	local r = -roll
 	local r2 = 10 --vertical distance between roll horiz segments
 	local cx,cy,dx,dy,ccx,ccy,cccx,cccy
-	-- no roll ==> segments are vertical, offsets are multiples of r2
+	local yPos = topBarPos.y + topBarPos.height + 8
+  -- no roll ==> segments are vertical, offsets are multiples of r2
 	if ( roll == 0) then
 		dx=0
 		dy=pitch
@@ -1303,103 +1459,143 @@ local function drawRoll()
 		cccy = math.sin(math.rad(90 - r)) * 3 * r2
 	end
 	local rollX = math.floor(hudPos.x + hudPos.width/2)
-	local delta = (hudPos.width - 76)
-	drawCroppedLine(rollX + dx - cccx,dy + 32 + cccy,r,5,DOTTED,hudPos.x,hudPos.x + hudPos.width)
-	drawCroppedLine(rollX + dx - ccx,dy + 32 + ccy,r,7,DOTTED,hudPos.x,hudPos.x + hudPos.width)
-	drawCroppedLine(rollX + dx - cx,dy + 32 + cy,r,10,DOTTED,hudPos.x,hudPos.x + hudPos.width)
-	drawCroppedLine(rollX + dx,dy + 32,r,28 + delta,SOLID,hudPos.x,hudPos.x + hudPos.width)
-	drawCroppedLine(rollX + dx + cx,dy + 32 - cy,r,10,DOTTED,hudPos.x,hudPos.x + hudPos.width)
-	drawCroppedLine(rollX + dx + ccx,dy + 32 - ccy,r,7,DOTTED,hudPos.x,hudPos.x + hudPos.width)
-	drawCroppedLine(rollX + dx + cccx,dy + 32 - cccy,r,5,DOTTED,hudPos.x,hudPos.x + hudPos.width)
+	--local delta = (hudPos.width - 76)
+	drawCroppedLine(rollX + dx - cccx,dy + 32 + cccy,r,5,DOTTED,hudPos.x,hudPos.x + hudPos.width,yPos,bottomBarPos.y)
+	drawCroppedLine(rollX + dx - ccx,dy + 32 + ccy,r,7,DOTTED,hudPos.x,hudPos.x + hudPos.width,yPos,bottomBarPos.y)
+	drawCroppedLine(rollX + dx - cx,dy + 32 + cy,r,16,DOTTED,hudPos.x,hudPos.x + hudPos.width,yPos,bottomBarPos.y)
+	drawCroppedLine(rollX + dx,dy + 32,r,54,SOLID,hudPos.x,hudPos.x + hudPos.width,yPos,bottomBarPos.y)
+	drawCroppedLine(rollX + dx + cx,dy + 32 - cy,r,16,DOTTED,hudPos.x,hudPos.x + hudPos.width,yPos,bottomBarPos.y)
+	drawCroppedLine(rollX + dx + ccx,dy + 32 - ccy,r,7,DOTTED,hudPos.x,hudPos.x + hudPos.width,yPos,bottomBarPos.y)
+	drawCroppedLine(rollX + dx + cccx,dy + 32 - cccy,r,5,DOTTED,hudPos.x,hudPos.x + hudPos.width,yPos,bottomBarPos.y)
 end
 
 local function drawYaw()
-	local halfWidth = math.floor(hudPos.width/2) - 2
-	local centerX = hudPos.x + halfWidth
-	local offset = halfWidth - 2
-	--
-	local yawRounded =  math.floor(yaw)
-	local yawWindow = roundTo(yaw,10)
-	local maxXHalf = math.floor(hudPos.x + hudPos.width/2)
-	local yawWindowOn = false
-	local flags = SMLSIZE
-	--
-	if (not(yawWindow == 0 or yawWindow == 90 or yawWindow == 180 or yawWindow == 270 or yawWindow == 360)) then
-		yawWindowOn = true
-	end
-	--
-	if (yawRounded == 0 or yawRounded == 360) then
-		lcd.drawText(centerX - offset, minY+1, "W", SMLSIZE)
-		lcd.drawText(centerX, minY+1, "N", flags)
-		lcd.drawText(centerX + offset, minY+1, "E", SMLSIZE)
-	elseif (yawRounded == 90) then
-		lcd.drawText(centerX - offset, minY+1, "N", SMLSIZE)
-		lcd.drawText(centerX, minY+1, "E", flags)
-		lcd.drawText(centerX + offset, minY+1, "S", SMLSIZE)
-	elseif (yawRounded == 180) then
-		lcd.drawText(centerX - offset, minY+1, "E", SMLSIZE)
-		lcd.drawText(centerX, minY+1, "S", flags)
-		lcd.drawText(centerX + offset, minY+1, "W", SMLSIZE)
-	elseif (yawRounded == 270) then
-		lcd.drawText(centerX - offset, minY+1, "S", SMLSIZE)
-		lcd.drawText(centerX, minY+1, "W", flags)
-		lcd.drawText(centerX + offset, minY+1, "N", SMLSIZE)
-	elseif ( yaw > 0 and yaw < 90) then
-		centerX = (maxXHalf - 2) - 0.3*yaw
-		lcd.drawText(centerX - 8, minY+1, "N", flags)
-		lcd.drawText(centerX + offset, minY+1, "E", SMLSIZE)
-		if (yaw > 85) then
-			lcd.drawText(centerX + 2*offset - 8, minY+1, "S", SMLSIZE)
-		end
-	elseif ( yaw > 90 and yaw < 180) then
-		centerX = (maxXHalf - 2) - 0.3*(yaw - 180)
-		lcd.drawText(centerX - offset, minY+1, "E", SMLSIZE)
-		lcd.drawText(centerX + 7, minY+1, "S", flags)
-		if (yaw > 170) then
-			lcd.drawText(centerX + offset, minY+1, "W", SMLSIZE)
-		end
-	elseif ( yaw > 180 and yaw < 270) then
-		centerX = (maxXHalf - 2) - 0.3*(yaw - 270)
-		lcd.drawText(centerX + 8, minY+1, "W", SMLSIZE)
-		lcd.drawText(centerX - offset, minY+1, "S", flags)
-		if (yaw < 190) then
-			lcd.drawText(centerX - 2*offset + 8, minY+1, "E", SMLSIZE)
-		end
-	elseif ( yaw > 270 and yaw < 360) then
-		centerX = (maxXHalf - 2) - 0.3*(yaw - 360)
-		lcd.drawText(centerX + 8, minY+1, "N", SMLSIZE)
-		lcd.drawText(centerX - offset, minY+1, "W", flags)
-		if (yaw < 290) then
-			lcd.drawText(centerX - 2*offset + 8, minY+1, "S", SMLSIZE)
-		end
-		if (yaw > 345) then
-			lcd.drawText(centerX + offset, minY+1, "E", SMLSIZE)
-		end
-	end
-	lcd.drawLine(hudPos.x, minY + 7, hudPos.x + hudPos.width - 1, minY + 7, SOLID, 0)
-	--
+	local hw = math.floor(hudPos.width/2)
+  local ww = hw - 6
+  local degL = 0
+  local degR = 0
+  local steps = 9
+  local flags=INVERS
+  local yawRounded = roundTo(yaw,10)
+  local homeRounded = roundTo(homeAngle,10)
+  local minY = topBarPos.y + topBarPos.height
+  --
+  local cx = hudPos.x + hw
+  for step = 0,steps
+  do
+      --
+      degR = (yawRounded + step*10) % 360
+      degL = (yawRounded - step*10) % 360
+      --
+      if degR > 39 and degR < 47 then
+        lcd.drawText(cx + step/steps*ww, minY+1, "NE", SMLSIZE)
+      elseif degR > 89 and degR < 92 then
+        lcd.drawText(cx + step/steps*ww, minY, "E", SMLSIZE+INVERS)
+      elseif degR > 129 and degR < 132 then
+        lcd.drawText(cx + step/steps*ww, minY+1, "SE", SMLSIZE)
+      elseif degR > 179 and degR < 182 then
+        lcd.drawText(cx + step/steps*ww, minY, "S", SMLSIZE+INVERS)
+      elseif degR > 219 and degR < 227 then
+        lcd.drawText(cx + step/steps*ww, minY+1, "SW", SMLSIZE)
+      elseif degR > 269 and degR < 272 then
+        lcd.drawText(cx + step/steps*ww, minY, "W", SMLSIZE+INVERS)
+      elseif degR > 309 and degR < 317 then
+        lcd.drawText(cx + step/steps*ww, minY+1, "NW", SMLSIZE)
+      elseif degR > 359 or degR < 2 then
+        lcd.drawText(cx + step/steps*ww, minY, "N", SMLSIZE+INVERS)
+      end
+      --    
+      if degL > 39 and degL < 47 then
+        lcd.drawText(cx - step/steps*ww - 6, minY+1, "NE", SMLSIZE)
+      elseif degL > 89 and degL < 92 then
+        lcd.drawText(cx - step/steps*ww - 4, minY, "E", SMLSIZE+INVERS)
+      elseif degL > 129 and degL < 137 then
+        lcd.drawText(cx - step/steps*ww - 6, minY+1, "SE", SMLSIZE)
+      elseif degL > 179 and degL < 182 then
+        lcd.drawText(cx - step/steps*ww - 4, minY, "S", SMLSIZE+INVERS)
+      elseif degL > 219 and degL < 227 then
+        lcd.drawText(cx - step/steps*ww - 6, minY+1, "SW", SMLSIZE)
+      elseif degL > 269 and degL < 272 then
+        lcd.drawText(cx - step/steps*ww - 4, minY, "W", SMLSIZE+INVERS)
+      elseif degL > 309 and degL < 317 then
+        lcd.drawText(cx - step/steps*ww - 6, minY+1, "NW", SMLSIZE)
+      elseif degL > 359 or degL < 2 then
+        lcd.drawText(cx - step/steps*ww - 4, minY, "N", SMLSIZE+INVERS)
+      end
+  
+      
+      if degR > homeRounded - 5 and degR < homeRounded + 5 and degL > homeRounded - 5  and degL < homeRounded + 5  then
+        drawHomeMiniIcon(cx - 2,minY + 1 + 12)
+      else
+        if degR > homeRounded - 5 and degR < homeRounded + 5 then
+          drawHomeMiniIcon(cx + step/steps*ww ,minY + 1 + 12)
+        end
+
+        if degL > homeRounded - 5  and degL < homeRounded + 5 then
+          drawHomeMiniIcon(cx - step/steps*ww - 6,minY + 1 + 12)
+        end
+      end
+  end
+  --[[
+  lcd.drawNumber(cx - 10,minY+20,yawRounded,0)
+  lcd.drawNumber(cx - 10,minY+28,homeRounded,0)
+  lcd.drawNumber(cx - 10,minY+36,yawRounded - homeRounded,0)
+  
+  local angle = yawRounded - homeRounded
+  
+  if angle > 90 and angle < 180 then
+    drawHomeMiniIcon(cx - ww - 6,minY + 10 + 12)
+  end
+  ]]--
+  
+ 	lcd.drawLine(hudPos.x, minY + 7, hudPos.x + hudPos.width - 1, minY + 7, SOLID, 0)
 	local xx = 0
 	if ( yaw < 10) then
-		xx = 3
+		xx = 1
 	elseif (yaw < 100) then
-		xx = 0
+		xx = -2
 	else
-		xx = -3
+		xx = -5
 	end
-	lcd.drawNumber(hudPos.x + offset + xx - 2, minY, yaw, MIDSIZE+INVERS)
+	lcd.drawRectangle(hudPos.x + hw - 6, minY, 12,12, SOLID)
+	lcd.drawFilledRectangle(hudPos.x + hw - 6, minY, 12,12, SOLID)
+  lcd.drawNumber(hudPos.x + hw + xx - 4, minY, yaw, MIDSIZE+INVERS)
 end
 
+local function clearHud()
+	lcd.drawFilledRectangle(hudPos.x,topBarPos.y + topBarPos.height + 8,hudPos.width,49,ERASE,0)  
+end
+
+local function clearLeftPane()
+  if radioModel == "x9" then
+    lcd.drawFilledRectangle(0,topBarPos.y + topBarPos.height,hudPos.x - 1,49,ERASE,0)  
+  end
+end
+
+local function clearRightPane()
+  if radioModel == "x7" then
+    lcd.drawFilledRectangle(hudPos.x+hudPos.width,topBarPos.y + topBarPos.height,128 - hudPos.x + hudPos.width,49,ERASE,0)
+  else
+    lcd.drawFilledRectangle(hudPos.x+hudPos.width,topBarPos.y + topBarPos.height,212 - hudPos.x + hudPos.width,49,ERASE,0)
+  end
+end
+
+
 local function drawHud()
-	drawPitch()
 	drawRoll()
-	drawYaw()
-	if (statusArmed == 1) then
-		lcd.drawText(hudPos.x + hudPos.width/2 - 12, 47, "ARMED", SMLSIZE+INVERS)
-	else
-		lcd.drawText(hudPos.x + hudPos.width/2 - 18, 47, "DISARMED", SMLSIZE+INVERS+BLINK)
-	end
-	lcd.drawLine(hudPos.x - 1, 8 ,hudPos.x - 1, 54, SOLID, 0)
-	lcd.drawLine(hudPos.x + hudPos.width, 8, hudPos.x + hudPos.width, 54, SOLID, 0)
+  drawPitch()
+  if ekfFailsafe == 0 and battFailsafe == 0 then
+    if (statusArmed == 1) then
+      lcd.drawText(hudPos.x + hudPos.width/2 - 12, 49, "ARMED", SMLSIZE+INVERS)
+    else
+      lcd.drawText(hudPos.x + hudPos.width/2 - 18, 49, "DISARMED", SMLSIZE+INVERS+BLINK)
+    end
+  end
+end
+
+local function drawGrid()
+	lcd.drawLine(hudPos.x - 1, 7 ,hudPos.x - 1, 57, SOLID, 0)
+	lcd.drawLine(hudPos.x + hudPos.width, 7, hudPos.x + hudPos.width, 57, SOLID, 0)
 end
 
 local function drawHomeDirection()
@@ -1408,27 +1604,21 @@ local function drawHomeDirection()
 	--
 	local angle = math.floor(yaw - homeAngle)
 	local r1 = homeDirectionPos.r
+  lcd.drawFilledRectangle(ox - r1,oy - r1,2*r1,2*r1,ERASE,0)
+  
 	local x1 = ox + r1 * math.cos(math.rad(angle - 90)) 
 	local y1 = oy + r1 * math.sin(math.rad(angle - 90))
 	local x2 = ox + r1 * math.cos(math.rad(angle - 90 + 150)) 
 	local y2 = oy + r1 * math.sin(math.rad(angle - 90 + 150))
 	local x3 = ox + r1 * math.cos(math.rad(angle - 90 - 150)) 
 	local y3 = oy + r1 * math.sin(math.rad(angle - 90 - 150))
+	local x4 = ox + r1 * 0.5 * math.cos(math.rad(angle - 270)) 
+	local y4 = oy + r1 * 0.5 *math.sin(math.rad(angle - 270))
 	--
-	lcd.drawLine(x1,y1,x2,y2,SOLID,1)
+  lcd.drawLine(x1,y1,x2,y2,SOLID,1)
 	lcd.drawLine(x1,y1,x3,y3,SOLID,1)
-	lcd.drawLine(x2,y2,x3,y3,SOLID,1)
-end
-
-local function drawRoverSide(x,y,angle)
-	local width = 30
-	local height = 16
-	local wheelRadius = 5
-	local ox = x + width/2
-	local oy = 0
-end
-
-local function drawRoverFront(x,y,angle)
+	lcd.drawLine(x2,y2,x4,y4,SOLID,1)
+	lcd.drawLine(x3,y3,x4,y4,SOLID,1)
 end
 
 local function drawFlightTime()
@@ -1438,15 +1628,19 @@ end
 
 local function drawRSSI()
 	local rssi = getRSSI()
-	lcd.drawText(rssiPos.x, rssiPos.y, "Rssi:", rssiPos.flags)
-	lcd.drawText(lcd.getLastRightPos() + 1, rssiPos.y, rssi, rssiPos.flags)
+  local label = "Rssi"
+  if radioModel == "x7" then
+    label = "RS:"
+  end
+	lcd.drawText(rssiPos.x, rssiPos.y, label, rssiPos.flags)
+	lcd.drawText(lcd.getLastRightPos(), rssiPos.y, rssi, rssiPos.flags)
 end
 
 local function drawTxVoltage()
-	txVId=getFieldInfo("tx-voltage").id
-	txV = getValue(txVId)*10  
+	local txVId=getFieldInfo("tx-voltage").id
+	local txV = getValue(txVId)*10  
 
-	lcd.drawText(txVoltagePos.x, txVoltagePos.y, "Tx:", txVoltagePos.flags)
+	lcd.drawText(txVoltagePos.x, txVoltagePos.y, "Tx", txVoltagePos.flags)
 	lcd.drawNumber(lcd.getLastRightPos(), txVoltagePos.y, txV, txVoltagePos.flags+PREC1)
 	lcd.drawText(lcd.getLastRightPos(), txVoltagePos.y, "v", txVoltagePos.flags)
 end
@@ -1494,6 +1688,25 @@ local function checkSoundEvents()
 		playSoundByFrameTypeAndFlightMode(frameType,flightMode)
 	end
 end
+
+local function symMode()
+	symAttitude()
+	symTimer()
+	symHome()
+	symGPS()
+	symBatt()
+	symFrameType()
+end
+
+local function cycleBatterySource()
+  if battSource == "vs" then
+    battSource = "fc"
+  elseif battSource == "fc" then
+    battSource = "a2"
+  elseif battSource == "a2" then
+    battSource = "vs"
+  end
+end
 --------------------------------------------------------------------------------
 -- loop FUNCTIONS
 --------------------------------------------------------------------------------
@@ -1505,70 +1718,72 @@ end
 --
 local clock = 0
 --
-local function symMode()
-	symAttitude()
-	symTimer()
-	symHome()
-	symGPS()
-	symBatt()
-	symFrameType()
-end
---
 local function run(event) 
 	processTelemetry()
+  --
 	if event == EVT_PLUS_FIRST or event == EVT_MINUS_FIRST then
 		showMessages = not showMessages
 	end
-	--
-	if (clock % 8 == 0) then
-		calcBattery()
-		calcFlightTime()
-		checkSoundEvents()
-		clock = 0
-	end
-	lcd.clear()
 	if showMessages then
-		processTelemetry()
+    processTelemetry()
+    lcd.clear()
 		drawAllMessages()
-		--drawCircle(100,32,30)
 	else
-		for r=1,3
+    lcd.clear()
+    if event == EVT_ENTER_BREAK then
+      cycleBatterySource()
+    end
+    if flagSim then
+      symMode()
+    end
+    -- very slow loop
+    if (clock % 8 == 0) then
+      calcBattery()
+      calcFlightTime()
+      checkSoundEvents()
+      checkLandingStatus()
+      clock = 0
+    end
+    -- fast loop, telemetry and hud
+		for r=1,4
 		do
 			processTelemetry()
-			lcd.clear()
-			if flagSim then
-				symMode()
-			end
-			drawCustomBoxes()
+      clearHud()
 			drawHud()
-			drawBottomBar()
-			drawTopBar()
-			drawCellVoltage()
-			drawBatteryVoltage()
-			drawBatteryCurrent()
-			drawBatteryPerc()
-			drawBatteryGauge()
-			drawBatteryMah()
-			drawGPSStatus()
-			checkLandingStatus()
-			drawMessage()
-			drawHomeDirection()
-			drawHomeDist()
-			--drawHomeAngle()
-			drawHSpeed()
-			drawFlightMode()
-			drawFlightTime()
-			drawTxVoltage()
-			drawRSSI()
-			drawFailsafe()
-		end
+    end
+    -- slow loop
+   	drawYaw()
+    --
+    clearLeftPane()
+    clearRightPane()
+    drawGrid()
+		drawCustomBoxes()
+    drawBottomBar()
+    drawTopBar()
+    drawCellVoltage()
+    drawBatteryVoltage()
+    drawBatteryCurrent()
+    drawBatteryPerc()
+    drawBatteryGauge()
+    drawBatteryMah()
+    drawAltAsl()
+    drawMessage()
+    drawHomeDirection()
+    drawHomeDist()
+    drawHSpeed()
+    drawGPSStatus()
+    drawFlightMode()
+    drawFlightTime()
+    drawTxVoltage()
+    drawRSSI()
+    drawFailsafe()
 	end
 	clock = clock + 1
 end
 
 local function init()
-	pushMessage(6,"Yaapu X9D+ telemetry script v1.2.1")
-	playSound("yaapu")
+	pushMessage(6,"Yaapu X9D+ telemetry script v1.2.3")
+  playSound("yaapu")
 	--
 	local ver, radio, maj, minor, rev = getVersion()
 	if string.find(radio,"-simu") then
