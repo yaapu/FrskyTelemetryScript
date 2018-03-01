@@ -7,9 +7,9 @@ Requires OpenTX 2.2 and a recent release of arducoper, arduplane or rover.
 Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4
 
 ## Screeshots
-![Taranis X9D+](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/screenshot_x9.JPG)
+![Taranis X9D+](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x9d.png)
 
-![Taranis X7](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/screenshot_x7.JPG)
+![Taranis X7](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7.png)
 
 
 ## Features
@@ -57,6 +57,13 @@ The script can use a second FLVSS voltage sensor but the variable in opentx need
 
 ## Configuration
 
+![X9D menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x9dmenupag1.png)
+
+![X9D menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x9dmenupag2.png)
+
+![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7dmenupag1.png)
+
+![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7dmenupag2.png)
 
 ## Installation
 
