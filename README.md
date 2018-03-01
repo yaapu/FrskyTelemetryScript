@@ -28,7 +28,7 @@ Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4
  - flight mode (modes are displayed based on the frame type:copter,plane or rover)
  - artificial horizon with roll,pitch and yaw with numeric compass heading
  - mini home icon on yaw compass at home angle position
- - battery voltage from 3 sources (in order of priority), short pressing ENTER cycles between the sources
+ - battery voltage from 3 sources (in order of priority), short pressing [ENTER] cycles between the sources
  - - frsky FLVSS voltage sensor if available (vs is displayed next to voltage)
  - - frsky analog port if available (a2 is displayed next to voltage)
  - - flight controller via telemetry (fc is displayed next to voltage)
