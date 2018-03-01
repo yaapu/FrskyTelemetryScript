@@ -6,15 +6,22 @@ Requires OpenTX 2.2 and a recent release of arducoper, arduplane or rover.
 
 Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4
 
-## Screeshots
+## Screenshots
+
 ![Taranis X9D+](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x9d.png)
+
+![Taranis X9D+](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x9ddual.png)
+
+![Taranis X9D+](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x9dmessages.png)
 
 ![Taranis X7](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7.png)
 
+![Taranis X7](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7dual.png)
 
+![Taranis X7](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7messages.png)
 ## Features
 
- - configuration menu
+ - configuration menu, long press [MENU] to display
  - flight mode (modes are displayed based on the frame type:copter,plane or rover)
  - artificial horizon with roll,pitch and yaw with numeric compass heading
  - mini home icon on yaw compass at home angle position
@@ -42,12 +49,17 @@ Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4
 
 ## Advanced Features 
 
- - dual battery support (dual FLVSS and/or dual battery from ArduPilot)
+ - dual battery support (dual FLVSS and/or dual battery from ArduPilot) short press [ENTER] to display second battery info
  - capacity ovveride for battery 1 and 2
- - min/max values for battery/cell voltage, current, altitude, ground and vertical speed
+ - min/max for battery/cell voltage, current, altitude, ground and vertical speed, short press [MENU] to display min/max values
+ 
+ ![X9D menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x9dminmax.png)
+ 
+ ![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7minmax.png)
+
  - vocal alerts for battery levels, max distance and min/max altitude (vocal fence)
- - configurable timer alert every n minutes
- - the sensors VFAS,CURR,Alt,VSpd,GAlt,Hdg,GSpd,Fuel,Tmp1,Tmp2 are exposed to OpenTX, see the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki/Exposed-Telemetry-Variables). You need to run "discover new sensors" in your model telemetry page to use the sensors in OpenTX.
+ - configurable vocal timer alert every n minutes
+ - sensors VFAS,CURR,Alt,VSpd,GAlt,Hdg,GSpd,Fuel,Tmp1,Tmp2 are exposed to OpenTX, see the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki/Exposed-Telemetry-Variables) for details. You need to run "discover new sensors" in your model telemetry page to use the sensors in OpenTX.
  
 ## Voltage Sources
 
@@ -61,9 +73,9 @@ The script can use a second FLVSS voltage sensor but the variable in opentx need
 
 ![X9D menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x9dmenupag2.png)
 
-![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7dmenupag1.png)
+![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7manupag1.png)
 
-![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7dmenupag2.png)
+![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7menupag2.png)
 
 ## Installation
 
