@@ -6,12 +6,19 @@ Requires OpenTX 2.2 and a recent release of arducoper, arduplane or rover.
 
 Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4
 
-## Screeshots
+## Screenshots
+
 ![Taranis X9D+](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x9d.png)
+
+![Taranis X9D+](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x9ddual.png)
+
+![Taranis X9D+](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x9dmessages.png)
 
 ![Taranis X7](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7.png)
 
+![Taranis X7](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7dual.png)
 
+![Taranis X7](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7messages.png)
 ## Features
 
  - configuration menu
@@ -61,9 +68,9 @@ The script can use a second FLVSS voltage sensor but the variable in opentx need
 
 ![X9D menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x9dmenupag2.png)
 
-![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7dmenupag1.png)
+![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7manupag1.png)
 
-![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7dmenupag2.png)
+![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7menupag2.png)
 
 ## Installation
 
