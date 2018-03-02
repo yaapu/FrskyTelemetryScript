@@ -52,7 +52,7 @@ Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4
 
 ## Advanced Features 
 
- - dual battery support (dual FLVSS and/or dual battery from ArduPilot) short press [ENTER] to display second battery info
+ - dual battery support (dual FLVSS and/or dual battery from ArduPilot) short press [ENTER] to display second battery info. If a second battery is detected there will be a "B1+B2" label on screen.
  - capacity ovveride for battery 1 and 2
  - min/max for battery/cell voltage, current, altitude, ground and vertical speed, short press [MENU] to display min/max values
  
@@ -64,11 +64,22 @@ Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4
  - configurable vocal timer alert every n minutes
  - sensors VFAS,CURR,Alt,VSpd,GAlt,Hdg,GSpd,Fuel,Tmp1,Tmp2 are exposed to OpenTX, see the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki/Exposed-Telemetry-Variables) for details. You need to run "discover new sensors" in your model telemetry page to use the sensors in OpenTX.
  
+Sensor valus are passed to OpenTX only when the script receives valid telemetry from the rx!
+ 
 ## Voltage Sources
 
-The script can use the A2 analog voltage source from X4R and X6R receivers (a2 is displayed next to cell voltage).
+Battery voltage is tracked independentely for 3 battery sources: FLVSS, analog port A2 and flight controller. You can cycle between them with a short press of [ENTER]. Min value is also tracked for the 3 sources and can be shown with a [MENU] short press.
 
-If you use a second FLVSS voltage sensor the OpenTX variable name needs to be "cels2".
+If you use a second FLVSS voltage sensor the OpenTX variable name needs to be "cel2"
+
+The script can also use the A2 analog voltage source from X4R and X6R receivers (a2 is displayed next to cell voltage).
+
+When a second battery is detected the script also tracks "aggregate" battery values and shows a "B1+B2" label in the right panel. Cell value and battery voltage is the "minimum" between the two batteries, current is summed and capacity percent is averaged. A short press of [MENU] will show min/max values for this aggregate view.
+
+A short press of [ENTER] switches from single aggregate view to individual dual battery view. Subsequent short presses of [ENTER] in this dual view cycle between voltage sources. In this dual view a short press of [MENU] shows individual packs min/max values.
+
+To get back to aggregate view short press [EXIT].
+
 
 ## Configuration
 
