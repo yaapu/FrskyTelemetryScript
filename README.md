@@ -52,7 +52,7 @@ Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4
 
 ## Advanced Features 
 
- - dual battery support (dual FLVSS and/or dual battery from ArduPilot) short press [ENTER] to display second battery info. If a second battery is detected there will be a "B1+B2" label on screen.
+- dual battery support (dual FLVSS and/or dual battery from ArduPilot) short press [ENTER] to display second battery info. If a second battery is detected there will be a "B1+B2" label on screen.
  - capacity ovveride for battery 1 and 2
  - min/max for battery/cell voltage, current, altitude, ground and vertical speed, short press [MENU] to display min/max values
  
@@ -79,6 +79,8 @@ When a second battery is detected the script also tracks "aggregate" battery val
 A short press of [ENTER] switches from single aggregate view to individual dual battery view. Subsequent short presses of [ENTER] in this dual view cycle between voltage sources. In this dual view a short press of [MENU] shows individual packs min/max values.
 
 To get back to aggregate view short press [EXIT].
+
+## Alerts
 
 
 ## Configuration
