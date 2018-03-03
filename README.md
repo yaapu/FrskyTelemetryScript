@@ -29,9 +29,9 @@ Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4
  - artificial horizon with roll,pitch and yaw with numeric compass heading
  - mini home icon on yaw compass at home angle position
  - battery voltage from 3 sources (in order of priority), short pressing [ENTER] cycles between the sources
- - - frsky FLVSS voltage sensor if available (vs is displayed next to voltage)
- - - frsky analog port if available (a2 is displayed next to voltage)
- - - flight controller via telemetry (fc is displayed next to voltage)
+   - frsky FLVSS voltage sensor if available (vs is displayed next to voltage)
+   - frsky analog port if available (a2 is displayed next to voltage)
+   - flight controller via telemetry (fc is displayed next to voltage)
  - battery lowest cell if available or cell average if not
  - battery current
  - battery capacity and battery capacity used in mAh and %
@@ -82,6 +82,16 @@ To get back to aggregate view short press [EXIT].
 
 ## Alerts
 
+There are 2 battery level alerts, both are set as cell voltage so independent from cell count.
+When minimum cell voltage reaches the first level it will trigger a vocal alert and the V next to the cell voltage will start blinking.
+Battery level 1 should be set higher then battery level 2.
+When the cell voltage reaches the second battery level it will trigger a second vocal alert and the cell voltage will start blinking.
+If the battery reaches the failsafe level (it must be configured in mission planner) the script will display "batt failsafe" on the hud and play a vocal alert every n seconds (period can be configured from the menu).
+
+It is possible to configure a timer that will trigger a vocal alert every n minutes of flight time.
+
+The script also support a "vocal fence" feature by setting a minimun altitude, a maximum altitude and a maximum distance alert.
+When the vehicle moves outside of the fence the script will play a vocal alert every n seconds.
 
 ## Configuration
 
@@ -92,6 +102,11 @@ To get back to aggregate view short press [EXIT].
 ![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7manupag1.png)
 
 ![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7menupag2.png)
+
+The language of the vocal alerts is independent from the radio language and can be configured from the menu.
+Right now only english and italian are supported but new languages can be added with ease.
+
+Battery capacity for battery 1 and battery 2 is automatically read from the values configured in mission planner but can both be overidden from the menu. When a new capacity is definet from the menu it will immediately be used in all calculations and it's value will be displayed on screen.
 
 ## Installation
 
