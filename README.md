@@ -54,7 +54,7 @@ Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4
 
 - dual battery support (dual FLVSS and/or dual battery from ArduPilot) short press [ENTER] to display second battery info. If a second battery is detected there will be a "B1+B2" label on screen.
  - capacity ovveride for battery 1 and 2
- - min/max for battery/cell voltage, current, altitude, ground and vertical speed, short press [MENU] to display min/max values
+ - tracking of min/max values for battery/cell voltage, current, altitude, ground and vertical speed, short press [MENU] to display them, an up pointing arrow will indicate max values whereas a down pointing arrow will indicate min values
  
  ![X9D menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x9dminmax.png)
  
@@ -68,11 +68,9 @@ Sensor valus are passed to OpenTX only when the script receives valid telemetry 
  
 ## Voltage Sources
 
-Battery voltage is tracked independentely for 3 battery sources: FLVSS, analog port A2 and flight controller. You can cycle between them with a short press of [ENTER]. Min value is also tracked for the 3 sources and can be shown with a [MENU] short press.
+Battery voltage is tracked independentely for 3 battery sources: FLVSS, analog port A2 and flight controller. (The script can also use the A2 analog voltage source from X4R and X6R receivers, a2 would be displayed next to cell voltage). A short press of [ENTER] cycles between all the sources. Min value is also tracked for the 3 sources and can be shown with a [MENU] short press.
 
-If you use a second FLVSS voltage sensor the OpenTX variable name needs to be "cel2"
-
-The script can also use the A2 analog voltage source from X4R and X6R receivers (a2 is displayed next to cell voltage).
+If you use a second FLVSS voltage sensor the OpenTX variable has to renamed to "cel2"
 
 When a second battery is detected the script also tracks "aggregate" battery values and shows a "B1+B2" label in the right panel. Cell value and battery voltage is the "minimum" between the two batteries, current is summed and capacity percent is averaged. A short press of [MENU] will show min/max values for this aggregate view.
 
