@@ -2,7 +2,7 @@
 
 A lua based telemetry script for the Taranis X9D+,X9E and X7 radio using the frsky passthrough protocol.
 
-It is a full implementation of the protocol.
+The script supports all of the telemetry DIY 0x5000 packets sent by ardupilot’s frsky passthrough protocol library https://github.com/ArduPilot/ardupilot/tree/master/libraries/AP_Frsky_Telem1
 
 Requires OpenTX 2.2 and a recent release of arducoper, arduplane or rover.
 
