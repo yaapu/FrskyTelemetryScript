@@ -97,7 +97,7 @@ When the vehicle moves outside of the fence the script will play a vocal alert e
 
 ![X9D menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x9dmenupag2.png)
 
-![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7manupag1.png)
+![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7menupag1.png)
 
 ![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7menupag2.png)
 
