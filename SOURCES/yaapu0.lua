@@ -820,7 +820,7 @@ local menuItems = {
 
 local function getConfigFilename()
   local info = model.getInfo()
-  return "/MODELS/yaapu/" .. string.lower(string.gsub(info.name, "%A", "")..".cfg")
+  return "/MODELS/yaapu/" .. string.lower(string.gsub(info.name, "[%c%p%s%z]", "")..".cfg")
 end
 
 local function applyConfigValues()
@@ -1147,7 +1147,7 @@ local menuItems = {
 
 local function getConfigFilename()
   local info = model.getInfo()
-  return "/MODELS/yaapu/" .. string.lower(string.gsub(info.name, "%A", "")..".cfg")
+  return "/MODELS/yaapu/" .. string.lower(string.gsub(info.name, "[%c%p%s%z]", "")..".cfg")
 end
 
 local function applyConfigValues()
