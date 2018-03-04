@@ -6,7 +6,7 @@ The script supports all of the telemetry DIY 0x5000 packets sent by ardupilot’
 
 Requires OpenTX 2.2 and a recent release of arducoper, arduplane or rover.
 
-Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4
+Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4 and 3.5.5
 
 ## Screenshots
 
