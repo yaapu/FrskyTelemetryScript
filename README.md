@@ -2,7 +2,7 @@
 
 A lua based telemetry script for the Taranis X9D+,X9E and X7 radio using the frsky passthrough protocol.
 
-The script supports all of the telemetry DIY 0x5000 packets sent by ardupilot’s frsky passthrough protocol library https://github.com/ArduPilot/ardupilot/tree/master/libraries/AP_Frsky_Telem1
+The script supports all of the telemetry DIY 0x5000 packets sent by ardupilot’s [frsky passthrough protocol library](https://github.com/ArduPilot/ardupilot/tree/master/libraries/AP_Frsky_Telem1)
 
 Requires OpenTX 2.2 and a recent release of arducoper, arduplane or rover.
 
@@ -70,11 +70,11 @@ Sensor valus are passed to OpenTX only when the script receives valid telemetry 
 
 Battery voltage is tracked independentely for 3 battery sources: FLVSS, analog port A2 and flight controller. (The script can also use the A2 analog voltage source from X4R and X6R receivers, a2 would be displayed next to cell voltage). A short press of [ENTER] cycles between all the sources. Min value is also tracked for the 3 sources and can be shown with a [MENU] short press.
 
-If you use a second FLVSS voltage sensor the OpenTX variable has to renamed to "cel2"
+If you use a second FLVSS voltage sensor the OpenTX variable has to be renamed to "cel2"
 
 When a second battery is detected the script also tracks "aggregate" battery values and shows a "B1+B2" label in the right panel. Cell value and battery voltage is the "minimum" between the two batteries, current is summed and capacity percent is averaged. A short press of [MENU] will show min/max values for this aggregate view.
 
-A short press of [ENTER] switches from single aggregate view to individual dual battery view. Subsequent short presses of [ENTER] in this dual view cycle between voltage sources. In this dual view a short press of [MENU] shows individual packs min/max values.
+A short press of [ENTER] switches from single aggregate view to individual dual battery view. Subsequent short presses of [ENTER] in this dual view will cycle between voltage sources. In dual view a short press of [MENU] shows individual packs min/max values.
 
 To get back to aggregate view short press [EXIT].
 
