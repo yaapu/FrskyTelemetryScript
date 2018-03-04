@@ -1079,11 +1079,11 @@ local function checkCellVoltage(battsource,cellmin,cellminFC,cellminA2)
   -- trigger batt1 and batt2
   if celm > conf.battAlertLevel2 and celm < conf.battAlertLevel1 and alarms[7][1] == false then
     alarms[7][1] = true
-    playSound("batalert")
+    playSound("batalert1")
   end
   if celm > 320 and celm < conf.battAlertLevel2 and alarms[8][1] == false then
     alarms[8][1] = true
-    playSound("batalert")
+    playSound("batalert2")
   end
   --[[
   -- reset alarms when voltage rises
@@ -1096,6 +1096,9 @@ local function checkCellVoltage(battsource,cellmin,cellminFC,cellminA2)
 
 
 local function setSensorValues()
+  if (not telemetryEnabled()) then
+    return
+  end
   local battmah = batt1mah
   local battcapacity = getBatt1Capacity()
   if batt2mah > 0 then
@@ -1141,10 +1144,10 @@ local function drawBatteryPane(x,battsource,battcurrent,battcapacity,battmah,cel
   local flags = 0
   local dimFlags = 0
   if showMinMaxValues == false then
-    if celm < conf.battAlertLevel2 then
+    if alarms[8][1] == true then
       flags = BLINK
       dimFlags = BLINK
-    elseif celm < conf.battAlertLevel1 then
+    elseif alarms[7][1] == true then
       dimFlags = BLINK+INVERS
     end
   end

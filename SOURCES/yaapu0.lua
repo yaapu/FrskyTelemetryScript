@@ -191,7 +191,7 @@ frameTypes[10]  = "r"
 -- boat
 frameTypes[11]  = "b"
 #endif
-#ifdef DEBUG
+#ifdef TESTMODE
 -- undefined
 frameTypes[5] = ""
 frameTypes[6] = ""
@@ -2209,11 +2209,11 @@ local function checkCellVoltage(battsource,cellmin,cellminFC,cellminA2)
   -- trigger batt1 and batt2
   if celm > conf.battAlertLevel2 and celm < conf.battAlertLevel1 and alarms[ALARMS_BATT1][1] == false then
     alarms[ALARMS_BATT1][1] = true
-    playSound("batalert")
+    playSound("batalert1")
   end
   if celm > 320 and celm < conf.battAlertLevel2 and alarms[ALARMS_BATT2][1] == false then
     alarms[ALARMS_BATT2][1] = true
-    playSound("batalert")
+    playSound("batalert2")
   end
   --[[
   -- reset alarms when voltage rises
@@ -2229,6 +2229,9 @@ end
 
 #ifdef SENSORS
 local function setSensorValues()
+  if (not telemetryEnabled()) then
+    return
+  end
   local battmah = batt1mah
   local battcapacity = getBatt1Capacity()
   if batt2mah > 0 then
@@ -2382,13 +2385,13 @@ local function checkCellVoltage(battsource,cellmin,cellminFC,cellminA2)
     alerts[BATTLEVEL1][ALERTS_TIME]=getTime()
     alerts[BATTLEVEL1][ALERTS_FTIME]=flightTime
     alerts[BATTLEVEL1][ALERTS_VALUE]=celm
-    playSound("batalert")
+    playSound("batalert1")
   end
   if celm > 320 and celm < conf.battAlertLevel2 and alerts[BATTLEVEL2][ALERTS_ACK] == false and alerts[BATTLEVEL2][ALERTS_TIME] == 0 then
     alerts[BATTLEVEL2][ALERTS_TIME]=getTime()
     alerts[BATTLEVEL2][ALERTS_FTIME]=flightTime
     alerts[BATTLEVEL2][ALERTS_VALUE]=celm
-    playSound("batalert")
+    playSound("batalert2")
   end
 end
 #endif
@@ -2416,12 +2419,21 @@ local function drawBatteryPane(x,battsource,battcurrent,battcapacity,battmah,cel
 #ifdef MINMAX
   if showMinMaxValues == false then
 #endif
+#ifdef ALARMS
+    if alarms[ALARMS_BATT2][1] == true then
+      flags = BLINK
+      dimFlags = BLINK
+    elseif alarms[ALARMS_BATT1][1] == true then
+      dimFlags = BLINK+INVERS
+    end
+#else
     if celm < conf.battAlertLevel2 then
       flags = BLINK
       dimFlags = BLINK
     elseif celm < conf.battAlertLevel1 then
       dimFlags = BLINK+INVERS
     end
+#endif
 #ifdef MINMAX
   end
 #endif
