@@ -78,6 +78,24 @@ A short press of [ENTER] switches from single aggregate view to individual dual 
 
 To get back to aggregate view short press [EXIT].
 
+## Cell count detection
+
+The script uses a simple way to calculate cell count for voltage sources fc and a2:
+- if the maximum pack voltage is higher then 21.75v i.e 4.35x5 then it's a 6s.
+- if the maximum pack voltage is higher then 17.4v i.e 4.35x4 then it's a 5s.
+- if the maximum pack voltage is higher then 13.05v i.e 4.35x3 then it's a 4s.
+- if the maximum pack voltage is higher then 8.7v i.e 4.35x2 then it's a 3s.
+- else it's a 2s
+
+This in turn means that:
+- if you hook a 6s with cell voltage lower then 3.625V it will be detected as a 5s.
+- if you hook a 5s with cell voltage lower then 3.48V it will be detected as a 4s.
+- if you hook a 4s with cell voltage lower then 3.27V it will be detected as a 3s.
+
+For 3s and 2s the limit is so low that's not a problem.
+
+Please note that the voltage used for the calculation is the maximum pack voltage so if after detection the cell voltage lowers below the above limits it will ok.
+
 ## Alerts
 
 There are 2 battery level alerts, both are set as cell voltage so independent from cell count.
