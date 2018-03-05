@@ -26,20 +26,20 @@
 ---------------------
 -- radio model
 ---------------------
-#define X9
---#define X7
+--#define X9
+#define X7
 
 ---------------------
 -- script version 
 ---------------------
 #ifdef X9
-  #define VERSION "Yaapu X9 telemetry script 1.4.1"
+  #define VERSION "Yaapu X9 telemetry script 1.4.2"
 #else
-  #define VERSION "Yaapu X7 script 1.4.1"
+  #define VERSION "Yaapu X7 script 1.4.2"
 #endif
 
 ---------------------
--- frame types
+-- frame types: copter always enabled
 ---------------------
 #define PLANE
 #define ROVER
@@ -61,9 +61,11 @@
 --#define DEBUG
 --#define TESTMODE
 --#define BATT2TEST
+--#define CELLCOUNT 5
 --#define DEMO
 --#define DEV
 --
+
 #ifdef SENSORS
   #define VFAS_ID 0x0210
   #define VFAS_SUBID 0
@@ -347,29 +349,27 @@ mavSeverity[5]="NOT"
 mavSeverity[6]="INF"
 mavSeverity[7]="DBG"
 
-#define CELLFULL 4.2
+#define CELLFULL 4.35
 --------------------------------
 -- FLVSS 1
-local cell1count = 0
 local cell1min = 0
 local cell1sum = 0
--- FC
-local cell1minFC = 0
-local cell1sumFC = 0
--- A2
-local cell1minA2 = 0
-local cell1sumA2 = 0
---------------------------------
 -- FLVSS 2
-local cell2count = 0
 local cell2min = 0
 local cell2sum = 0
--- FC
+-- FC 1
+local cell1minFC = 0
+local cell1sumFC = 0
+local cell1maxFC = 0
+-- FC 2
 local cell2minFC = 0
 local cell2sumFC = 0
+local cell2maxFC = 0
 -- A2
-local cell2minA2 = 0
-local cell2sumA2 = 0
+local cellminA2 = 0
+local cellsumA2 = 0
+local cellmaxA2 = 0
+--------------------------------
 -- STATUS
 local flightMode = 0
 local simpleMode = 0
@@ -381,30 +381,27 @@ local ekfFailsafe = 0
 local lastBattFailsafe = 0
 local lastEkfFailsafe = 0
 #endif
-
-
 -- GPS
 local numSats = 0
 local gpsStatus = 0
 local gpsHdopC = 100
 local gpsAlt = 0
-------------------------
+-- BATT
+local cellcount = 0
+local battsource = "na"
 -- BATT 1
 local batt1volt = 0
 local batt1current = 0
 local batt1mah = 0
-local batt1source = "na"
 local batt1sources = {
   a2 = false,
   vs = false,
   fc = false
 }
-------------------------
 -- BATT 2
 local batt2volt = 0
 local batt2current = 0
 local batt2mah = 0
-local batt2source = "na"
 local batt2sources = {
   a2 = false,
   vs = false,
@@ -466,35 +463,35 @@ batLevels[0]=90
 local showDualBattery = false
 --
 #ifdef MINMAX  
-  #define MINMAX_CELL_FC 1
-  #define MINMAX_CELL1_FC 2
-  #define MINMAX_CELL2_FC 3
-  #define MINMAX_CELL_VS 4
-  #define MINMAX_CELL1_VS 5
-  #define MINMAX_CELL2_VS 6
-  #define MINMAX_CELL_A2 7
-  #define MINMAX_CELL1_A2 8
-  #define MINMAX_CELL2_A2 9
+  #define MIN_CELL_FC 1
+  #define MIN_CELL1_FC 2
+  #define MIN_CELL2_FC 3
+  #define MIN_CELL_VS 4
+  #define MIN_CELL1_VS 5
+  #define MIN_CELL2_VS 6
+  #define MIN_CELL_A2 7
+  #define MIN_CELL1_A2 8
+  #define MIN_CELL2_A2 9
   
-  #define MINMAX_BATT_FC 10
-  #define MINMAX_BATT1_FC 11
-  #define MINMAX_BATT2_FC 12
-  #define MINMAX_BATT_VS 13
-  #define MINMAX_BATT1_VS 14
-  #define MINMAX_BATT2_VS 15
-  #define MINMAX_BATT_A2 16
-  #define MINMAX_BATT1_A2 17
-  #define MINMAX_BATT2_A2 18
+  #define MIN_BATT_FC 10
+  #define MIN_BATT1_FC 11
+  #define MIN_BATT2_FC 12
+  #define MIN_BATT_VS 13
+  #define MIN_BATT1_VS 14
+  #define MIN_BATT2_VS 15
+  #define MIN_BATT_A2 16
+  #define MIN_BATT1_A2 17
+  #define MIN_BATT2_A2 18
   
-  #define MINMAX_CURR 19
-  #define MINMAX_CURR1 20
-  #define MINMAX_CURR2 21
-  #define MINMAX_POWER 22
+  #define MAX_CURR 19
+  #define MAX_CURR1 20
+  #define MAX_CURR2 21
+  #define MAX_POWER 22
   #define MINMAX_ALT 23
-  #define MINMAX_GPSALT 24
-  #define MINMAX_VSPEED 25
-  #define MINMAX_HSPEED 26
-  #define MINMAX_DIST 27
+  #define MAX_GPSALT 24
+  #define MAX_VSPEED 25
+  #define MAX_HSPEED 26
+  #define MAX_DIST 27
 
 -- offsets
 local minmaxOffsets = {}
@@ -769,7 +766,6 @@ local thrOut = 0
   #define TXVOLTAGE_Y 21
   #define TXVOLTAGE_FLAGS SMLSIZE
 #endif
-
 --------------------------------------------------------------------------------
 -- CONFIGURATION MENU
 --------------------------------------------------------------------------------
@@ -1166,8 +1162,9 @@ local function applyConfigValues()
   conf.maxDistanceAlert = menuItems[D1][4]
   --
   if conf.defaultBattSource ~= nil then
-    batt1source = conf.defaultBattSource
-    batt2source = conf.defaultBattSource
+    --batt1source = conf.defaultBattSource
+    --batt2source = conf.defaultBattSource
+    battsource = conf.defaultBattSource
   end
   collectgarbage()
 end
@@ -1679,64 +1676,68 @@ local function symBatt()
   if (thrOut > -500 ) then
 #ifdef DEMO
     if battFailsafe == 1 then
-      minmaxValues[MINMAX_BATT_FC] = 102
-      minmaxValues[MINMAX_BATT1_FC] = 102
-      minmaxValues[MINMAX_BATT2_FC] = 103
-      minmaxValues[MINMAX_CELL_FC] = 340
-      minmaxValues[MINMAX_CELL1_FC] = 340
-      minmaxValues[MINMAX_CELL2_FC] = 343
-      minmaxValues[MINMAX_CURR] = 341+335
-      minmaxValues[MINMAX_CURR1] = 341
-      minmaxValues[MINMAX_CURR2] = 335
-      minmaxValues[MINMAX_POWER] = (11.2)*(34.1+33.5)
+      minmaxValues[MIN_BATT_FC] = CELLCOUNT * 3.40 * 10
+      minmaxValues[MIN_BATT1_FC] = CELLCOUNT * 3.40 * 10
+      minmaxValues[MIN_BATT2_FC] = CELLCOUNT * 3.43 * 10
+      minmaxValues[MIN_CELL_FC] = 340
+      minmaxValues[MIN_CELL1_FC] = 340
+      minmaxValues[MIN_CELL2_FC] = 343
+      minmaxValues[MAX_CURR] = 341 + 335
+      minmaxValues[MAX_CURR1] = 341
+      minmaxValues[MAX_CURR2] = 335
+      minmaxValues[MAX_POWER] = (CELLCOUNT * 3.43)*(34.1 + 33.5)
+      -- battery voltage
       batt1current = 235
-      batt1volt = 102
+      batt1volt = CELLCOUNT * 3.43 * 10
       batt1Capacity = 5200
       batt1mah = 4400
     #ifdef BATT2TEST
       batt2current = 238
-      batt2volt = 103
+      batt2volt = CELLCOUNT  * 3.44 * 10
       batt2Capacity = 5200
       batt2mah = 4500
     #endif
     else
-      minmaxValues[MINMAX_BATT_FC] = 111
-      minmaxValues[MINMAX_BATT1_FC] = 111
-      minmaxValues[MINMAX_BATT2_FC] = 112
-      minmaxValues[MINMAX_CELL_FC] = 375
-      minmaxValues[MINMAX_CELL1_FC] = 375
-      minmaxValues[MINMAX_CELL2_FC] = 377
-      minmaxValues[MINMAX_CURR] = 341+335
-      minmaxValues[MINMAX_CURR1] = 341
-      minmaxValues[MINMAX_CURR2] = 335
-      minmaxValues[MINMAX_POWER] = (11.2)*(34.1+33.5)
+      minmaxValues[MIN_BATT_FC] = CELLCOUNT * 3.75 * 10
+      minmaxValues[MIN_BATT1_FC] = CELLCOUNT * 3.75 * 10
+      minmaxValues[MIN_BATT2_FC] = CELLCOUNT * 3.77 * 10
+      minmaxValues[MIN_CELL_FC] = 375
+      minmaxValues[MIN_CELL1_FC] = 375
+      minmaxValues[MIN_CELL2_FC] = 377
+      minmaxValues[MAX_CURR] = 341+335
+      minmaxValues[MAX_CURR1] = 341
+      minmaxValues[MAX_CURR2] = 335
+      minmaxValues[MAX_POWER] = (CELLCOUNT * 3.89)*(34.1+33.5)
+      -- battery voltage
       batt1current = 235
-      batt1volt = 115
+      batt1volt = CELLCOUNT * 3.87 * 10
       batt1Capacity = 5200
       batt1mah = 2800
     #ifdef BATT2TEST
       batt2current = 238
-      batt2volt = 116
+      batt2volt = CELLCOUNT * 3.89 * 10
       batt2Capacity = 5200
       batt2mah = 2700
     #endif
     end
 #else
+    -- battery voltage
     batt1current = 100 +  ((thrOut)*0.01 * 30)
-    batt1volt = (1350 + ((thrOut)*0.01 * 30))*0.1
+    batt1volt = CELLCOUNT * (32 + 10*math.abs(thrOut)*0.001)
     batt1Capacity = 5200
     batt1mah = math.abs(1000*(thrOut/200))
   #ifdef BATT2TEST
     batt2current = 100 +  ((thrOut)*0.01 * 30)
-    batt2volt = (1350 + ((thrOut)*0.01 * 30))*0.1
+    batt2volt = CELLCOUNT * (32 + 10*math.abs(thrOut)*0.001)
     batt2Capacity = 5200
     batt2mah = math.abs(1000*(thrOut/200))
   #endif
 #endif
+  -- flightmode
 #ifdef DEMO
     flightMode = 1
-    minmaxValues[MINMAX_GPSALT] = 270*0.1
-    minmaxValues[MINMAX_DIST] = 130
+    minmaxValues[MAX_GPSALT] = 270*0.1
+    minmaxValues[MAX_DIST] = 130
     gpsAlt = 200
     homeDist = 95
 #else
@@ -1784,23 +1785,22 @@ local function symHome()
   yawCh = getValue("ch4")
 #ifdef DEMO
   minmaxValues[MINMAX_ALT] = 45
-  minmaxValues[MINMAX_VSPEED] = 4
-  minmaxValues[MINMAX_HSPEED] = 77
+  minmaxValues[MAX_VSPEED] = 4
+  minmaxValues[MAX_HSPEED] = 77
   homeAlt = 24
   vSpeed = 2
   hSpeed = 34
-  
 #else
   homeAlt = yawCh * 0.1
   vSpeed = yawCh * 0.1 * -1
   hSpeed = vSpeed
-  yaw = yawCh
 #endif  
   if ( yawCh >= 0) then
     yawCh = yawCh * 0.175
   else
     yawCh = 360 + (yawCh * 0.175)
   end
+  yaw = yawCh
   if ( S2Ch >= 0) then
     S2Ch = S2Ch * 0.175
   else
@@ -1967,6 +1967,28 @@ local function calcCellMin(v1,v2)
   end
 end
 
+local function calcCellCount(battmax)
+  -- cellcount is cached
+  if cellcount > 1 then
+    return cellcount
+  end
+  local count = 0
+  if battmax*0.1 > 21.75 then
+    -- battmax > 4.35 * 5 ==> 6s (lowest allowed cell on boot 3.625)
+    count = 6
+  elseif battmax*0.1 > 17.4 then
+    -- battmax > 4.35 * 4 ==> 5s (lowest allowed cell on boot 3.48)
+    count = 5
+  elseif battmax*0.1 > 13.05 then
+    -- battmax > 4.35 * 3 ==> 4s (lowest allowed cell on boot 3.27)
+    count = 4
+  else
+    count = 3
+  end
+  return count
+end
+
+#ifdef DEV
 local function calcCellValue(cellsum)
   local cellcount = 0
   if cellsum > 21 then
@@ -1980,6 +2002,7 @@ local function calcCellValue(cellsum)
   end
   return cellsum/cellcount
 end
+#endif
 
 #ifdef MINMAX
 local function calcMinValue(value,min)
@@ -2001,7 +2024,8 @@ local function calcBattery()
   if type(cellResult) == "table" then
     cell1min = CELLFULL
     cell1sum = 0
-    cell1count = #cellResult
+    -- cellcount is global and shared
+    cellcount = #cellResult
     for i, v in pairs(cellResult) do
       cell1sum = cell1sum + v
       if cell1min > v then
@@ -2010,10 +2034,10 @@ local function calcBattery()
     end
     -- if connected after scritp started
     if batt1sources.vs == false then
-      batt1source = "na"
+      battsource = "na"
     end
-    if batt1source == "na" then
-      batt1source = "vs"
+    if battsource == "na" then
+      battsource = "vs"
     end
     batt1sources.vs = true
   else
@@ -2033,7 +2057,8 @@ local function calcBattery()
     cell2min = CELLFULL
     cell2sum = 0
     for i = 1, #cell do cell[i] = 0 end
-    cell2count = #cellResult
+    -- cellcount is global and shared
+    cellcount = #cellResult
     for i, v in pairs(cellResult) do
       cell2sum = cell2sum + v
       if cell2min > v then
@@ -2042,10 +2067,10 @@ local function calcBattery()
     end
     -- if connected after scritp started
     if batt2sources.vs == false then
-      batt2source = "na"
+      battsource = "na"
     end
-    if batt2source == "na" then
-      batt2source = "vs"
+    if battsource == "na" then
+      battsource = "vs"
     end
     batt2sources.vs = true
   else
@@ -2058,9 +2083,10 @@ local function calcBattery()
   --------------------------------
   if batt1volt > 0 then
     cell1sumFC = batt1volt*0.1
-    cell1minFC = calcCellValue(cell1sumFC)
-    if batt1source == "na" then
-      batt1source = "fc"
+    cell1maxFC = math.max(batt1volt,cell1maxFC)
+    cell1minFC = cell1sumFC/calcCellCount(cell1maxFC)
+    if battsource == "na" then
+      battsource = "fc"
     end
     batt1sources.fc = true
   else
@@ -2073,9 +2099,10 @@ local function calcBattery()
   --------------------------------
   if batt2volt > 0 then
     cell2sumFC = batt2volt*0.1
-    cell2minFC = calcCellValue(cell2sumFC)
-    if batt2source == "na" then
-      batt2source = "fc"
+    cell2maxFC = math.max(batt2volt,cell2maxFC)
+    cell2minFC = cell2sumFC/calcCellCount(cell2maxFC)
+    if battsource == "na" then
+      battsource = "fc"
     end
     batt2sources.fc = true
   else
@@ -2089,42 +2116,43 @@ local function calcBattery()
   battA2 = getValue("A2")
   --
   if battA2 > 0 then
-    cell1sumA2 = battA2
-    cell1minA2 = calcCellValue(cell1sumA2)
+    cellsumA2 = battA2
+    cellmaxA2 = math.max(battA2*10,cellmaxA2)
+    cellminA2 = cellsumA2/calcCellCount(cellmaxA2)
     batt1sources.a2 = true
-    if batt1source == "na" then
-      batt1source = "a2"
+    if battsource == "na" then
+      battsource = "a2"
     end
   else
     batt1sources.a2 = false
-    cell1minA2 = 0
-    cell1sumA2 = 0
+    cellminA2 = 0
+    cellsumA2 = 0
   end
 #ifdef MINMAX
   -- cell fc
-  minmaxValues[MINMAX_CELL_FC] = calcMinValue(calcCellMin(cell1minFC,cell2minFC)*100,minmaxValues[MINMAX_CELL_FC])
-  minmaxValues[MINMAX_CELL1_FC] = calcMinValue(cell1minFC*100,minmaxValues[MINMAX_CELL1_FC])
-  minmaxValues[MINMAX_CELL2_FC] = calcMinValue(cell2minFC*100,minmaxValues[MINMAX_CELL2_FC])
+  minmaxValues[MIN_CELL_FC] = calcMinValue(calcCellMin(cell1minFC,cell2minFC)*100,minmaxValues[MIN_CELL_FC])
+  minmaxValues[MIN_CELL1_FC] = calcMinValue(cell1minFC*100,minmaxValues[MIN_CELL1_FC])
+  minmaxValues[MIN_CELL2_FC] = calcMinValue(cell2minFC*100,minmaxValues[MIN_CELL2_FC])
   -- cell flvss
-  minmaxValues[MINMAX_CELL_VS] = calcMinValue(calcCellMin(cell1min,cell2min)*100,minmaxValues[MINMAX_CELL_VS])
-  minmaxValues[MINMAX_CELL1_VS] = calcMinValue(cell1min*100,minmaxValues[MINMAX_CELL1_VS])
-  minmaxValues[MINMAX_CELL2_VS] = calcMinValue(cell2min*100,minmaxValues[MINMAX_CELL2_VS])
+  minmaxValues[MIN_CELL_VS] = calcMinValue(calcCellMin(cell1min,cell2min)*100,minmaxValues[MIN_CELL_VS])
+  minmaxValues[MIN_CELL1_VS] = calcMinValue(cell1min*100,minmaxValues[MIN_CELL1_VS])
+  minmaxValues[MIN_CELL2_VS] = calcMinValue(cell2min*100,minmaxValues[MIN_CELL2_VS])
   -- cell A2
-  minmaxValues[MINMAX_CELL_A2] = calcMinValue(calcCellMin(cell1minA2,cell2minA2)*100,minmaxValues[MINMAX_CELL_A2])
-  minmaxValues[MINMAX_CELL1_A2] = calcMinValue(cell1minA2*100,minmaxValues[MINMAX_CELL1_A2])
-  minmaxValues[MINMAX_CELL2_A2] = calcMinValue(cell2minA2*100,minmaxValues[MINMAX_CELL2_A2])
+  minmaxValues[MIN_CELL_A2] = calcMinValue(cellminA2*100,minmaxValues[MIN_CELL_A2])
+  minmaxValues[MIN_CELL1_A2] = minmaxValues[MIN_CELL_A2]
+  minmaxValues[MIN_CELL2_A2] = 0
   -- batt fc
-  minmaxValues[MINMAX_BATT_FC] = calcMinValue(calcCellMin(cell1sumFC,cell2sumFC)*10,minmaxValues[MINMAX_BATT_FC])
-  minmaxValues[MINMAX_BATT1_FC] = calcMinValue(cell1sumFC*10,minmaxValues[MINMAX_BATT1_FC])
-  minmaxValues[MINMAX_BATT2_FC] = calcMinValue(cell2sumFC*10,minmaxValues[MINMAX_BATT2_FC])
+  minmaxValues[MIN_BATT_FC] = calcMinValue(calcCellMin(cell1sumFC,cell2sumFC)*10,minmaxValues[MIN_BATT_FC])
+  minmaxValues[MIN_BATT1_FC] = calcMinValue(cell1sumFC*10,minmaxValues[MIN_BATT1_FC])
+  minmaxValues[MIN_BATT2_FC] = calcMinValue(cell2sumFC*10,minmaxValues[MIN_BATT2_FC])
   -- batt flvss
-  minmaxValues[MINMAX_BATT_VS] = calcMinValue(calcCellMin(cell1sum,cell2sum)*10,minmaxValues[MINMAX_BATT_VS])
-  minmaxValues[MINMAX_BATT1_VS] = calcMinValue(cell1sum*10,minmaxValues[MINMAX_BATT1_VS])
-  minmaxValues[MINMAX_BATT2_VS] = calcMinValue(cell2sum*10,minmaxValues[MINMAX_BATT2_VS])
+  minmaxValues[MIN_BATT_VS] = calcMinValue(calcCellMin(cell1sum,cell2sum)*10,minmaxValues[MIN_BATT_VS])
+  minmaxValues[MIN_BATT1_VS] = calcMinValue(cell1sum*10,minmaxValues[MIN_BATT1_VS])
+  minmaxValues[MIN_BATT2_VS] = calcMinValue(cell2sum*10,minmaxValues[MIN_BATT2_VS])
   -- batt A2
-  minmaxValues[MINMAX_BATT_A2] = calcMinValue(calcCellMin(cell1sumA2,cell2sumA2)*10,minmaxValues[MINMAX_BATT_A2])
-  minmaxValues[MINMAX_BATT1_A2] = calcMinValue(cell1sumA2*10,minmaxValues[MINMAX_BATT1_A2])
-  minmaxValues[MINMAX_BATT2_A2] = calcMinValue(cell2sumA2*10,minmaxValues[MINMAX_BATT2_A2])
+  minmaxValues[MIN_BATT_A2] = calcMinValue(cellsumA2*10,minmaxValues[MIN_BATT_A2])
+  minmaxValues[MIN_BATT1_A2] = minmaxValues[MIN_BATT_A2]
+  minmaxValues[MIN_BATT2_A2] = 0
 #endif
 end
 
@@ -2215,14 +2243,14 @@ local function checkCellVoltage(battsource,cellmin,cellminFC,cellminA2)
     alarms[ALARMS_BATT2][1] = true
     playSound("batalert2")
   end
-  --[[
+#ifdef RESETBATTALARMS
   -- reset alarms when voltage rises
   if celm > conf.battAlertLevel1 then
     alarms[ALARMS_BATT1][1] = false
   elseif celm > conf.battAlertLevel2 then
     alarms[ALARMS_BATT2][1] = false
   end
-  ]]--
+#endif
 end
 
 #endif
@@ -2661,7 +2689,7 @@ local function drawHomeDist()
     flags = BLINK
   end
 #ifdef MINMAX
-  homeDist = getMaxValue(homeDist,MINMAX_DIST)
+  homeDist = getMaxValue(homeDist,MAX_DIST)
   if showMinMaxValues == true then
     flags = 0
   end
@@ -2714,7 +2742,7 @@ local function drawLeftPane(battcurrent,cellsumFC)
     flags = 0
 #ifdef MINMAX
     -- update max only with 3d or better lock
-    alt = getMaxValue(alt,MINMAX_GPSALT)
+    alt = getMaxValue(alt,MAX_GPSALT)
 #endif
   end
 #ifdef MINMAX
@@ -2734,7 +2762,7 @@ local function drawLeftPane(battcurrent,cellsumFC)
     flags = BLINK
   end
 #ifdef MINMAX
-  homeDist = getMaxValue(homeDist,MINMAX_DIST)
+  homeDist = getMaxValue(homeDist,MAX_DIST)
   if showMinMaxValues == true then
     flags = 0
   end
@@ -2743,7 +2771,7 @@ local function drawLeftPane(battcurrent,cellsumFC)
   lcd.drawText(lcd.getLastRightPos(), HOMEDIST_Y-1, "m",HOMEDIST_FLAGS+flags)
   -- hspeed
   #ifdef MINMAX
-    hSpeed = getMaxValue(hSpeed,MINMAX_HSPEED)
+    hSpeed = getMaxValue(hSpeed,MAX_HSPEED)
   #endif  
   drawHArrow(HSPEED_XLABEL + 4,HSPEED_YLABEL,4,false,true)
   drawHArrow(HSPEED_XLABEL + 6,HSPEED_YLABEL + 4,5,false,true)
@@ -2762,7 +2790,7 @@ local function drawLeftPane(battcurrent,cellsumFC)
   -- power
   local power = cellsumFC*battcurrent*0.1
 #ifdef MINMAX  
-  power = getMaxValue(power,MINMAX_POWER)
+  power = getMaxValue(power,MAX_POWER)
 #endif
   drawNumberWithDim(BATTPOWER_X,BATTPOWER_Y,BATTPOWER_YW,power,"w",BATTPOWER_FLAGS,BATTPOWER_FLAGSW)
 #ifdef MINMAX
@@ -3297,6 +3325,7 @@ local function cycleBatteryInfo()
     showDualBattery = true
     return
   end
+--[[  
   if batt1source == "vs" then
     batt1source = "fc"
     batt2source = "fc"
@@ -3306,6 +3335,14 @@ local function cycleBatteryInfo()
   elseif batt1source == "a2" then
     batt1source = "vs"
     batt2source = "vs"
+  end
+  ]]
+  if battsource == "vs" then
+    battsource = "fc"
+  elseif battsource == "fc" then
+    battsource = "a2"
+  elseif battsource == "a2" then
+    battsource = "vs"
   end
 end
 --------------------------------------------------------------------------------
@@ -3390,11 +3427,11 @@ local function run(event)
       calcFlightTime()
       checkEvents()
       checkLandingStatus()
-      checkCellVoltage(batt1source,calcCellMin(cell1min,cell2min),calcCellMin(cell1minFC,cell2minFC),calcCellMin(cell1minA2,cell2minA2))
+      checkCellVoltage(battsource,calcCellMin(cell1min,cell2min),calcCellMin(cell1minFC,cell2minFC),cellminA2)
 #ifdef MINMAX
       -- current needs to be updated
-      minmaxValues[MINMAX_CURR1] = math.max(batt1current,minmaxValues[MINMAX_CURR1])
-      minmaxValues[MINMAX_CURR2] = math.max(batt2current,minmaxValues[MINMAX_CURR2])
+      minmaxValues[MAX_CURR1] = math.max(batt1current,minmaxValues[MAX_CURR1])
+      minmaxValues[MAX_CURR2] = math.max(batt2current,minmaxValues[MAX_CURR2])
 #endif
       clock = 0
     end
@@ -3436,27 +3473,27 @@ local function run(event)
 #else
         lcd.drawText(HUD_X+1,BOTTOMBAR_Y - 8,"2B",SMLSIZE+INVERS)
 #endif
-        drawBatteryPane(HUD_X+HUD_WIDTH+1,batt1source,batt1current+batt2current,getBatt1Capacity()+getBatt2Capacity(),batt1mah+batt2mah,calcCellMin(cell1min,cell2min),calcCellMin(cell1minFC,cell2minFC),calcCellMin(cell1minA2,cell2minA2),calcCellMin(cell1sum,cell2sum),calcCellMin(cell1sumFC,cell2sumFC),calcCellMin(cell1sumA2,cell2sumA2),MINMAX_CELL_FC,MINMAX_BATT_FC,MINMAX_CURR)
+        drawBatteryPane(HUD_X+HUD_WIDTH+1,battsource,batt1current+batt2current,getBatt1Capacity()+getBatt2Capacity(),batt1mah+batt2mah,calcCellMin(cell1min,cell2min),calcCellMin(cell1minFC,cell2minFC),cellminA2,calcCellMin(cell1sum,cell2sum),calcCellMin(cell1sumFC,cell2sumFC),cellsumA2,MIN_CELL_FC,MIN_BATT_FC,MAX_CURR)
       else
         -- dual battery:battery 1 right pane
 #ifdef X9
         -- battery name
         lcd.drawText(HUD_X+HUD_WIDTH+1,TOPBAR_HEIGHT,"B1",SMLSIZE+INVERS)
 #endif
-        drawBatteryPane(HUD_X+HUD_WIDTH+1,batt1source,batt1current,getBatt1Capacity(),batt1mah,cell1min,cell1minFC,cell1minA2,cell1sum,cell1sumFC,cell1sumA2,MINMAX_CELL1_FC,MINMAX_BATT1_FC,MINMAX_CURR1)
+        drawBatteryPane(HUD_X+HUD_WIDTH+1,battsource,batt1current,getBatt1Capacity(),batt1mah,cell1min,cell1minFC,cellminA2,cell1sum,cell1sumFC,cellsumA2,MIN_CELL1_FC,MIN_BATT1_FC,MAX_CURR1)
         -- dual battery:battery 2 left pane
 #ifdef X9
         -- battery name
         lcd.drawText(0,TOPBAR_HEIGHT,"B2",SMLSIZE+INVERS)
-        drawBatteryPane(0,batt2source,batt2current,getBatt2Capacity(),batt2mah,cell2min,cell2minFC,cell2minA2,cell2sum,cell2sumFC,cell2sumA2,MINMAX_CELL2_FC,MINMAX_BATT2_FC,MINMAX_CURR2)
+        drawBatteryPane(0,battsource,batt2current,getBatt2Capacity(),batt2mah,cell2min,cell2minFC,0,cell2sum,cell2sumFC,0,MIN_CELL2_FC,MIN_BATT2_FC,MAX_CURR2)
 #else
-        drawX7BatteryLeftPane(batt2source,batt2current,getBatt2Capacity(),batt2mah,cell2min,cell2minFC,cell2minA2,cell2sum,cell2sumFC,cell2sumA2,MINMAX_CELL2_FC,MINMAX_BATT2_FC,MINMAX_CURR2)
+        drawX7BatteryLeftPane(battsource,batt2current,getBatt2Capacity(),batt2mah,cell2min,cell2minFC,0,cell2sum,cell2sumFC,0,MIN_CELL2_FC,MIN_BATT2_FC,MAX_CURR2)
 #endif
       end
     else
 #ifdef X9      
       -- battery 1 right pane in single battery mode
-      drawBatteryPane(HUD_X+HUD_WIDTH+1,batt1source,batt1current,getBatt1Capacity(),batt1mah,cell1min,cell1minFC,cell1minA2,cell1sum,cell1sumFC,cell1sumA2,MINMAX_CELL1_FC,MINMAX_BATT1_FC,MINMAX_CURR1)
+      drawBatteryPane(HUD_X+HUD_WIDTH+1,battsource,batt1current,getBatt1Capacity(),batt1mah,cell1min,cell1minFC,cellminA2,cell1sum,cell1sumFC,cellsumA2,MIN_CELL1_FC,MIN_BATT1_FC,MAX_CURR1)
     end
     -- left pane info when not in dual battery mode
     if showDualBattery == false then
@@ -3465,7 +3502,7 @@ local function run(event)
     end
 #else
     --- battery 1 right pane in single battery mode
-      drawBatteryPane(HUD_X+HUD_WIDTH+1,batt1source,batt1current,getBatt1Capacity(),batt1mah,cell1min,cell1minFC,cell1minA2,cell1sum,cell1sumFC,cell1sumA2,MINMAX_CELL1_FC,MINMAX_BATT1_FC,MINMAX_CURR1)
+      drawBatteryPane(HUD_X+HUD_WIDTH+1,battsource,batt1current,getBatt1Capacity(),batt1mah,cell1min,cell1minFC,cellminA2,cell1sum,cell1sumFC,cellsumA2,MIN_CELL1_FC,MIN_BATT1_FC,MAX_CURR1)
     end
 #endif
 #ifdef X7
@@ -3489,11 +3526,11 @@ local function run(event)
     drawFailsafe()
 #ifdef ALERTS
     drawAlerts()
-  #ifdef DEBUG    
-    lcd.drawNumber(0,40,cell1minFC*100,SMLSIZE+PREC2)
-    lcd.drawNumber(25,40,minmaxValues[MINMAX_CELL1_FC],SMLSIZE+PREC2)
-  #endif
 #endif  
+#ifdef DEBUG    
+  lcd.drawNumber(0,40,cell1maxFC,SMLSIZE+PREC1)
+  lcd.drawNumber(25,40,calcCellCount(cell1maxFC),SMLSIZE)
+#endif
     drawNoTelemetryData()
   end
   clock = clock + 1

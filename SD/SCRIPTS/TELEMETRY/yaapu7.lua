@@ -33,7 +33,7 @@
 ---------------------
 
 ---------------------
--- frame types
+-- frame types: copter always enabled
 ---------------------
 
 ---------------------
@@ -50,9 +50,11 @@
 --#define DEBUG
 --#define TESTMODE
 --#define BATT2TEST
+--#define CELLCOUNT 5
 --#define DEMO
 --#define DEV
 --
+
   
   
 
@@ -170,26 +172,24 @@ mavSeverity[7]="DBG"
 
 --------------------------------
 -- FLVSS 1
-local cell1count = 0
 local cell1min = 0
 local cell1sum = 0
--- FC
-local cell1minFC = 0
-local cell1sumFC = 0
--- A2
-local cell1minA2 = 0
-local cell1sumA2 = 0
---------------------------------
 -- FLVSS 2
-local cell2count = 0
 local cell2min = 0
 local cell2sum = 0
--- FC
+-- FC 1
+local cell1minFC = 0
+local cell1sumFC = 0
+local cell1maxFC = 0
+-- FC 2
 local cell2minFC = 0
 local cell2sumFC = 0
+local cell2maxFC = 0
 -- A2
-local cell2minA2 = 0
-local cell2sumA2 = 0
+local cellminA2 = 0
+local cellsumA2 = 0
+local cellmaxA2 = 0
+--------------------------------
 -- STATUS
 local flightMode = 0
 local simpleMode = 0
@@ -197,30 +197,27 @@ local landComplete = 0
 local statusArmed = 0
 local battFailsafe = 0
 local ekfFailsafe = 0
-
-
 -- GPS
 local numSats = 0
 local gpsStatus = 0
 local gpsHdopC = 100
 local gpsAlt = 0
-------------------------
+-- BATT
+local cellcount = 0
+local battsource = "na"
 -- BATT 1
 local batt1volt = 0
 local batt1current = 0
 local batt1mah = 0
-local batt1source = "na"
 local batt1sources = {
   a2 = false,
   vs = false,
   fc = false
 }
-------------------------
 -- BATT 2
 local batt2volt = 0
 local batt2current = 0
 local batt2mah = 0
-local batt2source = "na"
 local batt2sources = {
   a2 = false,
   vs = false,
@@ -347,7 +344,6 @@ local showMinMaxValues = false
 
 
 
-
 --------------------------------------------------------------------------------
 -- CONFIGURATION MENU
 --------------------------------------------------------------------------------
@@ -416,8 +412,9 @@ local function applyConfigValues()
   conf.maxDistanceAlert = menuItems[13][4]
   --
   if conf.defaultBattSource ~= nil then
-    batt1source = conf.defaultBattSource
-    batt2source = conf.defaultBattSource
+    --batt1source = conf.defaultBattSource
+    --batt2source = conf.defaultBattSource
+    battsource = conf.defaultBattSource
   end
   collectgarbage()
 end
@@ -464,7 +461,7 @@ end
 local function drawConfigMenuBars()
   lcd.drawFilledRectangle(0,0, 128, 7, SOLID)
   lcd.drawRectangle(0, 0, 128, 7, SOLID)
-  lcd.drawText(0,0,"Yaapu X7 script 1.4.1",SMLSIZE+INVERS)
+  lcd.drawText(0,0,"Yaapu X7 script 1.4.2",SMLSIZE+INVERS)
   lcd.drawFilledRectangle(0,57-2, 128, 9, SOLID)
   lcd.drawRectangle(0, 57-2, 128, 9, SOLID)
   lcd.drawText(0,57-1,string.sub(getConfigFilename(),8),SMLSIZE+INVERS)
@@ -859,19 +856,27 @@ local function calcCellMin(v1,v2)
   end
 end
 
-local function calcCellValue(cellsum)
-  local cellcount = 0
-  if cellsum > 21 then
-    cellcount = 6
-  elseif cellsum > 17 then
-    cellcount = 5
-  elseif cellsum > 13 then
-    cellcount = 4
-  else
-    cellcount = 3
+local function calcCellCount(battmax)
+  -- cellcount is cached
+  if cellcount > 1 then
+    return cellcount
   end
-  return cellsum/cellcount
+  local count = 0
+  if battmax*0.1 > 21.75 then
+    -- battmax > 4.35 * 5 ==> 6s (lowest allowed cell on boot 3.625)
+    count = 6
+  elseif battmax*0.1 > 17.4 then
+    -- battmax > 4.35 * 4 ==> 5s (lowest allowed cell on boot 3.48)
+    count = 5
+  elseif battmax*0.1 > 13.05 then
+    -- battmax > 4.35 * 3 ==> 4s (lowest allowed cell on boot 3.27)
+    count = 4
+  else
+    count = 3
+  end
+  return count
 end
+
 
 local function calcMinValue(value,min)
   if min == 0 then
@@ -889,9 +894,10 @@ local function calcBattery()
   ------------
   local cellResult = getValue("Cels")
   if type(cellResult) == "table" then
-    cell1min = 4.2
+    cell1min = 4.35
     cell1sum = 0
-    cell1count = #cellResult
+    -- cellcount is global and shared
+    cellcount = #cellResult
     for i, v in pairs(cellResult) do
       cell1sum = cell1sum + v
       if cell1min > v then
@@ -900,10 +906,10 @@ local function calcBattery()
     end
     -- if connected after scritp started
     if batt1sources.vs == false then
-      batt1source = "na"
+      battsource = "na"
     end
-    if batt1source == "na" then
-      batt1source = "vs"
+    if battsource == "na" then
+      battsource = "vs"
     end
     batt1sources.vs = true
   else
@@ -916,10 +922,11 @@ local function calcBattery()
   ------------
   cellResult = getValue("Cel2")
   if type(cellResult) == "table" then
-    cell2min = 4.2
+    cell2min = 4.35
     cell2sum = 0
     for i = 1, #cell do cell[i] = 0 end
-    cell2count = #cellResult
+    -- cellcount is global and shared
+    cellcount = #cellResult
     for i, v in pairs(cellResult) do
       cell2sum = cell2sum + v
       if cell2min > v then
@@ -928,10 +935,10 @@ local function calcBattery()
     end
     -- if connected after scritp started
     if batt2sources.vs == false then
-      batt2source = "na"
+      battsource = "na"
     end
-    if batt2source == "na" then
-      batt2source = "vs"
+    if battsource == "na" then
+      battsource = "vs"
     end
     batt2sources.vs = true
   else
@@ -944,9 +951,10 @@ local function calcBattery()
   --------------------------------
   if batt1volt > 0 then
     cell1sumFC = batt1volt*0.1
-    cell1minFC = calcCellValue(cell1sumFC)
-    if batt1source == "na" then
-      batt1source = "fc"
+    cell1maxFC = math.max(batt1volt,cell1maxFC)
+    cell1minFC = cell1sumFC/calcCellCount(cell1maxFC)
+    if battsource == "na" then
+      battsource = "fc"
     end
     batt1sources.fc = true
   else
@@ -959,9 +967,10 @@ local function calcBattery()
   --------------------------------
   if batt2volt > 0 then
     cell2sumFC = batt2volt*0.1
-    cell2minFC = calcCellValue(cell2sumFC)
-    if batt2source == "na" then
-      batt2source = "fc"
+    cell2maxFC = math.max(batt2volt,cell2maxFC)
+    cell2minFC = cell2sumFC/calcCellCount(cell2maxFC)
+    if battsource == "na" then
+      battsource = "fc"
     end
     batt2sources.fc = true
   else
@@ -975,16 +984,17 @@ local function calcBattery()
   battA2 = getValue("A2")
   --
   if battA2 > 0 then
-    cell1sumA2 = battA2
-    cell1minA2 = calcCellValue(cell1sumA2)
+    cellsumA2 = battA2
+    cellmaxA2 = math.max(battA2*10,cellmaxA2)
+    cellminA2 = cellsumA2/calcCellCount(cellmaxA2)
     batt1sources.a2 = true
-    if batt1source == "na" then
-      batt1source = "a2"
+    if battsource == "na" then
+      battsource = "a2"
     end
   else
     batt1sources.a2 = false
-    cell1minA2 = 0
-    cell1sumA2 = 0
+    cellminA2 = 0
+    cellsumA2 = 0
   end
   -- cell fc
   minmaxValues[1] = calcMinValue(calcCellMin(cell1minFC,cell2minFC)*100,minmaxValues[1])
@@ -995,9 +1005,9 @@ local function calcBattery()
   minmaxValues[5] = calcMinValue(cell1min*100,minmaxValues[5])
   minmaxValues[6] = calcMinValue(cell2min*100,minmaxValues[6])
   -- cell 12
-  minmaxValues[7] = calcMinValue(calcCellMin(cell1minA2,cell2minA2)*100,minmaxValues[7])
-  minmaxValues[8] = calcMinValue(cell1minA2*100,minmaxValues[8])
-  minmaxValues[9] = calcMinValue(cell2minA2*100,minmaxValues[9])
+  minmaxValues[7] = calcMinValue(cellminA2*100,minmaxValues[7])
+  minmaxValues[8] = minmaxValues[7]
+  minmaxValues[9] = 0
   -- batt fc
   minmaxValues[10] = calcMinValue(calcCellMin(cell1sumFC,cell2sumFC)*10,minmaxValues[10])
   minmaxValues[11] = calcMinValue(cell1sumFC*10,minmaxValues[11])
@@ -1007,9 +1017,9 @@ local function calcBattery()
   minmaxValues[14] = calcMinValue(cell1sum*10,minmaxValues[14])
   minmaxValues[15] = calcMinValue(cell2sum*10,minmaxValues[15])
   -- batt 12
-  minmaxValues[16] = calcMinValue(calcCellMin(cell1sumA2,cell2sumA2)*10,minmaxValues[16])
-  minmaxValues[17] = calcMinValue(cell1sumA2*10,minmaxValues[17])
-  minmaxValues[18] = calcMinValue(cell2sumA2*10,minmaxValues[18])
+  minmaxValues[16] = calcMinValue(cellsumA2*10,minmaxValues[16])
+  minmaxValues[17] = minmaxValues[16]
+  minmaxValues[18] = 0
 end
 
 local function checkLandingStatus()
@@ -1085,14 +1095,7 @@ local function checkCellVoltage(battsource,cellmin,cellminFC,cellminA2)
     alarms[8][1] = true
     playSound("batalert2")
   end
-  --[[
-  -- reset alarms when voltage rises
-  if celm > conf.battAlertLevel1 then
-    alarms[ALARMS_BATT1][1] = false
-  elseif celm > conf.battAlertLevel2 then
-    alarms[ALARMS_BATT2][1] = false
-  end
-  ]]end
+end
 
 
 local function setSensorValues()
@@ -1676,6 +1679,7 @@ local function cycleBatteryInfo()
     showDualBattery = true
     return
   end
+--[[  
   if batt1source == "vs" then
     batt1source = "fc"
     batt2source = "fc"
@@ -1685,6 +1689,13 @@ local function cycleBatteryInfo()
   elseif batt1source == "a2" then
     batt1source = "vs"
     batt2source = "vs"
+  end
+  ]]  if battsource == "vs" then
+    battsource = "fc"
+  elseif battsource == "fc" then
+    battsource = "a2"
+  elseif battsource == "a2" then
+    battsource = "vs"
   end
 end
 --------------------------------------------------------------------------------
@@ -1750,7 +1761,7 @@ local function run(event)
       calcFlightTime()
       checkEvents()
       checkLandingStatus()
-      checkCellVoltage(batt1source,calcCellMin(cell1min,cell2min),calcCellMin(cell1minFC,cell2minFC),calcCellMin(cell1minA2,cell2minA2))
+      checkCellVoltage(battsource,calcCellMin(cell1min,cell2min),calcCellMin(cell1minFC,cell2minFC),cellminA2)
       -- current needs to be updated
       minmaxValues[20] = math.max(batt1current,minmaxValues[20])
       minmaxValues[21] = math.max(batt2current,minmaxValues[21])
@@ -1783,16 +1794,16 @@ local function run(event)
       if showDualBattery == false then
         -- dual battery: aggregate view
         lcd.drawText(0+1,57 - 8,"2B",SMLSIZE+INVERS)
-        drawBatteryPane(0+64+1,batt1source,batt1current+batt2current,getBatt1Capacity()+getBatt2Capacity(),batt1mah+batt2mah,calcCellMin(cell1min,cell2min),calcCellMin(cell1minFC,cell2minFC),calcCellMin(cell1minA2,cell2minA2),calcCellMin(cell1sum,cell2sum),calcCellMin(cell1sumFC,cell2sumFC),calcCellMin(cell1sumA2,cell2sumA2),1,10,19)
+        drawBatteryPane(0+64+1,battsource,batt1current+batt2current,getBatt1Capacity()+getBatt2Capacity(),batt1mah+batt2mah,calcCellMin(cell1min,cell2min),calcCellMin(cell1minFC,cell2minFC),cellminA2,calcCellMin(cell1sum,cell2sum),calcCellMin(cell1sumFC,cell2sumFC),cellsumA2,1,10,19)
       else
         -- dual battery:battery 1 right pane
-        drawBatteryPane(0+64+1,batt1source,batt1current,getBatt1Capacity(),batt1mah,cell1min,cell1minFC,cell1minA2,cell1sum,cell1sumFC,cell1sumA2,2,11,20)
+        drawBatteryPane(0+64+1,battsource,batt1current,getBatt1Capacity(),batt1mah,cell1min,cell1minFC,cellminA2,cell1sum,cell1sumFC,cellsumA2,2,11,20)
         -- dual battery:battery 2 left pane
-        drawX7BatteryLeftPane(batt2source,batt2current,getBatt2Capacity(),batt2mah,cell2min,cell2minFC,cell2minA2,cell2sum,cell2sumFC,cell2sumA2,3,12,21)
+        drawX7BatteryLeftPane(battsource,batt2current,getBatt2Capacity(),batt2mah,cell2min,cell2minFC,0,cell2sum,cell2sumFC,0,3,12,21)
       end
     else
     --- battery 1 right pane in single battery mode
-      drawBatteryPane(0+64+1,batt1source,batt1current,getBatt1Capacity(),batt1mah,cell1min,cell1minFC,cell1minA2,cell1sum,cell1sumFC,cell1sumA2,2,11,20)
+      drawBatteryPane(0+64+1,battsource,batt1current,getBatt1Capacity(),batt1mah,cell1min,cell1minFC,cellminA2,cell1sum,cell1sumFC,cellsumA2,2,11,20)
     end
     if showDualBattery == false then
       drawHomeDirection()
@@ -1814,7 +1825,7 @@ end
 
 local function init()
   loadConfig()
-  pushMessage(6,"Yaapu X7 script 1.4.1")
+  pushMessage(6,"Yaapu X7 script 1.4.2")
   playSound("yaapu")
 end
 
