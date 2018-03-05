@@ -94,7 +94,7 @@ This in turn means that:
 
 For 3s and 2s the limit is so low that's not a problem.
 
-Please note that the voltage used for the calculation is the maximum pack voltage so if after detection the cell voltage lowers below the above limits it will ok.
+Please note that the voltage used for the calculation is the maximum pack voltage so if after detection the cell voltage lowers below the above limits it will be ok.
 
 ## Alerts
 
@@ -104,7 +104,7 @@ Battery level 1 should be set higher then battery level 2.
 When the cell voltage reaches the second battery level it will trigger a second vocal alert and the cell voltage will start blinking.
 If the battery reaches the failsafe level (it must be configured in mission planner) the script will display "batt failsafe" on the hud and play a vocal alert every n seconds (period can be configured from the menu).
 
-It is possible to configure a timer that will trigger a vocal alert every n minutes of flight time.
+It's also possible to configure a timer that will trigger a vocal alert every n minutes of flight time.
 
 The script also support a "vocal fence" feature by setting a minimun altitude, a maximum altitude and a maximum distance alert.
 When the vehicle moves outside of the fence the script will play a vocal alert every n seconds.
@@ -144,6 +144,9 @@ To enable sound files playback copy them to /SOUNDS/yaapu0/en and /SOUNDS/yaapu0
 
 In order to compile your own version you must first preprocess the SOURCES/yaapu0.lua script with the pproc.lua preprocessor.
 Details on the preprocessor can be found [here](https://gist.github.com/incinirate/d52e03f453df94a65e1335d9c36d114e)
+
+There are many #define each activates a specific feature of the script.
+The most important ones are X9/X7 to build for different radio models.
 
 You need a working lua interpreter for this to work.
 On a command line simply run "lua pproc.lua yaapu0.lua yaapu9.lua"
