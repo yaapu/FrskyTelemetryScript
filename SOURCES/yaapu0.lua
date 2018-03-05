@@ -26,8 +26,8 @@
 ---------------------
 -- radio model
 ---------------------
---#define X9
-#define X7
+#define X9
+--#define X7
 
 ---------------------
 -- script version 
@@ -1982,8 +1982,11 @@ local function calcCellCount(battmax)
   elseif battmax*0.1 > 13.05 then
     -- battmax > 4.35 * 3 ==> 4s (lowest allowed cell on boot 3.27)
     count = 4
-  else
+  elseif battmax*0.1 > 8.7 then
+    -- battmax > 4.35 * 2 ==> 3s (lowest allowed cell on boot 2.9)
     count = 3
+  else
+    count = 2
   end
   return count
 end
@@ -2509,7 +2512,7 @@ local function drawBatteryPane(x,battsource,battcurrent,battcapacity,battmah,cel
   if showMinMaxValues == true then
     drawVArrow(x+BATTVOLT_X+27,BATTVOLT_Y + 7, 5,false,true)
     drawVArrow(x+BATTCURR_X+27,BATTCURR_Y + 6,5,true,false)
-    drawVArrow(x+BATTCELL_X+37, BATTCELL_Y + 4,6,false,true)
+    drawVArrow(x+BATTCELL_X+37, BATTCELL_Y + 3,6,false,true)
   end
   #else
   if showMinMaxValues == true then

@@ -872,8 +872,11 @@ local function calcCellCount(battmax)
   elseif battmax*0.1 > 13.05 then
     -- battmax > 4.35 * 3 ==> 4s (lowest allowed cell on boot 3.27)
     count = 4
-  else
+  elseif battmax*0.1 > 8.7 then
+    -- battmax > 4.35 * 2 ==> 3s (lowest allowed cell on boot 2.9)
     count = 3
+  else
+    count = 2
   end
   return count
 end
@@ -1179,7 +1182,7 @@ local function drawBatteryPane(x,battsource,battcurrent,battcapacity,battmah,cel
   if showMinMaxValues == true then
     drawVArrow(x+2+27,43 + 7, 5,false,true)
     drawVArrow(x+37+27,43 + 6,5,true,false)
-    drawVArrow(x+27+37, 10 + 4,6,false,true)
+    drawVArrow(x+27+37, 10 + 3,6,false,true)
   end
 end
 
