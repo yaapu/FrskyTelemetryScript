@@ -45,7 +45,7 @@ Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4 
  - rssi value
  - transmitter voltage
  - home distance
- - horizontal ground speed
+ - horizontal ground speed or air speed (available if configured in mission planner)
  - home heading as rotating triangle
  - mavlink messages with history accessible with +/- buttons short press
  - english and italian sound files for selected events: battery levels, failsafe, flightmodes, alerts and landing
