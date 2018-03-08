@@ -67,6 +67,70 @@ Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4 
  
 Sensor valus are passed to OpenTX only when the script receives valid telemetry from the rx!
  
+## Supported Flight Modes
+
+### Copter
+
+| #  | flight mode | sound support |
+|---:|:------------|:-----------|
+|1|Stabilize|YES|
+|2|Acro|YES|
+|3|AltHold|YES|
+|4|Auto|YES|
+|5|Guided|YES|
+|6|Loiter|YES|
+|7|RTL|YES|
+|8|Circle|YES|
+|10|Land|YES|
+|12|Drift|YES|
+|14|Sport|YES|
+|15|Flip|YES|
+|16|AutoTune|YES|
+|17|PosHold|YES|
+|18|Brake|YES|
+|19|Throw|YES|
+|20|AvoidADSB|YES|
+|21|GuidedNOGPS|YES|
+|22|SmartRTL|YES|
+
+### Plane
+| #  | flight mode | sound support |
+|---:|:------------|:-----------|
+|1|Manual|YES|
+|2|Circle|YES|
+|3|Stabilize|YES|
+|4|Training|YES|
+|5|Acro|YES|
+|6|FlyByWireA|YES|
+|7|FlyByWireB|YES|
+|8|Cruise|YES|
+|9|Autotune|YES|
+|11|Auto|YES|
+|12|RTL|YES|
+|13|Loiter|YES|
+|15|AvoidADSB|YES|
+|16|Guided|YES|
+|17|Initializing|YES|
+|18|QStabilize|YES|
+|19|QHover|YES|
+|20|QLoiter|YES|
+|21|Qland|YES|
+|22|QRTL|YES|
+
+### Rover
+
+| #  | flight mode | sound support |
+|---:|:------------|:-----------|
+|1|Manual|YES|
+|2|Acro|YES|
+|4|Steering|YES|
+|5|Hold|YES|
+|11|Auto|YES|
+|12|RTL|YES|
+|13|SmartRTL|YES|
+|16|Guided|YES|
+|17|Initializing|YES|
+
 ## Voltage Sources
 
 Battery voltage is tracked independentely for 3 battery sources: FLVSS, analog port A2 and flight controller. (The script can also use the A2 analog voltage source from X4R and X6R receivers, a2 would be displayed next to cell voltage). A short press of [ENTER] cycles between all the sources. Min value is also tracked for the 3 sources and can be shown with a [MENU] short press.
