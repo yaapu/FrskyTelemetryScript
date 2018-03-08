@@ -826,7 +826,7 @@ local function processTelemetry()
 end
 
 local function telemetryEnabled()
-  if getValue("RxBt") == 0 then
+  if getRSSI() == 0 then
     noTelemetryData = 1
   end
   return noTelemetryData == 0
@@ -1486,13 +1486,20 @@ local function drawYaw()
     degR = (yawRounded + step*10) % 360
     degL = (yawRounded - step*10) % 360
     --
-    for l=1,#yawLabels do
+    for l=1,#yawLabels - 1 do
       if degR > yawLabels[l][1] and degR < yawLabels[l][2] then
         lcd.drawText(cx + step/steps*ww, minY+1, yawLabels[l][3], SMLSIZE)
       end
       if degL > yawLabels[l][1] and degL < yawLabels[l][2] then
         lcd.drawText(cx - step/steps*ww - 6, minY+1, yawLabels[l][3], SMLSIZE)
       end
+    end
+    
+    if degR > yawLabels[#yawLabels][1] or degR < yawLabels[#yawLabels][2] then
+      lcd.drawText(cx + step/steps*ww, minY+1, yawLabels[#yawLabels][3], SMLSIZE)
+    end
+    if degL > yawLabels[#yawLabels][1] or degL < yawLabels[#yawLabels][2] then
+      lcd.drawText(cx - step/steps*ww - 6, minY+1, yawLabels[#yawLabels][3], SMLSIZE)
     end
 
     if degR > homeRounded - 5 and degR < homeRounded + 5 and degL > homeRounded - 5  and degL < homeRounded + 5  then
