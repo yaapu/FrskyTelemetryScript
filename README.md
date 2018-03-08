@@ -25,7 +25,7 @@ Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4 
 
  - configuration menu, long press [MENU] to display
  - per model configuration saved in MODELS/yaapu/modelname.cfg
- - flight mode (modes are displayed based on the frame type:copter,plane or rover)
+ - flight [modes](#supported-flight-modes) based on frame type:copter,plane or rover with vocal sound support
  - artificial horizon with roll,pitch and yaw with numeric compass heading
  - mini home icon on yaw compass at home angle position
  - battery voltage from 3 sources (in order of priority), short pressing [ENTER] cycles between the sources
