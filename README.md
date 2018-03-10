@@ -48,7 +48,7 @@ Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4 
  - horizontal ground speed or air speed (available if configured in mission planner)
  - home heading as rotating triangle
  - mavlink messages with history accessible with +/- buttons short press
- - english and italian sound files for selected events: battery levels, failsafe, flightmodes, alerts and landing
+ - english, italian and french sound files for selected events: battery levels, failsafe, flightmodes, alerts and landing
 
 ## Advanced Features 
 
@@ -226,4 +226,8 @@ Please refer to the arducopter wiki for information on how to configure your fli
 For information on how to connect the FrSky equipment together, please refer to 
  - http://ardupilot.org/copter/docs/common-frsky-telemetry.html#common-frsky-equipment
  - http://ardupilot.org/copter/docs/common-frsky-telemetry.html#frsky-cables
+ 
+ ## Thanks
+ 
+ Thanks to Marco Robustini (tester X9D), Chris Rey (tester QX7) and Alain Chartier (frech sound files)
 
