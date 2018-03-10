@@ -1101,7 +1101,7 @@ local menu  = {
 
 #ifdef X9
 local menuItems = {
-  {"voice language:", TYPECOMBO, "L1", 1, { "english", "italiano" } , {"en","it"} },
+  {"voice language:", TYPECOMBO, "L1", 1, { "english", "italian", "french" } , {"en","it","fr"} },
   {"batt alert level 1:", TYPEVALUE, "V1", 350, 320,420,"V",PREC2,5 },
   {"batt alert level 2:", TYPEVALUE, "V2", 350, 320,420,"V",PREC2,5 },
   {"batt[1] capacity override:", TYPEVALUE, "B1", 0, 0,500,"Ah",PREC2,10 },
@@ -1121,7 +1121,7 @@ local menuItems = {
 }
 #else
 local menuItems = {
-  {"voice language:", TYPECOMBO, "L1", 1, { "eng", "ita" } , {"en","it"} },
+  {"voice language:", TYPECOMBO, "L1", 1, { "eng", "ita", "fre" } , {"en","it","fr"} },
   {"batt alert level 1:", TYPEVALUE, "V1", 350, 320,420,"V",PREC2,5 },
   {"batt alert level 2:", TYPEVALUE, "V2", 350, 320,420,"V",PREC2,5 },
   {"batt[1] mAh override:", TYPEVALUE, "B1", 0, 0,500,"Ah",PREC2,10 },
@@ -1162,8 +1162,6 @@ local function applyConfigValues()
   conf.maxDistanceAlert = menuItems[D1][4]
   --
   if conf.defaultBattSource ~= nil then
-    --batt1source = conf.defaultBattSource
-    --batt2source = conf.defaultBattSource
     battsource = conf.defaultBattSource
   end
   collectgarbage()
@@ -1360,26 +1358,7 @@ local function drawVArrow(x,y,h,top,bottom)
     lcd.drawLine(x + 1,y  + h - 1,x + 2,y + h - 2, SOLID, 0)
   end
 end
-#ifdef DEV
-local function drawHomeMiniIcon(x,y)
-  lcd.drawLine(x,y,x + 4,y, SOLID, 0)
-  lcd.drawLine(x + 4,y - 1,x + 4,y - 4, SOLID, 0)
-  lcd.drawLine(x,y - 1,x,y - 4, SOLID, 0)
-  lcd.drawLine(x-1,y-4+1,x + 2,y-4 - 1,SOLID,0)
-  lcd.drawLine(x + 4 + 1,y - 4 + 1,x + 2 + 1,y-4 - 4/4 + 1,SOLID,0)
-  lcd.drawLine(x + 2,y - 2,x + 2,y-1,SOLID,0)
-end
-
-local function drawHomeIcon(x,y,size)
-  lcd.drawLine(x,y,x + size,y, SOLID, 0)
-  lcd.drawLine(x + size,y - 1,x + size,y - size, SOLID, 0)
-  lcd.drawLine(x,y - 1,x,y - size, SOLID, 0)
-  lcd.drawLine(x-1,y-size+1,x + size/2,y-size - size/4,SOLID,0)
-  lcd.drawLine(x + size + 1,y-size+1,x + size/2 + 1,y-size - size/4 + 1,SOLID,0)
-  lcd.drawRectangle(x + size/2 -1,y - size/2,size/2,size/2,SOLID)
-  lcd.drawFilledRectangle(x + size/2 -1,y - size/2,size/2,size/2,SOLID)
-end
-#else
+--
 local function drawHomeIcon(x,y)
   lcd.drawRectangle(x,y,5,5,SOLID)
   lcd.drawLine(x+2,y+3,x+2,y+4,SOLID,FORCE)
@@ -1388,7 +1367,6 @@ local function drawHomeIcon(x,y)
   lcd.drawLine(x-1,y+1,x+2,y-2,SOLID, FORCE)
   lcd.drawLine(x+5,y+1,x+3,y-1,SOLID, FORCE)
 end
-#endif
 -- draws a line centered at ox,oy with given angle and length WITH CROPPING
 local function drawCroppedLine(ox,oy,angle,len,style,minX,maxX,minY,maxY)
   --
@@ -1568,7 +1546,7 @@ local messages = {
 }
 
 local function pushMessage(severity, msg)
-  if  conf.disableMsgBeep == false then
+  if  conf.disableMsgBeep == false and conf.disableAllSounds == false then
     if ( severity < 4) then
       playTone(400,300,0)
     else
@@ -3004,87 +2982,6 @@ local function drawRoll()
   drawCroppedLine(rollX + dx + cccx,dy + 32 - cccy,r,5,DOTTED,HUD_X,HUD_X + HUD_WIDTH,yPos,BOTTOMBAR_Y)
 end
 
-#ifdef DEV
-local function drawYaw()
-  local hw = math.floor(HUD_WIDTH/2)
-  local ww = hw - 6
-  local degL = 0
-  local degR = 0
-  local steps = 9
-  local yawRounded = roundTo(yaw,10)
-  local homeRounded = roundTo(homeAngle,10)
-  local minY = TOPBAR_Y + TOPBAR_HEIGHT
-  --
-  local cx = HUD_X + hw
-  for step = 0,steps
-  do
-    --
-    degR = (yawRounded + step*10) % 360
-    degL = (yawRounded - step*10) % 360
-    --
-    if degR > 39 and degR < 47 then
-      lcd.drawText(cx + step/steps*ww, minY+1, "NE", SMLSIZE)
-    elseif degR > 89 and degR < 92 then
-      lcd.drawText(cx + step/steps*ww, minY, "E", SMLSIZE+INVERS)
-    elseif degR > 129 and degR < 132 then
-      lcd.drawText(cx + step/steps*ww, minY+1, "SE", SMLSIZE)
-    elseif degR > 179 and degR < 182 then
-      lcd.drawText(cx + step/steps*ww, minY, "S", SMLSIZE+INVERS)
-    elseif degR > 219 and degR < 227 then
-      lcd.drawText(cx + step/steps*ww, minY+1, "SW", SMLSIZE)
-    elseif degR > 269 and degR < 272 then
-      lcd.drawText(cx + step/steps*ww, minY, "W", SMLSIZE+INVERS)
-    elseif degR > 309 and degR < 317 then
-      lcd.drawText(cx + step/steps*ww, minY+1, "NW", SMLSIZE)
-    elseif degR > 359 or degR < 2 then
-      lcd.drawText(cx + step/steps*ww, minY, "N", SMLSIZE+INVERS)
-    end
-    --
-    if degL > 39 and degL < 47 then
-      lcd.drawText(cx - step/steps*ww - 6, minY+1, "NE", SMLSIZE)
-    elseif degL > 89 and degL < 92 then
-      lcd.drawText(cx - step/steps*ww - 4, minY, "E", SMLSIZE+INVERS)
-    elseif degL > 129 and degL < 137 then
-      lcd.drawText(cx - step/steps*ww - 6, minY+1, "SE", SMLSIZE)
-    elseif degL > 179 and degL < 182 then
-      lcd.drawText(cx - step/steps*ww - 4, minY, "S", SMLSIZE+INVERS)
-    elseif degL > 219 and degL < 227 then
-      lcd.drawText(cx - step/steps*ww - 6, minY+1, "SW", SMLSIZE)
-    elseif degL > 269 and degL < 272 then
-      lcd.drawText(cx - step/steps*ww - 4, minY, "W", SMLSIZE+INVERS)
-    elseif degL > 309 and degL < 317 then
-      lcd.drawText(cx - step/steps*ww - 6, minY+1, "NW", SMLSIZE)
-    elseif degL > 359 or degL < 2 then
-      lcd.drawText(cx - step/steps*ww - 4, minY, "N", SMLSIZE+INVERS)
-    end
-
-    if degR > homeRounded - 5 and degR < homeRounded + 5 and degL > homeRounded - 5  and degL < homeRounded + 5  then
-      drawHomeMiniIcon(cx - 2,minY + 1 + 12)
-    else
-      if degR > homeRounded - 5 and degR < homeRounded + 5 then
-        drawHomeMiniIcon(cx + step/steps*ww ,minY + 1 + 12)
-      end
-
-      if degL > homeRounded - 5  and degL < homeRounded + 5 then
-        drawHomeMiniIcon(cx - step/steps*ww - 6,minY + 1 + 12)
-      end
-    end
-  end
-
-  lcd.drawLine(HUD_X, minY + 7, HUD_X + HUD_WIDTH - 1, minY + 7, SOLID, 0)
-  local xx = 0
-  if ( yaw < 10) then
-    xx = 1
-  elseif (yaw < 100) then
-    xx = -2
-  else
-    xx = -5
-  end
-  lcd.drawRectangle(HUD_X + hw - 6, minY, 12,12, SOLID)
-  lcd.drawFilledRectangle(HUD_X + hw - 6, minY, 12,12, SOLID)
-  lcd.drawNumber(HUD_X + hw + xx - 4, minY, yaw, MIDSIZE+INVERS)
-end
-#else
 local yawLabels = {
   {39,47,"NE"},
   {89,92,"E"},
@@ -3154,7 +3051,6 @@ local function drawYaw()
   lcd.drawFilledRectangle(HUD_X + hw - 6, minY, 12,12, SOLID)
   lcd.drawNumber(HUD_X + hw + xx - 4, minY, yaw, MIDSIZE+INVERS)
 end
-#endif
 
 local function clearHud()
   lcd.drawFilledRectangle(HUD_X,TOPBAR_Y + TOPBAR_HEIGHT + 8,HUD_WIDTH,49,ERASE,0)

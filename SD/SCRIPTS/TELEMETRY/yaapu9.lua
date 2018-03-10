@@ -376,7 +376,7 @@ local menu  = {
 }
 
 local menuItems = {
-  {"voice language:", 1, "L1", 1, { "english", "italiano" } , {"en","it"} },
+  {"voice language:", 1, "L1", 1, { "english", "italian", "french" } , {"en","it","fr"} },
   {"batt alert level 1:", 0, "V1", 350, 320,420,"V",PREC2,5 },
   {"batt alert level 2:", 0, "V2", 350, 320,420,"V",PREC2,5 },
   {"batt[1] capacity override:", 0, "B1", 0, 0,500,"Ah",PREC2,10 },
@@ -413,8 +413,6 @@ local function applyConfigValues()
   conf.maxDistanceAlert = menuItems[13][4]
   --
   if conf.defaultBattSource ~= nil then
-    --batt1source = conf.defaultBattSource
-    --batt2source = conf.defaultBattSource
     battsource = conf.defaultBattSource
   end
   collectgarbage()
@@ -598,6 +596,7 @@ local function drawVArrow(x,y,h,top,bottom)
     lcd.drawLine(x + 1,y  + h - 1,x + 2,y + h - 2, SOLID, 0)
   end
 end
+--
 local function drawHomeIcon(x,y)
   lcd.drawRectangle(x,y,5,5,SOLID)
   lcd.drawLine(x+2,y+3,x+2,y+4,SOLID,FORCE)
@@ -698,7 +697,7 @@ local messages = {
 }
 
 local function pushMessage(severity, msg)
-  if  conf.disableMsgBeep == false then
+  if  conf.disableMsgBeep == false and conf.disableAllSounds == false then
     if ( severity < 4) then
       playTone(400,300,0)
     else
