@@ -53,6 +53,7 @@
 --#define CELLCOUNT 5
 --#define DEMO
 --#define DEV
+--#define BGRATE
 --
 
   
@@ -1707,13 +1708,17 @@ end
 local showMessages = false
 local showConfigMenu = false
 local bgclock = 0
---
+
+-- this get called around 18-19 times per second, i.e around every 50-55 millis, @20Hz
 local function background()
-  -------------------------------
-  -- always process telemetry
-  ------------------------------
+  -- FAST: this runs at 50 millis, ie. @20Hz
   processTelemetry()
-  setSensorValues()
+  setTelemetryValue(0x0110, 0, 1, vSpeed, 5 , 1 , "VSpd")
+  -- SLOWER: this runs every 250 millis i.e @4Hz
+  if (bgclock % 4 == 0) then
+    setSensorValues()
+  end
+  -- SLOWEST: this runs every 500 millis i.e @2Hz
   if (bgclock % 8 == 0) then
     calcBattery()
     calcFlightTime()

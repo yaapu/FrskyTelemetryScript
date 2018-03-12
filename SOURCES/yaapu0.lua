@@ -26,8 +26,8 @@
 ---------------------
 -- radio model
 ---------------------
-#define X9
---#define X7
+--#define X9
+#define X7
 
 ---------------------
 -- script version 
@@ -65,6 +65,7 @@
 --#define CELLCOUNT 5
 --#define DEMO
 --#define DEV
+--#define BGRATE
 --
 
 #ifdef SENSORS
@@ -3258,16 +3259,36 @@ end
 local showMessages = false
 local showConfigMenu = false
 local bgclock = 0
---
-local function background()
-  -------------------------------
-  -- always process telemetry
-  ------------------------------
-  processTelemetry()
-#ifdef SENSORS  
-  setSensorValues()
+#ifdef BGRATE
+local counter = 0
+local bgrate = 0
+local bgstart = 0
 #endif
+
+-- this get called around 18-19 times per second, i.e around every 50-55 millis, @20Hz
+local function background()
+#ifdef BGRATE
+  -- skip first iteration
+  local now = getTime()/100
+  if counter == 0 then
+    bgstart = now
+  else
+    bgrate = counter / (now - bgstart)
+  end
+  --
+  counter=counter+1
+#endif
+  -- FAST: this runs at 50 millis, ie. @20Hz
+  processTelemetry()
+  setTelemetryValue(VSpd_ID, VSpd_SUBID, VSpd_INSTANCE, vSpeed, 5 , VSpd_PRECISION , VSpd_NAME)
 #ifdef BACKGROUND
+  -- SLOWER: this runs every 250 millis i.e @4Hz
+  if (bgclock % 4 == 0) then
+#ifdef SENSORS  
+    setSensorValues()
+#endif
+  end
+  -- SLOWEST: this runs every 500 millis i.e @2Hz
   if (bgclock % 8 == 0) then
     calcBattery()
     calcFlightTime()
@@ -3455,6 +3476,10 @@ local function run(event)
 #ifdef DEBUG    
   lcd.drawNumber(0,40,cell1maxFC,SMLSIZE+PREC1)
   lcd.drawNumber(25,40,calcCellCount(cell1maxFC),SMLSIZE)
+#endif
+#ifdef BGRATE    
+  lcd.drawNumber(0,39,bgrate*10,PREC1+SMLSIZE+INVERS)
+  lcd.drawText(lcd.getLastRightPos(),39,"Hz",SMLSIZE+INVERS)
 #endif
     drawNoTelemetryData()
   end
