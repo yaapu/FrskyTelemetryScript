@@ -47,6 +47,7 @@
 ---------------------
 -- features
 ---------------------
+#define BACKGROUND
 #define MINMAX
 #define SENSORS
 #define ALARMS
@@ -3256,6 +3257,7 @@ end
 --------------------------------------------------------------------------------
 local showMessages = false
 local showConfigMenu = false
+local bgclock = 0
 --
 local function background()
   -------------------------------
@@ -3264,6 +3266,21 @@ local function background()
   processTelemetry()
 #ifdef SENSORS  
   setSensorValues()
+#endif
+#ifdef BACKGROUND
+  if (bgclock % 8 == 0) then
+    calcBattery()
+    calcFlightTime()
+    checkEvents()
+    checkLandingStatus()
+    checkCellVoltage(battsource,calcCellMin(cell1min,cell2min),calcCellMin(cell1minFC,cell2minFC),cellminA2)
+#ifdef MINMAX
+    minmaxValues[MAX_CURR1] = math.max(batt1current,minmaxValues[MAX_CURR1])
+    minmaxValues[MAX_CURR2] = math.max(batt2current,minmaxValues[MAX_CURR2])
+#endif
+    bgclock = 0
+  end
+  bgclock = bgclock+1
 #endif
 end
 --
@@ -3327,6 +3344,7 @@ local function run(event)
 #ifdef TESTMODE
       symMode()
 #endif
+#ifndef BACKGROUND
     -- very slow loop
     if (clock % 8 == 0) then
       calcBattery()
@@ -3341,6 +3359,7 @@ local function run(event)
 #endif
       clock = 0
     end
+#endif
     -- fast loop, telemetry and hud   
     for r=1,3
     do

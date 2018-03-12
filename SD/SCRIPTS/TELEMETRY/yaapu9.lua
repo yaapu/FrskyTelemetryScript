@@ -1706,6 +1706,7 @@ end
 --------------------------------------------------------------------------------
 local showMessages = false
 local showConfigMenu = false
+local bgclock = 0
 --
 local function background()
   -------------------------------
@@ -1713,6 +1714,17 @@ local function background()
   ------------------------------
   processTelemetry()
   setSensorValues()
+  if (bgclock % 8 == 0) then
+    calcBattery()
+    calcFlightTime()
+    checkEvents()
+    checkLandingStatus()
+    checkCellVoltage(battsource,calcCellMin(cell1min,cell2min),calcCellMin(cell1minFC,cell2minFC),cellminA2)
+    minmaxValues[20] = math.max(batt1current,minmaxValues[20])
+    minmaxValues[21] = math.max(batt2current,minmaxValues[21])
+    bgclock = 0
+  end
+  bgclock = bgclock+1
 end
 --
 local clock = 0
@@ -1757,18 +1769,6 @@ local function run(event)
     end
     if showDualBattery == true and event == EVT_EXIT_BREAK then
       showDualBattery = false
-    end
-    -- very slow loop
-    if (clock % 8 == 0) then
-      calcBattery()
-      calcFlightTime()
-      checkEvents()
-      checkLandingStatus()
-      checkCellVoltage(battsource,calcCellMin(cell1min,cell2min),calcCellMin(cell1minFC,cell2minFC),cellminA2)
-      -- current needs to be updated
-      minmaxValues[20] = math.max(batt1current,minmaxValues[20])
-      minmaxValues[21] = math.max(batt2current,minmaxValues[21])
-      clock = 0
     end
     -- fast loop, telemetry and hud   
     for r=1,3
