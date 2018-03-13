@@ -143,7 +143,7 @@ A short press of [ENTER] switches from single aggregate view to individual dual 
 
 To get back to aggregate view short press [EXIT].
 
-## Cell count detection
+## Cell Count Detection
 
 The script uses a simple way to calculate cell count for voltage sources fc and a2:
 - if the maximum pack voltage is higher then 21.75v i.e 4.35x5 then it's a 6s.
@@ -173,6 +173,15 @@ It's also possible to configure a timer that will trigger a vocal alert every n 
 
 The script also support a "vocal fence" feature by setting a minimun altitude, a maximum altitude and a maximum distance alert.
 When the vehicle moves outside of the fence the script will play a vocal alert every n seconds.
+
+## Script timimg
+
+- The script can process telemetry up to 60Hz
+- Sport telemetry stream is at around 40Hz
+- Screen is redrawn at 20Hz
+- VSpd sensor is exposed to OpenTX at 20Hz
+- All other frsky sensors are exposed to OpenTX at 4Hz
+- Events and alarms are checked at 2Hz
 
 ## Configuration
 
