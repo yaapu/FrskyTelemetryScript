@@ -174,9 +174,9 @@ It's also possible to configure a timer that will trigger a vocal alert every n 
 The script also support a "vocal fence" feature by setting a minimun altitude, a maximum altitude and a maximum distance alert.
 When the vehicle moves outside of the fence the script will play a vocal alert every n seconds.
 
-## Script timimg
+## Script timing and rates
 
-- The script can process telemetry up to 60Hz
+- The script processes telemetry up to 60Hz
 - Sport telemetry stream is at around 40Hz
 - Screen is redrawn at 20Hz
 - VSpd sensor is exposed to OpenTX at 20Hz
