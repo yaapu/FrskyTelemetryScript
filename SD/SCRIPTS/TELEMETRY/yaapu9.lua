@@ -39,6 +39,8 @@
 ---------------------
 -- features
 ---------------------
+-- check events in the background
+-- process telemetry in the background @60Hz
 --#define RESETBATTALARMS
 --#define MENUEX
 --#define ALERTS
@@ -53,14 +55,27 @@
 --#define CELLCOUNT 5
 --#define DEMO
 --#define DEV
+
+-- calc and show background function rate
 --#define BGRATE
+-- calc and show run function rate
+--#define FGRATE
+-- calc and show hud refresh rate
+--#define HUDRATE
+-- calc and show telemetry process rate
+--#define BGTELERATE
+-- calc and show actual incoming telemetry rate
+--#define TELERATE
+
 --
 
-  
-  
 
 
-  
+
+
+
+
+
 
 
 
@@ -152,6 +167,7 @@ flightModes["r"][17]="Initializing"
 --
 local soundFileBasePath = "/SOUNDS/yaapu0"
 local gpsStatuses = {}
+
 gpsStatuses[0]="NoGPS"
 gpsStatuses[1]="NoLock"
 gpsStatuses[2]="2D"
@@ -159,7 +175,6 @@ gpsStatuses[3]="3D"
 gpsStatuses[4]="DGPS"
 gpsStatuses[5]="RTK"
 gpsStatuses[6]="RTK"
-
 
 local mavSeverity = {}
 mavSeverity[0]="EMR"
@@ -280,7 +295,8 @@ batLevels[0]=90
 local showDualBattery = false
 --
   
-  
+
+
 
 -- offsets
 local minmaxOffsets = {}
@@ -323,24 +339,26 @@ minmaxValues[27] = 0
 local showMinMaxValues = false
 --
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -392,6 +410,7 @@ local menuItems = {
   {"max distance alert:", 0, "D1", 0, 0,100000,"m",0,10 },
   {"repeat alerts every:", 0, "T2", 10, 10,600,"sec",0,5 },
 }
+
 
 local function getConfigFilename()
   local info = model.getInfo()
@@ -461,7 +480,7 @@ end
 local function drawConfigMenuBars()
   lcd.drawFilledRectangle(0,0, 212, 7, SOLID)
   lcd.drawRectangle(0, 0, 212, 7, SOLID)
-  lcd.drawText(0,0,"Yaapu X9 telemetry script 1.4.2",SMLSIZE+INVERS)
+  lcd.drawText(0,0,"Yaapu X9 telemetry script 1.5.0-rc1",SMLSIZE+INVERS)
   lcd.drawFilledRectangle(0,56, 212, 8, SOLID)
   lcd.drawRectangle(0, 56, 212, 8, SOLID)
   lcd.drawText(0,56+1,getConfigFilename(),SMLSIZE+INVERS)
@@ -1071,7 +1090,8 @@ local function getVoltageBySource(battsource,cell,cellFC,cellA2)
   return 0
 end
 
-  
+
+
 --[[
   min alarms need to be armed, i.e since values start at 0 in order to avoid
   immediate triggering upon start, the value must first reach the treshold
@@ -1528,19 +1548,6 @@ local function drawYaw()
   lcd.drawNumber(68 + hw + xx - 4, minY, yaw, MIDSIZE+INVERS)
 end
 
-local function clearHud()
-  lcd.drawFilledRectangle(68,0 + 7 + 8,76,49,ERASE,0)
-end
-
-local function clearLeftPane()
-  lcd.drawFilledRectangle(0,0 + 7,68 - 1,49,ERASE,0)
-end
-
-local function clearRightPane()
---
-  lcd.drawFilledRectangle(68+76,0 + 7,212 - 68 + 76,49,ERASE,0)
-end
-
 
 local function drawHud()
   drawRoll()
@@ -1683,18 +1690,7 @@ local function cycleBatteryInfo()
     showDualBattery = true
     return
   end
---[[  
-  if batt1source == "vs" then
-    batt1source = "fc"
-    batt2source = "fc"
-  elseif batt1source == "fc" then
-    batt1source = "a2"
-    batt2source = "a2"
-  elseif batt1source == "a2" then
-    batt1source = "vs"
-    batt2source = "vs"
-  end
-  ]]  if battsource == "vs" then
+  if battsource == "vs" then
     battsource = "fc"
   elseif battsource == "fc" then
     battsource = "a2"
@@ -1709,16 +1705,22 @@ local showMessages = false
 local showConfigMenu = false
 local bgclock = 0
 
--- this get called around 18-19 times per second, i.e around every 50-55 millis, @20Hz
+-------------------------------
+-- running at 20Hz (every 50ms)
+-------------------------------
 local function background()
-  -- FAST: this runs at 50 millis, ie. @20Hz
-  processTelemetry()
+  -- FAST: this runs at 60Hz (every 16ms)
+  for i=1,3
+  do
+    processTelemetry()
+  end
+  -- NORMAL: this runs at 20Hz (every 50ms)
   setTelemetryValue(0x0110, 0, 1, vSpeed, 5 , 1 , "VSpd")
-  -- SLOWER: this runs every 250 millis i.e @4Hz
+  -- SLOW: this runs at 4Hz (every 250ms)
   if (bgclock % 4 == 0) then
     setSensorValues()
   end
-  -- SLOWEST: this runs every 500 millis i.e @2Hz
+  -- SLOWER: this runs at 2Hz (every 500ms)
   if (bgclock % 8 == 0) then
     calcBattery()
     calcFlightTime()
@@ -1735,26 +1737,32 @@ end
 local clock = 0
 --
 local function run(event)
-  -------------------------------
-  -- process telemetry at least once
-  ------------------------------
-  processTelemetry()
+  ---------------------
+  -- SHOW MESSAGES
+  ---------------------
   if showConfigMenu == false and (event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT) then
     showMessages = true
   end
+  ---------------------
+  -- SHOW CONFIG MENU
+  ---------------------
   if showMessages == false and (event == EVT_MENU_LONG) then
     showConfigMenu = true
   end
   if showMessages then
+    ---------------------
+    -- MESSAGES
+    ---------------------
+    lcd.clear()
     if event == EVT_EXIT_BREAK or event == EVT_MINUS_BREAK or event == EVT_ROT_LEFT then
       showMessages = false
     end
-    lcd.clear()
-    processTelemetry()
     drawAllMessages()
   elseif showConfigMenu then
+    ---------------------
+    -- CONFIG MENU
+    ---------------------
     lcd.clear()
-    processTelemetry()
     drawConfigMenu(event)
     -------------------------------
     -- exit from menu and save
@@ -1765,6 +1773,9 @@ local function run(event)
       saveConfig()
     end
   else
+    ---------------------
+    -- MAIN VIEW
+    ---------------------
     lcd.clear()
     if event == EVT_ENTER_BREAK then
       cycleBatteryInfo()
@@ -1775,38 +1786,21 @@ local function run(event)
     if showDualBattery == true and event == EVT_EXIT_BREAK then
       showDualBattery = false
     end
-    -- fast loop, telemetry and hud   
-    for r=1,3
-    do
-    ---------------------------------------------------------
-    -- process telemetry on tight loop, let's assume we can 
-	  -- empty the queue fast enough with 3x iterations
-	  -- we want the hud in sync with the telemetry data so we
-	  -- pop,clear and redraw
-    -------------------------------
-      processTelemetry()
-      clearHud()
-      drawHud()
-    end
-    -- slow loop
+    --clearHud()
+    drawHud()
     drawYaw()
-    clearLeftPane()
-    clearRightPane()
     drawGrid()
     -- with dual battery default is to show aggregate view
     if batt2sources.fc or batt2sources.vs or batt2sources.a2 then
       if showDualBattery == false then
         -- dual battery: aggregate view
-        -- battery name
         lcd.drawText(68+76+1,7,"B1+B2",SMLSIZE+INVERS)
         drawBatteryPane(68+76+1,battsource,batt1current+batt2current,getBatt1Capacity()+getBatt2Capacity(),batt1mah+batt2mah,calcCellMin(cell1min,cell2min),calcCellMin(cell1minFC,cell2minFC),cellminA2,calcCellMin(cell1sum,cell2sum),calcCellMin(cell1sumFC,cell2sumFC),cellsumA2,1,10,19)
       else
         -- dual battery:battery 1 right pane
-        -- battery name
         lcd.drawText(68+76+1,7,"B1",SMLSIZE+INVERS)
         drawBatteryPane(68+76+1,battsource,batt1current,getBatt1Capacity(),batt1mah,cell1min,cell1minFC,cellminA2,cell1sum,cell1sumFC,cellsumA2,2,11,20)
         -- dual battery:battery 2 left pane
-        -- battery name
         lcd.drawText(0,7,"B2",SMLSIZE+INVERS)
         drawBatteryPane(0,battsource,batt2current,getBatt2Capacity(),batt2mah,cell2min,cell2minFC,0,cell2sum,cell2sumFC,0,3,12,21)
       end
@@ -1830,7 +1824,7 @@ end
 
 local function init()
   loadConfig()
-  pushMessage(6,"Yaapu X9 telemetry script 1.4.2")
+  pushMessage(6,"Yaapu X9 telemetry script 1.5.0-rc1")
   playSound("yaapu")
 end
 

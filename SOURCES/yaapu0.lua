@@ -26,16 +26,16 @@
 ---------------------
 -- radio model
 ---------------------
---#define X9
-#define X7
+#define X9
+--#define X7
 
 ---------------------
 -- script version 
 ---------------------
 #ifdef X9
-  #define VERSION "Yaapu X9 telemetry script 1.4.2"
+  #define VERSION "Yaapu X9 telemetry script 1.5.0-rc1"
 #else
-  #define VERSION "Yaapu X7 script 1.4.2"
+  #define VERSION "Yaapu X7 1.5.0-rc1"
 #endif
 
 ---------------------
@@ -47,10 +47,13 @@
 ---------------------
 -- features
 ---------------------
+-- check events in the background
 #define BACKGROUND
 #define MINMAX
 #define SENSORS
 #define ALARMS
+-- process telemetry in the background @60Hz
+#define BGTELE
 --#define RESETBATTALARMS
 --#define MENUEX
 --#define ALERTS
@@ -65,70 +68,83 @@
 --#define CELLCOUNT 5
 --#define DEMO
 --#define DEV
+
+-- calc and show background function rate
 --#define BGRATE
+-- calc and show run function rate
+--#define FGRATE
+-- calc and show hud refresh rate
+--#define HUDRATE
+-- calc and show telemetry process rate
+--#define BGTELERATE
+-- calc and show actual incoming telemetry rate
+--#define TELERATE
+
 --
 
 #ifdef SENSORS
-  #define VFAS_ID 0x0210
-  #define VFAS_SUBID 0
-  #define VFAS_INSTANCE 2
-  #define VFAS_PRECISION 2
-  #define VFAS_NAME "VFAS"
-  
-  #define CURR_ID 0x0200
-  #define CURR_SUBID 0
-  #define CURR_INSTANCE 3
-  #define CURR_PRECISION 1
-  #define CURR_NAME "CURR"
-  
-  #define VSpd_ID 0x0110
-  #define VSpd_SUBID 0
-  #define VSpd_INSTANCE 1
-  #define VSpd_PRECISION 1
-  #define VSpd_NAME "VSpd"
 
-  #define GSpd_ID 0x0830
-  #define GSpd_SUBID 0
-  #define GSpd_INSTANCE 4
-  #define GSpd_PRECISION 0
-  #define GSpd_NAME "GSpd"
+#define VFAS_ID 0x0210
+#define VFAS_SUBID 0
+#define VFAS_INSTANCE 2
+#define VFAS_PRECISION 2
+#define VFAS_NAME "VFAS"
 
-  #define Alt_ID 0x0100
-  #define Alt_SUBID 0
-  #define Alt_INSTANCE 1
-  #define Alt_PRECISION 1
-  #define Alt_NAME "Alt"
-  
-  #define GAlt_ID 0x0820
-  #define GAlt_SUBID 0
-  #define GAlt_INSTANCE 4
-  #define GAlt_PRECISION 0
-  #define GAlt_NAME "GAlt"
+#define CURR_ID 0x0200
+#define CURR_SUBID 0
+#define CURR_INSTANCE 3
+#define CURR_PRECISION 1
+#define CURR_NAME "CURR"
 
-  #define Hdg_ID 0x0840
-  #define Hdg_SUBID 0
-  #define Hdg_INSTANCE 4
-  #define Hdg_PRECISION 0
-  #define Hdg_NAME "Hdg"
+#define VSpd_ID 0x0110
+#define VSpd_SUBID 0
+#define VSpd_INSTANCE 1
+#define VSpd_PRECISION 1
+#define VSpd_NAME "VSpd"
 
-  #define Tmp1_ID 0x0400
-  #define Tmp1_SUBID 0
-  #define Tmp1_INSTANCE 0
-  #define Tmp1_PRECISION 0
-  #define Tmp1_NAME "Tmp1"
+#define GSpd_ID 0x0830
+#define GSpd_SUBID 0
+#define GSpd_INSTANCE 4
+#define GSpd_PRECISION 0
+#define GSpd_NAME "GSpd"
 
-  #define Tmp2_ID 0x0410
-  #define Tmp2_SUBID 0
-  #define Tmp2_INSTANCE 0
-  #define Tmp2_PRECISION 0
-  #define Tmp2_NAME "Tmp2"
+#define Alt_ID 0x0100
+#define Alt_SUBID 0
+#define Alt_INSTANCE 1
+#define Alt_PRECISION 1
+#define Alt_NAME "Alt"
 
-  #define Fuel_ID 0x0600
-  #define Fuel_SUBID 0
-  #define Fuel_INSTANCE 0
-  #define Fuel_PRECISION 0
-  #define Fuel_NAME "Fuel"
-#endif
+#define GAlt_ID 0x0820
+#define GAlt_SUBID 0
+#define GAlt_INSTANCE 4
+#define GAlt_PRECISION 0
+#define GAlt_NAME "GAlt"
+
+#define Hdg_ID 0x0840
+#define Hdg_SUBID 0
+#define Hdg_INSTANCE 4
+#define Hdg_PRECISION 0
+#define Hdg_NAME "Hdg"
+
+#define Tmp1_ID 0x0400
+#define Tmp1_SUBID 0
+#define Tmp1_INSTANCE 0
+#define Tmp1_PRECISION 0
+#define Tmp1_NAME "Tmp1"
+
+#define Tmp2_ID 0x0410
+#define Tmp2_SUBID 0
+#define Tmp2_INSTANCE 0
+#define Tmp2_PRECISION 0
+#define Tmp2_NAME "Tmp2"
+
+#define Fuel_ID 0x0600
+#define Fuel_SUBID 0
+#define Fuel_INSTANCE 0
+#define Fuel_PRECISION 0
+#define Fuel_NAME "Fuel"
+
+#endif --SENSORS
 
 
 
@@ -165,7 +181,7 @@
 	MAV_TYPE_PARAFOIL=28,             /* Steerable, nonrigid airfoil | */
 	MAV_TYPE_DODECAROTOR=29,          /* Dodecarotor | */
 ]]--
-#endif
+#endif --DEBUG
 local frameTypes = {}
 -- copter
 frameTypes[0]   = "c"
@@ -188,13 +204,13 @@ frameTypes[23]  = "p"
 frameTypes[24]  = "p"
 frameTypes[25]  = "p"
 frameTypes[28]  = "p"
-#endif
+#endif --PLANE
 #ifdef ROVER
 -- rover
 frameTypes[10]  = "r"
 -- boat
 frameTypes[11]  = "b"
-#endif
+#endif --ROVER
 #ifdef TESTMODE
 -- undefined
 frameTypes[5] = ""
@@ -208,16 +224,16 @@ frameTypes[18] = ""
 frameTypes[26] = ""
 frameTypes[27] = ""
 frameTypes[30] = ""
-#endif
+#endif --TESTMODE
 --
 local flightModes = {}
 flightModes["c"] = {}
 #ifdef PLANE
 flightModes["p"] = {}
-#endif
+#endif --PLANE
 #ifdef ROVER
 flightModes["r"] = {}
-#endif
+#endif --ROVER
 -- copter flight modes
 flightModes["c"][1]="Stabilize"
 flightModes["c"][2]="Acro"
@@ -243,7 +259,7 @@ flightModes["c"][0]=""
 flightModes["c"][9]=""
 flightModes["c"][11]=""
 flightModes["c"][13]=""
-#endif
+#endif --TESTMODE
 #ifdef PLANE
 -- plane flight modes
 flightModes["p"][1]="Manual"
@@ -270,8 +286,8 @@ flightModes["p"][22]="QRTL"
 flightModes["p"][0]=""
 flightModes["p"][10]=""
 flightModes["p"][14]=""
-#endif
-#endif
+#endif --TESTMODE
+#endif --PLANE
 #ifdef ROVER
 -- rover flight modes
 flightModes["r"][1]="Manual"
@@ -297,41 +313,12 @@ flightModes["r"][19]=""
 flightModes["r"][20]=""
 flightModes["r"][21]=""
 flightModes["r"][22]=""
-#endif
-#endif
+#endif --TESTMODE
+#endif --ROVER
 --
 local soundFileBasePath = "/SOUNDS/yaapu0"
-#ifdef DEBUG
--- battery
---[[
-sounds["bat5"] = "bat5.wav"
-sounds["bat10"] = "bat10.wav"
-sounds["bat15"] = "bat15.wav"
-sounds["bat20"] = "bat20.wav"
-sounds["bat25"] = "bat25.wav"
-sounds["bat30"] = "bat30.wav"
-sounds["bat40"] = "bat40.wav"
-sounds["bat50"] = "bat50.wav"
-sounds["bat60"] = "bat60.wav"
-sounds["bat70"] = "bat70.wav"
-sounds["bat80"] = "bat80.wav"
-sounds["bat90"] = "bat90.wav"
--- gps
-sounds["gpsfix"] = "gpsfix.wav"
-sounds["gpsnofix"] = "gpsnofix.wav"
--- failsafe
-sounds["lowbat"] = "lowbat.wav"
-sounds["ekf"] = "ekf.wav"
--- events
-sounds["yaapu"] = "yaapu.wav"
-sounds["landing"] = "landing.wav"
-sounds["armed"] = "armed.wav"
-sounds["disarmed"] = "disarmed.wav"
-sounds["batalert"] = "batalert.wav"
-sounds["timealert"] = "timealert.wav"
-#]]--
-#endif
 local gpsStatuses = {}
+
 gpsStatuses[0]="NoGPS"
 gpsStatuses[1]="NoLock"
 gpsStatuses[2]="2D"
@@ -339,7 +326,6 @@ gpsStatuses[3]="3D"
 gpsStatuses[4]="DGPS"
 gpsStatuses[5]="RTK"
 gpsStatuses[6]="RTK"
-
 
 local mavSeverity = {}
 mavSeverity[0]="EMR"
@@ -382,7 +368,7 @@ local ekfFailsafe = 0
 #ifndef ALARMS
 local lastBattFailsafe = 0
 local lastEkfFailsafe = 0
-#endif
+#endif --ALARMS
 -- GPS
 local numSats = 0
 local gpsStatus = 0
@@ -465,35 +451,36 @@ batLevels[0]=90
 local showDualBattery = false
 --
 #ifdef MINMAX  
-  #define MIN_CELL_FC 1
-  #define MIN_CELL1_FC 2
-  #define MIN_CELL2_FC 3
-  #define MIN_CELL_VS 4
-  #define MIN_CELL1_VS 5
-  #define MIN_CELL2_VS 6
-  #define MIN_CELL_A2 7
-  #define MIN_CELL1_A2 8
-  #define MIN_CELL2_A2 9
   
-  #define MIN_BATT_FC 10
-  #define MIN_BATT1_FC 11
-  #define MIN_BATT2_FC 12
-  #define MIN_BATT_VS 13
-  #define MIN_BATT1_VS 14
-  #define MIN_BATT2_VS 15
-  #define MIN_BATT_A2 16
-  #define MIN_BATT1_A2 17
-  #define MIN_BATT2_A2 18
-  
-  #define MAX_CURR 19
-  #define MAX_CURR1 20
-  #define MAX_CURR2 21
-  #define MAX_POWER 22
-  #define MINMAX_ALT 23
-  #define MAX_GPSALT 24
-  #define MAX_VSPEED 25
-  #define MAX_HSPEED 26
-  #define MAX_DIST 27
+#define MIN_CELL_FC 1
+#define MIN_CELL1_FC 2
+#define MIN_CELL2_FC 3
+#define MIN_CELL_VS 4
+#define MIN_CELL1_VS 5
+#define MIN_CELL2_VS 6
+#define MIN_CELL_A2 7
+#define MIN_CELL1_A2 8
+#define MIN_CELL2_A2 9
+
+#define MIN_BATT_FC 10
+#define MIN_BATT1_FC 11
+#define MIN_BATT2_FC 12
+#define MIN_BATT_VS 13
+#define MIN_BATT1_VS 14
+#define MIN_BATT2_VS 15
+#define MIN_BATT_A2 16
+#define MIN_BATT1_A2 17
+#define MIN_BATT2_A2 18
+
+#define MAX_CURR 19
+#define MAX_CURR1 20
+#define MAX_CURR2 21
+#define MAX_POWER 22
+#define MINMAX_ALT 23
+#define MAX_GPSALT 24
+#define MAX_VSPEED 25
+#define MAX_HSPEED 26
+#define MAX_DIST 27
 
 -- offsets
 local minmaxOffsets = {}
@@ -534,240 +521,244 @@ minmaxValues[26] = 0
 minmaxValues[27] = 0
 
 local showMinMaxValues = false
-#endif
+#endif --MINMAX
 --
 #ifdef TESTMODE
 -- TEST MODE
 local thrOut = 0
-#endif
+#endif --TESTMODE
 
 #ifdef X9
-  #define HUD_X 68
-  #define HUD_WIDTH 76
-
-  #define LEFTPANE_X 68
-  #define RIGHTPANE_X 68
-
-  #define TOPBAR_Y 0
-  #define TOPBAR_HEIGHT 7
-  #define TOPBAR_WIDTH 212
-
-  #define BOTTOMBAR_Y 56
-  #define BOTTOMBAR_HEIGHT 9
-  #define BOTTOMBAR_WIDTH 212
-
-  #define BOX1_X 0
-  #define BOX1_Y 38
-  #define BOX1_WIDTH 67  
-  #define BOX1_HEIGHT 8
-
-  #define BOX2_X 61
-  #define BOX2_Y 46
-  #define BOX2_WIDTH 17  
-  #define BOX2_HEIGHT 12
-
-  #define BATTVOLT_X 2
-  #define BATTVOLT_Y 43
-  #define BATTVOLT_YV 43
-  #define BATTVOLT_FLAGS MIDSIZE+PREC1
-  #define BATTVOLT_FLAGSV SMLSIZE
-
-  #define BATTCELL_X 27
-  #define BATTCELL_Y 10
-  #define BATTCELL_YV 11
-  #define BATTCELL_YS 20
-  #define BATTCELL_FLAGS DBLSIZE+PREC2
-
-  #define BATTCURR_X 37
-  #define BATTCURR_Y 43
-  #define BATTCURR_YA 43
-  #define BATTCURR_FLAGS MIDSIZE+PREC1
-  #define BATTCURR_FLAGSA SMLSIZE
-
-  #define BATTPERC_X 4
-  #define BATTPERC_Y 14
-  #define BATTPERC_YPERC 19
-  #define BATTPERC_FLAGS MIDSIZE
-  #define BATTPERC_FLAGSPERC SMLSIZE
-
-  #define BATTGAUGE_X 5
-  #define BATTGAUGE_Y 27
-  #define BATTGAUGE_WIDTH 59
-  #define BATTGAUGE_HEIGHT 5
-  #define BATTGAUGE_STEPS 10
-
-  #define BATTMAH_X 12
-  #define BATTMAH_Y 34
-  #define BATTMAH_FLAGS SMLSIZE+PREC1
-
-  #define FLIGHTMODE_X 1
-  #define FLIGHTMODE_Y 0
-  #define FLIGHTMODE_FLAGS SMLSIZE+INVERS
-
-  #define HOMEANGLE_X 60
-  #define HOMEANGLE_Y 27
-  #define HOMEANGLE_XLABEL 3
-  #define HOMEANGLE_YLABEL 27
-  #define HOMEANGLE_FLAGS SMLSIZE
-
-  #define HSPEED_X 60
-  #define HSPEED_Y 49
-  #define HSPEED_XLABEL 12
-  #define HSPEED_YLABEL 48
-  #define HSPEED_XDIM 61
-  #define HSPEED_YDIM 49
-  #define HSPEED_FLAGS SMLSIZE
-  #define HSPEED_ARROW_WIDTH 10
-
-  #define GPS_X 0
-  #define GPS_Y 6
-  #define GPS_BORDER 0
-
-  #define ALTASL_X 2
-  #define ALTASL_Y 32
-  #define ALTASL_XLABEL 2
-  #define ALTASL_YLABEL 24
-
-  #define BATTPOWER_X 35
-  #define BATTPOWER_Y 39
-  #define BATTPOWER_YW 39
-  #define BATTPOWER_FLAGS SMLSIZE+INVERS
-  #define BATTPOWER_FLAGSW SMLSIZE+INVERS
   
-  #define HOMEDIST_X 35
-  #define HOMEDIST_Y 32
-  #define HOMEDIST_XLABEL 34
-  #define HOMEDIST_YLABEL 25
-  #define HOMEDIST_FLAGS SMLSIZE
-  #define HOMEDIST_ARROW_WIDTH 8
+#define HUD_X 68
+#define HUD_WIDTH 76
 
-  #define HOMEDIR_X 75
-  #define HOMEDIR_Y 48
-  #define HOMEDIR_R 7
+#define LEFTPANE_X 68
+#define RIGHTPANE_X 68
 
-  #define FLIGHTTIME_X 180
-  #define FLIGHTTIME_Y 0
-  #define FLIGHTTIME_FLAGS SMLSIZE+INVERS
+#define TOPBAR_Y 0
+#define TOPBAR_HEIGHT 7
+#define TOPBAR_WIDTH 212
 
-  #define RSSI_X 69
-  #define RSSI_Y 0
-  #define RSSI_FLAGS SMLSIZE+INVERS 
+#define BOTTOMBAR_Y 56
+#define BOTTOMBAR_HEIGHT 9
+#define BOTTOMBAR_WIDTH 212
 
-  #define TXVOLTAGE_X 116
-  #define TXVOLTAGE_Y 0
-  #define TXVOLTAGE_FLAGS SMLSIZE+INVERS
-#endif
+#define BOX1_X 0
+#define BOX1_Y 38
+#define BOX1_WIDTH 67  
+#define BOX1_HEIGHT 8
+
+#define BOX2_X 61
+#define BOX2_Y 46
+#define BOX2_WIDTH 17  
+#define BOX2_HEIGHT 12
+
+#define BATTVOLT_X 2
+#define BATTVOLT_Y 43
+#define BATTVOLT_YV 43
+#define BATTVOLT_FLAGS MIDSIZE+PREC1
+#define BATTVOLT_FLAGSV SMLSIZE
+
+#define BATTCELL_X 27
+#define BATTCELL_Y 10
+#define BATTCELL_YV 11
+#define BATTCELL_YS 20
+#define BATTCELL_FLAGS DBLSIZE+PREC2
+
+#define BATTCURR_X 37
+#define BATTCURR_Y 43
+#define BATTCURR_YA 43
+#define BATTCURR_FLAGS MIDSIZE+PREC1
+#define BATTCURR_FLAGSA SMLSIZE
+
+#define BATTPERC_X 4
+#define BATTPERC_Y 14
+#define BATTPERC_YPERC 19
+#define BATTPERC_FLAGS MIDSIZE
+#define BATTPERC_FLAGSPERC SMLSIZE
+
+#define BATTGAUGE_X 5
+#define BATTGAUGE_Y 27
+#define BATTGAUGE_WIDTH 59
+#define BATTGAUGE_HEIGHT 5
+#define BATTGAUGE_STEPS 10
+
+#define BATTMAH_X 12
+#define BATTMAH_Y 34
+#define BATTMAH_FLAGS SMLSIZE+PREC1
+
+#define FLIGHTMODE_X 1
+#define FLIGHTMODE_Y 0
+#define FLIGHTMODE_FLAGS SMLSIZE+INVERS
+
+#define HOMEANGLE_X 60
+#define HOMEANGLE_Y 27
+#define HOMEANGLE_XLABEL 3
+#define HOMEANGLE_YLABEL 27
+#define HOMEANGLE_FLAGS SMLSIZE
+
+#define HSPEED_X 60
+#define HSPEED_Y 49
+#define HSPEED_XLABEL 12
+#define HSPEED_YLABEL 48
+#define HSPEED_XDIM 61
+#define HSPEED_YDIM 49
+#define HSPEED_FLAGS SMLSIZE
+#define HSPEED_ARROW_WIDTH 10
+
+#define GPS_X 0
+#define GPS_Y 6
+#define GPS_BORDER 0
+
+#define ALTASL_X 2
+#define ALTASL_Y 32
+#define ALTASL_XLABEL 2
+#define ALTASL_YLABEL 24
+
+#define BATTPOWER_X 35
+#define BATTPOWER_Y 39
+#define BATTPOWER_YW 39
+#define BATTPOWER_FLAGS SMLSIZE+INVERS
+#define BATTPOWER_FLAGSW SMLSIZE+INVERS
+
+#define HOMEDIST_X 35
+#define HOMEDIST_Y 32
+#define HOMEDIST_XLABEL 34
+#define HOMEDIST_YLABEL 25
+#define HOMEDIST_FLAGS SMLSIZE
+#define HOMEDIST_ARROW_WIDTH 8
+
+#define HOMEDIR_X 75
+#define HOMEDIR_Y 48
+#define HOMEDIR_R 7
+
+#define FLIGHTTIME_X 180
+#define FLIGHTTIME_Y 0
+#define FLIGHTTIME_FLAGS SMLSIZE+INVERS
+
+#define RSSI_X 69
+#define RSSI_Y 0
+#define RSSI_FLAGS SMLSIZE+INVERS 
+
+#define TXVOLTAGE_X 116
+#define TXVOLTAGE_Y 0
+#define TXVOLTAGE_FLAGS SMLSIZE+INVERS
+
+#endif --X9
 
 #ifdef X7
-  #define HUD_X 0
-  #define HUD_WIDTH 64
+  
+#define HUD_X 0
+#define HUD_WIDTH 64
 
-  #define LEFTPANE_X 68
-  #define RIGHTPANE_X 68
+#define LEFTPANE_X 68
+#define RIGHTPANE_X 68
 
-  #define TOPBAR_Y 0
-  #define TOPBAR_HEIGHT 7
-  #define TOPBAR_WIDTH 128
+#define TOPBAR_Y 0
+#define TOPBAR_HEIGHT 7
+#define TOPBAR_WIDTH 128
 
-  #define BOTTOMBAR_Y 57
-  #define BOTTOMBAR_HEIGHT 8
-  #define BOTTOMBAR_WIDTH 128
+#define BOTTOMBAR_Y 57
+#define BOTTOMBAR_HEIGHT 8
+#define BOTTOMBAR_WIDTH 128
 
-  #define BOX1_X 65
-  #define BOX1_Y 28
-  #define BOX1_WIDTH 23 
-  #define BOX1_HEIGHT 15
+#define BOX1_X 65
+#define BOX1_Y 28
+#define BOX1_WIDTH 23 
+#define BOX1_HEIGHT 15
 
-  #define BOX2_X 65
-  #define BOX2_Y 46
-  #define BOX2_WIDTH 17  
-  #define BOX2_HEIGHT 12
+#define BOX2_X 65
+#define BOX2_Y 46
+#define BOX2_WIDTH 17  
+#define BOX2_HEIGHT 12
 
-  #define BATTVOLT_X 1
-  #define BATTVOLT_Y 29
-  #define BATTVOLT_YV 29
-  #define BATTVOLT_FLAGS INVERS+PREC1+SMLSIZE
-  #define BATTVOLT_FLAGSV INVERS+SMLSIZE
+#define BATTVOLT_X 1
+#define BATTVOLT_Y 29
+#define BATTVOLT_YV 29
+#define BATTVOLT_FLAGS INVERS+PREC1+SMLSIZE
+#define BATTVOLT_FLAGSV INVERS+SMLSIZE
 
-  #define BATTCELL_X 24
-  #define BATTCELL_Y 27
-  #define BATTCELL_YV 28
-  #define BATTCELL_YS 36
-  #define BATTCELL_FLAGS DBLSIZE+PREC2
+#define BATTCELL_X 24
+#define BATTCELL_Y 27
+#define BATTCELL_YV 28
+#define BATTCELL_YS 36
+#define BATTCELL_FLAGS DBLSIZE+PREC2
 
-  #define BATTCURR_X 1
-  #define BATTCURR_Y 36
-  #define BATTCURR_YA 36
-  #define BATTCURR_FLAGS INVERS+SMLSIZE+PREC1
-  #define BATTCURR_FLAGSA INVERS+SMLSIZE
+#define BATTCURR_X 1
+#define BATTCURR_Y 36
+#define BATTCURR_YA 36
+#define BATTCURR_FLAGS INVERS+SMLSIZE+PREC1
+#define BATTCURR_FLAGSA INVERS+SMLSIZE
 
-  #define BATTPERC_X 16
-  #define BATTPERC_Y 44
-  #define BATTPERC_YPERC 48
-  #define BATTPERC_FLAGS MIDSIZE
-  #define BATTPERC_FLAGSPERC SMLSIZE
+#define BATTPERC_X 16
+#define BATTPERC_Y 44
+#define BATTPERC_YPERC 48
+#define BATTPERC_FLAGS MIDSIZE
+#define BATTPERC_FLAGSPERC SMLSIZE
 
-  #define BATTGAUGE_X 0
-  #define BATTGAUGE_Y 0
-  #define BATTGAUGE_WIDTH 0
-  #define BATTGAUGE_HEIGHT 0
-  #define BATTGAUGE_STEPS 0
+#define BATTGAUGE_X 0
+#define BATTGAUGE_Y 0
+#define BATTGAUGE_WIDTH 0
+#define BATTGAUGE_HEIGHT 0
+#define BATTGAUGE_STEPS 0
 
-  #define BATTMAH_X 64
-  #define BATTMAH_Y 43
-  #define BATTMAH_FLAGS SMLSIZE+PREC1
+#define BATTMAH_X 64
+#define BATTMAH_Y 43
+#define BATTMAH_FLAGS SMLSIZE+PREC1
 
-  #define FLIGHTMODE_X 1
-  #define FLIGHTMODE_Y 0
-  #define FLIGHTMODE_FLAGS SMLSIZE+INVERS
+#define FLIGHTMODE_X 1
+#define FLIGHTMODE_Y 0
+#define FLIGHTMODE_FLAGS SMLSIZE+INVERS
 
-  #define HOMEANGLE_X 0
-  #define HOMEANGLE_Y 0
-  #define HOMEANGLE_XLABEL 0
-  #define HOMEANGLE_YLABEL 0
-  #define HOMEANGLE_FLAGS SMLSIZE
+#define HOMEANGLE_X 0
+#define HOMEANGLE_Y 0
+#define HOMEANGLE_XLABEL 0
+#define HOMEANGLE_YLABEL 0
+#define HOMEANGLE_FLAGS SMLSIZE
 
-  #define HSPEED_X 0
-  #define HSPEED_Y 0
-  #define HSPEED_XLABEL 0
-  #define HSPEED_YLABEL 0
-  #define HSPEED_XDIM 0
-  #define HSPEED_YDIM 0
-  #define HSPEED_FLAGS SMLSIZE
-  #define HSPEED_ARROW_WIDTH 10
+#define HSPEED_X 0
+#define HSPEED_Y 0
+#define HSPEED_XLABEL 0
+#define HSPEED_YLABEL 0
+#define HSPEED_XDIM 0
+#define HSPEED_YDIM 0
+#define HSPEED_FLAGS SMLSIZE
+#define HSPEED_ARROW_WIDTH 10
 
-  #define GPS_X 65
-  #define GPS_Y 6
-  #define GPS_BORDER 0
+#define GPS_X 65
+#define GPS_Y 6
+#define GPS_BORDER 0
 
-  #define ALTASL_X 0
-  #define ALTASL_Y 0
-  #define ALTASL_XLABEL 0
-  #define ALTASL_YLABEL 0
+#define ALTASL_X 0
+#define ALTASL_Y 0
+#define ALTASL_XLABEL 0
+#define ALTASL_YLABEL 0
 
-  #define HOMEDIST_X 76
-  #define HOMEDIST_Y 21
-  #define HOMEDIST_XLABEL 66
-  #define HOMEDIST_YLABEL 21
-  #define HOMEDIST_FLAGS SMLSIZE
-  #define HOMEDIST_ARROW_WIDTH 7
+#define HOMEDIST_X 76
+#define HOMEDIST_Y 21
+#define HOMEDIST_XLABEL 66
+#define HOMEDIST_YLABEL 21
+#define HOMEDIST_FLAGS SMLSIZE
+#define HOMEDIST_ARROW_WIDTH 7
 
-  #define HOMEDIR_X 73
-  #define HOMEDIR_Y 50
-  #define HOMEDIR_R 7
+#define HOMEDIR_X 73
+#define HOMEDIR_Y 50
+#define HOMEDIR_R 7
 
-  #define FLIGHTTIME_X 96
-  #define FLIGHTTIME_Y 0
-  #define FLIGHTTIME_FLAGS SMLSIZE+INVERS
+#define FLIGHTTIME_X 96
+#define FLIGHTTIME_Y 0
+#define FLIGHTTIME_FLAGS SMLSIZE+INVERS
 
-  #define RSSI_X 60
-  #define RSSI_Y 0
-  #define RSSI_FLAGS SMLSIZE+INVERS 
+#define RSSI_X 60
+#define RSSI_Y 0
+#define RSSI_FLAGS SMLSIZE+INVERS 
 
-  #define TXVOLTAGE_X 104
-  #define TXVOLTAGE_Y 21
-  #define TXVOLTAGE_FLAGS SMLSIZE
-#endif
+#define TXVOLTAGE_X 104
+#define TXVOLTAGE_Y 21
+#define TXVOLTAGE_FLAGS SMLSIZE
+
+#endif --X7
 --------------------------------------------------------------------------------
 -- CONFIGURATION MENU
 --------------------------------------------------------------------------------
@@ -791,12 +782,12 @@ local conf = {
 --------------------------------------------------------------------------------
 -- EXTENDED MENU VALUE,COMBO,COMBOVALUE
 --------------------------------------------------------------------------------
-  #define MENU_PAGESIZE   5
-  #define MENU_ROWHEIGHT  9
-  #define MENU_Y          1
-  #define TYPEVALUE           0
-  #define TYPECOMBO           1
-  #define TYPECOMBOVALUE      2
+#define MENU_PAGESIZE   5
+#define MENU_ROWHEIGHT  9
+#define MENU_Y          1
+#define TYPEVALUE           0
+#define TYPECOMBO           1
+#define TYPECOMBOVALUE      2
 
 local menu  = {
   selectedItem = 1,
@@ -1065,35 +1056,35 @@ local function drawConfigMenu(event)
     end
   end
 end
-#else
+#else --MENUEX
 --------------------------------------------------------------------------------
 -- MENU VALUE,COMBO
 --------------------------------------------------------------------------------
-  #define TYPEVALUE 0
-  #define TYPECOMBO 1
-  #define MENU_Y 7
-  #define MENU_PAGESIZE 7
-  #ifdef X9
-  #define MENU_ITEM_X 150
-  #else
-  #define MENU_ITEM_X 102
-  #endif
+#define TYPEVALUE 0
+#define TYPECOMBO 1
+#define MENU_Y 7
+#define MENU_PAGESIZE 7
+#ifdef X9
+#define MENU_ITEM_X 150
+#else
+#define MENU_ITEM_X 102
+#endif
 
-  #define L1 1
-  #define V1 2
-  #define V2 3
-  #define B1 4
-  #define B2 5
-  #define S1 6
-  #define S2 7
-  #define S3 8
-  #define VS 9
-  #define T1 10
-  #define A1 11
-  #define A2 12
-  #define D1 13
-  #define T2 14
-  #define AA 15
+#define L1 1
+#define V1 2
+#define V2 3
+#define B1 4
+#define B2 5
+#define S1 6
+#define S2 7
+#define S3 8
+#define VS 9
+#define T1 10
+#define A1 11
+#define A2 12
+#define D1 13
+#define T2 14
+#define AA 15
   
 local menu  = {
   selectedItem = 1,
@@ -1119,9 +1110,11 @@ local menuItems = {
   {"repeat alerts every:", TYPEVALUE, "T2", 10, 10,600,"sec",0,5 },
 #ifdef ALERTS 
   {"ack alerts after 10s:", TYPECOMBO, "AA", 2, { "yes", "no" } , {true,false} },
-#endif  
+#endif --ALERTS
 }
-#else
+#endif --X9
+
+#ifdef X7
 local menuItems = {
   {"voice language:", TYPECOMBO, "L1", 1, { "eng", "ita", "fre" } , {"en","it","fr"} },
   {"batt alert level 1:", TYPEVALUE, "V1", 350, 320,420,"V",PREC2,5 },
@@ -1139,9 +1132,9 @@ local menuItems = {
   {"repeat alerts every:", TYPEVALUE, "T2", 10, 10,600,"sec",0,5 },
 #ifdef ALERTS 
   {"ack alerts after 10s:", TYPECOMBO, "AA", 2, { "yes", "no" } , {true,false} },
-#endif  
+#endif --ALERTS
 }
-#endif
+#endif --X7
 
 local function getConfigFilename()
   local info = model.getInfo()
@@ -1219,7 +1212,8 @@ local function drawConfigMenuBars()
   lcd.drawNumber(BOTTOMBAR_WIDTH,BOTTOMBAR_Y+1,#menuItems,SMLSIZE+INVERS+RIGHT)
   lcd.drawText(lcd.getLastLeftPos(),BOTTOMBAR_Y+1,"/",SMLSIZE+INVERS+RIGHT)
   lcd.drawNumber(lcd.getLastLeftPos(),BOTTOMBAR_Y+1,menu.selectedItem,SMLSIZE+INVERS+RIGHT)
-#else
+#endif --X9
+#ifdef X7
   lcd.drawFilledRectangle(0,TOPBAR_Y, TOPBAR_WIDTH, 7, SOLID)
   lcd.drawRectangle(0, TOPBAR_Y, TOPBAR_WIDTH, 7, SOLID)
   lcd.drawText(0,0,VERSION,SMLSIZE+INVERS)
@@ -1229,7 +1223,7 @@ local function drawConfigMenuBars()
   lcd.drawNumber(BOTTOMBAR_WIDTH,BOTTOMBAR_Y-1,#menuItems,SMLSIZE+INVERS+RIGHT)
   lcd.drawText(lcd.getLastLeftPos(),BOTTOMBAR_Y-1,"/",SMLSIZE+INVERS+RIGHT)
   lcd.drawNumber(lcd.getLastLeftPos(),BOTTOMBAR_Y-1,menu.selectedItem,SMLSIZE+INVERS+RIGHT)
-#endif
+#endif --X7
 end
 
 local function incMenuItem(idx)
@@ -1312,7 +1306,7 @@ local function drawConfigMenu(event)
     end
   end
 end
-#endif
+#endif --MENUEX
 
 local function playSound(soundFile)
   if conf.disableAllSounds then
@@ -1497,7 +1491,7 @@ local function drawHomePad(x0,y0)
   drawCircle(x0 + 5,y0,5,2)
   lcd.drawText(x0 + 5 - 2,y0 - 3,"H")
 end
-#endif
+#endif --DEV
 
 local function drawNumberWithTwoDims(x,y,yTop,yBottom,number,topDim,bottomDim,flags,topFlags,bottomFlags)
   lcd.drawNumber(x, y, number, flags)
@@ -1539,7 +1533,7 @@ local function logTelemetryToFile(S_ID,F_ID,D_ID,VA)
   io.write(logFile,string.format("%d,%#04x,%#04x,%#04x,%#04x", getTime(), lc1, lc2, lc3, lc4),"\r\n")
   io.close(logFile)
 end
-#endif
+#endif --LOGTELEMETRY
 
 #define MAX_MESSAGES 9
 
@@ -1594,7 +1588,7 @@ end
 local function symTimer()
 #ifdef DEMO
   seconds = 60 * 9 + 30
-#endif  
+#endif --DEMO
   thrOut = getValue("thr")
   if (thrOut > -500 ) then
     landComplete = 1
@@ -1671,12 +1665,12 @@ local function symBatt()
       batt1volt = CELLCOUNT * 3.43 * 10
       batt1Capacity = 5200
       batt1mah = 4400
-    #ifdef BATT2TEST
+#ifdef BATT2TEST
       batt2current = 238
       batt2volt = CELLCOUNT  * 3.44 * 10
       batt2Capacity = 5200
       batt2mah = 4500
-    #endif
+#endif --BATT2TEST
     else
       minmaxValues[MIN_BATT_FC] = CELLCOUNT * 3.75 * 10
       minmaxValues[MIN_BATT1_FC] = CELLCOUNT * 3.75 * 10
@@ -1693,26 +1687,26 @@ local function symBatt()
       batt1volt = CELLCOUNT * 3.87 * 10
       batt1Capacity = 5200
       batt1mah = 2800
-    #ifdef BATT2TEST
+#ifdef BATT2TEST
       batt2current = 238
       batt2volt = CELLCOUNT * 3.89 * 10
       batt2Capacity = 5200
       batt2mah = 2700
-    #endif
+#endif --BATT2TEST
     end
-#else
+#else --DEMO
     -- battery voltage
     batt1current = 100 +  ((thrOut)*0.01 * 30)
     batt1volt = CELLCOUNT * (32 + 10*math.abs(thrOut)*0.001)
     batt1Capacity = 5200
     batt1mah = math.abs(1000*(thrOut/200))
-  #ifdef BATT2TEST
+#ifdef BATT2TEST
     batt2current = 100 +  ((thrOut)*0.01 * 30)
     batt2volt = CELLCOUNT * (32 + 10*math.abs(thrOut)*0.001)
     batt2Capacity = 5200
     batt2mah = math.abs(1000*(thrOut/200))
-  #endif
-#endif
+#endif --BATT2TEST
+#endif --DEMO
   -- flightmode
 #ifdef DEMO
     flightMode = 1
@@ -1720,11 +1714,11 @@ local function symBatt()
     minmaxValues[MAX_DIST] = 130
     gpsAlt = 200
     homeDist = 95
-#else
+#else --DEMO
     flightMode = math.floor(20 * math.abs(thrOut)*0.001)
     gpsAlt = math.floor(10 * math.abs(thrOut)*0.1)
     homeDist = math.floor(10 * math.abs(thrOut)*0.1)
-#endif    
+#endif --DEMO
   else
     batt1mah = 0
   end
@@ -1736,7 +1730,7 @@ local function symAttitude()
   roll = 14
   pitch = -0.8
   yaw = 33
-#else  
+#else --DEMO
   local rollCh = 0
   local pitchCh = 0
   local yawCh = 0
@@ -1754,7 +1748,7 @@ local function symAttitude()
   roll = rollCh/3
   pitch = pitchCh/2
   yaw = yawCh
-#endif
+#endif --DEMO
 end
 
 local function symHome()
@@ -1770,11 +1764,11 @@ local function symHome()
   homeAlt = 24
   vSpeed = 2
   hSpeed = 34
-#else
+#else --DEMO
   homeAlt = yawCh * 0.1
   vSpeed = yawCh * 0.1 * -1
   hSpeed = vSpeed
-#endif  
+#endif --DEMO  
   if ( yawCh >= 0) then
     yawCh = yawCh * 0.175
   else
@@ -1801,11 +1795,16 @@ local function symMode()
   symBatt()
   symFrameType()
 end
-#endif
+#endif --TESTMODE
 
 -----------------------------------------------------------------
 -- TELEMETRY
 -----------------------------------------------------------------
+#ifdef TELERATE
+local telecounter = 0
+local telerate = 0
+local telestart = 0
+#endif --TELERATE
 --
 local function processTelemetry()
   SENSOR_ID,FRAME_ID,DATA_ID,VALUE = sportTelemetryPop()
@@ -1815,7 +1814,20 @@ local function processTelemetry()
     if DATA_ID ~= 0x5006 then
       logTelemetryToFile(SENSOR_ID,FRAME_ID,DATA_ID,VALUE)
     end
-#endif
+#endif --LOGTELEMETRY
+#ifdef TELERATE
+    ------------------------
+    -- CALC ACTUAL TELE RATE
+    ------------------------
+    local now = getTime()/100
+    if telecounter == 0 then
+      telestart = now
+    else
+      telerate = telecounter / (now - telestart)
+    end
+    --
+    telecounter=telecounter+1
+#endif --TELERATE
     noTelemetryData = 0
     if ( DATA_ID == 0x5006) then -- ROLLPITCH
       -- roll [0,1800] ==> [-180,180]
@@ -1854,7 +1866,7 @@ local function processTelemetry()
       batt2volt = bit32.extract(VALUE,0,9)
       batt2current = bit32.extract(VALUE,10,7) * (10^bit32.extract(VALUE,9,1))
       batt2mah = bit32.extract(VALUE,17,15)
-#endif
+#endif --BATT2TEST
     elseif ( DATA_ID == 0x5008) then -- BATT2
       batt2volt = bit32.extract(VALUE,0,9)
       batt2current = bit32.extract(VALUE,10,7) * (10^bit32.extract(VALUE,9,1))
@@ -1882,7 +1894,7 @@ local function processTelemetry()
           pushMessage( severity, msgBuffer)
 #ifdef LOGTELEMETRY    
           logMessageToFile(string.format("[%s] %s",mavSeverity[severity],msgBuffer))
-#endif
+#endif --LOGTELEMETRY
           msgBuffer = ""
         end
     end
@@ -1899,7 +1911,7 @@ local function processTelemetry()
         batt1Capacity = paramValue
 #ifdef BATT2TEST
         batt2Capacity = paramValue
-#endif
+#endif --BATT2TEST
       elseif paramId == 5 then
         batt2Capacity = paramValue
       end
@@ -1911,14 +1923,14 @@ end
 local function telemetryEnabled()
   return true
 end
-#else
+#else --TESTMODE
 local function telemetryEnabled()
   if getRSSI() == 0 then
     noTelemetryData = 1
   end
   return noTelemetryData == 0
 end
-#endif
+#endif --TESTMODE
 
 #ifdef MINMAX
 local function getMinValue(value,idx)
@@ -1934,7 +1946,7 @@ local function getMaxValue(value,idx)
   end
   return value
 end
-#endif
+#endif --MINMAX
 
 -- returns the actual minimun only if both are > 0
 local function calcCellMin(v1,v2)
@@ -1985,7 +1997,7 @@ local function calcCellValue(cellsum)
   end
   return cellsum/cellcount
 end
-#endif
+#endif --DEV
 
 #ifdef MINMAX
 local function calcMinValue(value,min)
@@ -1995,7 +2007,7 @@ local function calcMinValue(value,min)
     return math.min(value,min)
   end
 end
-#endif
+#endif --MINMAX
 
 local function calcBattery()
   local battA2 = 0
@@ -2033,9 +2045,9 @@ local function calcBattery()
   ------------
 #ifdef BATT2TEST
   cellResult = getValue("Cels")
-#else
+#else --BATT2TEST
   cellResult = getValue("Cel2")
-#endif
+#endif --BATT2TEST
   if type(cellResult) == "table" then
     cell2min = CELLFULL
     cell2sum = 0
@@ -2136,7 +2148,7 @@ local function calcBattery()
   minmaxValues[MIN_BATT_A2] = calcMinValue(cellsumA2*10,minmaxValues[MIN_BATT_A2])
   minmaxValues[MIN_BATT1_A2] = minmaxValues[MIN_BATT_A2]
   minmaxValues[MIN_BATT2_A2] = 0
-#endif
+#endif --MINMAX
 end
 
 local function checkLandingStatus()
@@ -2185,19 +2197,20 @@ local function getVoltageBySource(battsource,cell,cellFC,cellA2)
 end
 
 #ifdef ALARMS
-  #define ALARMS_MIN_ALT 1
-  #define ALARMS_MAX_ALT 2
-  #define ALARMS_MAX_DIST 3
-  #define ALARMS_EKF 4
-  #define ALARMS_BATT 5
-  #define ALARMS_TIMER 6
-  #define ALARMS_BATT1 7
-  #define ALARMS_BATT2 8
-  
-  #define ALARM_TYPE_MIN 0
-  #define ALARM_TYPE_MAX 1
-  #define ALARM_TYPE_TIMER 2
-  #define ALARM_TYPE_BATT 3
+
+#define ALARMS_MIN_ALT 1
+#define ALARMS_MAX_ALT 2
+#define ALARMS_MAX_DIST 3
+#define ALARMS_EKF 4
+#define ALARMS_BATT 5
+#define ALARMS_TIMER 6
+#define ALARMS_BATT1 7
+#define ALARMS_BATT2 8
+
+#define ALARM_TYPE_MIN 0
+#define ALARM_TYPE_MAX 1
+#define ALARM_TYPE_TIMER 2
+#define ALARM_TYPE_BATT 3
 --[[
   min alarms need to be armed, i.e since values start at 0 in order to avoid
   immediate triggering upon start, the value must first reach the treshold
@@ -2233,10 +2246,10 @@ local function checkCellVoltage(battsource,cellmin,cellminFC,cellminA2)
   elseif celm > conf.battAlertLevel2 then
     alarms[ALARMS_BATT2][1] = false
   end
-#endif
+#endif --RESETBATTALARMS
 end
 
-#endif
+#endif --ALARMS
 
 #ifdef SENSORS
 local function setSensorValues()
@@ -2267,20 +2280,21 @@ local function setSensorValues()
   setTelemetryValue(Tmp1_ID, Tmp1_SUBID, Tmp1_INSTANCE, flightMode, 11 , Tmp1_PRECISION , Tmp1_NAME)
   setTelemetryValue(Tmp2_ID, Tmp2_SUBID, Tmp2_INSTANCE, numSats*10+gpsStatus, 11 , Tmp2_PRECISION , Tmp2_NAME)
 end
-#endif
+#endif --SENSORS
 
 #ifdef ALERTS
-  #define ALERTS_LABEL 1
-  #define ALERTS_TIME 2
-  #define ALERTS_ICON 3
-  #define ALERTS_ICONX 4
-  #define ALERTS_ICONY 5
-  #define ALERTS_ACK 6
-  #define ALERTS_FTIME 7
-  #define ALERTS_VALUE 8
-  #define ALERTS_UNIT 9
-  #define ALERTS_FLAGS 10
-  #define ALERTS_MULTIPLE 11  
+
+#define ALERTS_LABEL 1
+#define ALERTS_TIME 2
+#define ALERTS_ICON 3
+#define ALERTS_ICONX 4
+#define ALERTS_ICONY 5
+#define ALERTS_ACK 6
+#define ALERTS_FTIME 7
+#define ALERTS_VALUE 8
+#define ALERTS_UNIT 9
+#define ALERTS_FLAGS 10
+#define ALERTS_MULTIPLE 11  
   
 -- text,time,icon,xIcon,yIcon,ack,ftime,value,unit,prec,multiple
 local alerts = {
@@ -2291,31 +2305,33 @@ local alerts = {
   {"TIMER ALERT",   0, nil,   0,0,false,  0,  nil,  nil,  nil,    true }
 }
  
- #ifdef X9
-    #define ALERT_X 61
-    #define ALERT_Y 16
-    #define ALERT_WIDTH 90
-    #define ALERT_HEIGHT 30
-    #define ALERTICON_X 84
-    #define ALERTICON_Y 48
-  #else
-    #define ALERT_X 19
-    #define ALERT_Y 16
-    #define ALERT_WIDTH 90
-    #define ALERT_HEIGHT 30
-    #define ALERTICON_X 9
-    #define ALERTICON_Y 48
-  #endif
+#ifdef X9
+#define ALERT_X 61
+#define ALERT_Y 16
+#define ALERT_WIDTH 90
+#define ALERT_HEIGHT 30
+#define ALERTICON_X 84
+#define ALERTICON_Y 48
+#endif --X9
 
-  #define BATTFAILSAFE 1
-  #define EKFFAILSAFE 2
-  #define BATTLEVEL1 3
-  #define BATTLEVEL2 4
-  #define TIMERALERT 5
-  #define ALTITUDEALERT 6
-  
-  #define AUTOACK_SECS 10
-  #define ALERT_INIT_DELAY 5
+#ifdef X7
+#define ALERT_X 19
+#define ALERT_Y 16
+#define ALERT_WIDTH 90
+#define ALERT_HEIGHT 30
+#define ALERTICON_X 9
+#define ALERTICON_Y 48
+#endif --X7
+
+#define BATTFAILSAFE 1
+#define EKFFAILSAFE 2
+#define BATTLEVEL1 3
+#define BATTLEVEL2 4
+#define TIMERALERT 5
+#define ALTITUDEALERT 6
+
+#define AUTOACK_SECS 10
+#define ALERT_INIT_DELAY 5
 --
 local currentAlertIdx = 0
 --
@@ -2335,9 +2351,10 @@ local function drawAlerts()
       if showDualBattery == false then
         lcd.drawText(ALERTICON_X+alerts[a][ALERTS_ICONX],ALERTICON_Y+alerts[a][ALERTS_ICONY],alerts[a][ALERTS_ICON],SMLSIZE+INVERS)
       end
-#else
+#endif --X7
+#ifdef X9
       lcd.drawText(ALERTICON_X+alerts[a][ALERTS_ICONX],ALERTICON_Y+alerts[a][ALERTS_ICONY],alerts[a][ALERTS_ICON],SMLSIZE+INVERS)
-#endif
+#endif --X9
     elseif alerts[a][ALERTS_ACK] == false and alerts[a][ALERTS_TIME] > lastAlertTime then
       -- else display the latest alert event
       lastAlertTime = alerts[a][ALERTS_TIME]
@@ -2405,7 +2422,7 @@ local function checkCellVoltage(battsource,cellmin,cellminFC,cellminA2)
     playSound("batalert2")
   end
 end
-#endif
+#endif --ALERTS
 
 ---------------------
 -- Single long function much more memory efficient than many little functions
@@ -2416,7 +2433,7 @@ local function drawBatteryPane(x,battsource,battcurrent,battcapacity,battmah,cel
 #ifdef MINMAX
   celm = getMinValue(celm,cellIdx + minmaxOffsets[battsource])
   lipo = getMinValue(lipo,lipoIdx + minmaxOffsets[battsource])
-#endif
+#endif --MINMAX
   local perc = 0
   if (battcapacity > 0) then
     perc = (1 - (battmah/battcapacity))*100
@@ -2429,7 +2446,7 @@ local function drawBatteryPane(x,battsource,battcurrent,battcapacity,battmah,cel
   local dimFlags = 0
 #ifdef MINMAX
   if showMinMaxValues == false then
-#endif
+#endif --MINMAX
 #ifdef ALARMS
     if alarms[ALARMS_BATT2][1] == true then
       flags = BLINK
@@ -2444,17 +2461,17 @@ local function drawBatteryPane(x,battsource,battcurrent,battcapacity,battmah,cel
     elseif celm < conf.battAlertLevel1 then
       dimFlags = BLINK+INVERS
     end
-#endif
+#endif --ALARMS
 #ifdef MINMAX
   end
-#endif
+#endif --MINMAX
   drawNumberWithTwoDims(x+BATTCELL_X, BATTCELL_Y, BATTCELL_YV, BATTCELL_YS,celm,"V",battsource,BATTCELL_FLAGS+flags,dimFlags,SMLSIZE)
   -- battery voltage
   drawNumberWithDim(x+BATTVOLT_X,BATTVOLT_Y,BATTVOLT_YV, lipo,"V",BATTVOLT_FLAGS,BATTVOLT_FLAGSV)
   -- battery current
 #ifdef MINMAX
   battcurrent = getMaxValue(battcurrent,currIdx)
-#endif
+#endif --MINMAX
   drawNumberWithDim(x+BATTCURR_X,BATTCURR_Y,BATTCURR_YA,battcurrent,"A",BATTCURR_FLAGS,BATTCURR_FLAGSA)
   -- battery percentage
   lcd.drawNumber(x+BATTPERC_X, BATTPERC_Y, perc, BATTPERC_FLAGS)
@@ -2467,39 +2484,40 @@ local function drawBatteryPane(x,battsource,battcurrent,battcapacity,battmah,cel
   for s=1,BATTGAUGE_STEPS - 1 do
     lcd.drawLine(x+BATTGAUGE_X + s*step - 1,BATTGAUGE_Y, x+BATTGAUGE_X + s*step - 1, BATTGAUGE_Y + BATTGAUGE_HEIGHT - 1,SOLID,0)
   end
-#endif
+#endif --X9
   -- battery mah
 #ifdef X7
   lcd.drawText(x+BATTMAH_X, BATTMAH_Y, "Ah", SMLSIZE+RIGHT)
   lcd.drawNumber(lcd.getLastLeftPos()-1, BATTMAH_Y, battmah/100, BATTMAH_FLAGS+RIGHT)
   lcd.drawText(x+BATTMAH_X, BATTMAH_Y+8, "Ah", SMLSIZE+RIGHT+INVERS)
   lcd.drawNumber(lcd.getLastLeftPos()-1, BATTMAH_Y+8, battcapacity/100, BATTMAH_FLAGS+RIGHT+INVERS)
-#endif
+#endif --X7
 #ifdef X9
   lcd.drawNumber(x+BATTMAH_X, BATTMAH_Y, battmah/100, BATTMAH_FLAGS)
   lcd.drawText(lcd.getLastRightPos(), BATTMAH_Y, "/", SMLSIZE)
   lcd.drawNumber(lcd.getLastRightPos(), BATTMAH_Y, battcapacity/100, BATTMAH_FLAGS)
   lcd.drawText(lcd.getLastRightPos(), BATTMAH_Y, "Ah", SMLSIZE)
-#endif
+#endif --X9
 #ifdef X7
   -- tx voltage
   lcd.drawText(TXVOLTAGE_X, TXVOLTAGE_Y, "Tx", TXVOLTAGE_FLAGS)
   lcd.drawNumber(lcd.getLastRightPos(), TXVOLTAGE_Y, getValue(getFieldInfo("tx-voltage").id)*10, TXVOLTAGE_FLAGS+PREC1)
   lcd.drawText(lcd.getLastRightPos(), TXVOLTAGE_Y, "v", TXVOLTAGE_FLAGS)
-#endif
+#endif --X7
 #ifdef MINMAX
-  #ifdef X9
+#ifdef X9
   if showMinMaxValues == true then
     drawVArrow(x+BATTVOLT_X+27,BATTVOLT_Y + 7, 5,false,true)
     drawVArrow(x+BATTCURR_X+27,BATTCURR_Y + 6,5,true,false)
     drawVArrow(x+BATTCELL_X+37, BATTCELL_Y + 3,6,false,true)
   end
-  #else
+#endif --X9
+#ifdef X7
   if showMinMaxValues == true then
     drawVArrow(x+BATTCELL_X+36, BATTCELL_Y+2,6,false,true)
   end
-  #endif
-#endif
+#endif --X7
+#endif --MINMAX
 end
 #ifdef X7
 ---------------------
@@ -2511,7 +2529,7 @@ local function drawX7BatteryLeftPane(battsource,battcurrent,battcapacity,battmah
 #ifdef MINMAX
   celm = getMinValue(celm,cellIdx + minmaxOffsets[battsource])
   lipo = getMinValue(lipo,lipoIdx + minmaxOffsets[battsource])
-#endif 
+#endif --MINMAX
   local perc = 0
   if (battcapacity > 0) then
     perc = (1 - (battmah/battcapacity))*100
@@ -2526,7 +2544,7 @@ local function drawX7BatteryLeftPane(battsource,battcurrent,battcapacity,battmah
   local dimFlags = 0
 #ifdef MINMAX
   if showMinMaxValues == false then
-#endif
+#endif --MINMAX
     if celm < conf.battAlertLevel2 then
       flags = BLINK
       dimFlags = BLINK
@@ -2535,14 +2553,14 @@ local function drawX7BatteryLeftPane(battsource,battcurrent,battcapacity,battmah
     end  
 #ifdef MINMAX
   end
-#endif
+#endif --MINMAX
   drawNumberWithTwoDims(0, BATTCELL_Y, BATTCELL_YV, BATTCELL_YS,celm,"V",battsource,BATTCELL_FLAGS+flags,dimFlags,SMLSIZE)
   -- battery voltage
   drawNumberWithDim(41+BATTVOLT_X,BATTVOLT_Y,BATTVOLT_YV, lipo,"V",BATTVOLT_FLAGS,BATTVOLT_FLAGSV)
   -- battery current
 #ifdef MINMAX
   battcurrent = getMinValue(battcurrent,currIdx)
-#endif   
+#endif --MINMAX
   drawNumberWithDim(41+BATTCURR_X,BATTCURR_Y,BATTCURR_YA,battcurrent,"A",BATTCURR_FLAGS,BATTCURR_FLAGSA)
   -- battery percentage
   lcd.drawNumber(17+BATTPERC_X, BATTPERC_Y, perc, BATTPERC_FLAGS)
@@ -2559,9 +2577,9 @@ local function drawX7BatteryLeftPane(battsource,battcurrent,battcapacity,battmah
   if showMinMaxValues == true then
     drawVArrow(36, BATTCELL_Y+2,6,false,true)
   end
-#endif  
+#endif --MINAMX
 end
-#endif
+#endif --X7
 
 local function drawNoTelemetryData()
   -- no telemetry data
@@ -2577,7 +2595,7 @@ local function drawNoTelemetryData()
     lcd.drawText(30, 29, "no telemetry", INVERS)
     return
   end
-#endif
+#endif --X9
 end
 
 #ifdef X9
@@ -2595,7 +2613,8 @@ local function getMessage(index)
     return string.format("%02d:%s %s", messages[index][1], mavSeverity[messages[index][2]], msg)
   end
 end
-#else
+#endif --X9
+#ifdef X7
 local function getMessage(index)
   local msg = messages[index][3]
   if messages[index][4] > 1 then
@@ -2610,7 +2629,7 @@ local function getMessage(index)
     return string.format("%d:%s %s", messages[index][1], mavSeverity[messages[index][2]], msg)
   end
 end
-#endif
+#endif --X7
 
 local function drawTopBar()
   -- black bar
@@ -2631,15 +2650,15 @@ local function drawTopBar()
   lcd.drawText(RSSI_X, RSSI_Y, "RS:", RSSI_FLAGS)
 #ifdef DEMO
   lcd.drawText(lcd.getLastRightPos(), RSSI_Y, 87, RSSI_FLAGS)  
-#else
+#else --DEMO
   lcd.drawText(lcd.getLastRightPos(), RSSI_Y, getRSSI(), RSSI_FLAGS)  
-#endif
+#endif --DEMO
 #ifdef X9
   -- tx voltage
   lcd.drawText(TXVOLTAGE_X, TXVOLTAGE_Y, "Tx", TXVOLTAGE_FLAGS)
   lcd.drawNumber(lcd.getLastRightPos(), TXVOLTAGE_Y, getValue(getFieldInfo("tx-voltage").id)*10, TXVOLTAGE_FLAGS+PREC1)
   lcd.drawText(lcd.getLastRightPos(), TXVOLTAGE_Y, "v", TXVOLTAGE_FLAGS)
-#endif
+#endif --X9
 end
 
 local function drawBottomBar()
@@ -2655,13 +2674,14 @@ local function drawBottomBar()
   else
     lcd.drawText(0, BOTTOMBAR_Y+1, msg,SMLSIZE+INVERS+BLINK)
   end
-#else
+#endif --X9
+#ifdef X7
   if (now - lastMsgTime ) > 150 or conf.disableMsgBlink then
     lcd.drawText(0, BOTTOMBAR_Y + 1,  msg,SMLSIZE+INVERS)
   else
     lcd.drawText(0, BOTTOMBAR_Y + 1,  msg,SMLSIZE+INVERS+BLINK)
   end
-#endif
+#endif --X7
 end
 
 #ifdef X7
@@ -2676,16 +2696,16 @@ local function drawHomeDist()
   if showMinMaxValues == true then
     flags = 0
   end
-#endif    
+#endif --MINMAX
   lcd.drawNumber(HOMEDIST_X, HOMEDIST_Y, homeDist, HOMEDIST_FLAGS+flags)
   lcd.drawText(lcd.getLastRightPos(), HOMEDIST_Y, "m",HOMEDIST_FLAGS+flags)
 #ifdef MINMAX
   if showMinMaxValues == true then
     drawVArrow(lcd.getLastRightPos() + 2, HOMEDIST_Y,6,true,false)
   end
-#endif    
+#endif --MINMAX
 end
-#endif
+#endif --X7
 
 local function drawAllMessages()
   for i=1,#messages do
@@ -2726,13 +2746,13 @@ local function drawLeftPane(battcurrent,cellsumFC)
 #ifdef MINMAX
     -- update max only with 3d or better lock
     alt = getMaxValue(alt,MAX_GPSALT)
-#endif
+#endif --MINMAX
   end
 #ifdef MINMAX
   if showMinMaxValues == true then
     flags = 0
   end
-#endif
+#endif --MINMAX
   lcd.drawText(ALTASL_XLABEL + 4, ALTASL_YLABEL, "Asl", SMLSIZE)
   drawVArrow(ALTASL_XLABEL,ALTASL_YLABEL - 1,7,true,true)
   lcd.drawNumber(ALTASL_X, ALTASL_Y-1, alt, SMLSIZE+flags)
@@ -2749,13 +2769,13 @@ local function drawLeftPane(battcurrent,cellsumFC)
   if showMinMaxValues == true then
     flags = 0
   end
-#endif
+#endif --MINMAX
   lcd.drawNumber(HOMEDIST_X, HOMEDIST_Y-1, homeDist, HOMEDIST_FLAGS+flags)
   lcd.drawText(lcd.getLastRightPos(), HOMEDIST_Y-1, "m",HOMEDIST_FLAGS+flags)
   -- hspeed
-  #ifdef MINMAX
+#ifdef MINMAX
     hSpeed = getMaxValue(hSpeed,MAX_HSPEED)
-  #endif  
+#endif  --MINMAX
   drawHArrow(HSPEED_XLABEL + 4,HSPEED_YLABEL,4,false,true)
   drawHArrow(HSPEED_XLABEL + 6,HSPEED_YLABEL + 4,5,false,true)
   lcd.drawPoint(HSPEED_XLABEL + 2,HSPEED_YLABEL)
@@ -2774,7 +2794,7 @@ local function drawLeftPane(battcurrent,cellsumFC)
   local power = cellsumFC*battcurrent*0.1
 #ifdef MINMAX  
   power = getMaxValue(power,MAX_POWER)
-#endif
+#endif --MINMAX
   drawNumberWithDim(BATTPOWER_X,BATTPOWER_Y,BATTPOWER_YW,power,"w",BATTPOWER_FLAGS,BATTPOWER_FLAGSW)
 #ifdef MINMAX
   if showMinMaxValues == true then
@@ -2783,9 +2803,9 @@ local function drawLeftPane(battcurrent,cellsumFC)
     drawVArrow(HSPEED_XDIM + 2,HSPEED_Y - 2 ,6,true,false)
     drawVArrow(ALTASL_X + 26, ALTASL_Y - 2,6,true,false)
   end
-#endif
+#endif --MINMAX
 end
-#endif
+#endif --X9
 
 #ifdef X7
 local function drawGPSStatus()
@@ -2810,7 +2830,7 @@ local function drawGPSStatus()
   end
   lcd.drawLine(GPS_X ,GPS_Y + 13,GPS_X+63,GPS_Y + 13,SOLID,FORCE)
 end
-#endif
+#endif --X7
 
 local function drawFailsafe()
 #ifdef ALERTS
@@ -2828,23 +2848,23 @@ local function drawFailsafe()
       alerts[BATTFAILSAFE][ALERTS_TIME] = getTime()
     end
   end
-#else
+#else --ALERTS
   local xoffset = 0
   local yoffset = 0
-  #ifdef X7
+#ifdef X7
   if showDualBattery == true and (ekfFailsafe > 0 or battFailsafe >0) then
     xoffset = 35
     yoffset = -15
     lcd.drawFilledRectangle(xoffset + 6, 36 + yoffset, 50, 21, ERASE)
     lcd.drawRectangle(xoffset + 6, 36 + yoffset, 50, 21, SOLID)
   end
-  #endif
+#endif --X7
   if ekfFailsafe > 0 then
 #ifndef ALARMS    
     if lastEkfFailsafe == 0 then
       playSound("ekf")
     end
-#endif
+#endif --ALARMS
     lcd.drawText(xoffset + HUD_X + HUD_WIDTH/2 - 6, 39 + yoffset, "EKF", SMLSIZE+INVERS+BLINK)
     lcd.drawText(xoffset + HUD_X + HUD_WIDTH/2 - 17, 48 + yoffset, "FAILSAFE", SMLSIZE+INVERS+BLINK)
   end
@@ -2853,15 +2873,15 @@ local function drawFailsafe()
     if lastBattFailsafe == 0 then
       playSound("lowbat")
     end
-#endif
+#endif --ALARMS
     lcd.drawText(xoffset + HUD_X + HUD_WIDTH/2 - 8, 39 + yoffset, "BATT", SMLSIZE+INVERS+BLINK)
     lcd.drawText(xoffset + HUD_X + HUD_WIDTH/2 - 17, 48 + yoffset, "FAILSAFE", SMLSIZE+INVERS+BLINK)
   end
-  #endif
+#endif --ALERTS
 #ifndef ALARMS
   lastEkfFailsafe = ekfFailsafe
   lastBattFailsafe = battFailsafe
-#endif
+#endif --ALARMS
 end
 
 #define LEFTWIDTH   16
@@ -2894,7 +2914,7 @@ local function drawPitch()
   --
 #ifdef MINMAX
     homeAlt = getMaxValue(homeAlt,MINMAX_ALT)
-#endif  
+#endif --MINMAX
   if homeAlt > 0 then
     if homeAlt < 10 then -- 2 digits with decimal
       lcd.drawNumber(HUD_X + HUD_WIDTH,32 - 3,homeAlt * 10,SMLSIZE+PREC1+RIGHT)
@@ -2936,7 +2956,7 @@ local function drawPitch()
     lcd.drawFilledRectangle(HUD_X + HUD_WIDTH - 26,32-5,7,10,ERASE)
     drawVArrow(HUD_X + HUD_WIDTH - 23, 32-4,6,true,false)
   end
-#endif  
+#endif --MINMAX
 end
 
 -- vertical distance between roll horiz segments
@@ -2976,9 +2996,10 @@ local function drawRoll()
   drawCroppedLine(rollX + dx - cx,dy + 32 + cy,r,16,DOTTED,HUD_X,HUD_X + HUD_WIDTH,yPos,BOTTOMBAR_Y)
 #ifdef X9
   drawCroppedLine(rollX + dx,dy + 32,r,54,SOLID,HUD_X,HUD_X + HUD_WIDTH,yPos,BOTTOMBAR_Y)
-#else
+#endif --X9
+#ifdef X7
   drawCroppedLine(rollX + dx,dy + 32,r,44,SOLID,HUD_X,HUD_X + HUD_WIDTH,yPos,BOTTOMBAR_Y)
-#endif
+#endif --X7
   drawCroppedLine(rollX + dx + cx,dy + 32 - cy,r,16,DOTTED,HUD_X,HUD_X + HUD_WIDTH,yPos,BOTTOMBAR_Y)
   drawCroppedLine(rollX + dx + ccx,dy + 32 - ccy,r,7,DOTTED,HUD_X,HUD_X + HUD_WIDTH,yPos,BOTTOMBAR_Y)
   drawCroppedLine(rollX + dx + cccx,dy + 32 - cccy,r,5,DOTTED,HUD_X,HUD_X + HUD_WIDTH,yPos,BOTTOMBAR_Y)
@@ -3054,6 +3075,7 @@ local function drawYaw()
   lcd.drawNumber(HUD_X + hw + xx - 4, minY, yaw, MIDSIZE+INVERS)
 end
 
+#ifndef BGTELE
 local function clearHud()
   lcd.drawFilledRectangle(HUD_X,TOPBAR_Y + TOPBAR_HEIGHT + 8,HUD_WIDTH,49,ERASE,0)
 end
@@ -3061,19 +3083,19 @@ end
 local function clearLeftPane()
 #ifdef X9
   lcd.drawFilledRectangle(0,TOPBAR_Y + TOPBAR_HEIGHT,HUD_X - 1,49,ERASE,0)
-#endif
+#endif --X9
 end
 
 local function clearRightPane()
 #ifdef X7
   lcd.drawFilledRectangle(HUD_X+HUD_WIDTH,TOPBAR_Y + TOPBAR_HEIGHT,128 - HUD_X + HUD_WIDTH,49,ERASE,0)
-#endif
+#endif --X7
 --
 #ifdef X9
   lcd.drawFilledRectangle(HUD_X+HUD_WIDTH,TOPBAR_Y + TOPBAR_HEIGHT,212 - HUD_X + HUD_WIDTH,49,ERASE,0)
-#endif
+#endif --X9
 end
-
+#endif --BGTELE
 
 local function drawHud()
   drawRoll()
@@ -3096,7 +3118,7 @@ local function drawHomeDirection()
   local angle = math.floor(homeAngle - yaw)
 #ifdef X9  
   lcd.drawFilledRectangle(HOMEDIR_X - HOMEDIR_R,HOMEDIR_Y - HOMEDIR_R,2*HOMEDIR_R,2*HOMEDIR_R,ERASE,0)
-#endif
+#endif --X9
   local x1 = HOMEDIR_X + HOMEDIR_R * math.cos(math.rad(angle - 90))
   local y1 = HOMEDIR_Y + HOMEDIR_R * math.sin(math.rad(angle - 90))
   local x2 = HOMEDIR_X + HOMEDIR_R * math.cos(math.rad(angle - 90 + 150))
@@ -3117,7 +3139,7 @@ local function drawCustomBoxes()
   lcd.drawRectangle(BOX1_X,BOX1_Y,BOX1_WIDTH,BOX1_HEIGHT,SOLID)
   lcd.drawFilledRectangle(BOX1_X,BOX1_Y,BOX1_WIDTH,BOX1_HEIGHT,SOLID)
 end
-#endif
+#endif --X7
 
 ---------------------------------
 -- This function checks alarm condition and as long as the condition persists it plays
@@ -3179,7 +3201,7 @@ local function checkEvents()
     alerts[TIMERALERT][ALERTS_FTIME]=flightTime
     playSound("timealert")
   end
-#endif
+#endif --ALERTS
 #ifdef ALARMS
   -- silence alarms when showing min/max values
   if showMinMaxValues == false then
@@ -3191,7 +3213,7 @@ local function checkEvents()
     checkAlarm(1,2*battFailsafe,ALARMS_BATT,1,"lowbat",menuItems[T2][4])  
     checkAlarm(conf.timerAlert,flightTime,ALARMS_TIMER,1,"timealert",conf.timerAlert)
   end
-#endif
+#endif --ALARMS
 
   local capacity = getBatt1Capacity() + getBatt2Capacity()
   local mah = batt1mah + batt2mah
@@ -3233,18 +3255,6 @@ local function cycleBatteryInfo()
     showDualBattery = true
     return
   end
---[[  
-  if batt1source == "vs" then
-    batt1source = "fc"
-    batt2source = "fc"
-  elseif batt1source == "fc" then
-    batt1source = "a2"
-    batt2source = "a2"
-  elseif batt1source == "a2" then
-    batt1source = "vs"
-    batt2source = "vs"
-  end
-  ]]
   if battsource == "vs" then
     battsource = "fc"
   elseif battsource == "fc" then
@@ -3263,11 +3273,31 @@ local bgclock = 0
 local counter = 0
 local bgrate = 0
 local bgstart = 0
-#endif
+#endif --BGRATE
+#ifdef FGRATE
+local fgcounter = 0
+local fgrate = 0
+local fgstart = 0
+#endif --FGRATE
+#ifdef HUDRATE
+local hudcounter = 0
+local hudrate = 0
+local hudstart = 0
+#endif --HUDRATE
+#ifdef BGTELERATE
+local bgtelecounter = 0
+local bgtelerate = 0
+local bgtelestart = 0
+#endif --BGTELERATE
 
--- this get called around 18-19 times per second, i.e around every 50-55 millis, @20Hz
+-------------------------------
+-- running at 20Hz (every 50ms)
+-------------------------------
 local function background()
 #ifdef BGRATE
+  ------------------------
+  -- CALC BG LOOP RATE
+  ------------------------
   -- skip first iteration
   local now = getTime()/100
   if counter == 0 then
@@ -3277,18 +3307,40 @@ local function background()
   end
   --
   counter=counter+1
-#endif
-  -- FAST: this runs at 50 millis, ie. @20Hz
+#endif --BGRATE
+#ifdef BGTELE
+  -- FAST: this runs at 60Hz (every 16ms)
+  for i=1,3
+  do
+    processTelemetry()
+#ifdef BGTELERATE
+    ------------------------
+    -- CALC BG TELE PROCESSING RATE
+    ------------------------
+    -- skip first iteration
+    local now = getTime()/100
+    if bgtelecounter == 0 then
+      bgtelestart = now
+    else
+      bgtelerate = bgtelecounter / (now - bgtelestart)
+    end
+    --
+    bgtelecounter=bgtelecounter+1
+#endif --BGTELERATE
+  end
+#else --BGTELE
   processTelemetry()
+#endif --BGTELE
+  -- NORMAL: this runs at 20Hz (every 50ms)
   setTelemetryValue(VSpd_ID, VSpd_SUBID, VSpd_INSTANCE, vSpeed, 5 , VSpd_PRECISION , VSpd_NAME)
 #ifdef BACKGROUND
-  -- SLOWER: this runs every 250 millis i.e @4Hz
+  -- SLOW: this runs at 4Hz (every 250ms)
   if (bgclock % 4 == 0) then
 #ifdef SENSORS  
     setSensorValues()
-#endif
+#endif --SENSORS
   end
-  -- SLOWEST: this runs every 500 millis i.e @2Hz
+  -- SLOWER: this runs at 2Hz (every 500ms)
   if (bgclock % 8 == 0) then
     calcBattery()
     calcFlightTime()
@@ -3298,36 +3350,68 @@ local function background()
 #ifdef MINMAX
     minmaxValues[MAX_CURR1] = math.max(batt1current,minmaxValues[MAX_CURR1])
     minmaxValues[MAX_CURR2] = math.max(batt2current,minmaxValues[MAX_CURR2])
-#endif
+#endif --MINMAX
     bgclock = 0
   end
   bgclock = bgclock+1
-#endif
+#endif --BACKGROUND
 end
 --
 local clock = 0
 --
 local function run(event)
-  -------------------------------
-  -- process telemetry at least once
-  ------------------------------
+ #ifdef FGRATE
+  ------------------------
+  -- CALC FG LOOP RATE
+  ------------------------
+  -- skip first iteration
+  local now = getTime()/100
+  if fgcounter == 0 then
+    fgstart = now
+  else
+    fgrate = fgcounter / (now - fgstart)
+  end
+  --
+  fgcounter=fgcounter+1
+#endif --FGRATE
+#ifndef BGTELE  
+  ---------------------
+  -- process telemetry
+  ---------------------
   processTelemetry()
+#endif --BGTELE
+  ---------------------
+  -- SHOW MESSAGES
+  ---------------------
   if showConfigMenu == false and (event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT) then
     showMessages = true
   end
+  ---------------------
+  -- SHOW CONFIG MENU
+  ---------------------
   if showMessages == false and (event == EVT_MENU_LONG) then
     showConfigMenu = true
   end
   if showMessages then
+    ---------------------
+    -- MESSAGES
+    ---------------------
+    lcd.clear()
     if event == EVT_EXIT_BREAK or event == EVT_MINUS_BREAK or event == EVT_ROT_LEFT then
       showMessages = false
     end
-    lcd.clear()
+#ifndef BGTELE  
     processTelemetry()
+#endif --BGTELE  
     drawAllMessages()
   elseif showConfigMenu then
+    ---------------------
+    -- CONFIG MENU
+    ---------------------
     lcd.clear()
+#ifndef BGTELE  
     processTelemetry()
+#endif --BGTELE
     drawConfigMenu(event)
     -------------------------------
     -- exit from menu and save
@@ -3336,11 +3420,14 @@ local function run(event)
       menu.editSelected = false
 #ifdef MENUEX
       editComboValue = false
-#endif
+#endif --MENUEX
       showConfigMenu = false
       saveConfig()
     end
   else
+    ---------------------
+    -- MAIN VIEW
+    ---------------------
     lcd.clear()
     if event == EVT_ENTER_BREAK then
       cycleBatteryInfo()
@@ -3349,7 +3436,7 @@ local function run(event)
     if event == EVT_MENU_BREAK then
       showMinMaxValues = not showMinMaxValues
     end
-#endif
+#endif --MINMAX
 #ifdef ALERTS
     -- when alerts are showed the press of exit always closes the alert window
     if currentAlertIdx > 0 and event == EVT_EXIT_BREAK then
@@ -3357,14 +3444,14 @@ local function run(event)
     elseif showDualBattery == true and event == EVT_EXIT_BREAK then
       showDualBattery = false
     end
-#else
+#else --ALERTS
     if showDualBattery == true and event == EVT_EXIT_BREAK then
       showDualBattery = false
     end
-#endif
+#endif --ALERTS
 #ifdef TESTMODE
       symMode()
-#endif
+#endif --TESTMODE
 #ifndef BACKGROUND
     -- very slow loop
     if (clock % 8 == 0) then
@@ -3377,64 +3464,106 @@ local function run(event)
       -- current needs to be updated
       minmaxValues[MAX_CURR1] = math.max(batt1current,minmaxValues[MAX_CURR1])
       minmaxValues[MAX_CURR2] = math.max(batt2current,minmaxValues[MAX_CURR2])
-#endif
+#endif --MINMAX
       clock = 0
     end
-#endif
-    -- fast loop, telemetry and hud   
+#endif --BACKGROUND
+#ifdef BGTELE
+#ifdef HUDRATE
+    ------------------------
+    -- CALC HUD REFRESH RATE
+    ------------------------
+    -- skip first iteration
+    local hudnow = getTime()/100
+    if hudcounter == 0 then
+      hudstart = hudnow
+    else
+      hudrate = hudcounter / (hudnow - hudstart)
+    end
+    --
+    hudcounter=hudcounter+1
+#endif --HUDRATE
+    --clearHud()
+#ifdef X9
+    drawHud()
+#endif --X9
+#ifdef X7
+    -- on X7 the HUD is replaced with 2nd battery details
+    if showDualBattery == false then
+      drawHud()
+    end
+#endif --X7
+#else --BGTELE
+    -- fast loop, telemetry and hud at 60Hz
     for r=1,3
     do
-    ---------------------------------------------------------
-    -- process telemetry on tight loop, let's assume we can 
-	  -- empty the queue fast enough with 3x iterations
-	  -- we want the hud in sync with the telemetry data so we
-	  -- pop,clear and redraw
-    -------------------------------
+#ifdef HUDRATE
+      ------------------------
+      -- CALC HUD REFRESH RATE
+      ------------------------
+      -- skip first iteration
+      local hudnow = getTime()/100
+      if hudcounter == 0 then
+        hudstart = hudnow
+      else
+        hudrate = hudcounter / (hudnow - hudstart)
+      end
+      --
+      hudcounter=hudcounter+1
+#endif --HUDRATE
+      ---------------------------------------------------------
+      -- process telemetry on tight loop, let's assume we can 
+      -- empty the queue fast enough with 3x iterations
+      -- we want the hud in sync with the telemetry data so we
+      -- pop,clear and redraw
+      -------------------------------
       processTelemetry()
       clearHud()
 #ifdef X9
       drawHud()
-#else
+#endif --X9
+#ifdef X7
       -- on X7 the HUD is replaced with 2nd battery details
       if showDualBattery == false then
         drawHud()
       end
-#endif
-    end
-    -- slow loop
+#endif --X7
+  end
+#endif --BGTELE
     drawYaw()
+#ifndef BGTELE
     clearLeftPane()
     clearRightPane()
+#endif --BGTELE
     drawGrid()
 #ifdef X7    
     drawCustomBoxes()
-#endif    
+#endif --X7
     -- with dual battery default is to show aggregate view
     if batt2sources.fc or batt2sources.vs or batt2sources.a2 then
       if showDualBattery == false then
         -- dual battery: aggregate view
 #ifdef X9
-        -- battery name
         lcd.drawText(HUD_X+HUD_WIDTH+1,TOPBAR_HEIGHT,"B1+B2",SMLSIZE+INVERS)
-#else
+#endif --X9
+#ifdef X7
         lcd.drawText(HUD_X+1,BOTTOMBAR_Y - 8,"2B",SMLSIZE+INVERS)
-#endif
+#endif --X7
         drawBatteryPane(HUD_X+HUD_WIDTH+1,battsource,batt1current+batt2current,getBatt1Capacity()+getBatt2Capacity(),batt1mah+batt2mah,calcCellMin(cell1min,cell2min),calcCellMin(cell1minFC,cell2minFC),cellminA2,calcCellMin(cell1sum,cell2sum),calcCellMin(cell1sumFC,cell2sumFC),cellsumA2,MIN_CELL_FC,MIN_BATT_FC,MAX_CURR)
       else
         -- dual battery:battery 1 right pane
 #ifdef X9
-        -- battery name
         lcd.drawText(HUD_X+HUD_WIDTH+1,TOPBAR_HEIGHT,"B1",SMLSIZE+INVERS)
-#endif
+#endif --X9
         drawBatteryPane(HUD_X+HUD_WIDTH+1,battsource,batt1current,getBatt1Capacity(),batt1mah,cell1min,cell1minFC,cellminA2,cell1sum,cell1sumFC,cellsumA2,MIN_CELL1_FC,MIN_BATT1_FC,MAX_CURR1)
         -- dual battery:battery 2 left pane
 #ifdef X9
-        -- battery name
         lcd.drawText(0,TOPBAR_HEIGHT,"B2",SMLSIZE+INVERS)
         drawBatteryPane(0,battsource,batt2current,getBatt2Capacity(),batt2mah,cell2min,cell2minFC,0,cell2sum,cell2sumFC,0,MIN_CELL2_FC,MIN_BATT2_FC,MAX_CURR2)
-#else
+#endif --X9
+#ifdef X7
         drawX7BatteryLeftPane(battsource,batt2current,getBatt2Capacity(),batt2mah,cell2min,cell2minFC,0,cell2sum,cell2sumFC,0,MIN_CELL2_FC,MIN_BATT2_FC,MAX_CURR2)
-#endif
+#endif --X7
       end
     else
 #ifdef X9      
@@ -3446,41 +3575,54 @@ local function run(event)
       -- power is always based on flight controller values
       drawLeftPane(batt1current+batt2current,calcCellMin(cell1sumFC,cell2sumFC))
     end
-#else
-    --- battery 1 right pane in single battery mode
+#endif --X9
+#ifdef X7
+      --- battery 1 right pane in single battery mode
       drawBatteryPane(HUD_X+HUD_WIDTH+1,battsource,batt1current,getBatt1Capacity(),batt1mah,cell1min,cell1minFC,cellminA2,cell1sum,cell1sumFC,cellsumA2,MIN_CELL1_FC,MIN_BATT1_FC,MAX_CURR1)
     end
-#endif
-#ifdef X7
     if showDualBattery == false then
       drawHomeDirection()
     end
     drawHomeDist()
     drawGPSStatus()
 #ifdef MINMAX
-  if showMinMaxValues == true then
-    drawVArrow(HSPEED_XDIM + 2,HSPEED_Y - 2 ,6,true,false)
-    drawVArrow(ALTASL_X + 26, ALTASL_Y - 1,6,true,false)
-  end
-#endif  
-    
-#else
+    if showMinMaxValues == true then
+      drawVArrow(HSPEED_XDIM + 2,HSPEED_Y - 2 ,6,true,false)
+      drawVArrow(ALTASL_X + 26, ALTASL_Y - 1,6,true,false)
+    end
+#endif --MINMAX
+#endif --X7
+#ifdef X9
     drawHomeDirection()
-#endif
+#endif --X9
     drawTopBar()
     drawBottomBar()
     drawFailsafe()
 #ifdef ALERTS
     drawAlerts()
-#endif  
+#endif --ALERTS
 #ifdef DEBUG    
-  lcd.drawNumber(0,40,cell1maxFC,SMLSIZE+PREC1)
-  lcd.drawNumber(25,40,calcCellCount(cell1maxFC),SMLSIZE)
-#endif
+    lcd.drawNumber(0,40,cell1maxFC,SMLSIZE+PREC1)
+    lcd.drawNumber(25,40,calcCellCount(cell1maxFC),SMLSIZE)
+#endif --DEBUG
 #ifdef BGRATE    
-  lcd.drawNumber(0,39,bgrate*10,PREC1+SMLSIZE+INVERS)
-  lcd.drawText(lcd.getLastRightPos(),39,"Hz",SMLSIZE+INVERS)
-#endif
+    lcd.drawNumber(0,39,bgrate*10,PREC1+SMLSIZE+INVERS)
+    lcd.drawText(lcd.getLastRightPos(),39,"Hz",SMLSIZE+INVERS)
+#endif --BGRATE
+#ifdef FGRATE    
+    lcd.drawNumber(0,39,fgrate*10,PREC1+SMLSIZE+INVERS)
+    lcd.drawText(lcd.getLastRightPos(),39,"Hz",SMLSIZE+INVERS)
+#endif --FGRATE
+#ifdef HUDRATE    
+    lcd.drawNumber(0,39,hudrate*10,PREC1+SMLSIZE+INVERS)
+    lcd.drawText(lcd.getLastRightPos(),39,"Hz",SMLSIZE+INVERS)
+#endif --HUDRATE
+#ifdef TELERATE    
+    lcd.drawNumber(0,39,telerate,SMLSIZE+INVERS)
+#endif --TELERATE
+#ifdef BGTELERATE    
+    lcd.drawNumber(20,39,bgtelerate,SMLSIZE+INVERS)
+#endif --BGTELERATE
     drawNoTelemetryData()
   end
   clock = clock + 1
@@ -3490,31 +3632,31 @@ local function init()
   loadConfig()
 #ifdef X9
   pushMessage(6,VERSION)
-#endif
+#endif --X9
 #ifdef X7
   pushMessage(6,VERSION)
-#endif
+#endif --X7
 #ifdef TESTMODE
-  #ifdef DEMO
-    pushMessage(7,"APM:Copter V3.5.4 (284349c3) QUAD")
-    pushMessage(7,"Calibrating barometer")
-    pushMessage(6,"Initialising APM")
-    pushMessage(7,"Barometer calibration complete")
-    pushMessage(7,"EKF2 IMU0 initial yaw alignment complete")
-    pushMessage(7,"EKF2 IMU1 initial yaw alignment complete")
-    pushMessage(7,"GPS 1: detected as u-blox at 115200 baud")
-    pushMessage(6,"EKF2 IMU0 tilt alignment complete")
-    pushMessage(6,"EKF2 IMU1 tilt alignment complete")
-    pushMessage(7,"u-blox 1 HW: 00080000 SW: 2.01 (75331)")
-    pushMessage(4,"Bad AHRS")
-  #else
+#ifdef DEMO
+  pushMessage(7,"APM:Copter V3.5.4 (284349c3) QUAD")
+  pushMessage(7,"Calibrating barometer")
+  pushMessage(6,"Initialising APM")
+  pushMessage(7,"Barometer calibration complete")
+  pushMessage(7,"EKF2 IMU0 initial yaw alignment complete")
+  pushMessage(7,"EKF2 IMU1 initial yaw alignment complete")
+  pushMessage(7,"GPS 1: detected as u-blox at 115200 baud")
+  pushMessage(6,"EKF2 IMU0 tilt alignment complete")
+  pushMessage(6,"EKF2 IMU1 tilt alignment complete")
+  pushMessage(7,"u-blox 1 HW: 00080000 SW: 2.01 (75331)")
+  pushMessage(4,"Bad AHRS")
+#else --DEMO
   for i=1,15 do
     pushMessage(6,"sample messages " .. i)
   end
   pushMessage(6,VERSION)
   pushMessage(6,VERSION)
-  #endif
-#endif
+#endif --DEMO
+#endif --TESTMODE
   playSound("yaapu")
 end
 
