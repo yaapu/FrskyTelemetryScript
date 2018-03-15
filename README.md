@@ -208,6 +208,7 @@ For the QX7 radio use the yaapu7.lua script.
 
 The script is quite big and compilation on your radio may fail.
 The safest way is to compile it on Companion and then copy the .luac compiled version to the SD card in the /SCRIPTS/TELEMETRY folder.
+
 I do provide already compiled versions for both X9D and QX7.
 
 **Note: On radios without the luac option enabled it is necessary to rename the script from yaapu9.luac to yaapu9.lua and from yaapu7.luac to yaapu7.lua**
