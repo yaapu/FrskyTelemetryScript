@@ -194,7 +194,7 @@ When the vehicle moves outside of the fence the script will play a vocal alert e
 ![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7menupag2.png)
 
 The language of the vocal alerts is independent from the radio language and can be configured from the menu.
-Right now only english and italian are supported but new languages can be added with ease.
+Right now only english, italian and french are supported but new languages can be added with ease.
 
 Battery capacity for battery 1 and battery 2 is automatically read from the values configured in mission planner but can both be overidden from the menu. When a new capacity is defined from the menu it will immediately be used in all calculations and it's value will be displayed on screen.
 
