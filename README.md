@@ -215,6 +215,86 @@ I do provide already compiled versions for both X9D and QX7.
 
 To enable sound files playback copy them to /SOUNDS/yaapu0/en and /SOUNDS/yaapu0/it folders.
 
+## Sound files customization
+
+All sound files are inside the SOUNDS/yaapu0/"language" folder, where language is a 2 chars language code.The following table is a list of all english files.
+ 
+| folder path  | filename | TTS text |
+|:---|:------------|:-----------| 
+|SOUNDS/yaapu0/en|acro|Acro flight mode|
+|SOUNDS/yaapu0/en|acro_r|Acro mode|
+|SOUNDS/yaapu0/en|althold|Altitude hold flight mode|
+|SOUNDS/yaapu0/en|armed|Motors armed|
+|SOUNDS/yaapu0/en|auto|Auto flight mode|
+|SOUNDS/yaapu0/en|auto_r|Auto mode|
+|SOUNDS/yaapu0/en|autotune|Autotune enabled|
+|SOUNDS/yaapu0/en|avoidadsb|Avoid A D S B flight mode|
+|SOUNDS/yaapu0/en|bat5|Battery at 5 percent|
+|SOUNDS/yaapu0/en|bat10|Battery at 10 percent|
+|SOUNDS/yaapu0/en|bat15|Battery at 15 percent|
+|SOUNDS/yaapu0/en|bat20|Battery at 20 percent|
+|SOUNDS/yaapu0/en|bat25|Battery at 25 percent|
+|SOUNDS/yaapu0/en|bat30|Battery at 30 percent|
+|SOUNDS/yaapu0/en|bat40|Battery at 40 percent|
+|SOUNDS/yaapu0/en|bat50|Battery at 50 percent|
+|SOUNDS/yaapu0/en|bat60|Battery at 60 percent|
+|SOUNDS/yaapu0/en|bat70|Battery at 70 percent|
+|SOUNDS/yaapu0/en|bat80|Battery at 80 percent|
+|SOUNDS/yaapu0/en|bat90|Battery at 90 percent|
+|SOUNDS/yaapu0/en|batalert|Battery alert|
+|SOUNDS/yaapu0/en|batalert1|Battery level 1 alert|
+|SOUNDS/yaapu0/en|batalert2|Battery level 2 alert|
+|SOUNDS/yaapu0/en|brake|Brake flight mode|
+|SOUNDS/yaapu0/en|circle|Circle flight mode|
+|SOUNDS/yaapu0/en|cruise|Cruise flight mode|
+|SOUNDS/yaapu0/en|disarmed|Motors disarmed|
+|SOUNDS/yaapu0/en|drift|Drift flight mode|
+|SOUNDS/yaapu0/en|ekf|E K F failsafe|
+|SOUNDS/yaapu0/en|flip|Flip flight mode|
+|SOUNDS/yaapu0/en|flybywirea|Fly by wire a flight mode|
+|SOUNDS/yaapu0/en|flybywireb|Fly by wire b flight mode|
+|SOUNDS/yaapu0/en|gpsfix|GPS 3D fix lock|
+|SOUNDS/yaapu0/en|gpsnofix|No gps|
+|SOUNDS/yaapu0/en|guided|Guided flight mode|
+|SOUNDS/yaapu0/en|guided_r|Guided mode|
+|SOUNDS/yaapu0/en|guidednogps|Guided no gps flight mode|
+|SOUNDS/yaapu0/en|hold_r|Hold mode|
+|SOUNDS/yaapu0/en|initializing|Initializing|
+|SOUNDS/yaapu0/en|land|Land flight mode|
+|SOUNDS/yaapu0/en|landing|Landing complete|
+|SOUNDS/yaapu0/en|loiter|Loiter flight mode|
+|SOUNDS/yaapu0/en|lowbat|Low battery|
+|SOUNDS/yaapu0/en|manual|Manual flight mode|
+|SOUNDS/yaapu0/en|manual_r|Manual mode|
+|SOUNDS/yaapu0/en|maxalt|Max altitude alert|
+|SOUNDS/yaapu0/en|maxdist|Max distance alert|
+|SOUNDS/yaapu0/en|minalt|Low altitude alert|
+|SOUNDS/yaapu0/en|poshold|Position hold flight mode|
+|SOUNDS/yaapu0/en|qhover|Q hover flight mode|
+|SOUNDS/yaapu0/en|qland|Q land flight mode|
+|SOUNDS/yaapu0/en|qloiter|Q loiter flight mode|
+|SOUNDS/yaapu0/en|qrtl|Q return to home flight mode|
+|SOUNDS/yaapu0/en|qstabilize|Q stabilize flight mode|
+|SOUNDS/yaapu0/en|rtl|Return to home|
+|SOUNDS/yaapu0/en|rtl_r|Return to home mode|
+|SOUNDS/yaapu0/en|smartrtl|Smart return to home flight mode|
+|SOUNDS/yaapu0/en|smartrtl_r|Smart return to home mode|
+|SOUNDS/yaapu0/en|sport|Sport flight mode|
+|SOUNDS/yaapu0/en|stabilize|Stabilize flight mode|
+|SOUNDS/yaapu0/en|steering_r|Steering mode|
+|SOUNDS/yaapu0/en|throw|Throw flight mode|
+|SOUNDS/yaapu0/en|timealert|Timer alert|
+|SOUNDS/yaapu0/en|training|Training flight mode|
+|SOUNDS/yaapu0/en|yaapu|Yaapu telemetry ready|
+
+Sound files can be customized but must be compatible with [OpenTX](https://opentx.gitbooks.io/manual-for-opentx-2-2/content/advanced/audio.html)
+
+An easy way to automate creation of sound files is by using the [TTSAutomate](https://github.com/CaffeineAU/TTSAutomate) tool with a phrase file.
+
+A reference [phrase file](https://github.com/yaapu/FrskyTelemetryScript/blob/master/SOURCES/english.psv) for the english language is provided as a template for other languages.
+
+**Note:In order to add new languages the script needs to be recompiled because the language must be added to the script configuration menu.**
+
 ## Compilation
 
 In order to compile your own version you must first preprocess the SOURCES/yaapu0.lua script with the pproc.lua preprocessor.
