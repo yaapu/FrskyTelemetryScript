@@ -39,11 +39,10 @@
 ---------------------
 -- features
 ---------------------
--- check events in the background
--- process telemetry in the background @60Hz
 --#define RESETBATTALARMS
 --#define MENUEX
 --#define ALERTS
+--#define FRAMETYPE
 
 ---------------------
 -- dev features
@@ -93,6 +92,7 @@ frameTypes[13]  = "c"
 frameTypes[14]  = "c"
 frameTypes[15]  = "c"
 frameTypes[29]  = "c"
+
 -- plane
 frameTypes[1]   = "p"
 frameTypes[16]  = "p"
@@ -104,10 +104,12 @@ frameTypes[23]  = "p"
 frameTypes[24]  = "p"
 frameTypes[25]  = "p"
 frameTypes[28]  = "p"
+
 -- rover
 frameTypes[10]  = "r"
 -- boat
 frameTypes[11]  = "b"
+
 --
 local flightModes = {}
 flightModes["c"] = {}
@@ -260,7 +262,7 @@ local roll = 0
 local pitch = 0
 -- PARAMS
 local paramId,paramValue
-local frameType = 2
+local frameType = -1
 local battFailsafeVoltage = 0
 local battFailsafeCapacity = 0
 local batt1Capacity = 0
@@ -583,8 +585,10 @@ local function playSoundByFrameTypeAndFlightMode(frameType,flightMode)
   if conf.disableAllSounds then
     return
   end
-  if flightModes[frameTypes[frameType]][flightMode] ~= nil then
-    playFile(soundFileBasePath.."/"..conf.language.."/".. string.lower(flightModes[frameTypes[frameType]][flightMode])..".wav")
+  if frameType ~= -1 then
+    if flightModes[frameTypes[frameType]][flightMode] ~= nil then
+      playFile(soundFileBasePath.."/"..conf.language.."/".. string.lower(flightModes[frameTypes[frameType]][flightMode])..".wav")
+    end
   end
 end
 
@@ -728,7 +732,7 @@ local function pushMessage(severity, msg)
     for i=1,9-1 do
       messages[i]=messages[i+1]
     end
-    -- trunk at 9
+    -- trunc at 9
     messages[9] = nil
   end
   -- is there at least 1 message?
@@ -856,12 +860,21 @@ local function getMinValue(value,idx)
   end
   return value
 end
+
 local function getMaxValue(value,idx)
   minmaxValues[idx] = math.max(value,minmaxValues[idx])
   if showMinMaxValues == true then
     return minmaxValues[idx]
   end
   return value
+end
+
+local function calcMinValue(value,min)
+  if min == 0 then
+    return value
+  else
+    return math.min(value,min)
+  end
 end
 
 -- returns the actual minimun only if both are > 0
@@ -899,14 +912,6 @@ local function calcCellCount(battmax)
   return count
 end
 
-
-local function calcMinValue(value,min)
-  if min == 0 then
-    return value
-  else
-    return math.min(value,min)
-  end
-end
 
 local function calcBattery()
   local battA2 = 0
@@ -1070,6 +1075,7 @@ local function getBatt1Capacity()
     return batt1Capacity
   end
 end
+
 local function getBatt2Capacity()
   if conf.battCapOverride2 > 0 then
     return conf.battCapOverride2*100
@@ -1278,13 +1284,15 @@ local function drawTopBar()
   lcd.drawFilledRectangle(0,0, 128, 7, SOLID)
   lcd.drawRectangle(0, 0, 128, 7, SOLID)
   -- flight mode
-  local strMode = flightModes[frameTypes[frameType]][flightMode]
-  if strMode ~= nil then
-    lcd.drawText(1, 0, strMode, SMLSIZE+INVERS)
-    if ( simpleMode == 1) then
-      lcd.drawText(lcd.getLastRightPos(), 1, "(S)", SMLSIZE+INVERS)
-    end
-  end  
+  if frameTypes[frameType] ~= nil then
+    local strMode = flightModes[frameTypes[frameType]][flightMode]
+    if strMode ~= nil then
+      lcd.drawText(1, 0, strMode, SMLSIZE+INVERS)
+      if ( simpleMode == 1) then
+        lcd.drawText(lcd.getLastRightPos(), 1, "(S)", SMLSIZE+INVERS)
+      end
+    end  
+  end
   -- flight time
   lcd.drawText(96, 0, "T:", SMLSIZE+INVERS)
   lcd.drawTimer(lcd.getLastRightPos(), 0, flightTime, SMLSIZE+INVERS)
@@ -1611,7 +1619,7 @@ local function checkAlarm(level,value,idx,sign,sound,delay)
   if alarms[idx][3] == false and timerRunning == 1 and level > 0 and -1 * sign*value > -1 * sign*level then
     alarms[idx][3] = true
   end
-  -- if the alarm is armed and value is "ouside" levl
+  -- if alarm is armed and value is "outside" level
   if alarms[idx][3] == true and timerRunning == 1 and level > 0 and sign*value > sign*level then
     -- for timer alarms trigger when flighttime is a multiple of delay
     if alarms[idx][4] == 2 then
@@ -1630,7 +1638,7 @@ local function checkAlarm(level,value,idx,sign,sound,delay)
         alarms[idx][2] = flightTime
         playSound(sound)
       end
-      -- ...and then fire every conf secs after the first show
+      -- ...and then fire every conf secs after the first shot
       if math.floor(flightTime - alarms[idx][2]) %  delay == 0 then
         if alarms[idx][1] == false then 
           alarms[idx][1] = true
@@ -1686,7 +1694,7 @@ local function checkEvents()
     playSound("gpsnofix")
   end
 
-  if flightMode ~= lastFlightMode then
+  if frameType ~= -1 and flightMode ~= lastFlightMode then
     lastFlightMode = flightMode
     playSoundByFrameTypeAndFlightMode(frameType,flightMode)
   end
@@ -1741,9 +1749,8 @@ local function background()
   bgclock = bgclock+1
 end
 --
-local clock = 0
---
 local function run(event)
+  lcd.clear()
   ---------------------
   -- SHOW MESSAGES
   ---------------------
@@ -1760,7 +1767,6 @@ local function run(event)
     ---------------------
     -- MESSAGES
     ---------------------
-    lcd.clear()
     if event == EVT_EXIT_BREAK or event == EVT_MINUS_BREAK or event == EVT_ROT_LEFT then
       showMessages = false
     end
@@ -1769,11 +1775,8 @@ local function run(event)
     ---------------------
     -- CONFIG MENU
     ---------------------
-    lcd.clear()
     drawConfigMenu(event)
-    -------------------------------
-    -- exit from menu and save
-    -------------------------------
+    --
     if event == EVT_EXIT_BREAK then
       menu.editSelected = false
       showConfigMenu = false
@@ -1783,7 +1786,6 @@ local function run(event)
     ---------------------
     -- MAIN VIEW
     ---------------------
-    lcd.clear()
     if event == EVT_ENTER_BREAK then
       cycleBatteryInfo()
     end
@@ -1793,7 +1795,6 @@ local function run(event)
     if showDualBattery == true and event == EVT_EXIT_BREAK then
       showDualBattery = false
     end
-    --clearHud()
     -- on  the HUD is replaced with 2nd battery details
     if showDualBattery == false then
       drawHud()
@@ -1831,7 +1832,6 @@ local function run(event)
     drawFailsafe()
     drawNoTelemetryData()
   end
-  clock = clock + 1
 end
 
 local function init()

@@ -47,16 +47,13 @@
 ---------------------
 -- features
 ---------------------
--- check events in the background
-#define BACKGROUND
 #define MINMAX
 #define SENSORS
 #define ALARMS
--- process telemetry in the background @60Hz
-#define BGTELE
 --#define RESETBATTALARMS
 --#define MENUEX
 --#define ALERTS
+--#define FRAMETYPE
 
 ---------------------
 -- dev features
@@ -146,8 +143,6 @@
 
 #endif --SENSORS
 
-
-
 #ifdef DEBUG
 --[[
 	MAV_TYPE_GENERIC=0,               /* Generic micro air vehicle. | */
@@ -182,6 +177,41 @@
 	MAV_TYPE_DODECAROTOR=29,          /* Dodecarotor | */
 ]]--
 #endif --DEBUG
+
+#ifdef FRAMETYPE
+local frameNames = {}
+-- copter
+frameNames[0]   = "GEN"
+frameNames[2]   = "QUAD"
+frameNames[3]   = "COAX"
+frameNames[4]   = "HELI"
+frameNames[13]  = "HEX"
+frameNames[14]  = "OCTO"
+frameNames[15]  = "TRI"
+frameNames[29]  = "DODE"
+
+#ifdef PLANE
+-- plane
+frameNames[1]   = "WING"
+frameNames[16]  = "FLAP"
+frameNames[19]  = "VTOL2"
+frameNames[20]  = "VTOL4"
+frameNames[21]  = "VTOLT"
+frameNames[22]  = "VTOL"
+frameNames[23]  = "VTOL"
+frameNames[24]  = "VTOL"
+frameNames[25]  = "VTOL"
+frameNames[28]  = "FOIL"
+#endif --PLANE
+
+#ifdef ROVER
+-- rover
+frameNames[10]  = "ROV"
+-- boat
+frameNames[11]  = "SUB"
+#endif --ROVER
+#endif --FRAMETYPE
+
 local frameTypes = {}
 -- copter
 frameTypes[0]   = "c"
@@ -192,6 +222,7 @@ frameTypes[13]  = "c"
 frameTypes[14]  = "c"
 frameTypes[15]  = "c"
 frameTypes[29]  = "c"
+
 #ifdef PLANE
 -- plane
 frameTypes[1]   = "p"
@@ -205,12 +236,14 @@ frameTypes[24]  = "p"
 frameTypes[25]  = "p"
 frameTypes[28]  = "p"
 #endif --PLANE
+
 #ifdef ROVER
 -- rover
 frameTypes[10]  = "r"
 -- boat
 frameTypes[11]  = "b"
 #endif --ROVER
+
 #ifdef TESTMODE
 -- undefined
 frameTypes[5] = ""
@@ -416,7 +449,7 @@ local roll = 0
 local pitch = 0
 -- PARAMS
 local paramId,paramValue
-local frameType = 2
+local frameType = -1
 local battFailsafeVoltage = 0
 local battFailsafeCapacity = 0
 local batt1Capacity = 0
@@ -1322,8 +1355,10 @@ local function playSoundByFrameTypeAndFlightMode(frameType,flightMode)
   if conf.disableAllSounds then
     return
   end
-  if flightModes[frameTypes[frameType]][flightMode] ~= nil then
-    playFile(soundFileBasePath.."/"..conf.language.."/".. string.lower(flightModes[frameTypes[frameType]][flightMode])..".wav")
+  if frameType ~= -1 then
+    if flightModes[frameTypes[frameType]][flightMode] ~= nil then
+      playFile(soundFileBasePath.."/"..conf.language.."/".. string.lower(flightModes[frameTypes[frameType]][flightMode])..".wav")
+    end
   end
 end
 
@@ -1554,7 +1589,7 @@ local function pushMessage(severity, msg)
     for i=1,MAX_MESSAGES-1 do
       messages[i]=messages[i+1]
     end
-    -- trunk at 9
+    -- trunc at 9
     messages[MAX_MESSAGES] = nil
   end
   -- is there at least 1 message?
@@ -1636,7 +1671,7 @@ end
 
 local function symFrameType()
   local ch11 = getValue("ch11")
-  if (ch11 < -300) then
+  if ch11 < -300 then
     frameType = 2
   elseif ch11 < 300 then
     frameType = 1
@@ -1939,12 +1974,21 @@ local function getMinValue(value,idx)
   end
   return value
 end
+
 local function getMaxValue(value,idx)
   minmaxValues[idx] = math.max(value,minmaxValues[idx])
   if showMinMaxValues == true then
     return minmaxValues[idx]
   end
   return value
+end
+
+local function calcMinValue(value,min)
+  if min == 0 then
+    return value
+  else
+    return math.min(value,min)
+  end
 end
 #endif --MINMAX
 
@@ -1998,16 +2042,6 @@ local function calcCellValue(cellsum)
   return cellsum/cellcount
 end
 #endif --DEV
-
-#ifdef MINMAX
-local function calcMinValue(value,min)
-  if min == 0 then
-    return value
-  else
-    return math.min(value,min)
-  end
-end
-#endif --MINMAX
 
 local function calcBattery()
   local battA2 = 0
@@ -2177,6 +2211,7 @@ local function getBatt1Capacity()
     return batt1Capacity
   end
 end
+
 local function getBatt2Capacity()
   if conf.battCapOverride2 > 0 then
     return conf.battCapOverride2*100
@@ -2636,13 +2671,15 @@ local function drawTopBar()
   lcd.drawFilledRectangle(0,TOPBAR_Y, TOPBAR_WIDTH, 7, SOLID)
   lcd.drawRectangle(0, TOPBAR_Y, TOPBAR_WIDTH, 7, SOLID)
   -- flight mode
-  local strMode = flightModes[frameTypes[frameType]][flightMode]
-  if strMode ~= nil then
-    lcd.drawText(FLIGHTMODE_X, FLIGHTMODE_Y, strMode, FLIGHTMODE_FLAGS)
-    if ( simpleMode == 1) then
-      lcd.drawText(lcd.getLastRightPos(), 1, "(S)", FLIGHTMODE_FLAGS)
-    end
-  end  
+  if frameTypes[frameType] ~= nil then
+    local strMode = flightModes[frameTypes[frameType]][flightMode]
+    if strMode ~= nil then
+      lcd.drawText(FLIGHTMODE_X, FLIGHTMODE_Y, strMode, FLIGHTMODE_FLAGS)
+      if ( simpleMode == 1) then
+        lcd.drawText(lcd.getLastRightPos(), 1, "(S)", FLIGHTMODE_FLAGS)
+      end
+    end  
+  end
   -- flight time
   lcd.drawText(FLIGHTTIME_X, FLIGHTTIME_Y, "T:", FLIGHTTIME_FLAGS)
   lcd.drawTimer(lcd.getLastRightPos(), FLIGHTTIME_Y, flightTime, FLIGHTTIME_FLAGS)
@@ -2774,7 +2811,7 @@ local function drawLeftPane(battcurrent,cellsumFC)
   lcd.drawText(lcd.getLastRightPos(), HOMEDIST_Y-1, "m",HOMEDIST_FLAGS+flags)
   -- hspeed
 #ifdef MINMAX
-    hSpeed = getMaxValue(hSpeed,MAX_HSPEED)
+  hSpeed = getMaxValue(hSpeed,MAX_HSPEED)
 #endif  --MINMAX
   drawHArrow(HSPEED_XLABEL + 4,HSPEED_YLABEL,4,false,true)
   drawHArrow(HSPEED_XLABEL + 6,HSPEED_YLABEL + 4,5,false,true)
@@ -3075,7 +3112,7 @@ local function drawYaw()
   lcd.drawNumber(HUD_X + hw + xx - 4, minY, yaw, MIDSIZE+INVERS)
 end
 
-#ifndef BGTELE
+#ifdef DEV
 local function clearHud()
   lcd.drawFilledRectangle(HUD_X,TOPBAR_Y + TOPBAR_HEIGHT + 8,HUD_WIDTH,49,ERASE,0)
 end
@@ -3095,7 +3132,7 @@ local function clearRightPane()
   lcd.drawFilledRectangle(HUD_X+HUD_WIDTH,TOPBAR_Y + TOPBAR_HEIGHT,212 - HUD_X + HUD_WIDTH,49,ERASE,0)
 #endif --X9
 end
-#endif --BGTELE
+#endif --DEV
 
 local function drawHud()
   drawRoll()
@@ -3160,7 +3197,7 @@ local function checkAlarm(level,value,idx,sign,sound,delay)
   if alarms[idx][3] == false and timerRunning == 1 and level > 0 and -1 * sign*value > -1 * sign*level then
     alarms[idx][3] = true
   end
-  -- if the alarm is armed and value is "ouside" levl
+  -- if alarm is armed and value is "outside" level
   if alarms[idx][3] == true and timerRunning == 1 and level > 0 and sign*value > sign*level then
     -- for timer alarms trigger when flighttime is a multiple of delay
     if alarms[idx][4] == ALARM_TYPE_TIMER then
@@ -3179,7 +3216,7 @@ local function checkAlarm(level,value,idx,sign,sound,delay)
         alarms[idx][2] = flightTime
         playSound(sound)
       end
-      -- ...and then fire every conf secs after the first show
+      -- ...and then fire every conf secs after the first shot
       if math.floor(flightTime - alarms[idx][2]) %  delay == 0 then
         if alarms[idx][1] == false then 
           alarms[idx][1] = true
@@ -3244,7 +3281,7 @@ local function checkEvents()
     playSound("gpsnofix")
   end
 
-  if flightMode ~= lastFlightMode then
+  if frameType ~= -1 and flightMode ~= lastFlightMode then
     lastFlightMode = flightMode
     playSoundByFrameTypeAndFlightMode(frameType,flightMode)
   end
@@ -3308,7 +3345,6 @@ local function background()
   --
   counter=counter+1
 #endif --BGRATE
-#ifdef BGTELE
   -- FAST: this runs at 60Hz (every 16ms)
   for i=1,3
   do
@@ -3328,12 +3364,8 @@ local function background()
     bgtelecounter=bgtelecounter+1
 #endif --BGTELERATE
   end
-#else --BGTELE
-  processTelemetry()
-#endif --BGTELE
   -- NORMAL: this runs at 20Hz (every 50ms)
   setTelemetryValue(VSpd_ID, VSpd_SUBID, VSpd_INSTANCE, vSpeed, 5 , VSpd_PRECISION , VSpd_NAME)
-#ifdef BACKGROUND
   -- SLOW: this runs at 4Hz (every 250ms)
   if (bgclock % 4 == 0) then
 #ifdef SENSORS  
@@ -3354,13 +3386,11 @@ local function background()
     bgclock = 0
   end
   bgclock = bgclock+1
-#endif --BACKGROUND
 end
 --
-local clock = 0
---
 local function run(event)
- #ifdef FGRATE
+  lcd.clear()
+#ifdef FGRATE
   ------------------------
   -- CALC FG LOOP RATE
   ------------------------
@@ -3374,12 +3404,6 @@ local function run(event)
   --
   fgcounter=fgcounter+1
 #endif --FGRATE
-#ifndef BGTELE  
-  ---------------------
-  -- process telemetry
-  ---------------------
-  processTelemetry()
-#endif --BGTELE
   ---------------------
   -- SHOW MESSAGES
   ---------------------
@@ -3396,26 +3420,16 @@ local function run(event)
     ---------------------
     -- MESSAGES
     ---------------------
-    lcd.clear()
     if event == EVT_EXIT_BREAK or event == EVT_MINUS_BREAK or event == EVT_ROT_LEFT then
       showMessages = false
     end
-#ifndef BGTELE  
-    processTelemetry()
-#endif --BGTELE  
     drawAllMessages()
   elseif showConfigMenu then
     ---------------------
     -- CONFIG MENU
     ---------------------
-    lcd.clear()
-#ifndef BGTELE  
-    processTelemetry()
-#endif --BGTELE
     drawConfigMenu(event)
-    -------------------------------
-    -- exit from menu and save
-    -------------------------------
+    --
     if event == EVT_EXIT_BREAK then
       menu.editSelected = false
 #ifdef MENUEX
@@ -3428,7 +3442,6 @@ local function run(event)
     ---------------------
     -- MAIN VIEW
     ---------------------
-    lcd.clear()
     if event == EVT_ENTER_BREAK then
       cycleBatteryInfo()
     end
@@ -3452,23 +3465,6 @@ local function run(event)
 #ifdef TESTMODE
       symMode()
 #endif --TESTMODE
-#ifndef BACKGROUND
-    -- very slow loop
-    if (clock % 8 == 0) then
-      calcBattery()
-      calcFlightTime()
-      checkEvents()
-      checkLandingStatus()
-      checkCellVoltage(battsource,calcCellMin(cell1min,cell2min),calcCellMin(cell1minFC,cell2minFC),cellminA2)
-#ifdef MINMAX
-      -- current needs to be updated
-      minmaxValues[MAX_CURR1] = math.max(batt1current,minmaxValues[MAX_CURR1])
-      minmaxValues[MAX_CURR2] = math.max(batt2current,minmaxValues[MAX_CURR2])
-#endif --MINMAX
-      clock = 0
-    end
-#endif --BACKGROUND
-#ifdef BGTELE
 #ifdef HUDRATE
     ------------------------
     -- CALC HUD REFRESH RATE
@@ -3483,7 +3479,6 @@ local function run(event)
     --
     hudcounter=hudcounter+1
 #endif --HUDRATE
-    --clearHud()
 #ifdef X9
     drawHud()
 #endif --X9
@@ -3493,48 +3488,7 @@ local function run(event)
       drawHud()
     end
 #endif --X7
-#else --BGTELE
-    -- fast loop, telemetry and hud at 60Hz
-    for r=1,3
-    do
-#ifdef HUDRATE
-      ------------------------
-      -- CALC HUD REFRESH RATE
-      ------------------------
-      -- skip first iteration
-      local hudnow = getTime()/100
-      if hudcounter == 0 then
-        hudstart = hudnow
-      else
-        hudrate = hudcounter / (hudnow - hudstart)
-      end
-      --
-      hudcounter=hudcounter+1
-#endif --HUDRATE
-      ---------------------------------------------------------
-      -- process telemetry on tight loop, let's assume we can 
-      -- empty the queue fast enough with 3x iterations
-      -- we want the hud in sync with the telemetry data so we
-      -- pop,clear and redraw
-      -------------------------------
-      processTelemetry()
-      clearHud()
-#ifdef X9
-      drawHud()
-#endif --X9
-#ifdef X7
-      -- on X7 the HUD is replaced with 2nd battery details
-      if showDualBattery == false then
-        drawHud()
-      end
-#endif --X7
-  end
-#endif --BGTELE
     drawYaw()
-#ifndef BGTELE
-    clearLeftPane()
-    clearRightPane()
-#endif --BGTELE
     drawGrid()
 #ifdef X7    
     drawCustomBoxes()
@@ -3623,9 +3577,18 @@ local function run(event)
 #ifdef BGTELERATE    
     lcd.drawNumber(20,39,bgtelerate,SMLSIZE+INVERS)
 #endif --BGTELERATE
+#ifdef FRAMETYPE
+    local fn = frameNames[frameType]
+--    if fn ~= nil then
+    lcd.drawNumber(0,39,frameType,SMLSIZE+INVERS)
+    if fn ~= nil then
+      lcd.drawText(lcd.getLastRightPos() + 1,39,fn,SMLSIZE+INVERS)
+    else
+      lcd.drawText(lcd.getLastRightPos() + 1,39,"N/A",SMLSIZE+INVERS)
+    end
+#endif --FRAMETYPE
     drawNoTelemetryData()
   end
-  clock = clock + 1
 end
 
 local function init()
@@ -3649,12 +3612,6 @@ local function init()
   pushMessage(6,"EKF2 IMU1 tilt alignment complete")
   pushMessage(7,"u-blox 1 HW: 00080000 SW: 2.01 (75331)")
   pushMessage(4,"Bad AHRS")
-#else --DEMO
-  for i=1,15 do
-    pushMessage(6,"sample messages " .. i)
-  end
-  pushMessage(6,VERSION)
-  pushMessage(6,VERSION)
 #endif --DEMO
 #endif --TESTMODE
   playSound("yaapu")
