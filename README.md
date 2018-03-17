@@ -319,5 +319,10 @@ For information on how to connect the FrSky equipment together, please refer to
  
  ## Thanks
  
- Thanks to Marco Robustini (tester X9D), Chris Rey (tester QX7) and Alain Chartier (frech sound files)
+ Thanks go to 
+ - Marco Robustini (tester X9D), 
+ - Chris Rey (tester QX7)
+ - Alain Chartier (frech sound files)
+ - [Johnex](https://github.com/Johnex) for TTSAutomate phrase file
+ 
 
