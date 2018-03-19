@@ -16,7 +16,7 @@ Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4 
  - [voltage sources](#voltage-sources)
  - [cell count detection](#cell-count-detection)
  - [alerts](#alerts)
- - [script timing](#script-timing-and-rates)
+ - [script timing and update rates](#script-timing-and-update-rates)
  - [configuration](#configuration)
  - [installation](#installation)
  - [sound files customization](#sound-files-customization)
@@ -191,7 +191,7 @@ It's also possible to configure a timer that will trigger a vocal alert every n 
 The script also support a "vocal fence" feature by setting a minimun altitude, a maximum altitude and a maximum distance alert.
 When the vehicle moves outside of the fence the script will play a vocal alert every n seconds.
 
-## Script timing and rates
+## Script timing and update rates
 
 - The script processes telemetry up to 60Hz
 - Sport telemetry stream is at around 40Hz
