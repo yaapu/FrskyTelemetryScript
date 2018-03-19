@@ -8,6 +8,23 @@ Requires OpenTX 2.2 and a recent release of arducoper, arduplane or rover.
 
 Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4 and 3.5.5
 
+## Index
+
+ - [features](#features)
+ - [advanced features](#advanced-features)
+ - [supported flight modes](#supported-flight-modes)
+ - [voltage sources](#voltage-sources)
+ - [cell count detection](#cell-count-detection)
+ - [alerts](#alerts)
+ - [script timing](#script-timing-and-rates)
+ - [configuration](#configuration)
+ - [installation](#installation)
+ - [sound files customization](#sound-files-customization)
+ - [compilation](#compilation)
+ - [hardware requirements](#hardware-requirements)
+ - [thanks](#thanks)
+ 
+
 ## Screenshots
 
 ![Taranis X9D+](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x9d.png)
