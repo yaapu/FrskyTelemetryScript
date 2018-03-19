@@ -53,7 +53,7 @@
 --#define RESETBATTALARMS
 --#define MENUEX
 --#define ALERTS
---#define FRAMETYPE
+#define FRAMETYPE
 
 ---------------------
 -- dev features
@@ -1310,20 +1310,22 @@ local function drawConfigMenu(event)
     decMenuItem(menu.selectedItem)
   elseif not menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT) then
     menu.selectedItem = (menu.selectedItem - 1)
+    if menu.offset >=  menu.selectedItem then
+      menu.offset = menu.offset - 1
+    end
   elseif not menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_LEFT) then
     menu.selectedItem = (menu.selectedItem + 1)
+    if menu.selectedItem - MENU_PAGESIZE > menu.offset then
+      menu.offset = menu.offset + 1
+    end
   end
   --wrap
   if menu.selectedItem > #menuItems then
     menu.selectedItem = 1 
-  elseif menu.selectedItem  < 1 then
-      menu.selectedItem = #menuItems
-  end
-  --
-  if menu.selectedItem > MENU_PAGESIZE then
-    menu.offset = menu.selectedItem - MENU_PAGESIZE
-  elseif menu.selectedItem <= MENU_PAGESIZE then
     menu.offset = 0
+  elseif menu.selectedItem  < 1 then
+    menu.selectedItem = #menuItems
+    menu.offset = MENU_PAGESIZE
   end
   --
   for m=1+menu.offset,math.min(#menuItems,MENU_PAGESIZE+menu.offset) do
@@ -3579,13 +3581,12 @@ local function run(event)
 #endif --BGTELERATE
 #ifdef FRAMETYPE
     local fn = frameNames[frameType]
---    if fn ~= nil then
-    lcd.drawNumber(0,39,frameType,SMLSIZE+INVERS)
     if fn ~= nil then
-      lcd.drawText(lcd.getLastRightPos() + 1,39,fn,SMLSIZE+INVERS)
-    else
-      lcd.drawText(lcd.getLastRightPos() + 1,39,"N/A",SMLSIZE+INVERS)
+      lcd.drawText(0,39,fn,SMLSIZE+INVERS)
     end
+#ifdef DEBUG
+    lcd.drawNumber(lcd.getLastRightPos() + 1,39,frameType,SMLSIZE+INVERS)
+#endif --DEBUG
 #endif --FRAMETYPE
     drawNoTelemetryData()
   end

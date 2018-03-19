@@ -42,7 +42,6 @@
 --#define RESETBATTALARMS
 --#define MENUEX
 --#define ALERTS
---#define FRAMETYPE
 
 ---------------------
 -- dev features
@@ -81,6 +80,33 @@
 
 
 
+local frameNames = {}
+-- copter
+frameNames[0]   = "GEN"
+frameNames[2]   = "QUAD"
+frameNames[3]   = "COAX"
+frameNames[4]   = "HELI"
+frameNames[13]  = "HEX"
+frameNames[14]  = "OCTO"
+frameNames[15]  = "TRI"
+frameNames[29]  = "DODE"
+
+-- plane
+frameNames[1]   = "WING"
+frameNames[16]  = "FLAP"
+frameNames[19]  = "VTOL2"
+frameNames[20]  = "VTOL4"
+frameNames[21]  = "VTOLT"
+frameNames[22]  = "VTOL"
+frameNames[23]  = "VTOL"
+frameNames[24]  = "VTOL"
+frameNames[25]  = "VTOL"
+frameNames[28]  = "FOIL"
+
+-- rover
+frameNames[10]  = "ROV"
+-- boat
+frameNames[11]  = "SUB"
 
 local frameTypes = {}
 -- copter
@@ -542,20 +568,22 @@ local function drawConfigMenu(event)
     decMenuItem(menu.selectedItem)
   elseif not menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT) then
     menu.selectedItem = (menu.selectedItem - 1)
+    if menu.offset >=  menu.selectedItem then
+      menu.offset = menu.offset - 1
+    end
   elseif not menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_LEFT) then
     menu.selectedItem = (menu.selectedItem + 1)
+    if menu.selectedItem - 7 > menu.offset then
+      menu.offset = menu.offset + 1
+    end
   end
   --wrap
   if menu.selectedItem > #menuItems then
     menu.selectedItem = 1 
-  elseif menu.selectedItem  < 1 then
-      menu.selectedItem = #menuItems
-  end
-  --
-  if menu.selectedItem > 7 then
-    menu.offset = menu.selectedItem - 7
-  elseif menu.selectedItem <= 7 then
     menu.offset = 0
+  elseif menu.selectedItem  < 1 then
+    menu.selectedItem = #menuItems
+    menu.offset = 7
   end
   --
   for m=1+menu.offset,math.min(#menuItems,7+menu.offset) do
@@ -1818,6 +1846,10 @@ local function run(event)
     drawTopBar()
     drawBottomBar()
     drawFailsafe()
+    local fn = frameNames[frameType]
+    if fn ~= nil then
+      lcd.drawText(0,39,fn,SMLSIZE+INVERS)
+    end
     drawNoTelemetryData()
   end
 end

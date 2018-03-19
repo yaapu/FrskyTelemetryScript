@@ -541,20 +541,22 @@ local function drawConfigMenu(event)
     decMenuItem(menu.selectedItem)
   elseif not menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT) then
     menu.selectedItem = (menu.selectedItem - 1)
+    if menu.offset >=  menu.selectedItem then
+      menu.offset = menu.offset - 1
+    end
   elseif not menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_LEFT) then
     menu.selectedItem = (menu.selectedItem + 1)
+    if menu.selectedItem - 7 > menu.offset then
+      menu.offset = menu.offset + 1
+    end
   end
   --wrap
   if menu.selectedItem > #menuItems then
     menu.selectedItem = 1 
-  elseif menu.selectedItem  < 1 then
-      menu.selectedItem = #menuItems
-  end
-  --
-  if menu.selectedItem > 7 then
-    menu.offset = menu.selectedItem - 7
-  elseif menu.selectedItem <= 7 then
     menu.offset = 0
+  elseif menu.selectedItem  < 1 then
+    menu.selectedItem = #menuItems
+    menu.offset = 7
   end
   --
   for m=1+menu.offset,math.min(#menuItems,7+menu.offset) do
