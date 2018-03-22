@@ -36,7 +36,7 @@ Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4 
  - [sound files customization](#sound-files-customization)
  - [compilation](#compilation)
  - [hardware requirements](#hardware-requirements)
- - [thanks](#thanks)
+ - [credits](#credits)
  
 ## Features
 
@@ -336,7 +336,7 @@ For information on how to connect the FrSky equipment together, please refer to
  - http://ardupilot.org/copter/docs/common-frsky-telemetry.html#common-frsky-equipment
  - http://ardupilot.org/copter/docs/common-frsky-telemetry.html#frsky-cables
  
- ## Thanks
+ ## Credits
  
  Thanks go to 
  - Marco Robustini (tester X9D), 
