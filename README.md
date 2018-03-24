@@ -343,3 +343,4 @@ For information on how to connect the FrSky equipment together, please refer to
  - Chris Rey (tester QX7)
  - Alain Chartier (frech sound files)
  - [Johnex](https://github.com/Johnex) for TTSAutomate phrase file
+ - Craft&Theory for the passthrough protocol
