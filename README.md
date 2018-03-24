@@ -150,7 +150,7 @@ Sensor valus are passed to OpenTX only when the script receives valid telemetry 
 
 ## Voltage Sources
 
-Battery voltage is tracked independentely for 3 battery sources: FLVSS, analog port A2 and flight controller. (The script can also use the A2 analog voltage source from X4R and X6R receivers, a2 would be displayed next to cell voltage). A short press of [ENTER] cycles between all the sources. Min value is also tracked for the 3 sources and can be shown with a [MENU] short press.
+Battery voltage is tracked independentely for 3 battery sources: FLVSS, analog port A2 and flight controller. (The script can use the A2 analog voltage source from X4R and X6R receivers, a2 would be displayed next to cell voltage). A short press of [ENTER] cycles between all the sources. Min value is also tracked for the 3 sources and can be shown with a [MENU] short press.
 
 If you use a second FLVSS voltage sensor the OpenTX variable has to be renamed to "Cel2"
 
@@ -343,5 +343,4 @@ For information on how to connect the FrSky equipment together, please refer to
  - Chris Rey (tester QX7)
  - Alain Chartier (frech sound files)
  - [Johnex](https://github.com/Johnex) for TTSAutomate phrase file
- 
-
+ - Craft&Theory for the contribution to the passthrough ptotocol
