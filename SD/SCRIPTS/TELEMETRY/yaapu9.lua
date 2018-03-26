@@ -41,12 +41,13 @@
 ---------------------
 --#define RESETBATTALARMS
 --#define MENUEX
---#define ALERTS
 
 ---------------------
 -- dev features
 ---------------------
 --#define LOGTELEMETRY
+--#define LOGMESSAGES
+--
 --#define DEBUG
 --#define TESTMODE
 --#define BATT2TEST
@@ -106,7 +107,7 @@ frameNames[28]  = "FOIL"
 -- rover
 frameNames[10]  = "ROV"
 -- boat
-frameNames[11]  = "SUB"
+frameNames[11]  = "BOAT"
 
 local frameTypes = {}
 -- copter
@@ -302,27 +303,27 @@ local flightTime = 0
 local lastStatusArmed = 0
 local lastGpsStatus = 0
 local lastFlightMode = 0
-local lastBattLevel = 0
 -- battery levels
 local batLevel = 99
 local batLevels = {}
-batLevels[12]=0
-batLevels[11]=5
-batLevels[10]=10
-batLevels[9]=15
-batLevels[8]=20
-batLevels[7]=25
+--
+local lastBattLevel = 13
+batLevels[0]=0
+batLevels[1]=5
+batLevels[2]=10
+batLevels[3]=15
+batLevels[4]=20
+batLevels[5]=25
 batLevels[6]=30
-batLevels[5]=40
-batLevels[4]=50
-batLevels[3]=60
-batLevels[2]=70
-batLevels[1]=80
-batLevels[0]=90
+batLevels[7]=40
+batLevels[8]=50
+batLevels[9]=60
+batLevels[10]=70
+batLevels[11]=80
+batLevels[12]=90
 -- dual battery
 local showDualBattery = false
 --
-  
 
 
 
@@ -365,6 +366,7 @@ minmaxValues[26] = 0
 minmaxValues[27] = 0
 
 local showMinMaxValues = false
+--
 --
 
   
@@ -506,15 +508,14 @@ local function saveConfig()
 end
 
 local function drawConfigMenuBars()
+  local itemIdx = string.format("%d/%d",menu.selectedItem,#menuItems)
   lcd.drawFilledRectangle(0,0, 212, 7, SOLID)
   lcd.drawRectangle(0, 0, 212, 7, SOLID)
   lcd.drawText(0,0,"Yaapu X9 telemetry script 1.5.0-rc1",SMLSIZE+INVERS)
   lcd.drawFilledRectangle(0,56, 212, 8, SOLID)
   lcd.drawRectangle(0, 56, 212, 8, SOLID)
   lcd.drawText(0,56+1,getConfigFilename(),SMLSIZE+INVERS)
-  lcd.drawNumber(212,56+1,#menuItems,SMLSIZE+INVERS+RIGHT)
-  lcd.drawText(lcd.getLastLeftPos(),56+1,"/",SMLSIZE+INVERS+RIGHT)
-  lcd.drawNumber(lcd.getLastLeftPos(),56+1,menu.selectedItem,SMLSIZE+INVERS+RIGHT)
+  lcd.drawText(212,56+1,itemIdx,SMLSIZE+INVERS+RIGHT)
 end
 
 local function incMenuItem(idx)
@@ -1125,7 +1126,6 @@ local function getVoltageBySource(battsource,cell,cellFC,cellA2)
 end
 
 
-
 --[[
   min alarms need to be armed, i.e since values start at 0 in order to avoid
   immediate triggering upon start, the value must first reach the treshold
@@ -1155,7 +1155,6 @@ local function checkCellVoltage(battsource,cellmin,cellminFC,cellminA2)
   end
 end
 
-
 local function setSensorValues()
   if (not telemetryEnabled()) then
     return
@@ -1184,9 +1183,7 @@ local function setSensorValues()
   setTelemetryValue(0x0400, 0, 0, flightMode, 11 , 0 , "Tmp1")
   setTelemetryValue(0x0410, 0, 0, numSats*10+gpsStatus, 11 , 0 , "Tmp2")
 end
-
-
----------------------
+--------------------
 -- Single long function much more memory efficient than many little functions
 ---------------------
 local function drawBatteryPane(x,battsource,battcurrent,battcapacity,battmah,cellmin,cellminFC,cellminA2,cellsum,cellsumFC,cellsumA2,cellIdx,lipoIdx,currIdx)
@@ -1212,31 +1209,31 @@ local function drawBatteryPane(x,battsource,battcurrent,battcapacity,battmah,cel
       dimFlags = BLINK+INVERS
     end
   end
-  drawNumberWithTwoDims(x+27, 10, 11, 20,celm,"V",battsource,DBLSIZE+PREC2+flags,dimFlags,SMLSIZE)
+  drawNumberWithTwoDims(x+27, 11, 12, 21,celm,"V",battsource,DBLSIZE+PREC2+flags,dimFlags,SMLSIZE)
   -- battery voltage
   drawNumberWithDim(x+2,43,43, lipo,"V",MIDSIZE+PREC1,SMLSIZE)
   -- battery current
   battcurrent = getMaxValue(battcurrent,currIdx)
   drawNumberWithDim(x+37,43,43,battcurrent,"A",MIDSIZE+PREC1,SMLSIZE)
   -- battery percentage
-  lcd.drawNumber(x+4, 14, perc, MIDSIZE)
-  lcd.drawText(lcd.getLastRightPos(), 19, "%", SMLSIZE)
+  lcd.drawNumber(x+4, 15, perc, MIDSIZE)
+  lcd.drawText(lcd.getLastRightPos(), 20, "%", SMLSIZE)
   -- display capacity bar %
-  lcd.drawFilledRectangle(x+5, 27, 2 + math.floor(perc * 0.01 * (59 - 3)), 5, SOLID)
-  lcd.drawRectangle(x+5, 27, 2 + math.floor(perc * 0.01 * (59 - 3)), 5, SOLID)
+  lcd.drawFilledRectangle(x+5, 28, 2 + math.floor(perc * 0.01 * (59 - 3)), 5, SOLID)
+  lcd.drawRectangle(x+5, 28, 2 + math.floor(perc * 0.01 * (59 - 3)), 5, SOLID)
   local step = 59/10
   for s=1,10 - 1 do
-    lcd.drawLine(x+5 + s*step - 1,27, x+5 + s*step - 1, 27 + 5 - 1,SOLID,0)
+    lcd.drawLine(x+5 + s*step - 1,28, x+5 + s*step - 1, 28 + 5 - 1,SOLID,0)
   end
   -- battery mah
-  lcd.drawNumber(x+12, 34, battmah/100, SMLSIZE+PREC1)
-  lcd.drawText(lcd.getLastRightPos(), 34, "/", SMLSIZE)
-  lcd.drawNumber(lcd.getLastRightPos(), 34, battcapacity/100, SMLSIZE+PREC1)
-  lcd.drawText(lcd.getLastRightPos(), 34, "Ah", SMLSIZE)
+  lcd.drawNumber(x+12, 35, battmah/100, SMLSIZE+PREC1)
+  lcd.drawText(lcd.getLastRightPos(), 35, "/", SMLSIZE)
+  lcd.drawNumber(lcd.getLastRightPos(), 35, battcapacity/100, SMLSIZE+PREC1)
+  lcd.drawText(lcd.getLastRightPos(), 35, "Ah", SMLSIZE)
   if showMinMaxValues == true then
-    drawVArrow(x+2+27,43 + 7, 5,false,true)
+    drawVArrow(x+2+29,43 + 6, 5,false,true)
     drawVArrow(x+37+27,43 + 6,5,true,false)
-    drawVArrow(x+27+37, 10 + 3,6,false,true)
+    drawVArrow(x+27+37, 11 + 3,6,false,true)
   end
 end
 
@@ -1244,6 +1241,7 @@ local function drawNoTelemetryData()
   -- no telemetry data
   if (not telemetryEnabled()) then
     lcd.drawFilledRectangle((212-130)/2,18, 130, 30, SOLID)
+    lcd.drawRectangle((212-130)/2,18, 130, 30, ERASE)
     lcd.drawText(60, 29, "no telemetry data", INVERS)
     return
   end
@@ -1285,9 +1283,8 @@ local function drawTopBar()
   lcd.drawText(69, 0, "RS:", SMLSIZE+INVERS )
   lcd.drawText(lcd.getLastRightPos(), 0, getRSSI(), SMLSIZE+INVERS )  
   -- tx voltage
-  lcd.drawText(116, 0, "Tx", SMLSIZE+INVERS)
-  lcd.drawNumber(lcd.getLastRightPos(), 0, getValue(getFieldInfo("tx-voltage").id)*10, SMLSIZE+INVERS+PREC1)
-  lcd.drawText(lcd.getLastRightPos(), 0, "v", SMLSIZE+INVERS)
+  local vTx = string.format("Tx%.1fv",getValue(getFieldInfo("tx-voltage").id))
+  lcd.drawText(116, 0, vTx, SMLSIZE+INVERS)
 end
 
 local function drawBottomBar()
@@ -1376,9 +1373,9 @@ local function drawLeftPane(battcurrent,cellsumFC)
   lcd.drawText(61 + 1, 49, "s",SMLSIZE+RIGHT)
   lcd.drawLine(61 -6,49 + 3,61 -3,49,SOLID,0)
   -- power box
-  lcd.drawRectangle(0,38,67  ,8,FORCE)
-  lcd.drawFilledRectangle(0,38,67  ,8,FORCE)
-  lcd.drawLine(0+67  /2,38,0+67  /2,38+8 - 1,SOLID,0)
+  lcd.drawRectangle(0,38,66  ,8,FORCE)
+  lcd.drawFilledRectangle(0,38,66  ,8,FORCE)
+  lcd.drawLine(0+66  /2,38,0+66  /2,38+8 - 1,SOLID,0)
   -- power
   local power = cellsumFC*battcurrent*0.1
   power = getMaxValue(power,22)
@@ -1396,123 +1393,19 @@ local function drawFailsafe()
   local xoffset = 0
   local yoffset = 0
   if ekfFailsafe > 0 then
-    lcd.drawText(xoffset + 68 + 76/2 - 6, 39 + yoffset, "EKF", SMLSIZE+INVERS+BLINK)
-    lcd.drawText(xoffset + 68 + 76/2 - 17, 48 + yoffset, "FAILSAFE", SMLSIZE+INVERS+BLINK)
+    lcd.drawText(xoffset + 68 + 76/2 - 9, 38 + yoffset, " EKF ", SMLSIZE+INVERS+BLINK)
+    lcd.drawText(xoffset + 68 + 76/2 - 21, 47 + yoffset, " FAILSAFE ", SMLSIZE+INVERS+BLINK)
   end
   if battFailsafe > 0 then
-    lcd.drawText(xoffset + 68 + 76/2 - 8, 39 + yoffset, "BATT", SMLSIZE+INVERS+BLINK)
-    lcd.drawText(xoffset + 68 + 76/2 - 17, 48 + yoffset, "FAILSAFE", SMLSIZE+INVERS+BLINK)
+    lcd.drawText(xoffset + 68 + 76/2 - 10, 38 + yoffset, " BATT ", SMLSIZE+INVERS+BLINK)
+    lcd.drawText(xoffset + 68 + 76/2 - 21, 47 + yoffset, " FAILSAFE ", SMLSIZE+INVERS+BLINK)
   end
 end
 
 
-local function drawPitch()
-  local y = 0
-  local p = pitch
-  -- horizon min max +/- 30°
-  if ( pitch > 0) then
-    if (pitch > 30) then
-      p = 30
-    end
-  else
-    if (pitch < -30) then
-      p = -30
-    end
-  end
-  -- y normalized at 32 +/-20  (0.75 = 20/32)
-  y = 32 + 0.75*p
-  -- lets erase to hide the artificial horizon lines
-  for ly=0,5 do
-    lcd.drawLine(68,32 - ly,68 +   16 + (5 - ly),32 - ly, SOLID, ERASE)
-    lcd.drawLine(68 + 76 -  17 - 1 - (5 - ly),32 - ly,68 + 76 - 1,32 - ly,SOLID,ERASE)
-  end
-  for ly=1,4 do
-    lcd.drawLine(68,32 + ly,68 +   16 + (5 - ly),32 + ly, SOLID, ERASE)
-    lcd.drawLine(68 + 76 -  17 - 1 - (5 - ly),32 + ly,68 + 76 - 1,32 + ly,SOLID,ERASE)
-  end
-  --
-    homeAlt = getMaxValue(homeAlt,23)
-  if homeAlt > 0 then
-    if homeAlt < 10 then -- 2 digits with decimal
-      lcd.drawNumber(68 + 76,32 - 3,homeAlt * 10,SMLSIZE+PREC1+RIGHT)
-    else -- 3 digits
-      lcd.drawNumber(68 + 76,32 - 3,homeAlt,SMLSIZE+RIGHT)
-    end
-  else
-    if homeAlt > -10 then -- 1 digit with sign
-      lcd.drawNumber(68 + 76,32 - 3,homeAlt * 10,SMLSIZE+PREC1+RIGHT)
-    else -- 3 digits with sign
-      lcd.drawNumber(68 + 76,32 - 3,homeAlt,SMLSIZE+RIGHT)
-    end
-  end
-  --
-  if (vSpeed > 999) then
-    lcd.drawNumber(68 + 1,32 - 3,vSpeed*0.1,SMLSIZE)
-  elseif (vSpeed < -99) then
-    lcd.drawNumber(68 + 1,32 - 3,vSpeed * 0.1,SMLSIZE)
-  else
-    lcd.drawNumber(68 + 1,32 - 3,vSpeed,SMLSIZE+PREC1)
-  end
-  -- up pointing center arrow
-  local arrowX = math.floor(68 + 76/2)
-  lcd.drawLine(arrowX - 5,34 + 5,arrowX ,34 ,SOLID,FORCE)
-  lcd.drawLine(arrowX,34 ,arrowX + 5, 34 + 5,SOLID,FORCE)
-  -- vSpeed
-  lcd.drawLine(68,32 - 5,68 +   16,32 - 5, SOLID, FORCE)
-  lcd.drawLine(68,32 + 4,68 +   16,32 + 4, SOLID, FORCE)
-  lcd.drawLine(68 +   16 + 1,32 - 4,68 +   16 + 5,32, SOLID,  FORCE)
-  lcd.drawLine(68 +   16 + 1,32 + 4,68 +   16 + 4,33, SOLID,  FORCE)
-  -- altitude
-  lcd.drawLine(68 + 76 -  17 - 1,32 - 5,68 + 76 - 1,32 - 5,SOLID,FORCE)
-  lcd.drawLine(68 + 76 -  17 - 1,32 + 4,68 + 76 - 1,32 + 4,SOLID,FORCE)
-  lcd.drawLine(68 + 76 -  17 - 2,32 + 4,68 + 76 -  17 - 6,32, SOLID, FORCE)
-  lcd.drawLine(68 + 76 -  17 - 2,32 - 4,68 + 76 -  17 - 6,32, SOLID, FORCE)
-    --
-  if showMinMaxValues == true then
-    lcd.drawFilledRectangle(68 + 76 - 26,32-5,7,10,ERASE)
-    drawVArrow(68 + 76 - 23, 32-4,6,true,false)
-  end
-end
 
 -- vertical distance between roll horiz segments
-local function drawRoll()
-  local r = -roll
-  local cx,cy,dx,dy,ccx,ccy,cccx,cccy
-  local yPos = 0 + 7 + 8
-  -- no roll ==> segments are vertical, offsets are multiples of 10
-  if ( roll == 0) then
-    dx=0
-    dy=pitch
-    cx=0
-    cy=10
-    ccx=0
-    ccy=2*10
-    cccx=0
-    cccy=3*10
-  else
-    -- center line offsets
-    dx = math.cos(math.rad(90 - r)) * -pitch
-    dy = math.sin(math.rad(90 - r)) * pitch
-    -- 1st line offsets
-    cx = math.cos(math.rad(90 - r)) * 10
-    cy = math.sin(math.rad(90 - r)) * 10
-    -- 2nd line offsets
-    ccx = math.cos(math.rad(90 - r)) * 2 * 10
-    ccy = math.sin(math.rad(90 - r)) * 2 * 10
-    -- 3rd line offsets
-    cccx = math.cos(math.rad(90 - r)) * 3 * 10
-    cccy = math.sin(math.rad(90 - r)) * 3 * 10
-  end
-  local rollX = math.floor(68 + 76/2)
-  --local delta = (76 - 76)
-  drawCroppedLine(rollX + dx - cccx,dy + 32 + cccy,r,5,DOTTED,68,68 + 76,yPos,56)
-  drawCroppedLine(rollX + dx - ccx,dy + 32 + ccy,r,7,DOTTED,68,68 + 76,yPos,56)
-  drawCroppedLine(rollX + dx - cx,dy + 32 + cy,r,16,DOTTED,68,68 + 76,yPos,56)
-  drawCroppedLine(rollX + dx,dy + 32,r,54,SOLID,68,68 + 76,yPos,56)
-  drawCroppedLine(rollX + dx + cx,dy + 32 - cy,r,16,DOTTED,68,68 + 76,yPos,56)
-  drawCroppedLine(rollX + dx + ccx,dy + 32 - ccy,r,7,DOTTED,68,68 + 76,yPos,56)
-  drawCroppedLine(rollX + dx + cccx,dy + 32 - cccy,r,5,DOTTED,68,68 + 76,yPos,56)
-end
+
 
 local yawLabels = {
   {39,47,"NE"},
@@ -1568,6 +1461,15 @@ local function drawYaw()
         drawHomeIcon(cx - step/steps*ww - 6,minY + 10)
       end
     end
+    -- when abs(home angle) > 90 draw home icon close to left/right border
+    local angle = homeAngle - yaw
+    local cos = math.cos(math.rad(angle - 90))    
+    local sin = math.sin(math.rad(angle - 90))    
+    if cos > 0 and sin > 0 then
+      drawHomeIcon(cx + ww ,minY + 10)
+    elseif cos < 0 and sin > 0 then
+      drawHomeIcon(cx - ww - 5,minY + 10)
+    end
   end
 
   lcd.drawLine(68, minY + 7, 68 + 76 - 1, minY + 7, SOLID, 0)
@@ -1585,14 +1487,143 @@ local function drawYaw()
 end
 
 
+
+
 local function drawHud()
-  drawRoll()
-  drawPitch()
+  local r = -roll
+  local cx,cy,dx,dy,ccx,ccy,cccx,cccy
+  local yPos = 0 + 7 + 8
+  -----------------------
+  -- artificial horizon
+  -----------------------
+  -- no roll ==> segments are vertical, offsets are multiples of 7
+  if ( roll == 0) then
+    dx=0
+    dy=pitch
+    cx=0
+    cy=7
+    ccx=0
+    ccy=2*7
+    cccx=0
+    cccy=3*7
+  else
+    -- center line offsets
+    dx = math.cos(math.rad(90 - r)) * -pitch
+    dy = math.sin(math.rad(90 - r)) * pitch
+    -- 1st line offsets
+    cx = math.cos(math.rad(90 - r)) * 7
+    cy = math.sin(math.rad(90 - r)) * 7
+    -- 2nd line offsets
+    ccx = math.cos(math.rad(90 - r)) * 2 * 7
+    ccy = math.sin(math.rad(90 - r)) * 2 * 7
+    -- 3rd line offsets
+    cccx = math.cos(math.rad(90 - r)) * 3 * 7
+    cccy = math.sin(math.rad(90 - r)) * 3 * 7
+  end
+  local rollX = math.floor(68 + 76/2)
+  -- parallel lines above and below horizon of increasing length 5,7,16,16,7,5
+  drawCroppedLine(rollX + dx - cccx,dy + 35 + cccy,r,5,DOTTED,68,68 + 76,yPos,56 - 1)
+  drawCroppedLine(rollX + dx - ccx,dy + 35 + ccy,r,7,DOTTED,68,68 + 76,yPos,56 - 1)
+  drawCroppedLine(rollX + dx - cx,dy + 35 + cy,r,16,DOTTED,68,68 + 76,yPos,56 - 1)
+  drawCroppedLine(rollX + dx + cx,dy + 35 - cy,r,16,DOTTED,68,68 + 76,yPos,56 - 1)
+  drawCroppedLine(rollX + dx + ccx,dy + 35 - ccy,r,7,DOTTED,68,68 + 76,yPos,56 - 1)
+  drawCroppedLine(rollX + dx + cccx,dy + 35 - cccy,r,5,DOTTED,68,68 + 76,yPos,56 - 1)
+  -----------------------
+  -- dark color for "ground"
+  -----------------------
+  local minY = 16
+  local maxY = 54
+  local minX = 68 + 1
+  local maxX = 68 + 76 - 2
+  --
+  local ox = 106 + dx
+  --
+  local oy = 35 + dy
+  local yy = 0
+  -- angle of the line passing on point(ox,oy)
+  local angle = math.tan(math.rad(-roll))
+  -- for each pixel of the hud base/top draw vertical black 
+  -- lines from hud border to horizon line
+  -- horizon line moves with pitch/roll
+  for xx= minX,maxX
+  do
+    if roll > 90 or roll < -90 then
+      yy = (oy - ox*angle) + math.floor(xx*angle)
+      if yy <= minY then
+      elseif yy > minY + 1 and yy < maxY then
+        lcd.drawLine(0 + xx, 0 + minY, 0 + xx, 0 + yy,SOLID,0)
+      elseif yy >= maxY then
+        lcd.drawLine(0 + xx, 0 + minY, 0 + xx, 0 + maxY,SOLID,0)
+      end
+    else
+      yy = (oy - ox*angle) + math.floor(xx*angle)
+      if yy <= minY then
+        lcd.drawLine(0 + xx, 0 + minY, 0 + xx, 0 + maxY,SOLID,0)
+      elseif yy >= maxY then
+      else
+        lcd.drawLine(0 + xx, 0 + yy, 0 + xx, 0 + maxY,SOLID,0)
+      end
+    end
+  end
+  -------------------------------------
+  -- left and right indicators on HUD
+  -------------------------------------
+  -- lets erase to hide the artificial horizon lines
+  for ly=0,5 do
+    lcd.drawLine(68,35 - ly,68 +   16 + (5 - ly),35 - ly, SOLID, ERASE)
+    lcd.drawLine(68 + 76 -  17 - 1 - (5 - ly),35 - ly,68 + 76 - 1,35 - ly,SOLID,ERASE)
+  end
+  for ly=1,4 do
+    lcd.drawLine(68,35 + ly,68 +   16 + (5 - ly),35 + ly, SOLID, ERASE)
+    lcd.drawLine(68 + 76 -  17 - 1 - (5 - ly),35 + ly,68 + 76 - 1,35 + ly,SOLID,ERASE)
+  end
+  -- altitude
+  homeAlt = getMaxValue(homeAlt,23)
+  if homeAlt > 0 then
+    if homeAlt < 10 then -- 2 digits with decimal
+      lcd.drawNumber(68 + 76,35 - 3,homeAlt * 10,SMLSIZE+PREC1+RIGHT)
+    else -- 3 digits
+      lcd.drawNumber(68 + 76,35 - 3,homeAlt,SMLSIZE+RIGHT)
+    end
+  else
+    if homeAlt > -10 then -- 1 digit with sign
+      lcd.drawNumber(68 + 76,35 - 3,homeAlt * 10,SMLSIZE+PREC1+RIGHT)
+    else -- 3 digits with sign
+      lcd.drawNumber(68 + 76,35 - 3,homeAlt,SMLSIZE+RIGHT)
+    end
+  end
+  -- vertical speed
+  if (vSpeed > 999) then
+    lcd.drawNumber(68 + 1,35 - 3,vSpeed*0.1,SMLSIZE)
+  elseif (vSpeed < -99) then
+    lcd.drawNumber(68 + 1,35 - 3,vSpeed * 0.1,SMLSIZE)
+  else
+    lcd.drawNumber(68 + 1,35 - 3,vSpeed,SMLSIZE+PREC1)
+  end
+  -- center arrow
+  local arrowX = math.floor(68 + 76/2)
+  lcd.drawLine(arrowX - 5,35 + 5,arrowX ,35 ,SOLID,0)
+  lcd.drawLine(arrowX + 1,35 + 1,arrowX + 5, 35 + 5,SOLID,0)
+  -- vertical speed grid lines
+  lcd.drawLine(68,35 - 5,68 +   16,35 - 5, SOLID, FORCE)
+  lcd.drawLine(68,35 + 4,68 +   16,35 + 4, SOLID, FORCE)
+  lcd.drawLine(68 +   16 + 1,35 - 4,68 +   16 + 5,35, SOLID,  FORCE)
+  lcd.drawLine(68 +   16 + 1,35 + 4,68 +   16 + 4,35+1, SOLID,  FORCE)
+  -- altitude grid lines
+  lcd.drawLine(68 + 76 -  17 - 1,35 - 5,68 + 76 - 1,35 - 5,SOLID,FORCE)
+  lcd.drawLine(68 + 76 -  17 - 1,35 + 4,68 + 76 - 1,35 + 4,SOLID,FORCE)
+  lcd.drawLine(68 + 76 -  17 - 2,35 + 4,68 + 76 -  17 - 6,35, SOLID, FORCE)
+  lcd.drawLine(68 + 76 -  17 - 2,35 - 4,68 + 76 -  17 - 6,35, SOLID, FORCE)
+  -- min/max arrows
+  if showMinMaxValues == true then
+    drawVArrow(68 + 76 - 26, 35 - 4,6,true,false)
+  end
+  -- failsafe
   if ekfFailsafe == 0 and battFailsafe == 0 and timerRunning == 0 then
     if (statusArmed == 1) then
-      lcd.drawText(68 + 76/2 - 12, 39, "ARMED", SMLSIZE+INVERS)
+      lcd.drawText(68 + 76/2 - 15, 21, " ARMED ", SMLSIZE+INVERS)
     else
-      lcd.drawText(68 + 76/2 - 18, 39, "DISARMED", SMLSIZE+INVERS+BLINK)
+      lcd.drawText(68 + 76/2 - 21, 21, " DISARMED ", SMLSIZE+INVERS+BLINK)
     end
   end
 end
@@ -1604,14 +1635,13 @@ end
 
 local function drawHomeDirection()
   local angle = math.floor(homeAngle - yaw)
-  lcd.drawFilledRectangle(75 - 7,48 - 7,2*7,2*7,ERASE,0)
-  local x1 = 75 + 7 * math.cos(math.rad(angle - 90))
+  local x1 = 76 + 7 * math.cos(math.rad(angle - 90))
   local y1 = 48 + 7 * math.sin(math.rad(angle - 90))
-  local x2 = 75 + 7 * math.cos(math.rad(angle - 90 + 150))
+  local x2 = 76 + 7 * math.cos(math.rad(angle - 90 + 150))
   local y2 = 48 + 7 * math.sin(math.rad(angle - 90 + 150))
-  local x3 = 75 + 7 * math.cos(math.rad(angle - 90 - 150))
+  local x3 = 76 + 7 * math.cos(math.rad(angle - 90 - 150))
   local y3 = 48 + 7 * math.sin(math.rad(angle - 90 - 150))
-  local x4 = 75 + 7 * 0.5 * math.cos(math.rad(angle - 270))
+  local x4 = 76 + 7 * 0.5 * math.cos(math.rad(angle - 270))
   local y4 = 48 + 7 * 0.5 *math.sin(math.rad(angle - 270))
   --
   lcd.drawLine(x1,y1,x2,y2,SOLID,1)
@@ -1694,9 +1724,13 @@ local function checkEvents()
     batLevel = 99
   end
 
-  if batLevel < (batLevels[lastBattLevel] + 1) and lastBattLevel <= 11 then
-    playSound("bat"..batLevels[lastBattLevel])
-    lastBattLevel = lastBattLevel + 1
+  for l=0,12 do
+    -- trigger alarm as as soon as it falls below level + 1 (i.e 91%,81%,71%,...)
+    if batLevel <= batLevels[l] + 1 and l < lastBattLevel then
+      lastBattLevel = l
+      playSound("bat"..batLevels[l])
+      break
+    end
   end
 
   if statusArmed == 1 and lastStatusArmed == 0 then
@@ -1846,9 +1880,11 @@ local function run(event)
     drawTopBar()
     drawBottomBar()
     drawFailsafe()
-    local fn = frameNames[frameType]
-    if fn ~= nil then
-      lcd.drawText(0,39,fn,SMLSIZE+INVERS)
+    if showDualBattery == false then
+      local fn = frameNames[frameType]
+      if fn ~= nil then
+        lcd.drawText(0,39,fn,SMLSIZE+INVERS)
+      end
     end
     drawNoTelemetryData()
   end
