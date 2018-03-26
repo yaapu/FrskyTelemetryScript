@@ -334,7 +334,7 @@ Please refer to the arducopter wiki for information on how to configure your fli
 
 For information on how to connect the FrSky equipment together, please refer to 
  - http://ardupilot.org/copter/docs/common-frsky-telemetry.html#common-frsky-equipment
- - http://ardupilot.org/copter/docs/common-frsky-telemetry.html#frsky-cables
+ - http://ardupilot.org/copter/docs/common-frsky-telemetry.html#diy-cable-for-x-receivers
  
  ## Credits
  
