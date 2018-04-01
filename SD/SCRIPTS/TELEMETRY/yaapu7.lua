@@ -510,7 +510,7 @@ local function drawConfigMenuBars()
   local itemIdx = string.format("%d/%d",menu.selectedItem,#menuItems)
   lcd.drawFilledRectangle(0,0, 128, 7, SOLID)
   lcd.drawRectangle(0, 0, 128, 7, SOLID)
-  lcd.drawText(0,0,"Yaapu X7 1.5.0-rc1",SMLSIZE+INVERS)
+  lcd.drawText(0,0,"Yaapu X7 1.5.0",SMLSIZE+INVERS)
   lcd.drawFilledRectangle(0,57-2, 128, 9, SOLID)
   lcd.drawRectangle(0, 57-2, 128, 9, SOLID)
   lcd.drawText(0,57-1,string.sub(getConfigFilename(),8),SMLSIZE+INVERS)
@@ -1212,8 +1212,8 @@ local function drawBatteryPane(x,battsource,battcurrent,battcapacity,battmah,cel
   -- battery voltage
   drawNumberWithDim(x+1,29,29, lipo,"V",INVERS+PREC1+SMLSIZE,INVERS+SMLSIZE)
   -- battery current
-  battcurrent = getMaxValue(battcurrent,currIdx)
-  drawNumberWithDim(x+1,36,36,battcurrent,"A",INVERS+SMLSIZE+PREC1,INVERS+SMLSIZE)
+  local current = getMaxValue(battcurrent,currIdx)
+  drawNumberWithDim(x+1,36,36,current,"A",INVERS+SMLSIZE+PREC1,INVERS+SMLSIZE)
   -- battery percentage
   lcd.drawNumber(x+16, 44, perc, MIDSIZE)
   lcd.drawText(lcd.getLastRightPos(), 48, "%", SMLSIZE)
@@ -1261,8 +1261,8 @@ local function drawX7BatteryLeftPane(battsource,battcurrent,battcapacity,battmah
   -- battery voltage
   drawNumberWithDim(41+1,29,29, lipo,"V",INVERS+PREC1+SMLSIZE,INVERS+SMLSIZE)
   -- battery current
-  battcurrent = getMinValue(battcurrent,currIdx)
-  drawNumberWithDim(41+1,36,36,battcurrent,"A",INVERS+SMLSIZE+PREC1,INVERS+SMLSIZE)
+  local current = getMaxValue(battcurrent,currIdx)
+  drawNumberWithDim(41+1,36,36,current,"A",INVERS+SMLSIZE+PREC1,INVERS+SMLSIZE)
   -- battery percentage
   lcd.drawNumber(17+16, 44, perc, MIDSIZE)
   lcd.drawText(lcd.getLastRightPos(), 48, "%", SMLSIZE)
@@ -1346,11 +1346,11 @@ local function drawHomeDist()
   if homeAngle == -1 then
     flags = BLINK
   end
-  homeDist = getMaxValue(homeDist,27)
+  local dist = getMaxValue(homeDist,27)
   if showMinMaxValues == true then
     flags = 0
   end
-  lcd.drawNumber(76, 21, homeDist, SMLSIZE+flags)
+  lcd.drawNumber(76, 21, dist, SMLSIZE+flags)
   lcd.drawText(lcd.getLastRightPos(), 21, "m",SMLSIZE+flags)
   if showMinMaxValues == true then
     drawVArrow(lcd.getLastRightPos() + 2, 21,6,true,false)
@@ -1582,18 +1582,19 @@ local function drawHud()
     lcd.drawLine(0 + 64 -  17 - 1 - (5 - ly),35 + ly,0 + 64 - 1,35 + ly,SOLID,ERASE)
   end
   -- altitude
-  homeAlt = getMaxValue(homeAlt,23)
-  if homeAlt > 0 then
-    if homeAlt < 10 then -- 2 digits with decimal
-      lcd.drawNumber(0 + 64,35 - 3,homeAlt * 10,SMLSIZE+PREC1+RIGHT)
+  local alt = getMaxValue(homeAlt,23)
+  --
+  if alt > 0 then
+    if alt < 10 then -- 2 digits with decimal
+      lcd.drawNumber(0 + 64,35 - 3,alt * 10,SMLSIZE+PREC1+RIGHT)
     else -- 3 digits
-      lcd.drawNumber(0 + 64,35 - 3,homeAlt,SMLSIZE+RIGHT)
+      lcd.drawNumber(0 + 64,35 - 3,alt,SMLSIZE+RIGHT)
     end
   else
-    if homeAlt > -10 then -- 1 digit with sign
-      lcd.drawNumber(0 + 64,35 - 3,homeAlt * 10,SMLSIZE+PREC1+RIGHT)
+    if alt > -10 then -- 1 digit with sign
+      lcd.drawNumber(0 + 64,35 - 3,alt * 10,SMLSIZE+PREC1+RIGHT)
     else -- 3 digits with sign
-      lcd.drawNumber(0 + 64,35 - 3,homeAlt,SMLSIZE+RIGHT)
+      lcd.drawNumber(0 + 64,35 - 3,alt,SMLSIZE+RIGHT)
     end
   end
   -- vertical speed
@@ -1713,17 +1714,13 @@ local function checkAlarm(level,value,idx,sign,sound,delay)
 end
 
 local function checkEvents()
-  -- silence alarms when showing min/max values
-  if showMinMaxValues == false then
-    -- vocal fence alarms
-    checkAlarm(conf.minAltitudeAlert,homeAlt,1,-1,"minalt",menuItems[14][4])
-    checkAlarm(conf.maxAltitudeAlert,homeAlt,2,1,"maxalt",menuItems[14][4])  
-    checkAlarm(conf.maxDistanceAlert,homeDist,3,1,"maxdist",menuItems[14][4])  
-    checkAlarm(1,2*ekfFailsafe,4,1,"ekf",menuItems[14][4])  
-    checkAlarm(1,2*battFailsafe,5,1,"lowbat",menuItems[14][4])  
-    checkAlarm(conf.timerAlert,flightTime,6,1,"timealert",conf.timerAlert)
-  end
-
+  checkAlarm(conf.minAltitudeAlert,homeAlt,1,-1,"minalt",menuItems[14][4])
+  checkAlarm(conf.maxAltitudeAlert,homeAlt,2,1,"maxalt",menuItems[14][4])  
+  checkAlarm(conf.maxDistanceAlert,homeDist,3,1,"maxdist",menuItems[14][4])  
+  checkAlarm(1,2*ekfFailsafe,4,1,"ekf",menuItems[14][4])  
+  checkAlarm(1,2*battFailsafe,5,1,"lowbat",menuItems[14][4])  
+  checkAlarm(conf.timerAlert,flightTime,6,1,"timealert",conf.timerAlert)
+  --
   local capacity = getBatt1Capacity() + getBatt2Capacity()
   local mah = batt1mah + batt2mah
   if (capacity > 0) then
@@ -1899,7 +1896,7 @@ end
 
 local function init()
   loadConfig()
-  pushMessage(6,"Yaapu X7 1.5.0-rc1")
+  pushMessage(6,"Yaapu X7 1.5.0")
   playSound("yaapu")
 end
 

@@ -33,9 +33,9 @@
 -- script version 
 ---------------------
 #ifdef X9
-  #define VERSION "Yaapu X9 telemetry script 1.5.0-rc1"
+  #define VERSION "Yaapu X9 telemetry script 1.5.0"
 #else
-  #define VERSION "Yaapu X7 1.5.0-rc1"
+  #define VERSION "Yaapu X7 1.5.0"
 #endif
 
 ---------------------
@@ -2367,8 +2367,8 @@ local function drawBatteryPane(x,battsource,battcurrent,battcapacity,battmah,cel
   -- battery voltage
   drawNumberWithDim(x+BATTVOLT_X,BATTVOLT_Y,BATTVOLT_YV, lipo,"V",BATTVOLT_FLAGS,BATTVOLT_FLAGSV)
   -- battery current
-  battcurrent = getMaxValue(battcurrent,currIdx)
-  drawNumberWithDim(x+BATTCURR_X,BATTCURR_Y,BATTCURR_YA,battcurrent,"A",BATTCURR_FLAGS,BATTCURR_FLAGSA)
+  local current = getMaxValue(battcurrent,currIdx)
+  drawNumberWithDim(x+BATTCURR_X,BATTCURR_Y,BATTCURR_YA,current,"A",BATTCURR_FLAGS,BATTCURR_FLAGSA)
   -- battery percentage
   lcd.drawNumber(x+BATTPERC_X, BATTPERC_Y, perc, BATTPERC_FLAGS)
   lcd.drawText(lcd.getLastRightPos(), BATTPERC_YPERC, "%", BATTPERC_FLAGSPERC)
@@ -2445,8 +2445,8 @@ local function drawX7BatteryLeftPane(battsource,battcurrent,battcapacity,battmah
   -- battery voltage
   drawNumberWithDim(41+BATTVOLT_X,BATTVOLT_Y,BATTVOLT_YV, lipo,"V",BATTVOLT_FLAGS,BATTVOLT_FLAGSV)
   -- battery current
-  battcurrent = getMinValue(battcurrent,currIdx)
-  drawNumberWithDim(41+BATTCURR_X,BATTCURR_Y,BATTCURR_YA,battcurrent,"A",BATTCURR_FLAGS,BATTCURR_FLAGSA)
+  local current = getMaxValue(battcurrent,currIdx)
+  drawNumberWithDim(41+BATTCURR_X,BATTCURR_Y,BATTCURR_YA,current,"A",BATTCURR_FLAGS,BATTCURR_FLAGSA)
   -- battery percentage
   lcd.drawNumber(17+BATTPERC_X, BATTPERC_Y, perc, BATTPERC_FLAGS)
   lcd.drawText(lcd.getLastRightPos(), BATTPERC_YPERC, "%", BATTPERC_FLAGSPERC)
@@ -2476,6 +2476,7 @@ local function drawNoTelemetryData()
 #else
   if (not telemetryEnabled()) then
     lcd.drawFilledRectangle(12,18, 105, 30, SOLID)
+    lcd.drawRectangle(12,18, 105, 30, ERASE)
     lcd.drawText(30, 29, "no telemetry", INVERS)
     return
   end
@@ -2576,11 +2577,11 @@ local function drawHomeDist()
   if homeAngle == -1 then
     flags = BLINK
   end
-  homeDist = getMaxValue(homeDist,MAX_DIST)
+  local dist = getMaxValue(homeDist,MAX_DIST)
   if showMinMaxValues == true then
     flags = 0
   end
-  lcd.drawNumber(HOMEDIST_X, HOMEDIST_Y, homeDist, HOMEDIST_FLAGS+flags)
+  lcd.drawNumber(HOMEDIST_X, HOMEDIST_Y, dist, HOMEDIST_FLAGS+flags)
   lcd.drawText(lcd.getLastRightPos(), HOMEDIST_Y, "m",HOMEDIST_FLAGS+flags)
   if showMinMaxValues == true then
     drawVArrow(lcd.getLastRightPos() + 2, HOMEDIST_Y,6,true,false)
@@ -2641,21 +2642,21 @@ local function drawLeftPane(battcurrent,cellsumFC)
   if homeAngle == -1 then
     flags = BLINK
   end
-  homeDist = getMaxValue(homeDist,MAX_DIST)
+  local dist = getMaxValue(homeDist,MAX_DIST)
   if showMinMaxValues == true then
     flags = 0
   end
-  lcd.drawNumber(HOMEDIST_X, HOMEDIST_Y-1, homeDist, HOMEDIST_FLAGS+flags)
+  lcd.drawNumber(HOMEDIST_X, HOMEDIST_Y-1, dist, HOMEDIST_FLAGS+flags)
   lcd.drawText(lcd.getLastRightPos(), HOMEDIST_Y-1, "m",HOMEDIST_FLAGS+flags)
   -- hspeed
-  hSpeed = getMaxValue(hSpeed,MAX_HSPEED)
+  local speed = getMaxValue(hSpeed,MAX_HSPEED)
   drawHArrow(HSPEED_XLABEL + 4,HSPEED_YLABEL,4,false,true)
   drawHArrow(HSPEED_XLABEL + 6,HSPEED_YLABEL + 4,5,false,true)
   lcd.drawPoint(HSPEED_XLABEL + 2,HSPEED_YLABEL)
   lcd.drawPoint(HSPEED_XLABEL,HSPEED_YLABEL)
   lcd.drawPoint(HSPEED_XLABEL + 4,HSPEED_YLABEL + 4)
   lcd.drawPoint(HSPEED_XLABEL + 2,HSPEED_YLABEL + 4)
-  lcd.drawNumber(HSPEED_X - 10, HSPEED_Y - 1, hSpeed, HSPEED_FLAGS+RIGHT+PREC1)
+  lcd.drawNumber(HSPEED_X - 10, HSPEED_Y - 1, speed, HSPEED_FLAGS+RIGHT+PREC1)
   lcd.drawText(HSPEED_XDIM - 4, HSPEED_YDIM - 4, "m",HSPEED_FLAGS+RIGHT)
   lcd.drawText(HSPEED_XDIM + 1, HSPEED_YDIM, "s",HSPEED_FLAGS+RIGHT)
   lcd.drawLine(HSPEED_XDIM -6,HSPEED_YDIM + 3,HSPEED_XDIM -3,HSPEED_YDIM,SOLID,0)
@@ -2737,18 +2738,18 @@ local function drawPitch()
     lcd.drawLine(HUD_X + HUD_WIDTH - RIGHTWIDTH - 1 - (5 - ly),HUD_X_MID + ly,HUD_X + HUD_WIDTH - 1,HUD_X_MID + ly,SOLID,ERASE)
   end
   --
-  homeAlt = getMaxValue(homeAlt,MINMAX_ALT)
-  if homeAlt > 0 then
-    if homeAlt < 10 then -- 2 digits with decimal
-      lcd.drawNumber(HUD_X + HUD_WIDTH,HUD_X_MID - 3,homeAlt * 10,SMLSIZE+PREC1+RIGHT)
+  local alt = getMaxValue(homeAlt,MINMAX_ALT)
+  if alt > 0 then
+    if alt < 10 then -- 2 digits with decimal
+      lcd.drawNumber(HUD_X + HUD_WIDTH,HUD_X_MID - 3,alt * 10,SMLSIZE+PREC1+RIGHT)
     else -- 3 digits
-      lcd.drawNumber(HUD_X + HUD_WIDTH,HUD_X_MID - 3,homeAlt,SMLSIZE+RIGHT)
+      lcd.drawNumber(HUD_X + HUD_WIDTH,HUD_X_MID - 3,alt,SMLSIZE+RIGHT)
     end
   else
-    if homeAlt > -10 then -- 1 digit with sign
-      lcd.drawNumber(HUD_X + HUD_WIDTH,HUD_X_MID - 3,homeAlt * 10,SMLSIZE+PREC1+RIGHT)
+    if alt > -10 then -- 1 digit with sign
+      lcd.drawNumber(HUD_X + HUD_WIDTH,HUD_X_MID - 3,alt * 10,SMLSIZE+PREC1+RIGHT)
     else -- 3 digits with sign
-      lcd.drawNumber(HUD_X + HUD_WIDTH,HUD_X_MID - 3,homeAlt,SMLSIZE+RIGHT)
+      lcd.drawNumber(HUD_X + HUD_WIDTH,HUD_X_MID - 3,alt,SMLSIZE+RIGHT)
     end
   end
   --
@@ -3105,18 +3106,19 @@ local function drawHud()
     lcd.drawLine(HUD_X + HUD_WIDTH - RIGHTWIDTH - 1 - (5 - ly),HUD_X_MID + ly,HUD_X + HUD_WIDTH - 1,HUD_X_MID + ly,SOLID,ERASE)
   end
   -- altitude
-  homeAlt = getMaxValue(homeAlt,MINMAX_ALT)
-  if homeAlt > 0 then
-    if homeAlt < 10 then -- 2 digits with decimal
-      lcd.drawNumber(HUD_X + HUD_WIDTH,HUD_X_MID - 3,homeAlt * 10,SMLSIZE+PREC1+RIGHT)
+  local alt = getMaxValue(homeAlt,MINMAX_ALT)
+  --
+  if alt > 0 then
+    if alt < 10 then -- 2 digits with decimal
+      lcd.drawNumber(HUD_X + HUD_WIDTH,HUD_X_MID - 3,alt * 10,SMLSIZE+PREC1+RIGHT)
     else -- 3 digits
-      lcd.drawNumber(HUD_X + HUD_WIDTH,HUD_X_MID - 3,homeAlt,SMLSIZE+RIGHT)
+      lcd.drawNumber(HUD_X + HUD_WIDTH,HUD_X_MID - 3,alt,SMLSIZE+RIGHT)
     end
   else
-    if homeAlt > -10 then -- 1 digit with sign
-      lcd.drawNumber(HUD_X + HUD_WIDTH,HUD_X_MID - 3,homeAlt * 10,SMLSIZE+PREC1+RIGHT)
+    if alt > -10 then -- 1 digit with sign
+      lcd.drawNumber(HUD_X + HUD_WIDTH,HUD_X_MID - 3,alt * 10,SMLSIZE+PREC1+RIGHT)
     else -- 3 digits with sign
-      lcd.drawNumber(HUD_X + HUD_WIDTH,HUD_X_MID - 3,homeAlt,SMLSIZE+RIGHT)
+      lcd.drawNumber(HUD_X + HUD_WIDTH,HUD_X_MID - 3,alt,SMLSIZE+RIGHT)
     end
   end
   -- vertical speed
@@ -3264,17 +3266,13 @@ local function checkAlarm(level,value,idx,sign,sound,delay)
 end
 
 local function checkEvents()
-  -- silence alarms when showing min/max values
-  if showMinMaxValues == false then
-    -- vocal fence alarms
-    checkAlarm(conf.minAltitudeAlert,homeAlt,ALARMS_MIN_ALT,-1,"minalt",menuItems[T2][4])
-    checkAlarm(conf.maxAltitudeAlert,homeAlt,ALARMS_MAX_ALT,1,"maxalt",menuItems[T2][4])  
-    checkAlarm(conf.maxDistanceAlert,homeDist,ALARMS_MAX_DIST,1,"maxdist",menuItems[T2][4])  
-    checkAlarm(1,2*ekfFailsafe,ALARMS_EKF,1,"ekf",menuItems[T2][4])  
-    checkAlarm(1,2*battFailsafe,ALARMS_BATT,1,"lowbat",menuItems[T2][4])  
-    checkAlarm(conf.timerAlert,flightTime,ALARMS_TIMER,1,"timealert",conf.timerAlert)
-  end
-
+  checkAlarm(conf.minAltitudeAlert,homeAlt,ALARMS_MIN_ALT,-1,"minalt",menuItems[T2][4])
+  checkAlarm(conf.maxAltitudeAlert,homeAlt,ALARMS_MAX_ALT,1,"maxalt",menuItems[T2][4])  
+  checkAlarm(conf.maxDistanceAlert,homeDist,ALARMS_MAX_DIST,1,"maxdist",menuItems[T2][4])  
+  checkAlarm(1,2*ekfFailsafe,ALARMS_EKF,1,"ekf",menuItems[T2][4])  
+  checkAlarm(1,2*battFailsafe,ALARMS_BATT,1,"lowbat",menuItems[T2][4])  
+  checkAlarm(conf.timerAlert,flightTime,ALARMS_TIMER,1,"timealert",conf.timerAlert)
+  --
   local capacity = getBatt1Capacity() + getBatt2Capacity()
   local mah = batt1mah + batt2mah
   if (capacity > 0) then

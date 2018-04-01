@@ -511,7 +511,7 @@ local function drawConfigMenuBars()
   local itemIdx = string.format("%d/%d",menu.selectedItem,#menuItems)
   lcd.drawFilledRectangle(0,0, 212, 7, SOLID)
   lcd.drawRectangle(0, 0, 212, 7, SOLID)
-  lcd.drawText(0,0,"Yaapu X9 telemetry script 1.5.0-rc1",SMLSIZE+INVERS)
+  lcd.drawText(0,0,"Yaapu X9 telemetry script 1.5.0",SMLSIZE+INVERS)
   lcd.drawFilledRectangle(0,56, 212, 8, SOLID)
   lcd.drawRectangle(0, 56, 212, 8, SOLID)
   lcd.drawText(0,56+1,getConfigFilename(),SMLSIZE+INVERS)
@@ -1213,8 +1213,8 @@ local function drawBatteryPane(x,battsource,battcurrent,battcapacity,battmah,cel
   -- battery voltage
   drawNumberWithDim(x+2,43,43, lipo,"V",MIDSIZE+PREC1,SMLSIZE)
   -- battery current
-  battcurrent = getMaxValue(battcurrent,currIdx)
-  drawNumberWithDim(x+37,43,43,battcurrent,"A",MIDSIZE+PREC1,SMLSIZE)
+  local current = getMaxValue(battcurrent,currIdx)
+  drawNumberWithDim(x+37,43,43,current,"A",MIDSIZE+PREC1,SMLSIZE)
   -- battery percentage
   lcd.drawNumber(x+4, 15, perc, MIDSIZE)
   lcd.drawText(lcd.getLastRightPos(), 20, "%", SMLSIZE)
@@ -1354,21 +1354,21 @@ local function drawLeftPane(battcurrent,cellsumFC)
   if homeAngle == -1 then
     flags = BLINK
   end
-  homeDist = getMaxValue(homeDist,27)
+  local dist = getMaxValue(homeDist,27)
   if showMinMaxValues == true then
     flags = 0
   end
-  lcd.drawNumber(35, 32-1, homeDist, SMLSIZE+flags)
+  lcd.drawNumber(35, 32-1, dist, SMLSIZE+flags)
   lcd.drawText(lcd.getLastRightPos(), 32-1, "m",SMLSIZE+flags)
   -- hspeed
-  hSpeed = getMaxValue(hSpeed,26)
+  local speed = getMaxValue(hSpeed,26)
   drawHArrow(12 + 4,48,4,false,true)
   drawHArrow(12 + 6,48 + 4,5,false,true)
   lcd.drawPoint(12 + 2,48)
   lcd.drawPoint(12,48)
   lcd.drawPoint(12 + 4,48 + 4)
   lcd.drawPoint(12 + 2,48 + 4)
-  lcd.drawNumber(60 - 10, 49 - 1, hSpeed, SMLSIZE+RIGHT+PREC1)
+  lcd.drawNumber(60 - 10, 49 - 1, speed, SMLSIZE+RIGHT+PREC1)
   lcd.drawText(61 - 4, 49 - 4, "m",SMLSIZE+RIGHT)
   lcd.drawText(61 + 1, 49, "s",SMLSIZE+RIGHT)
   lcd.drawLine(61 -6,49 + 3,61 -3,49,SOLID,0)
@@ -1578,18 +1578,19 @@ local function drawHud()
     lcd.drawLine(68 + 76 -  17 - 1 - (5 - ly),35 + ly,68 + 76 - 1,35 + ly,SOLID,ERASE)
   end
   -- altitude
-  homeAlt = getMaxValue(homeAlt,23)
-  if homeAlt > 0 then
-    if homeAlt < 10 then -- 2 digits with decimal
-      lcd.drawNumber(68 + 76,35 - 3,homeAlt * 10,SMLSIZE+PREC1+RIGHT)
+  local alt = getMaxValue(homeAlt,23)
+  --
+  if alt > 0 then
+    if alt < 10 then -- 2 digits with decimal
+      lcd.drawNumber(68 + 76,35 - 3,alt * 10,SMLSIZE+PREC1+RIGHT)
     else -- 3 digits
-      lcd.drawNumber(68 + 76,35 - 3,homeAlt,SMLSIZE+RIGHT)
+      lcd.drawNumber(68 + 76,35 - 3,alt,SMLSIZE+RIGHT)
     end
   else
-    if homeAlt > -10 then -- 1 digit with sign
-      lcd.drawNumber(68 + 76,35 - 3,homeAlt * 10,SMLSIZE+PREC1+RIGHT)
+    if alt > -10 then -- 1 digit with sign
+      lcd.drawNumber(68 + 76,35 - 3,alt * 10,SMLSIZE+PREC1+RIGHT)
     else -- 3 digits with sign
-      lcd.drawNumber(68 + 76,35 - 3,homeAlt,SMLSIZE+RIGHT)
+      lcd.drawNumber(68 + 76,35 - 3,alt,SMLSIZE+RIGHT)
     end
   end
   -- vertical speed
@@ -1705,17 +1706,13 @@ local function checkAlarm(level,value,idx,sign,sound,delay)
 end
 
 local function checkEvents()
-  -- silence alarms when showing min/max values
-  if showMinMaxValues == false then
-    -- vocal fence alarms
-    checkAlarm(conf.minAltitudeAlert,homeAlt,1,-1,"minalt",menuItems[14][4])
-    checkAlarm(conf.maxAltitudeAlert,homeAlt,2,1,"maxalt",menuItems[14][4])  
-    checkAlarm(conf.maxDistanceAlert,homeDist,3,1,"maxdist",menuItems[14][4])  
-    checkAlarm(1,2*ekfFailsafe,4,1,"ekf",menuItems[14][4])  
-    checkAlarm(1,2*battFailsafe,5,1,"lowbat",menuItems[14][4])  
-    checkAlarm(conf.timerAlert,flightTime,6,1,"timealert",conf.timerAlert)
-  end
-
+  checkAlarm(conf.minAltitudeAlert,homeAlt,1,-1,"minalt",menuItems[14][4])
+  checkAlarm(conf.maxAltitudeAlert,homeAlt,2,1,"maxalt",menuItems[14][4])  
+  checkAlarm(conf.maxDistanceAlert,homeDist,3,1,"maxdist",menuItems[14][4])  
+  checkAlarm(1,2*ekfFailsafe,4,1,"ekf",menuItems[14][4])  
+  checkAlarm(1,2*battFailsafe,5,1,"lowbat",menuItems[14][4])  
+  checkAlarm(conf.timerAlert,flightTime,6,1,"timealert",conf.timerAlert)
+  --
   local capacity = getBatt1Capacity() + getBatt2Capacity()
   local mah = batt1mah + batt2mah
   if (capacity > 0) then
@@ -1892,7 +1889,7 @@ end
 
 local function init()
   loadConfig()
-  pushMessage(6,"Yaapu X9 telemetry script 1.5.0-rc1")
+  pushMessage(6,"Yaapu X9 telemetry script 1.5.0")
   playSound("yaapu")
 end
 
