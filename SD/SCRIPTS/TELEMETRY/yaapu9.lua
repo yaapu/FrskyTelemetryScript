@@ -552,7 +552,7 @@ local function drawItem(idx,flags)
       lcd.drawText(150,7 + (idx-menu.offset-1)*7, "---",0+SMLSIZE+flags+menuItems[idx][8])
     else
       lcd.drawNumber(150,7 + (idx-menu.offset-1)*7, menuItems[idx][4],0+SMLSIZE+flags+menuItems[idx][8])
-      lcd.drawText(lcd.getLastRightPos(),7 + (idx-menu.offset-1)*7, menuItems[idx][7],SMLSIZE+flags+menuItems[idx][8])
+      lcd.drawText(lcd.getLastRightPos(),7 + (idx-menu.offset-1)*7, menuItems[idx][7],SMLSIZE+flags)
     end
   else
     lcd.drawText(150,7 + (idx-menu.offset-1)*7, menuItems[idx][5][menuItems[idx][4]],SMLSIZE+flags)
@@ -1402,11 +1402,8 @@ local function drawFailsafe()
   end
 end
 
-
-
 -- vertical distance between roll horiz segments
-
-
+--
 local yawLabels = {
   {39,47,"NE"},
   {89,92,"E"},
@@ -1487,8 +1484,6 @@ local function drawYaw()
 end
 
 
-
-
 local function drawHud()
   local r = -roll
   local cx,cy,dx,dy,ccx,ccy,cccx,cccy
@@ -1496,38 +1491,38 @@ local function drawHud()
   -----------------------
   -- artificial horizon
   -----------------------
-  -- no roll ==> segments are vertical, offsets are multiples of 7
+  -- no roll ==> segments are vertical, offsets are multiples of 6
   if ( roll == 0) then
     dx=0
     dy=pitch
     cx=0
-    cy=7
+    cy=6
     ccx=0
-    ccy=2*7
+    ccy=2*6
     cccx=0
-    cccy=3*7
+    cccy=3*6
   else
     -- center line offsets
     dx = math.cos(math.rad(90 - r)) * -pitch
     dy = math.sin(math.rad(90 - r)) * pitch
     -- 1st line offsets
-    cx = math.cos(math.rad(90 - r)) * 7
-    cy = math.sin(math.rad(90 - r)) * 7
+    cx = math.cos(math.rad(90 - r)) * 6
+    cy = math.sin(math.rad(90 - r)) * 6
     -- 2nd line offsets
-    ccx = math.cos(math.rad(90 - r)) * 2 * 7
-    ccy = math.sin(math.rad(90 - r)) * 2 * 7
+    ccx = math.cos(math.rad(90 - r)) * 2 * 6
+    ccy = math.sin(math.rad(90 - r)) * 2 * 6
     -- 3rd line offsets
-    cccx = math.cos(math.rad(90 - r)) * 3 * 7
-    cccy = math.sin(math.rad(90 - r)) * 3 * 7
+    cccx = math.cos(math.rad(90 - r)) * 3 * 6
+    cccy = math.sin(math.rad(90 - r)) * 3 * 6
   end
   local rollX = math.floor(68 + 76/2)
   -- parallel lines above and below horizon of increasing length 5,7,16,16,7,5
-  drawCroppedLine(rollX + dx - cccx,dy + 35 + cccy,r,5,DOTTED,68,68 + 76,yPos,56 - 1)
+  drawCroppedLine(rollX + dx - cccx,dy + 35 + cccy,r,16,DOTTED,68,68 + 76,yPos,56 - 1)
   drawCroppedLine(rollX + dx - ccx,dy + 35 + ccy,r,7,DOTTED,68,68 + 76,yPos,56 - 1)
   drawCroppedLine(rollX + dx - cx,dy + 35 + cy,r,16,DOTTED,68,68 + 76,yPos,56 - 1)
   drawCroppedLine(rollX + dx + cx,dy + 35 - cy,r,16,DOTTED,68,68 + 76,yPos,56 - 1)
   drawCroppedLine(rollX + dx + ccx,dy + 35 - ccy,r,7,DOTTED,68,68 + 76,yPos,56 - 1)
-  drawCroppedLine(rollX + dx + cccx,dy + 35 - cccy,r,5,DOTTED,68,68 + 76,yPos,56 - 1)
+  drawCroppedLine(rollX + dx + cccx,dy + 35 - cccy,r,16,DOTTED,68,68 + 76,yPos,56 - 1)
   -----------------------
   -- dark color for "ground"
   -----------------------
@@ -1569,17 +1564,27 @@ local function drawHud()
   -- left and right indicators on HUD
   -------------------------------------
   -- lets erase to hide the artificial horizon lines
-  for ly=0,5 do
-    lcd.drawLine(68,35 - ly,68 +   16 + (5 - ly),35 - ly, SOLID, ERASE)
-    lcd.drawLine(68 + 76 -  17 - 1 - (5 - ly),35 - ly,68 + 76 - 1,35 - ly,SOLID,ERASE)
-  end
-  for ly=1,4 do
-    lcd.drawLine(68,35 + ly,68 +   16 + (5 - ly),35 + ly, SOLID, ERASE)
-    lcd.drawLine(68 + 76 -  17 - 1 - (5 - ly),35 + ly,68 + 76 - 1,35 + ly,SOLID,ERASE)
-  end
-  -- altitude
+  -- black borders
+  lcd.drawRectangle(68, 35 - 5,   17, 11, FORCE, 0)
+  lcd.drawRectangle(68 + 76 -  17 - 1, 35 - 5,  17+1, 11, FORCE, 0)
+  -- erase area
+  lcd.drawFilledRectangle(68, 35 - 4,   17, 9, ERASE, 0)
+  lcd.drawFilledRectangle(68 + 76 -  17 - 1, 35 - 4,  17+2, 9, ERASE, 0)
+  -- erase tips
+  lcd.drawLine(68 +   17,35 - 3,68 +   17,35 + 3, SOLID, ERASE)
+  lcd.drawLine(68 +   17+1,35 - 2,68 +   17+1,35 + 2, SOLID, ERASE)
+  lcd.drawLine(68 + 76 -  17 - 2,35 - 3,68 + 76 -  17 - 2,35 + 3, SOLID, ERASE)
+  lcd.drawLine(68 + 76 -  17 - 3,35 - 2,68 + 76 -  17 - 3,35 + 2, SOLID, ERASE)
+  -- left tip
+  lcd.drawLine(68 +   17+2,35 - 2,68 +   17+2,35 + 2, SOLID, FORCE)
+  lcd.drawLine(68 +   17-1,35 - 5,68 +   17+1,35 - 3, SOLID, FORCE)
+  lcd.drawLine(68 +   17-1,35 + 5,68 +   17+1,35 + 3, SOLID, FORCE)
+  -- right tip
+  lcd.drawLine(68 + 76 -  17 - 4,35 - 2,68 + 76 -  17 - 4,35 + 2, SOLID, FORCE)
+  lcd.drawLine(68 + 76 -  17 - 3,35 - 3,68 + 76 -  17 - 1,35 - 5, SOLID, FORCE)
+  lcd.drawLine(68 + 76 -  17 - 3,35 + 3,68 + 76 -  17 - 1,35 + 5, SOLID, FORCE)
+    -- altitude
   local alt = getMaxValue(homeAlt,23)
-  --
   if alt > 0 then
     if alt < 10 then -- 2 digits with decimal
       lcd.drawNumber(68 + 76,35 - 3,alt * 10,SMLSIZE+PREC1+RIGHT)
@@ -1595,29 +1600,21 @@ local function drawHud()
   end
   -- vertical speed
   if (vSpeed > 999) then
-    lcd.drawNumber(68 + 1,35 - 3,vSpeed*0.1,SMLSIZE)
+    lcd.drawNumber(68+1,35 - 3,vSpeed*0.1,SMLSIZE)
   elseif (vSpeed < -99) then
-    lcd.drawNumber(68 + 1,35 - 3,vSpeed * 0.1,SMLSIZE)
+    lcd.drawNumber(68+1,35 - 3,vSpeed * 0.1,SMLSIZE)
   else
-    lcd.drawNumber(68 + 1,35 - 3,vSpeed,SMLSIZE+PREC1)
+    lcd.drawNumber(68+1,35 - 3,vSpeed,SMLSIZE+PREC1)
   end
-  -- center arrow
+-- center arrow
   local arrowX = math.floor(68 + 76/2)
-  lcd.drawLine(arrowX - 5,35 + 5,arrowX ,35 ,SOLID,0)
-  lcd.drawLine(arrowX + 1,35 + 1,arrowX + 5, 35 + 5,SOLID,0)
-  -- vertical speed grid lines
-  lcd.drawLine(68,35 - 5,68 +   16,35 - 5, SOLID, FORCE)
-  lcd.drawLine(68,35 + 4,68 +   16,35 + 4, SOLID, FORCE)
-  lcd.drawLine(68 +   16 + 1,35 - 4,68 +   16 + 5,35, SOLID,  FORCE)
-  lcd.drawLine(68 +   16 + 1,35 + 4,68 +   16 + 4,35+1, SOLID,  FORCE)
-  -- altitude grid lines
-  lcd.drawLine(68 + 76 -  17 - 1,35 - 5,68 + 76 - 1,35 - 5,SOLID,FORCE)
-  lcd.drawLine(68 + 76 -  17 - 1,35 + 4,68 + 76 - 1,35 + 4,SOLID,FORCE)
-  lcd.drawLine(68 + 76 -  17 - 2,35 + 4,68 + 76 -  17 - 6,35, SOLID, FORCE)
-  lcd.drawLine(68 + 76 -  17 - 2,35 - 4,68 + 76 -  17 - 6,35, SOLID, FORCE)
+  lcd.drawLine(arrowX - 4,35 + 4,arrowX ,35 ,SOLID,0)
+  lcd.drawLine(arrowX + 1,35 + 1,arrowX + 4, 35 + 4,SOLID,0)
+  lcd.drawLine(68 + 22,35,68 + 30,35 ,SOLID,0)
+  lcd.drawLine(68 + 76 - 24,35,68 + 76 - 31,35 ,SOLID,0)
   -- min/max arrows
   if showMinMaxValues == true then
-    drawVArrow(68 + 76 - 26, 35 - 4,6,true,false)
+    drawVArrow(68 + 76 - 23, 35 - 4,6,true,false)
   end
   -- failsafe
   if ekfFailsafe == 0 and battFailsafe == 0 and timerRunning == 0 then

@@ -51,7 +51,6 @@
 --#define RESETBATTALARMS
 --#define MENUEX
 #define FRAMETYPE
-#define HUDBG
 #define BATTINV
 
 ---------------------
@@ -1304,7 +1303,7 @@ local function drawItem(idx,flags)
       lcd.drawText(MENU_ITEM_X,MENU_Y + (idx-menu.offset-1)*7, "---",0+SMLSIZE+flags+menuItems[idx][8])
     else
       lcd.drawNumber(MENU_ITEM_X,MENU_Y + (idx-menu.offset-1)*7, menuItems[idx][4],0+SMLSIZE+flags+menuItems[idx][8])
-      lcd.drawText(lcd.getLastRightPos(),MENU_Y + (idx-menu.offset-1)*7, menuItems[idx][7],SMLSIZE+flags+menuItems[idx][8])
+      lcd.drawText(lcd.getLastRightPos(),MENU_Y + (idx-menu.offset-1)*7, menuItems[idx][7],SMLSIZE+flags)
     end
   else
     lcd.drawText(MENU_ITEM_X,MENU_Y + (idx-menu.offset-1)*7, menuItems[idx][5][menuItems[idx][4]],SMLSIZE+flags)
@@ -2723,125 +2722,11 @@ local function drawFailsafe()
   end
 end
 
-#define LEFTWIDTH   16
+#define LEFTWIDTH   17
 #define RIGHTWIDTH  17
-
-#ifndef HUDBG
-local function drawPitch()
-  -- lets erase to hide the artificial horizon lines
-  for ly=0,5 do
-    lcd.drawLine(HUD_X,HUD_X_MID - ly,HUD_X + LEFTWIDTH + (5 - ly),HUD_X_MID - ly, SOLID, ERASE)
-    lcd.drawLine(HUD_X + HUD_WIDTH - RIGHTWIDTH - 1 - (5 - ly),HUD_X_MID - ly,HUD_X + HUD_WIDTH - 1,HUD_X_MID - ly,SOLID,ERASE)
-  end
-  for ly=1,4 do
-    lcd.drawLine(HUD_X,HUD_X_MID + ly,HUD_X + LEFTWIDTH + (5 - ly),HUD_X_MID + ly, SOLID, ERASE)
-    lcd.drawLine(HUD_X + HUD_WIDTH - RIGHTWIDTH - 1 - (5 - ly),HUD_X_MID + ly,HUD_X + HUD_WIDTH - 1,HUD_X_MID + ly,SOLID,ERASE)
-  end
-  --
-  local alt = getMaxValue(homeAlt,MINMAX_ALT)
-  if alt > 0 then
-    if alt < 10 then -- 2 digits with decimal
-      lcd.drawNumber(HUD_X + HUD_WIDTH,HUD_X_MID - 3,alt * 10,SMLSIZE+PREC1+RIGHT)
-    else -- 3 digits
-      lcd.drawNumber(HUD_X + HUD_WIDTH,HUD_X_MID - 3,alt,SMLSIZE+RIGHT)
-    end
-  else
-    if alt > -10 then -- 1 digit with sign
-      lcd.drawNumber(HUD_X + HUD_WIDTH,HUD_X_MID - 3,alt * 10,SMLSIZE+PREC1+RIGHT)
-    else -- 3 digits with sign
-      lcd.drawNumber(HUD_X + HUD_WIDTH,HUD_X_MID - 3,alt,SMLSIZE+RIGHT)
-    end
-  end
-  --
-  if (vSpeed > 999) then
-    lcd.drawNumber(HUD_X + 1,HUD_X_MID - 3,vSpeed*0.1,SMLSIZE)
-  elseif (vSpeed < -99) then
-    lcd.drawNumber(HUD_X + 1,HUD_X_MID - 3,vSpeed * 0.1,SMLSIZE)
-  else
-    lcd.drawNumber(HUD_X + 1,HUD_X_MID - 3,vSpeed,SMLSIZE+PREC1)
-  end
-  -- up pointing center arrow
-  local arrowX = math.floor(HUD_X + HUD_WIDTH/2)
-#ifdef HUDBG
-  lcd.drawLine(arrowX - 5,HUD_X_MID + 5,arrowX ,HUD_X_MID ,SOLID,0)
-  lcd.drawLine(arrowX + 1,HUD_X_MID + 1,arrowX + 5, HUD_X_MID + 5,SOLID,0)
-#else
-  lcd.drawLine(arrowX - 5,HUD_X_MID + 2 + 5,arrowX ,HUD_X_MID + 2 ,SOLID,FORCE)
-  lcd.drawLine(arrowX,HUD_X_MID + 2 ,arrowX + 5, HUD_X_MID + 2 + 5,SOLID,FORCE)
-#endif --HUDBG  
-  -- vSpeed
-  lcd.drawLine(HUD_X,HUD_X_MID - 5,HUD_X + LEFTWIDTH,HUD_X_MID - 5, SOLID, FORCE)
-  lcd.drawLine(HUD_X,HUD_X_MID + 4,HUD_X + LEFTWIDTH,HUD_X_MID + 4, SOLID, FORCE)
-  lcd.drawLine(HUD_X + LEFTWIDTH + 1,HUD_X_MID - 4,HUD_X + LEFTWIDTH + 5,HUD_X_MID, SOLID,  FORCE)
-  lcd.drawLine(HUD_X + LEFTWIDTH + 1,HUD_X_MID + 4,HUD_X + LEFTWIDTH + 4,HUD_X_MID+1, SOLID,  FORCE)
-  -- altitude
-  lcd.drawLine(HUD_X + HUD_WIDTH - RIGHTWIDTH - 1,HUD_X_MID - 5,HUD_X + HUD_WIDTH - 1,HUD_X_MID - 5,SOLID,FORCE)
-  lcd.drawLine(HUD_X + HUD_WIDTH - RIGHTWIDTH - 1,HUD_X_MID + 4,HUD_X + HUD_WIDTH - 1,HUD_X_MID + 4,SOLID,FORCE)
-  lcd.drawLine(HUD_X + HUD_WIDTH - RIGHTWIDTH - 2,HUD_X_MID + 4,HUD_X + HUD_WIDTH - RIGHTWIDTH - 6,HUD_X_MID, SOLID, FORCE)
-  lcd.drawLine(HUD_X + HUD_WIDTH - RIGHTWIDTH - 2,HUD_X_MID - 4,HUD_X + HUD_WIDTH - RIGHTWIDTH - 6,HUD_X_MID, SOLID, FORCE)
-    --
-  if showMinMaxValues == true then
-    --lcd.drawFilledRectangle(HUD_X + HUD_WIDTH - 29, HUD_X_MID - 5,7,9,ERASE)
-    drawVArrow(HUD_X + HUD_WIDTH - 26, HUD_X_MID - 4,6,true,false)
-  end
-end
-#endif --HUDBG
-
 -- vertical distance between roll horiz segments
-#ifdef HUDBG
-#define R2 7
-#else
-#define R2 10
-#endif --HUDBG
-
-#ifndef HUDBG
-local function drawRoll()
-  local r = -roll
-  local cx,cy,dx,dy,ccx,ccy,cccx,cccy
-  local yPos = TOPBAR_Y + TOPBAR_HEIGHT + 8
-  -- no roll ==> segments are vertical, offsets are multiples of R2
-  if ( roll == 0) then
-    dx=0
-    dy=pitch
-    cx=0
-    cy=R2
-    ccx=0
-    ccy=2*R2
-    cccx=0
-    cccy=3*R2
-  else
-    -- center line offsets
-    dx = math.cos(math.rad(90 - r)) * -pitch
-    dy = math.sin(math.rad(90 - r)) * pitch
-    -- 1st line offsets
-    cx = math.cos(math.rad(90 - r)) * R2
-    cy = math.sin(math.rad(90 - r)) * R2
-    -- 2nd line offsets
-    ccx = math.cos(math.rad(90 - r)) * 2 * R2
-    ccy = math.sin(math.rad(90 - r)) * 2 * R2
-    -- 3rd line offsets
-    cccx = math.cos(math.rad(90 - r)) * 3 * R2
-    cccy = math.sin(math.rad(90 - r)) * 3 * R2
-  end
-  local rollX = math.floor(HUD_X + HUD_WIDTH/2)
-  --local delta = (HUD_WIDTH - 76)
-  drawCroppedLine(rollX + dx - cccx,dy + HUD_X_MID + cccy,r,5,DOTTED,HUD_X,HUD_X + HUD_WIDTH,yPos,BOTTOMBAR_Y - 1)
-  drawCroppedLine(rollX + dx - ccx,dy + HUD_X_MID + ccy,r,7,DOTTED,HUD_X,HUD_X + HUD_WIDTH,yPos,BOTTOMBAR_Y - 1)
-  drawCroppedLine(rollX + dx - cx,dy + HUD_X_MID + cy,r,16,DOTTED,HUD_X,HUD_X + HUD_WIDTH,yPos,BOTTOMBAR_Y - 1)
-#ifndef HUDBG
-#ifdef X9
-  drawCroppedLine(rollX + dx,dy + HUD_X_MID,r,54,SOLID,HUD_X,HUD_X + HUD_WIDTH,yPos,BOTTOMBAR_Y - 1)
-#endif --X9
-#ifdef X7
-  drawCroppedLine(rollX + dx,dy + HUD_X_MID,r,44,SOLID,HUD_X,HUD_X + HUD_WIDTH,yPos,BOTTOMBAR_Y - 1)
-#endif --X7
-#endif --HUDBG
-  drawCroppedLine(rollX + dx + cx,dy + HUD_X_MID - cy,r,16,DOTTED,HUD_X,HUD_X + HUD_WIDTH,yPos,BOTTOMBAR_Y - 1)
-  drawCroppedLine(rollX + dx + ccx,dy + HUD_X_MID - ccy,r,7,DOTTED,HUD_X,HUD_X + HUD_WIDTH,yPos,BOTTOMBAR_Y - 1)
-  drawCroppedLine(rollX + dx + cccx,dy + HUD_X_MID - cccy,r,5,DOTTED,HUD_X,HUD_X + HUD_WIDTH,yPos,BOTTOMBAR_Y - 1)
-end
-#endif --HUDBG
-
+#define R2 6
+--
 local yawLabels = {
   {39,47,"NE"},
   {89,92,"E"},
@@ -2943,70 +2828,6 @@ local function clearRightPane()
 end
 #endif --DEV
 
-
-#ifdef HUDBG
-#ifdef DEBUG
-local function drawHudBg()
-    local r = -roll
-    local cx,cy,dx,dy,ccx,ccy,cccx,cccy
-    -- calc x and y offset from center based on roll and pitch
-    if ( roll == 0) then
-      dx=0
-      dy=pitch
-    else
-      dx = math.cos(math.rad(90 - r)) * -pitch
-      dy = math.sin(math.rad(90 - r)) * pitch
-    end
-    -- line equation y=ax+b passing on point(ox,oy)
-#ifdef X9
-    local minY = 16
-    local maxY = 54
-    local minX = HUD_X + 1
-    local maxX = HUD_X + HUD_WIDTH - 2
-    --
-    local ox = 106 + dx
-#endif --X9
-#ifdef X7
-    local minY = 16
-    local maxY = 55
-    local minX = HUD_X + 1
-    local maxX = HUD_X + HUD_WIDTH - 2
-    --
-    local ox = (HUD_X + HUD_WIDTH)/2 + dx
-#endif --X7
-    --
-    local oy = HUD_X_MID + dy
-    local yy = 0
-    -- angle of the line passing on point(ox,oy)
-    local angle = math.tan(math.rad(-roll))
-    -- for each pixel of the hud base/top draw vertical black 
-    -- lines from hud border to horizon line
-    -- horizon line moves with pitch/roll
-    for xx= minX,maxX
-    do
-      if roll > 90 or roll < -90 then
-        yy = (oy - ox*angle) + math.floor(xx*angle)
-        if yy <= minY then
-        elseif yy > minY + 1 and yy < maxY then
-          lcd.drawLine(0 + xx, 0 + minY, 0 + xx, 0 + yy,SOLID,0)
-        elseif yy >= maxY then
-          lcd.drawLine(0 + xx, 0 + minY, 0 + xx, 0 + maxY,SOLID,0)
-        end
-      else
-        yy = (oy - ox*angle) + math.floor(xx*angle)
-        if yy <= minY then
-          lcd.drawLine(0 + xx, 0 + minY, 0 + xx, 0 + maxY,SOLID,0)
-        elseif yy >= maxY then
-        else
-          lcd.drawLine(0 + xx, 0 + yy, 0 + xx, 0 + maxY,SOLID,0)
-        end
-      end
-    end
-end
-#endif --DEBUG
-#endif --HUDBG
-
-#ifdef HUDBG
 local function drawHud()
   local r = -roll
   local cx,cy,dx,dy,ccx,ccy,cccx,cccy
@@ -3040,12 +2861,12 @@ local function drawHud()
   end
   local rollX = math.floor(HUD_X + HUD_WIDTH/2)
   -- parallel lines above and below horizon of increasing length 5,7,16,16,7,5
-  drawCroppedLine(rollX + dx - cccx,dy + HUD_X_MID + cccy,r,5,DOTTED,HUD_X,HUD_X + HUD_WIDTH,yPos,BOTTOMBAR_Y - 1)
+  drawCroppedLine(rollX + dx - cccx,dy + HUD_X_MID + cccy,r,16,DOTTED,HUD_X,HUD_X + HUD_WIDTH,yPos,BOTTOMBAR_Y - 1)
   drawCroppedLine(rollX + dx - ccx,dy + HUD_X_MID + ccy,r,7,DOTTED,HUD_X,HUD_X + HUD_WIDTH,yPos,BOTTOMBAR_Y - 1)
   drawCroppedLine(rollX + dx - cx,dy + HUD_X_MID + cy,r,16,DOTTED,HUD_X,HUD_X + HUD_WIDTH,yPos,BOTTOMBAR_Y - 1)
   drawCroppedLine(rollX + dx + cx,dy + HUD_X_MID - cy,r,16,DOTTED,HUD_X,HUD_X + HUD_WIDTH,yPos,BOTTOMBAR_Y - 1)
   drawCroppedLine(rollX + dx + ccx,dy + HUD_X_MID - ccy,r,7,DOTTED,HUD_X,HUD_X + HUD_WIDTH,yPos,BOTTOMBAR_Y - 1)
-  drawCroppedLine(rollX + dx + cccx,dy + HUD_X_MID - cccy,r,5,DOTTED,HUD_X,HUD_X + HUD_WIDTH,yPos,BOTTOMBAR_Y - 1)
+  drawCroppedLine(rollX + dx + cccx,dy + HUD_X_MID - cccy,r,16,DOTTED,HUD_X,HUD_X + HUD_WIDTH,yPos,BOTTOMBAR_Y - 1)
   -----------------------
   -- dark color for "ground"
   -----------------------
@@ -3097,17 +2918,27 @@ local function drawHud()
   -- left and right indicators on HUD
   -------------------------------------
   -- lets erase to hide the artificial horizon lines
-  for ly=0,5 do
-    lcd.drawLine(HUD_X,HUD_X_MID - ly,HUD_X + LEFTWIDTH + (5 - ly),HUD_X_MID - ly, SOLID, ERASE)
-    lcd.drawLine(HUD_X + HUD_WIDTH - RIGHTWIDTH - 1 - (5 - ly),HUD_X_MID - ly,HUD_X + HUD_WIDTH - 1,HUD_X_MID - ly,SOLID,ERASE)
-  end
-  for ly=1,4 do
-    lcd.drawLine(HUD_X,HUD_X_MID + ly,HUD_X + LEFTWIDTH + (5 - ly),HUD_X_MID + ly, SOLID, ERASE)
-    lcd.drawLine(HUD_X + HUD_WIDTH - RIGHTWIDTH - 1 - (5 - ly),HUD_X_MID + ly,HUD_X + HUD_WIDTH - 1,HUD_X_MID + ly,SOLID,ERASE)
-  end
-  -- altitude
+  -- black borders
+  lcd.drawRectangle(HUD_X, HUD_X_MID - 5, LEFTWIDTH, 11, FORCE, 0)
+  lcd.drawRectangle(HUD_X + HUD_WIDTH - RIGHTWIDTH - 1, HUD_X_MID - 5, RIGHTWIDTH+1, 11, FORCE, 0)
+  -- erase area
+  lcd.drawFilledRectangle(HUD_X, HUD_X_MID - 4, LEFTWIDTH, 9, ERASE, 0)
+  lcd.drawFilledRectangle(HUD_X + HUD_WIDTH - RIGHTWIDTH - 1, HUD_X_MID - 4, RIGHTWIDTH+2, 9, ERASE, 0)
+  -- erase tips
+  lcd.drawLine(HUD_X + LEFTWIDTH,HUD_X_MID - 3,HUD_X + LEFTWIDTH,HUD_X_MID + 3, SOLID, ERASE)
+  lcd.drawLine(HUD_X + LEFTWIDTH+1,HUD_X_MID - 2,HUD_X + LEFTWIDTH+1,HUD_X_MID + 2, SOLID, ERASE)
+  lcd.drawLine(HUD_X + HUD_WIDTH - RIGHTWIDTH - 2,HUD_X_MID - 3,HUD_X + HUD_WIDTH - RIGHTWIDTH - 2,HUD_X_MID + 3, SOLID, ERASE)
+  lcd.drawLine(HUD_X + HUD_WIDTH - RIGHTWIDTH - 3,HUD_X_MID - 2,HUD_X + HUD_WIDTH - RIGHTWIDTH - 3,HUD_X_MID + 2, SOLID, ERASE)
+  -- left tip
+  lcd.drawLine(HUD_X + LEFTWIDTH+2,HUD_X_MID - 2,HUD_X + LEFTWIDTH+2,HUD_X_MID + 2, SOLID, FORCE)
+  lcd.drawLine(HUD_X + LEFTWIDTH-1,HUD_X_MID - 5,HUD_X + LEFTWIDTH+1,HUD_X_MID - 3, SOLID, FORCE)
+  lcd.drawLine(HUD_X + LEFTWIDTH-1,HUD_X_MID + 5,HUD_X + LEFTWIDTH+1,HUD_X_MID + 3, SOLID, FORCE)
+  -- right tip
+  lcd.drawLine(HUD_X + HUD_WIDTH - RIGHTWIDTH - 4,HUD_X_MID - 2,HUD_X + HUD_WIDTH - RIGHTWIDTH - 4,HUD_X_MID + 2, SOLID, FORCE)
+  lcd.drawLine(HUD_X + HUD_WIDTH - RIGHTWIDTH - 3,HUD_X_MID - 3,HUD_X + HUD_WIDTH - RIGHTWIDTH - 1,HUD_X_MID - 5, SOLID, FORCE)
+  lcd.drawLine(HUD_X + HUD_WIDTH - RIGHTWIDTH - 3,HUD_X_MID + 3,HUD_X + HUD_WIDTH - RIGHTWIDTH - 1,HUD_X_MID + 5, SOLID, FORCE)
+    -- altitude
   local alt = getMaxValue(homeAlt,MINMAX_ALT)
-  --
   if alt > 0 then
     if alt < 10 then -- 2 digits with decimal
       lcd.drawNumber(HUD_X + HUD_WIDTH,HUD_X_MID - 3,alt * 10,SMLSIZE+PREC1+RIGHT)
@@ -3123,34 +2954,21 @@ local function drawHud()
   end
   -- vertical speed
   if (vSpeed > 999) then
-    lcd.drawNumber(HUD_X + 1,HUD_X_MID - 3,vSpeed*0.1,SMLSIZE)
+    lcd.drawNumber(HUD_X+1,HUD_X_MID - 3,vSpeed*0.1,SMLSIZE)
   elseif (vSpeed < -99) then
-    lcd.drawNumber(HUD_X + 1,HUD_X_MID - 3,vSpeed * 0.1,SMLSIZE)
+    lcd.drawNumber(HUD_X+1,HUD_X_MID - 3,vSpeed * 0.1,SMLSIZE)
   else
-    lcd.drawNumber(HUD_X + 1,HUD_X_MID - 3,vSpeed,SMLSIZE+PREC1)
+    lcd.drawNumber(HUD_X+1,HUD_X_MID - 3,vSpeed,SMLSIZE+PREC1)
   end
-  -- center arrow
+-- center arrow
   local arrowX = math.floor(HUD_X + HUD_WIDTH/2)
-#ifdef HUDBG
-  lcd.drawLine(arrowX - 5,HUD_X_MID + 5,arrowX ,HUD_X_MID ,SOLID,0)
-  lcd.drawLine(arrowX + 1,HUD_X_MID + 1,arrowX + 5, HUD_X_MID + 5,SOLID,0)
-#else
-  lcd.drawLine(arrowX - 5,HUD_X_MID + 2 + 5,arrowX ,HUD_X_MID + 2 ,SOLID,FORCE)
-  lcd.drawLine(arrowX,HUD_X_MID + 2 ,arrowX + 5, HUD_X_MID + 2 + 5,SOLID,FORCE)
-#endif --HUDBG  
-  -- vertical speed grid lines
-  lcd.drawLine(HUD_X,HUD_X_MID - 5,HUD_X + LEFTWIDTH,HUD_X_MID - 5, SOLID, FORCE)
-  lcd.drawLine(HUD_X,HUD_X_MID + 4,HUD_X + LEFTWIDTH,HUD_X_MID + 4, SOLID, FORCE)
-  lcd.drawLine(HUD_X + LEFTWIDTH + 1,HUD_X_MID - 4,HUD_X + LEFTWIDTH + 5,HUD_X_MID, SOLID,  FORCE)
-  lcd.drawLine(HUD_X + LEFTWIDTH + 1,HUD_X_MID + 4,HUD_X + LEFTWIDTH + 4,HUD_X_MID+1, SOLID,  FORCE)
-  -- altitude grid lines
-  lcd.drawLine(HUD_X + HUD_WIDTH - RIGHTWIDTH - 1,HUD_X_MID - 5,HUD_X + HUD_WIDTH - 1,HUD_X_MID - 5,SOLID,FORCE)
-  lcd.drawLine(HUD_X + HUD_WIDTH - RIGHTWIDTH - 1,HUD_X_MID + 4,HUD_X + HUD_WIDTH - 1,HUD_X_MID + 4,SOLID,FORCE)
-  lcd.drawLine(HUD_X + HUD_WIDTH - RIGHTWIDTH - 2,HUD_X_MID + 4,HUD_X + HUD_WIDTH - RIGHTWIDTH - 6,HUD_X_MID, SOLID, FORCE)
-  lcd.drawLine(HUD_X + HUD_WIDTH - RIGHTWIDTH - 2,HUD_X_MID - 4,HUD_X + HUD_WIDTH - RIGHTWIDTH - 6,HUD_X_MID, SOLID, FORCE)
+  lcd.drawLine(arrowX - 4,HUD_X_MID + 4,arrowX ,HUD_X_MID ,SOLID,0)
+  lcd.drawLine(arrowX + 1,HUD_X_MID + 1,arrowX + 4, HUD_X_MID + 4,SOLID,0)
+  lcd.drawLine(HUD_X + 22,HUD_X_MID,HUD_X + 30,HUD_X_MID ,SOLID,0)
+  lcd.drawLine(HUD_X + HUD_WIDTH - 24,HUD_X_MID,HUD_X + HUD_WIDTH - 31,HUD_X_MID ,SOLID,0)
   -- min/max arrows
   if showMinMaxValues == true then
-    drawVArrow(HUD_X + HUD_WIDTH - 26, HUD_X_MID - 4,6,true,false)
+    drawVArrow(HUD_X + HUD_WIDTH - 23, HUD_X_MID - 4,6,true,false)
   end
   -- failsafe
   if ekfFailsafe == 0 and battFailsafe == 0 and timerRunning == 0 then
@@ -3161,22 +2979,6 @@ local function drawHud()
     end
   end
 end
-#else --HUDBG
-local function drawHud()
-  drawRoll()
-#ifdef HUDBG
-  drawHudBg()
-#endif --HUDBG
-  drawPitch()
-  if ekfFailsafe == 0 and battFailsafe == 0 and timerRunning == 0 then
-    if (statusArmed == 1) then
-      lcd.drawText(HUD_X + HUD_WIDTH/2 - 15, 21, " ARMED ", SMLSIZE+INVERS)
-    else
-      lcd.drawText(HUD_X + HUD_WIDTH/2 - 21, 21, " DISARMED ", SMLSIZE+INVERS+BLINK)
-    end
-  end
-end
-#endif --HUDBG
 
 local function drawGrid()
   lcd.drawLine(HUD_X - 1, 7 ,HUD_X - 1, 57, SOLID, 0)
@@ -3185,11 +2987,6 @@ end
 
 local function drawHomeDirection()
   local angle = math.floor(homeAngle - yaw)
-#ifdef X9
-#ifndef HUDBG
-  lcd.drawFilledRectangle(HOMEDIR_X - HOMEDIR_R,1 + HOMEDIR_Y - HOMEDIR_R,2*HOMEDIR_R,2*HOMEDIR_R,ERASE,0)
-#endif --HUDBG
-#endif --X9
   local x1 = HOMEDIR_X + HOMEDIR_R * math.cos(math.rad(angle - 90))
   local y1 = HOMEDIR_Y + HOMEDIR_R * math.sin(math.rad(angle - 90))
   local x2 = HOMEDIR_X + HOMEDIR_R * math.cos(math.rad(angle - 90 + 150))
