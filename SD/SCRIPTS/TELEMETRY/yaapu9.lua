@@ -41,7 +41,6 @@
 ---------------------
 --#define RESETBATTALARMS
 --#define MENUEX
-
 ---------------------
 -- dev features
 ---------------------
@@ -1402,74 +1401,69 @@ local function drawFailsafe()
   end
 end
 
--- vertical distance between roll horiz segments
---
-local yawLabels = {
-  {39,47,"NE"},
-  {89,92,"E"},
-  {129,132,"SE"},
-  {179,182,"S"},
-  {219,227,"SW"},
-  {269,272,"W"},
-  {309,317,"NW"},
-  {359,2,"N"}
-}
---
-local function drawYaw()
-  local hw = math.floor(76/2)
-  local ww = hw - 6
-  local degL = 0
-  local degR = 0
-  local steps = 9
-  local yawRounded = roundTo(yaw,10)
-  local homeRounded = roundTo(homeAngle,10)
-  local minY = 0 + 7
-  --
-  local cx = 68 + hw
-  for step = 0,steps
-  do
-    --
-    degR = (yawRounded + step*10) % 360
-    degL = (yawRounded - step*10) % 360
-    --
-    for l=1,#yawLabels - 1 do
-      if degR > yawLabels[l][1] and degR < yawLabels[l][2] then
-        lcd.drawText(cx + step/steps*ww, minY+1, yawLabels[l][3], SMLSIZE)
-      end
-      if degL > yawLabels[l][1] and degL < yawLabels[l][2] then
-        lcd.drawText(cx - step/steps*ww - 6, minY+1, yawLabels[l][3], SMLSIZE)
-      end
-    end
-    
-    if degR > yawLabels[#yawLabels][1] or degR < yawLabels[#yawLabels][2] then
-      lcd.drawText(cx + step/steps*ww, minY+1, yawLabels[#yawLabels][3], SMLSIZE)
-    end
-    if degL > yawLabels[#yawLabels][1] or degL < yawLabels[#yawLabels][2] then
-      lcd.drawText(cx - step/steps*ww - 6, minY+1, yawLabels[#yawLabels][3], SMLSIZE)
-    end
 
-    if degR > homeRounded - 5 and degR < homeRounded + 5 and degL > homeRounded - 5  and degL < homeRounded + 5  then
-      drawHomeIcon(cx - 2,minY + 10)
-    else
-      if degR > homeRounded - 5 and degR < homeRounded + 5 then
-        drawHomeIcon(cx + step/steps*ww ,minY + 10)
+local yawRibbonPoints = {}
+--
+yawRibbonPoints[0]={"N",0}
+yawRibbonPoints[1]={"NE",-3}
+yawRibbonPoints[2]={"E",0}
+yawRibbonPoints[3]={"SE",-3}
+yawRibbonPoints[4]={"S",0}
+yawRibbonPoints[5]={"SW",-3}
+yawRibbonPoints[6]={"W",0}
+yawRibbonPoints[7]={"NW",-3}
+
+-- optimized yaw ribbon drawing
+local function drawCompassRibbon()
+  -- ribbon centered +/- 90 on yaw
+  local centerYaw = (yaw+270)%360
+  -- this is the first point left to be drawn on the compass ribbon
+  local nextPoint = roundTo(centerYaw,45)
+  -- distance in degrees between leftmost ribbon point and first 45° multiple normalized to YAW_WIDTH/8
+  local yawMinX = (LCD_W - 76)/2 + 2
+  local yawMaxX = (LCD_W + 76)/2 - 3
+  -- x coord of first ribbon letter
+  local nextPointX = yawMinX + (nextPoint - centerYaw)/45 * 17
+  local yawY = 0 + 7
+  --
+  local i = (nextPoint / 45) % 8
+  for idx=1,6
+  do
+      if nextPointX >= yawMinX and nextPointX < yawMaxX then
+        lcd.drawText(nextPointX+yawRibbonPoints[i][2],yawY,yawRibbonPoints[i][1],SMLSIZE)
       end
-      if degL > homeRounded - 5  and degL < homeRounded + 5 then
-        drawHomeIcon(cx - step/steps*ww - 6,minY + 10)
-      end
+      i = (i + 1) % 8
+      nextPointX = nextPointX + 17
+  end
+  -- home icon
+  local leftYaw = (yaw + 180)%360
+  local rightYaw = yaw%360
+  local centerHome = (homeAngle+270)%360
+  --
+  local homeIconX = yawMinX
+  local homeIconY = yawY + 10
+  if rightYaw >= leftYaw then
+    if centerHome > leftYaw and centerHome < rightYaw then
+      drawHomeIcon(math.min(yawMinX + ((centerHome - leftYaw)/180)*76,yawMaxX - 2),homeIconY)
     end
-    -- when abs(home angle) > 90 draw home icon close to left/right border
-    local angle = homeAngle - yaw
-    local cos = math.cos(math.rad(angle - 90))    
-    local sin = math.sin(math.rad(angle - 90))    
-    if cos > 0 and sin > 0 then
-      drawHomeIcon(cx + ww ,minY + 10)
-    elseif cos < 0 and sin > 0 then
-      drawHomeIcon(cx - ww - 5,minY + 10)
+  else
+    if centerHome < rightYaw then
+      drawHomeIcon(yawMinX + (((360-leftYaw) + centerHome)/180)*76,homeIconY)
+    elseif centerHome >= leftYaw then
+      drawHomeIcon(math.min(yawMinX + ((centerHome-leftYaw)/180)*76,yawMaxX-2),homeIconY)
     end
   end
-
-  lcd.drawLine(68, minY + 7, 68 + 76 - 1, minY + 7, SOLID, 0)
+  -- when abs(home angle) > 90 draw home icon close to left/right border
+  local angle = homeAngle - yaw
+  local cos = math.cos(math.rad(angle - 90))    
+  local sin = math.sin(math.rad(angle - 90))    
+  if cos > 0 and sin > 0 then
+    drawHomeIcon(yawMaxX - 2, yawY + 10)
+  elseif cos < 0 and sin > 0 then
+    drawHomeIcon(yawMinX - 2, yawY + 10)
+  end
+  --
+  lcd.drawLine(yawMinX, yawY + 7, yawMaxX, yawY + 7, SOLID, 0)
   local xx = 0
   if ( yaw < 10) then
     xx = 1
@@ -1478,12 +1472,11 @@ local function drawYaw()
   else
     xx = -5
   end
-  lcd.drawRectangle(68 + hw - 6, minY, 12,12, SOLID)
-  lcd.drawFilledRectangle(68 + hw - 6, minY, 12,12, SOLID)
-  lcd.drawNumber(68 + hw + xx - 4, minY, yaw, MIDSIZE+INVERS)
+  lcd.drawNumber(LCD_W/2 + xx - 4, yawY, yaw, MIDSIZE+INVERS)
 end
 
-
+-- vertical distance between roll horiz segments
+--
 local function drawHud()
   local r = -roll
   local cx,cy,dx,dy,ccx,ccy,cccx,cccy
@@ -1610,6 +1603,7 @@ local function drawHud()
   local arrowX = math.floor(68 + 76/2)
   lcd.drawLine(arrowX - 4,35 + 4,arrowX ,35 ,SOLID,0)
   lcd.drawLine(arrowX + 1,35 + 1,arrowX + 4, 35 + 4,SOLID,0)
+  --
   lcd.drawLine(68 + 22,35,68 + 30,35 ,SOLID,0)
   lcd.drawLine(68 + 76 - 24,35,68 + 76 - 31,35 ,SOLID,0)
   -- min/max arrows
@@ -1845,7 +1839,7 @@ local function run(event)
       showDualBattery = false
     end
     drawHud()
-    drawYaw()
+    drawCompassRibbon()
     drawGrid()
     -- with dual battery default is to show aggregate view
     if batt2sources.fc or batt2sources.vs or batt2sources.a2 then

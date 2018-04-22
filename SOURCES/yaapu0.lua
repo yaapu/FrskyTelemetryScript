@@ -52,7 +52,7 @@
 --#define MENUEX
 #define FRAMETYPE
 #define BATTINV
-
+#define YAWRIBBON
 ---------------------
 -- dev features
 ---------------------
@@ -2721,11 +2721,7 @@ local function drawFailsafe()
     lcd.drawText(xoffset + HUD_X + HUD_WIDTH/2 - 21, 47 + yoffset, " FAILSAFE ", SMLSIZE+INVERS+BLINK)
   end
 end
-
-#define LEFTWIDTH   17
-#define RIGHTWIDTH  17
--- vertical distance between roll horiz segments
-#define R2 6
+#ifndef YAWRIBBON
 --
 local yawLabels = {
   {39,47,"NE"},
@@ -2805,7 +2801,97 @@ local function drawYaw()
   lcd.drawFilledRectangle(HUD_X + hw - 6, minY, 12,12, SOLID)
   lcd.drawNumber(HUD_X + hw + xx - 4, minY, yaw, MIDSIZE+INVERS)
 end
+#endif --YAWRIBBON ifndef
 
+#ifdef YAWRIBBON
+#ifdef X9
+#define YAW_STEPWIDTH 17
+#else
+#define YAW_STEPWIDTH 13.2
+#endif --X9
+
+local yawRibbonPoints = {}
+--
+yawRibbonPoints[0]={"N",0}
+yawRibbonPoints[1]={"NE",-3}
+yawRibbonPoints[2]={"E",0}
+yawRibbonPoints[3]={"SE",-3}
+yawRibbonPoints[4]={"S",0}
+yawRibbonPoints[5]={"SW",-3}
+yawRibbonPoints[6]={"W",0}
+yawRibbonPoints[7]={"NW",-3}
+
+-- optimized yaw ribbon drawing
+local function drawCompassRibbon()
+  -- ribbon centered +/- 90 on yaw
+  local centerYaw = (yaw+270)%360
+  -- this is the first point left to be drawn on the compass ribbon
+  local nextPoint = roundTo(centerYaw,45)
+  -- distance in degrees between leftmost ribbon point and first 45° multiple normalized to YAW_WIDTH/8
+#ifdef X9
+  local yawMinX = (LCD_W - HUD_WIDTH)/2 + 2
+  local yawMaxX = (LCD_W + HUD_WIDTH)/2 - 3
+#else
+  local yawMinX = 3
+  local yawMaxX = HUD_WIDTH - 5
+#endif --X9
+  -- x coord of first ribbon letter
+  local nextPointX = yawMinX + (nextPoint - centerYaw)/45 * YAW_STEPWIDTH
+  local yawY = TOPBAR_Y + TOPBAR_HEIGHT
+  --
+  local i = (nextPoint / 45) % 8
+  for idx=1,6
+  do
+      if nextPointX >= yawMinX and nextPointX < yawMaxX then
+        lcd.drawText(nextPointX+yawRibbonPoints[i][2],yawY,yawRibbonPoints[i][1],SMLSIZE)
+      end
+      i = (i + 1) % 8
+      nextPointX = nextPointX + YAW_STEPWIDTH
+  end
+  -- home icon
+  local leftYaw = (yaw + 180)%360
+  local rightYaw = yaw%360
+  local centerHome = (homeAngle+270)%360
+  --
+  local homeIconX = yawMinX
+  local homeIconY = yawY + 10
+  if rightYaw >= leftYaw then
+    if centerHome > leftYaw and centerHome < rightYaw then
+      drawHomeIcon(math.min(yawMinX + ((centerHome - leftYaw)/180)*HUD_WIDTH,yawMaxX - 2),homeIconY)
+    end
+  else
+    if centerHome < rightYaw then
+      drawHomeIcon(yawMinX + (((360-leftYaw) + centerHome)/180)*HUD_WIDTH,homeIconY)
+    elseif centerHome >= leftYaw then
+      drawHomeIcon(math.min(yawMinX + ((centerHome-leftYaw)/180)*HUD_WIDTH,yawMaxX-2),homeIconY)
+    end
+  end
+  -- when abs(home angle) > 90 draw home icon close to left/right border
+  local angle = homeAngle - yaw
+  local cos = math.cos(math.rad(angle - 90))    
+  local sin = math.sin(math.rad(angle - 90))    
+  if cos > 0 and sin > 0 then
+    drawHomeIcon(yawMaxX - 2, yawY + 10)
+  elseif cos < 0 and sin > 0 then
+    drawHomeIcon(yawMinX - 2, yawY + 10)
+  end
+  --
+  lcd.drawLine(yawMinX, yawY + 7, yawMaxX, yawY + 7, SOLID, 0)
+  local xx = 0
+  if ( yaw < 10) then
+    xx = 1
+  elseif (yaw < 100) then
+    xx = -2
+  else
+    xx = -5
+  end
+#ifdef X9
+  lcd.drawNumber(LCD_W/2 + xx - 4, yawY, yaw, MIDSIZE+INVERS)
+#else
+  lcd.drawNumber(HUD_WIDTH/2 + xx - 4, yawY, yaw, MIDSIZE+INVERS)
+#endif
+end
+#endif --YAWRIBBON
 #ifdef DEV
 local function clearHud()
   lcd.drawFilledRectangle(HUD_X,TOPBAR_Y + TOPBAR_HEIGHT + 8,HUD_WIDTH,49,ERASE,0)
@@ -2828,6 +2914,11 @@ local function clearRightPane()
 end
 #endif --DEV
 
+#define LEFTWIDTH   17
+#define RIGHTWIDTH  17
+-- vertical distance between roll horiz segments
+#define R2 6
+--
 local function drawHud()
   local r = -roll
   local cx,cy,dx,dy,ccx,ccy,cccx,cccy
@@ -2964,8 +3055,14 @@ local function drawHud()
   local arrowX = math.floor(HUD_X + HUD_WIDTH/2)
   lcd.drawLine(arrowX - 4,HUD_X_MID + 4,arrowX ,HUD_X_MID ,SOLID,0)
   lcd.drawLine(arrowX + 1,HUD_X_MID + 1,arrowX + 4, HUD_X_MID + 4,SOLID,0)
+  --
+#ifdef X9
   lcd.drawLine(HUD_X + 22,HUD_X_MID,HUD_X + 30,HUD_X_MID ,SOLID,0)
   lcd.drawLine(HUD_X + HUD_WIDTH - 24,HUD_X_MID,HUD_X + HUD_WIDTH - 31,HUD_X_MID ,SOLID,0)
+#else
+  lcd.drawLine(HUD_X + 22,HUD_X_MID,HUD_X + 28,HUD_X_MID ,SOLID,0)
+  lcd.drawLine(HUD_X + HUD_WIDTH - 23,HUD_X_MID,HUD_X + HUD_WIDTH - 28,HUD_X_MID ,SOLID,0)
+#endif
   -- min/max arrows
   if showMinMaxValues == true then
     drawVArrow(HUD_X + HUD_WIDTH - 23, HUD_X_MID - 4,6,true,false)
@@ -3304,7 +3401,11 @@ local function run(event)
       drawHud()
     end
 #endif --X7
+#ifdef YAWRIBBON
+    drawCompassRibbon()
+#else
     drawYaw()
+#endif --YAWRIBBON
     drawGrid()
 #ifdef X7    
     drawCustomBoxes()
