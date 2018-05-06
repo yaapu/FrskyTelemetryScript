@@ -39,7 +39,6 @@
 ---------------------
 -- features
 ---------------------
---#define RESETBATTALARMS
 --#define MENUEX
 ---------------------
 -- dev features
@@ -48,6 +47,7 @@
 --#define LOGMESSAGES
 --
 --#define DEBUG
+--#define DEBUGMENU
 --#define TESTMODE
 --#define BATT2TEST
 --#define CELLCOUNT 5
@@ -305,6 +305,8 @@ local lastFlightMode = 0
 -- battery levels
 local batLevel = 99
 local batLevels = {}
+local battLevel1 = false
+local battLevel2 = false
 --
 local lastBattLevel = 13
 batLevels[0]=0
@@ -408,7 +410,8 @@ local conf = {
   timerAlert = 0,
   minAltitudeAlert = 0,
   maxAltitudeAlert = 0,
-  maxDistanceAlert = 0
+  maxDistanceAlert = 0,
+  cellCount = 0,
 }
 --
 --------------------------------------------------------------------------------
@@ -438,6 +441,7 @@ local menuItems = {
   {"max altitude alert:", 0, "A2", 0, 0,10000,"m",0,1 },
   {"max distance alert:", 0, "D1", 0, 0,100000,"m",0,10 },
   {"repeat alerts every:", 0, "T2", 10, 10,600,"sec",0,5 },
+  {"cell count override:", 0, "CC", 0, 0,12,"s",0,1 },
 }
 
 local function getConfigFilename()
@@ -459,6 +463,7 @@ local function applyConfigValues()
   conf.minAltitudeAlert = menuItems[11][4]*0.1
   conf.maxAltitudeAlert = menuItems[12][4]
   conf.maxDistanceAlert = menuItems[13][4]
+  conf.cellCount = menuItems[15][4]
   --
   if conf.defaultBattSource ~= nil then
     battsource = conf.defaultBattSource
@@ -509,7 +514,7 @@ local function drawConfigMenuBars()
   local itemIdx = string.format("%d/%d",menu.selectedItem,#menuItems)
   lcd.drawFilledRectangle(0,0, 128, 7, SOLID)
   lcd.drawRectangle(0, 0, 128, 7, SOLID)
-  lcd.drawText(0,0,"Yaapu X7 1.5.0",SMLSIZE+INVERS)
+  lcd.drawText(0,0,"Yaapu X7 1.5.1",SMLSIZE+INVERS)
   lcd.drawFilledRectangle(0,57-2, 128, 9, SOLID)
   lcd.drawRectangle(0, 57-2, 128, 9, SOLID)
   lcd.drawText(0,57-1,string.sub(getConfigFilename(),8),SMLSIZE+INVERS)
@@ -582,7 +587,7 @@ local function drawConfigMenu(event)
     menu.offset = 0
   elseif menu.selectedItem  < 1 then
     menu.selectedItem = #menuItems
-    menu.offset = 7
+    menu.offset = 7 + #menuItems % 7
   end
   --
   for m=1+menu.offset,math.min(#menuItems,7+menu.offset) do
@@ -917,6 +922,9 @@ local function calcCellMin(v1,v2)
 end
 
 local function calcCellCount(battmax)
+  if conf.cellCount ~= nil and conf.cellCount > 0 then
+    return conf.cellCount
+  end
   -- cellcount is cached
   if cellcount > 1 then
     return cellcount
@@ -1136,22 +1144,8 @@ end
     { false, 0 , true, 1 },
     { false, 0 , true, 1 },
     { false, 0 , true, 2 },
-    { false, 0 , true, 3 },
-    { false, 0 , true, 3 },
+    { false, 0 , false, 3 }
 }
-
-local function checkCellVoltage(battsource,cellmin,cellminFC,cellminA2)
-  local celm = getVoltageBySource(battsource,cellmin,cellminFC,cellminA2)*100
-  -- trigger batt1 and batt2
-  if celm > conf.battAlertLevel2 and celm < conf.battAlertLevel1 and alarms[7][1] == false then
-    alarms[7][1] = true
-    playSound("batalert1")
-  end
-  if celm > 320 and celm < conf.battAlertLevel2 and alarms[8][1] == false then
-    alarms[8][1] = true
-    playSound("batalert2")
-  end
-end
 
 local function setSensorValues()
   if (not telemetryEnabled()) then
@@ -1200,10 +1194,10 @@ local function drawBatteryPane(x,battsource,battcurrent,battcapacity,battmah,cel
   local flags = 0
   local dimFlags = 0
   if showMinMaxValues == false then
-    if alarms[8][1] == true then
+    if battLevel2 == true then
       flags = BLINK
       dimFlags = BLINK
-    elseif alarms[7][1] == true then
+    elseif battLevel1 == true then
       dimFlags = BLINK+INVERS
     end
   end
@@ -1390,18 +1384,16 @@ local function drawFailsafe()
   local xoffset = 0
   local yoffset = 0
   if showDualBattery == true and (ekfFailsafe > 0 or battFailsafe >0) then
-    xoffset = 35
-    yoffset = -15
-    lcd.drawFilledRectangle(xoffset + 6, 36 + yoffset, 50, 21, ERASE)
-    lcd.drawRectangle(xoffset + 6, 36 + yoffset, 50, 21, SOLID)
+    xoffset = 36
+    yoffset = -10
+    lcd.drawFilledRectangle(xoffset - 8, 18 + yoffset, 80, 15, ERASE)
+    lcd.drawRectangle(xoffset - 8, 18 + yoffset, 80, 15, SOLID)
   end
   if ekfFailsafe > 0 then
-    lcd.drawText(xoffset + 0 + 64/2 - 9, 38 + yoffset, " EKF ", SMLSIZE+INVERS+BLINK)
-    lcd.drawText(xoffset + 0 + 64/2 - 21, 47 + yoffset, " FAILSAFE ", SMLSIZE+INVERS+BLINK)
+    lcd.drawText(xoffset + 0 + 64/2 - 31, 22 + yoffset, " EKF FAILSAFE ", SMLSIZE+INVERS+BLINK)
   end
   if battFailsafe > 0 then
-    lcd.drawText(xoffset + 0 + 64/2 - 10, 38 + yoffset, " BATT ", SMLSIZE+INVERS+BLINK)
-    lcd.drawText(xoffset + 0 + 64/2 - 21, 47 + yoffset, " FAILSAFE ", SMLSIZE+INVERS+BLINK)
+    lcd.drawText(xoffset + 0 + 64/2 - 33, 22 + yoffset, " BATT FAILSAFE ", SMLSIZE+INVERS+BLINK)
   end
 end
 
@@ -1424,8 +1416,8 @@ local function drawCompassRibbon()
   -- this is the first point left to be drawn on the compass ribbon
   local nextPoint = roundTo(centerYaw,45)
   -- distance in degrees between leftmost ribbon point and first 45° multiple normalized to YAW_WIDTH/8
-  local yawMinX = 3
-  local yawMaxX = 64 - 5
+  local yawMinX = 2
+  local yawMaxX = 64 - 3
   -- x coord of first ribbon letter
   local nextPointX = yawMinX + (nextPoint - centerYaw)/45 * 13.2
   local yawY = 0 + 7
@@ -1467,7 +1459,7 @@ local function drawCompassRibbon()
     drawHomeIcon(yawMinX - 2, yawY + 10)
   end
   --
-  lcd.drawLine(yawMinX, yawY + 7, yawMaxX, yawY + 7, SOLID, 0)
+  lcd.drawLine(yawMinX - 2, yawY + 7, yawMaxX + 2, yawY + 7, SOLID, 0)
   local xx = 0
   if ( yaw < 10) then
     xx = 1
@@ -1558,6 +1550,20 @@ local function drawHud()
     end
   end
   -------------------------------------
+  -- vario indicator on left
+  -------------------------------------
+  lcd.drawFilledRectangle(0, yPos, 7, 50, ERASE, 0)
+  lcd.drawLine(0 + 5, yPos, 0 + 5, yPos + 40, SOLID, FORCE)
+  local varioMax = math.log(10)
+  local varioSpeed = math.log(1+math.min(math.abs(0.1*vSpeed),10))
+  local varioY = 0
+  if vSpeed > 0 then
+    varioY = 35 - 4 - varioSpeed/varioMax*15
+  else
+    varioY = 35 + 6
+  end
+  lcd.drawFilledRectangle(0, varioY, 5, varioSpeed/varioMax*15, FORCE, 0)
+  -------------------------------------
   -- left and right indicators on HUD
   -------------------------------------
   -- lets erase to hide the artificial horizon lines
@@ -1599,7 +1605,7 @@ local function drawHud()
   if (vSpeed > 999) then
     lcd.drawNumber(0+1,35 - 3,vSpeed*0.1,SMLSIZE)
   elseif (vSpeed < -99) then
-    lcd.drawNumber(0+1,35 - 3,vSpeed * 0.1,SMLSIZE)
+    lcd.drawNumber(0+1,35 - 3,vSpeed*0.1,SMLSIZE)
   else
     lcd.drawNumber(0+1,35 - 3,vSpeed,SMLSIZE+PREC1)
   end
@@ -1617,9 +1623,9 @@ local function drawHud()
   -- failsafe
   if ekfFailsafe == 0 and battFailsafe == 0 and timerRunning == 0 then
     if (statusArmed == 1) then
-      lcd.drawText(0 + 64/2 - 15, 21, " ARMED ", SMLSIZE+INVERS)
+      lcd.drawText(0 + 64/2 - 15, 22, " ARMED ", SMLSIZE+INVERS)
     else
-      lcd.drawText(0 + 64/2 - 21, 21, " DISARMED ", SMLSIZE+INVERS+BLINK)
+      lcd.drawText(0 + 64/2 - 21, 22, " DISARMED ", SMLSIZE+INVERS+BLINK)
     end
   end
 end
@@ -1656,14 +1662,16 @@ end
 -- a warning sound.
 ---------------------------------
 local function checkAlarm(level,value,idx,sign,sound,delay)
-  -- once landed reset all alarms
+  -- once landed reset all alarms except battery alerts
   if timerRunning == 0 then
     if alarms[idx][4] == 0 then
       alarms[idx] = { false, 0, false, 0} 
-    elseif  alarms[idx][4] == 1 then
+    elseif alarms[idx][4] == 1 then
       alarms[idx] = { false, 0, true, 1}
-    else
+    elseif  alarms[idx][4] == 2 then
       alarms[idx] = { false, 0, true, 2}
+    elseif  alarms[idx][4] == 3 then
+      alarms[idx] = { false, 0 , false, 3 }
     end
   end
   -- for minimum type alarms, arm the alarm only after value has reached level  
@@ -1749,6 +1757,20 @@ local function checkEvents()
     lastFlightMode = flightMode
     playSoundByFrameTypeAndFlightMode(frameType,flightMode)
   end
+end
+
+local function checkCellVoltage(battsource,cellmin,cellminFC,cellminA2)
+  local celm = getVoltageBySource(battsource,cellmin,cellminFC,cellminA2)*100
+  -- trigger batt1 and batt2
+  if celm > conf.battAlertLevel2 and celm < conf.battAlertLevel1 and battLevel1 == false then
+    battLevel1 = true
+    playSound("batalert1")
+  end
+  if celm > 320 and celm < conf.battAlertLevel2 then
+    battLevel2 = true
+  end
+  --
+  checkAlarm(conf.battAlertLevel2,celm,7,-1,"batalert2",menuItems[14][4])  
 end
 
 local function cycleBatteryInfo()
@@ -1857,7 +1879,7 @@ local function run(event)
     if batt2sources.fc or batt2sources.vs or batt2sources.a2 then
       if showDualBattery == false then
         -- dual battery: aggregate view
-        lcd.drawText(0+2,57 - 8,"2B",SMLSIZE+INVERS)
+        lcd.drawText(0+8,57 - 8,"2B",SMLSIZE+INVERS)
         drawBatteryPane(0+64+1,battsource,batt1current+batt2current,getBatt1Capacity()+getBatt2Capacity(),batt1mah+batt2mah,calcCellMin(cell1min,cell2min),calcCellMin(cell1minFC,cell2minFC),cellminA2,calcCellMin(cell1sum,cell2sum),calcCellMin(cell1sumFC,cell2sumFC),cellsumA2,1,10,19)
       else
         -- dual battery:battery 1 right pane
@@ -1887,7 +1909,7 @@ end
 
 local function init()
   loadConfig()
-  pushMessage(6,"Yaapu X7 1.5.0")
+  pushMessage(6,"Yaapu X7 1.5.1")
   playSound("yaapu")
 end
 

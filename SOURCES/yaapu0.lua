@@ -26,16 +26,16 @@
 ---------------------
 -- radio model
 ---------------------
-#define X9
---#define X7
+--#define X9
+#define X7
 
 ---------------------
 -- script version 
 ---------------------
 #ifdef X9
-  #define VERSION "Yaapu X9 telemetry script 1.5.0"
+  #define VERSION "Yaapu X9 telemetry script 1.5.1"
 #else
-  #define VERSION "Yaapu X7 1.5.0"
+  #define VERSION "Yaapu X7 1.5.1"
 #endif
 
 ---------------------
@@ -48,10 +48,8 @@
 -- features
 ---------------------
 #define SENSORS
---#define RESETBATTALARMS
 --#define MENUEX
 #define FRAMETYPE
-#define BATTINV
 #define YAWRIBBON
 ---------------------
 -- dev features
@@ -60,6 +58,7 @@
 --#define LOGMESSAGES
 --
 --#define DEBUG
+--#define DEBUGMENU
 --#define TESTMODE
 --#define BATT2TEST
 --#define CELLCOUNT 5
@@ -462,8 +461,9 @@ local lastFlightMode = 0
 -- battery levels
 local batLevel = 99
 local batLevels = {}
+local battLevel1 = false
+local battLevel2 = false
 --
-#ifdef BATTINV
 local lastBattLevel = 13
 batLevels[0]=0
 batLevels[1]=5
@@ -478,22 +478,6 @@ batLevels[9]=60
 batLevels[10]=70
 batLevels[11]=80
 batLevels[12]=90
-#else --BATTINV
-local lastBattLevel = 0
-batLevels[12]=0
-batLevels[11]=5
-batLevels[10]=10
-batLevels[9]=15
-batLevels[8]=20
-batLevels[7]=25
-batLevels[6]=30
-batLevels[5]=40
-batLevels[4]=50
-batLevels[3]=60
-batLevels[2]=70
-batLevels[1]=80
-batLevels[0]=90
-#endif --BATTINV
 -- dual battery
 local showDualBattery = false
 --
@@ -679,7 +663,7 @@ local thrOut = 0
 #define HOMEDIST_FLAGS SMLSIZE
 #define HOMEDIST_ARROW_WIDTH 8
 
-#define HOMEDIR_X 76
+#define HOMEDIR_X 82
 #define HOMEDIR_Y 48
 #define HOMEDIR_R 7
 
@@ -826,290 +810,10 @@ local conf = {
   timerAlert = 0,
   minAltitudeAlert = 0,
   maxAltitudeAlert = 0,
-  maxDistanceAlert = 0
+  maxDistanceAlert = 0,
+  cellCount = 0,
 }
 --
-#ifdef MENUEX
---------------------------------------------------------------------------------
--- EXTENDED MENU VALUE,COMBO,COMBOVALUE
---------------------------------------------------------------------------------
-#define MENU_PAGESIZE   5
-#define MENU_ROWHEIGHT  9
-#define MENU_Y          1
-#define TYPEVALUE           0
-#define TYPECOMBO           1
-#define TYPECOMBOVALUE      2
-
-local menu  = {
-  selectedItem = 1,
-  editSelected = false,
-  editComboValue = false,
-  page  = 0
-}
-
-local menuItems = {
-  {"force sound language:", TYPECOMBO, "L1", 1, { "english", "italiano" } , {"en","it"} },
-  {"battery warning level:", TYPEVALUE, "V1", 350, 320,420,"V",PREC2 },
-  {"battery critical level:", TYPEVALUE, "V2", 330, 320,420,"V",PREC2 },
-  {"battery capacity override:", TYPECOMBOVALUE, "B1", 1, { {nil},{0,0,500}, {27,0,500}, {30,0,500}, {52,0,500} }, PREC1,"Ah"},
-  {"battery capacity override:", TYPECOMBOVALUE, "B2", 1, { {nil},{0,0,500}, {27,0,500}, {30,0,500}, {52,0,500} }, PREC1,"Ah"},
-  {"disable all sounds:", TYPECOMBO, "S1", 1, { "no", "yes" }, { false, true } },
-  {"disable message beep:", TYPECOMBO, "S2", 1, { "no", "yes" }, { false, true } },
-  {"disable message blink:", TYPECOMBO, "S3", 1, { "no", "yes" }, { false, true } }
-}
-
-local function getConfigFilename()
-  local info = model.getInfo()
-  return "/MODELS/yaapu/" .. string.lower(string.gsub(info.name, "[%c%p%s%z]", "")..".cfg")
-end
-
-
-
-local function applyConfigValues()
-  conf.language = menuItems[1][6][menuItems[1][4]]
-  conf.battAlertLevel1 = menuItems[2][4]
-  conf.battAlertLevel2 = menuItems[3][4]
-  conf.battCapOverride1 = menuItems[4][5][menuItems[4][4]][1]*0.1
-  conf.battCapOverride2 = menuItems[5][5][menuItems[5][4]][1]*0.1
-  conf.disableAllSounds = menuItems[6][6][menuItems[6][4]]
-  conf.disableMsgBeep = menuItems[7][6][menuItems[7][4]]
-  conf.disableMsgBlink = menuItems[8][6][menuItems[8][4]]  
-  collectgarbage()
-end
-
-local function loadConfig()
-  local cfg = io.open(getConfigFilename(),"r")
-  if cfg == nil then
-    return
-  end
-  local str = io.read(cfg,200)
-  if string.len(str) > 0 then
-    for i=1,#menuItems
-    do
-      if  menuItems[i][2] == TYPECOMBOVALUE then
-        local value = string.match(str, menuItems[i][3]..":(%d+)")
-        if value ~= nil then
-          menuItems[i][4] = tonumber(value)
-          for c=1,#menuItems[i][5]
-          do
-            local value_option = string.match(str, menuItems[i][3].."_O"..c..":(%d+)")
-            if value_option ~= nil then
-              if value_option == "---" then
-                menuItems[i][5][c] = nil
-              else
-                menuItems[i][5][c][1] = tonumber(value_option)
-              end
-            end
-          end
-        end
-      else
-        local value = string.match(str, menuItems[i][3]..":(%d+)")
-        if value ~= nil then
-          menuItems[i][4] = tonumber(value)
-        end
-      end
-    end
-
-  end
-  if cfg 	~= nil then
-    io.close(cfg)
-  end
-  applyConfigValues()
-end
-
-local function saveConfig()
-  local cfg = assert(io.open(getConfigFilename(),"w"))
-  if cfg == nil then
-    return
-  end
-  for i=1,#menuItems
-  do
-    if  menuItems[i][2] == TYPECOMBOVALUE then
-      io.write(cfg,menuItems[i][3],":",menuItems[i][4],"[")
-      for c=1,#menuItems[i][5]
-      do
-        if menuItems[i][5][c][1] == nil then
-          io.write(cfg,menuItems[i][3],"_","O",c,":","---")
-        else
-          io.write(cfg,menuItems[i][3],"_","O",c,":",menuItems[i][5][c][1])
-        end
-        if c < #menuItems[i][5] then
-          io.write(cfg,",")
-        end
-      end
-      io.write(cfg,"]")
-    else
-      io.write(cfg,menuItems[i][3],":",menuItems[i][4])
-    end
-    if i < #menuItems then
-      io.write(cfg,",")
-    end
-  end
-  if cfg 	~= nil then
-    io.close(cfg)
-  end
-  applyConfigValues()
-end
-
-local function drawConfigMenuBars()
-  lcd.drawFilledRectangle(0,BOTTOMBAR_Y, BOTTOMBAR_WIDTH, 8, SOLID)
-  lcd.drawRectangle(0, BOTTOMBAR_Y, BOTTOMBAR_WIDTH, 8, SOLID)
-  lcd.drawText(0,BOTTOMBAR_Y+1,getConfigFilename(),SMLSIZE+INVERS)
-  lcd.drawText(BOTTOMBAR_WIDTH,BOTTOMBAR_Y+1,"/2",SMLSIZE+INVERS+RIGHT)
-  lcd.drawNumber(lcd.getLastLeftPos(),BOTTOMBAR_Y+1,menu.page+1,SMLSIZE+INVERS+RIGHT)
-  lcd.drawText(lcd.getLastLeftPos(),BOTTOMBAR_Y+1,"Page:",SMLSIZE+INVERS+RIGHT)
-end
-
-local function incMenuItem(idx)
-  if menuItems[idx][2] == TYPEVALUE then
-    menuItems[idx][4] = menuItems[idx][4] + 10
-    if menuItems[idx][4] > menuItems[idx][6] then
-      menuItems[idx][4] = menuItems[idx][6]
-    end
-  elseif menuItems[idx][2] == TYPECOMBO then
-    menuItems[idx][4] = menuItems[idx][4] + 1
-    if menuItems[idx][4] > #menuItems[idx][5] then
-      menuItems[idx][4] = 1
-    end
-  else
-    if menu.editComboValue then
-      if menuItems[idx][5][menuItems[idx][4]][1] ~= nil then
-        menuItems[idx][5][menuItems[idx][4]][1] = menuItems[idx][5][menuItems[idx][4]][1] + 1
-        if menuItems[idx][5][menuItems[idx][4]][1] > menuItems[idx][5][menuItems[idx][4]][3] then
-          menuItems[idx][5][menuItems[idx][4]][1] = menuItems[idx][5][menuItems[idx][4]][2]
-        end
-      end
-    else
-      menuItems[idx][4] = menuItems[idx][4] + 1
-      if menuItems[idx][4] > #menuItems[idx][5] then
-        menuItems[idx][4] = 1
-      end
-    end
-  end
-end
-
-local function decMenuItem(idx)
-  if menuItems[idx][2] == TYPEVALUE then
-    menuItems[idx][4] = menuItems[idx][4] - 10
-    if menuItems[idx][4] < menuItems[idx][5] then
-      menuItems[idx][4] = menuItems[idx][5]
-    end
-  elseif menuItems[idx][2] == TYPECOMBO then
-    menuItems[idx][4] = menuItems[idx][4] - 1
-    if menuItems[idx][4] < 1 then
-      menuItems[idx][4] = #menuItems[idx][5]
-    end
-  else
-    if menu.editComboValue then
-      if menuItems[idx][5][menuItems[idx][4]][1] ~= nil then
-        menuItems[idx][5][menuItems[idx][4]][1] = menuItems[idx][5][menuItems[idx][4]][1] - 1
-        if menuItems[idx][5][menuItems[idx][4]][1] < menuItems[idx][5][menuItems[idx][4]][2] then
-          menuItems[idx][5][menuItems[idx][4]][1] = menuItems[idx][5][menuItems[idx][4]][3]
-        end
-      end
-    else
-      menuItems[idx][4] = menuItems[idx][4] - 1
-      if menuItems[idx][4] < 1 then
-        menuItems[idx][4] = #menuItems[idx][5]
-      end
-    end
-  end
-end
-
-local function drawEditItem(m)
-  local idx = menu.page*MENU_PAGESIZE + m
-  if menuItems[idx][2] == TYPEVALUE then
-    lcd.drawNumber(150,MENU_Y + m*MENU_ROWHEIGHT, menuItems[idx][4],0+SMLSIZE+INVERS+BLINK+menuItems[idx][8])
-    lcd.drawText(lcd.getLastRightPos(),MENU_Y + m*MENU_ROWHEIGHT, menuItems[idx][7],0+SMLSIZE+INVERS+BLINK+menuItems[idx][8])
-  elseif menuItems[idx][2] == TYPECOMBO then
-    lcd.drawText(150,MENU_Y + m*MENU_ROWHEIGHT, menuItems[idx][5][menuItems[idx][4]],0+SMLSIZE+INVERS+BLINK)
-  else
-    if menu.editComboValue then
-      if menuItems[idx][5][menuItems[idx][4]][1] == nil then -- value cannot be changed
-        lcd.drawText(150,MENU_Y + m*MENU_ROWHEIGHT, "---",SMLSIZE+INVERS+BLINK+menuItems[idx][6])
-      else
-        lcd.drawNumber(150,MENU_Y + m*MENU_ROWHEIGHT, menuItems[idx][5][menuItems[idx][4]][1],0+SMLSIZE+INVERS+BLINK+menuItems[idx][6])
-        lcd.drawText(lcd.getLastRightPos(),MENU_Y + m*MENU_ROWHEIGHT, menuItems[idx][7],0+SMLSIZE+INVERS+BLINK+menuItems[idx][6])
-        lcd.drawText(lcd.getLastRightPos() + 5,MENU_Y + m*MENU_ROWHEIGHT, "+/-",0+SMLSIZE+INVERS+BLINK)
-      end
-    else
-      if menuItems[idx][5][menuItems[idx][4]][1] == nil then
-        lcd.drawText(150,MENU_Y + m*MENU_ROWHEIGHT, "---",0+SMLSIZE+INVERS+BLINK)
-      else
-        lcd.drawNumber(150,MENU_Y + m*MENU_ROWHEIGHT, menuItems[idx][5][menuItems[idx][4]][1],0+SMLSIZE+INVERS+BLINK+menuItems[idx][6])
-        lcd.drawText(lcd.getLastRightPos(),MENU_Y + m*MENU_ROWHEIGHT, menuItems[idx][7],0+SMLSIZE+INVERS+BLINK+menuItems[idx][6])
-      end
-    end
-  end
-end
-
-local function drawItem(m,flags)
-  local idx = menu.page*MENU_PAGESIZE + m
-  if menuItems[idx][2] == TYPEVALUE then
-    lcd.drawNumber(150,MENU_Y + m*MENU_ROWHEIGHT, menuItems[idx][4],0+SMLSIZE+menuItems[idx][8]+flags)
-    lcd.drawText(lcd.getLastRightPos(),MENU_Y + m*MENU_ROWHEIGHT, menuItems[idx][7],0+SMLSIZE+menuItems[idx][8]+flags)
-  elseif menuItems[idx][2] == TYPECOMBO then
-    lcd.drawText(150,MENU_Y +  m*MENU_ROWHEIGHT, menuItems[idx][5][menuItems[idx][4]],0+SMLSIZE+flags)
-  else
-    if menuItems[idx][5][menuItems[idx][4]][1] == nil then
-      lcd.drawText(150,MENU_Y + m*MENU_ROWHEIGHT, "---",0+SMLSIZE+menuItems[idx][6]+flags)
-    else
-      lcd.drawNumber(150,MENU_Y + m*MENU_ROWHEIGHT, menuItems[idx][5][menuItems[idx][4]][1],0+SMLSIZE+menuItems[idx][6]+flags)
-      lcd.drawText(lcd.getLastRightPos(),MENU_Y + m*MENU_ROWHEIGHT, menuItems[idx][7],0+SMLSIZE+menuItems[idx][6]+flags)
-    end
-  end
-end
-
-local function drawConfigMenu(event)
-  drawConfigMenuBars()
-  if menu.editSelected and event == EVT_ENTER_BREAK then
-    if menuItems[menu.selectedItem][2] == TYPECOMBOVALUE and menuItems[menu.selectedItem][5][menuItems[menu.selectedItem][4]][1] ~= nil then
-      menu.editComboValue = not menu.editComboValue
-      if not menu.editComboValue then
-        menu.editSelected = false
-      end
-    else
-      menu.editSelected = not menu.editSelected
-    end
-  elseif menu.editSelected and event == EVT_PLUS_BREAK then
-    incMenuItem(menu.selectedItem)
-  elseif menu.editSelected and event == EVT_MINUS_BREAK then
-    decMenuItem(menu.selectedItem)
-  elseif not menu.editSelected and event == EVT_PLUS_BREAK then
-    menu.selectedItem = (menu.selectedItem - 1)
-  elseif not menu.editSelected and event == EVT_MINUS_BREAK then
-    menu.selectedItem = (menu.selectedItem + 1)
-  elseif not menu.editComboValue and event == EVT_ENTER_BREAK then
-    menu.editSelected = not menu.editSelected
-  elseif menu.editComboValue and event == EVT_ENTER_BREAK then
-    menu.editComboValue = not menu.editComboValue
-  end
-  --wrap
-  if menu.selectedItem - menu.page*MENU_PAGESIZE > math.min(MENU_PAGESIZE,#menuItems - menu.page*MENU_PAGESIZE) then
-    menu.selectedItem = 1 + menu.page*MENU_PAGESIZE
-  elseif menu.selectedItem - menu.page*MENU_PAGESIZE < 1 then
-    if menu.page == 0 then
-      menu.selectedItem = MENU_PAGESIZE
-    else
-      menu.selectedItem = menu.page*MENU_PAGESIZE + math.min(menu.page*MENU_PAGESIZE,#menuItems-menu.page*MENU_PAGESIZE)
-    end
-  end
-
-  for m=1,math.min(MENU_PAGESIZE,#menuItems - menu.page*MENU_PAGESIZE) do
-    local idx = menu.page*MENU_PAGESIZE + m
-    lcd.drawText(2,1 + m*MENU_ROWHEIGHT, menuItems[idx][1],0+SMLSIZE)
-    if idx == menu.selectedItem then
-      if menu.editSelected then
-        drawEditItem(m)
-      else
-        drawItem(m,INVERS)
-      end
-    else
-      drawItem(m,0)
-    end
-  end
-end
-#else --MENUEX
 --------------------------------------------------------------------------------
 -- MENU VALUE,COMBO
 --------------------------------------------------------------------------------
@@ -1137,7 +841,7 @@ end
 #define A2 12
 #define D1 13
 #define T2 14
-#define AA 15
+#define CC 15
   
 local menu  = {
   selectedItem = 1,
@@ -1161,6 +865,7 @@ local menuItems = {
   {"max altitude alert:", TYPEVALUE, "A2", 0, 0,10000,"m",0,1 },
   {"max distance alert:", TYPEVALUE, "D1", 0, 0,100000,"m",0,10 },
   {"repeat alerts every:", TYPEVALUE, "T2", 10, 10,600,"sec",0,5 },
+  {"cell count override:", TYPEVALUE, "CC", 0, 0,12," cells",0,1 },
 }
 #endif --X9
 
@@ -1180,6 +885,7 @@ local menuItems = {
   {"max altitude alert:", TYPEVALUE, "A2", 0, 0,10000,"m",0,1 },
   {"max distance alert:", TYPEVALUE, "D1", 0, 0,100000,"m",0,10 },
   {"repeat alerts every:", TYPEVALUE, "T2", 10, 10,600,"sec",0,5 },
+  {"cell count override:", TYPEVALUE, "CC", 0, 0,12,"s",0,1 },
 }
 #endif --X7
 
@@ -1202,6 +908,7 @@ local function applyConfigValues()
   conf.minAltitudeAlert = menuItems[A1][4]*0.1
   conf.maxAltitudeAlert = menuItems[A2][4]
   conf.maxDistanceAlert = menuItems[D1][4]
+  conf.cellCount = menuItems[CC][4]
   --
   if conf.defaultBattSource ~= nil then
     battsource = conf.defaultBattSource
@@ -1335,7 +1042,7 @@ local function drawConfigMenu(event)
     menu.offset = 0
   elseif menu.selectedItem  < 1 then
     menu.selectedItem = #menuItems
-    menu.offset = MENU_PAGESIZE
+    menu.offset = MENU_PAGESIZE + #menuItems % MENU_PAGESIZE
   end
   --
   for m=1+menu.offset,math.min(#menuItems,MENU_PAGESIZE+menu.offset) do
@@ -1350,8 +1057,10 @@ local function drawConfigMenu(event)
       drawItem(m,0)
     end
   end
+#ifdef DEBUGMENU
+    lcd.drawNumber(LCD_W-50,LCD_H-8, menu.offset,SMLSIZE)
+#endif --DEBUGMENU
 end
-#endif --MENUEX
 
 local function playSound(soundFile)
   if conf.disableAllSounds then
@@ -2030,6 +1739,9 @@ local function calcCellMin(v1,v2)
 end
 
 local function calcCellCount(battmax)
+  if conf.cellCount ~= nil and conf.cellCount > 0 then
+    return conf.cellCount
+  end
   -- cellcount is cached
   if cellcount > 1 then
     return cellcount
@@ -2261,8 +1973,7 @@ end
 #define ALARMS_EKF 4
 #define ALARMS_BATT 5
 #define ALARMS_TIMER 6
-#define ALARMS_BATT1 7
-#define ALARMS_BATT2 8
+#define ALARMS_BATT2 7
 
 #define ALARM_TYPE_MIN 0
 #define ALARM_TYPE_MAX 1
@@ -2281,30 +1992,8 @@ local alarms = {
     { false, 0 , true, ALARM_TYPE_MAX },
     { false, 0 , true, ALARM_TYPE_MAX },
     { false, 0 , true, ALARM_TYPE_TIMER },
-    { false, 0 , true, ALARM_TYPE_BATT },
-    { false, 0 , true, ALARM_TYPE_BATT },
+    { false, 0 , false, ALARM_TYPE_BATT }
 }
-
-local function checkCellVoltage(battsource,cellmin,cellminFC,cellminA2)
-  local celm = getVoltageBySource(battsource,cellmin,cellminFC,cellminA2)*100
-  -- trigger batt1 and batt2
-  if celm > conf.battAlertLevel2 and celm < conf.battAlertLevel1 and alarms[ALARMS_BATT1][1] == false then
-    alarms[ALARMS_BATT1][1] = true
-    playSound("batalert1")
-  end
-  if celm > 320 and celm < conf.battAlertLevel2 and alarms[ALARMS_BATT2][1] == false then
-    alarms[ALARMS_BATT2][1] = true
-    playSound("batalert2")
-  end
-#ifdef RESETBATTALARMS
-  -- reset alarms when voltage rises
-  if celm > conf.battAlertLevel1 then
-    alarms[ALARMS_BATT1][1] = false
-  elseif celm > conf.battAlertLevel2 then
-    alarms[ALARMS_BATT2][1] = false
-  end
-#endif --RESETBATTALARMS
-end
 
 #ifdef SENSORS
 local function setSensorValues()
@@ -2355,10 +2044,10 @@ local function drawBatteryPane(x,battsource,battcurrent,battcapacity,battmah,cel
   local flags = 0
   local dimFlags = 0
   if showMinMaxValues == false then
-    if alarms[ALARMS_BATT2][1] == true then
+    if battLevel2 == true then
       flags = BLINK
       dimFlags = BLINK
-    elseif alarms[ALARMS_BATT1][1] == true then
+    elseif battLevel1 == true then
       dimFlags = BLINK+INVERS
     end
   end
@@ -2667,6 +2356,17 @@ local function drawLeftPane(battcurrent,cellsumFC)
   local power = cellsumFC*battcurrent*0.1
   power = getMaxValue(power,MAX_POWER)
   drawNumberWithDim(BATTPOWER_X,BATTPOWER_Y,BATTPOWER_YW,power,"w",BATTPOWER_FLAGS,BATTPOWER_FLAGSW)
+#ifdef FRAMETYPE
+#ifdef X9
+  local fn = frameNames[frameType]
+  if fn ~= nil then
+    lcd.drawText(0,39,fn,SMLSIZE+INVERS)
+  end
+#ifdef DEBUG
+  lcd.drawNumber(lcd.getLastRightPos() + 1,39,frameType,SMLSIZE+INVERS)
+#endif --DEBUG
+#endif --X9
+#endif --FRAMETYPE
   if showMinMaxValues == true then
     drawVArrow(BATTPOWER_X + 28, BATTPOWER_Y, 5,true,false)
     drawVArrow(HOMEDIST_X + 28, HOMEDIST_Y - 2,6,true,false)
@@ -2706,19 +2406,17 @@ local function drawFailsafe()
   local yoffset = 0
 #ifdef X7
   if showDualBattery == true and (ekfFailsafe > 0 or battFailsafe >0) then
-    xoffset = 35
-    yoffset = -15
-    lcd.drawFilledRectangle(xoffset + 6, 36 + yoffset, 50, 21, ERASE)
-    lcd.drawRectangle(xoffset + 6, 36 + yoffset, 50, 21, SOLID)
+    xoffset = 36
+    yoffset = -10
+    lcd.drawFilledRectangle(xoffset - 8, 18 + yoffset, 80, 15, ERASE)
+    lcd.drawRectangle(xoffset - 8, 18 + yoffset, 80, 15, SOLID)
   end
 #endif --X7
   if ekfFailsafe > 0 then
-    lcd.drawText(xoffset + HUD_X + HUD_WIDTH/2 - 9, 38 + yoffset, " EKF ", SMLSIZE+INVERS+BLINK)
-    lcd.drawText(xoffset + HUD_X + HUD_WIDTH/2 - 21, 47 + yoffset, " FAILSAFE ", SMLSIZE+INVERS+BLINK)
+    lcd.drawText(xoffset + HUD_X + HUD_WIDTH/2 - 31, 22 + yoffset, " EKF FAILSAFE ", SMLSIZE+INVERS+BLINK)
   end
   if battFailsafe > 0 then
-    lcd.drawText(xoffset + HUD_X + HUD_WIDTH/2 - 10, 38 + yoffset, " BATT ", SMLSIZE+INVERS+BLINK)
-    lcd.drawText(xoffset + HUD_X + HUD_WIDTH/2 - 21, 47 + yoffset, " FAILSAFE ", SMLSIZE+INVERS+BLINK)
+    lcd.drawText(xoffset + HUD_X + HUD_WIDTH/2 - 33, 22 + yoffset, " BATT FAILSAFE ", SMLSIZE+INVERS+BLINK)
   end
 end
 #ifndef YAWRIBBON
@@ -2832,8 +2530,8 @@ local function drawCompassRibbon()
   local yawMinX = (LCD_W - HUD_WIDTH)/2 + 2
   local yawMaxX = (LCD_W + HUD_WIDTH)/2 - 3
 #else
-  local yawMinX = 3
-  local yawMaxX = HUD_WIDTH - 5
+  local yawMinX = 2
+  local yawMaxX = HUD_WIDTH - 3
 #endif --X9
   -- x coord of first ribbon letter
   local nextPointX = yawMinX + (nextPoint - centerYaw)/45 * YAW_STEPWIDTH
@@ -2876,7 +2574,7 @@ local function drawCompassRibbon()
     drawHomeIcon(yawMinX - 2, yawY + 10)
   end
   --
-  lcd.drawLine(yawMinX, yawY + 7, yawMaxX, yawY + 7, SOLID, 0)
+  lcd.drawLine(yawMinX - 2, yawY + 7, yawMaxX + 2, yawY + 7, SOLID, 0)
   local xx = 0
   if ( yaw < 10) then
     xx = 1
@@ -3006,6 +2704,20 @@ local function drawHud()
     end
   end
   -------------------------------------
+  -- vario indicator on left
+  -------------------------------------
+  lcd.drawFilledRectangle(HUD_X, yPos, 7, 50, ERASE, 0)
+  lcd.drawLine(HUD_X + 5, yPos, HUD_X + 5, yPos + 40, SOLID, FORCE)
+  local varioMax = math.log(10)
+  local varioSpeed = math.log(1+math.min(math.abs(0.1*vSpeed),10))
+  local varioY = 0
+  if vSpeed > 0 then
+    varioY = HUD_X_MID - 4 - varioSpeed/varioMax*15
+  else
+    varioY = HUD_X_MID + 6
+  end
+  lcd.drawFilledRectangle(HUD_X, varioY, 5, varioSpeed/varioMax*15, FORCE, 0)
+  -------------------------------------
   -- left and right indicators on HUD
   -------------------------------------
   -- lets erase to hide the artificial horizon lines
@@ -3047,7 +2759,7 @@ local function drawHud()
   if (vSpeed > 999) then
     lcd.drawNumber(HUD_X+1,HUD_X_MID - 3,vSpeed*0.1,SMLSIZE)
   elseif (vSpeed < -99) then
-    lcd.drawNumber(HUD_X+1,HUD_X_MID - 3,vSpeed * 0.1,SMLSIZE)
+    lcd.drawNumber(HUD_X+1,HUD_X_MID - 3,vSpeed*0.1,SMLSIZE)
   else
     lcd.drawNumber(HUD_X+1,HUD_X_MID - 3,vSpeed,SMLSIZE+PREC1)
   end
@@ -3070,9 +2782,9 @@ local function drawHud()
   -- failsafe
   if ekfFailsafe == 0 and battFailsafe == 0 and timerRunning == 0 then
     if (statusArmed == 1) then
-      lcd.drawText(HUD_X + HUD_WIDTH/2 - 15, 21, " ARMED ", SMLSIZE+INVERS)
+      lcd.drawText(HUD_X + HUD_WIDTH/2 - 15, 22, " ARMED ", SMLSIZE+INVERS)
     else
-      lcd.drawText(HUD_X + HUD_WIDTH/2 - 21, 21, " DISARMED ", SMLSIZE+INVERS+BLINK)
+      lcd.drawText(HUD_X + HUD_WIDTH/2 - 21, 22, " DISARMED ", SMLSIZE+INVERS+BLINK)
     end
   end
 end
@@ -3111,14 +2823,16 @@ end
 -- a warning sound.
 ---------------------------------
 local function checkAlarm(level,value,idx,sign,sound,delay)
-  -- once landed reset all alarms
+  -- once landed reset all alarms except battery alerts
   if timerRunning == 0 then
     if alarms[idx][4] == ALARM_TYPE_MIN then
       alarms[idx] = { false, 0, false, ALARM_TYPE_MIN} 
-    elseif  alarms[idx][4] == ALARM_TYPE_MAX then
+    elseif alarms[idx][4] == ALARM_TYPE_MAX then
       alarms[idx] = { false, 0, true, ALARM_TYPE_MAX}
-    else
+    elseif  alarms[idx][4] == ALARM_TYPE_TIMER then
       alarms[idx] = { false, 0, true, ALARM_TYPE_TIMER}
+    elseif  alarms[idx][4] == ALARM_TYPE_BATT then
+      alarms[idx] = { false, 0 , false, ALARM_TYPE_BATT }
     end
   end
   -- for minimum type alarms, arm the alarm only after value has reached level  
@@ -3175,7 +2889,6 @@ local function checkEvents()
     batLevel = 99
   end
 
-#ifdef BATTINV
   for l=0,12 do
     -- trigger alarm as as soon as it falls below level + 1 (i.e 91%,81%,71%,...)
     if batLevel <= batLevels[l] + 1 and l < lastBattLevel then
@@ -3184,12 +2897,6 @@ local function checkEvents()
       break
     end
   end
-#else --BATTINV
-  if batLevel < (batLevels[lastBattLevel] + 1) and lastBattLevel <= 11 then
-    playSound("bat"..batLevels[lastBattLevel])
-    lastBattLevel = lastBattLevel + 1
-  end
-#endif --BATTINV
 
   if statusArmed == 1 and lastStatusArmed == 0 then
     lastStatusArmed = statusArmed
@@ -3211,6 +2918,20 @@ local function checkEvents()
     lastFlightMode = flightMode
     playSoundByFrameTypeAndFlightMode(frameType,flightMode)
   end
+end
+
+local function checkCellVoltage(battsource,cellmin,cellminFC,cellminA2)
+  local celm = getVoltageBySource(battsource,cellmin,cellminFC,cellminA2)*100
+  -- trigger batt1 and batt2
+  if celm > conf.battAlertLevel2 and celm < conf.battAlertLevel1 and battLevel1 == false then
+    battLevel1 = true
+    playSound("batalert1")
+  end
+  if celm > 320 and celm < conf.battAlertLevel2 then
+    battLevel2 = true
+  end
+  --
+  checkAlarm(conf.battAlertLevel2,celm,ALARMS_BATT2,-1,"batalert2",menuItems[T2][4])  
 end
 
 local function cycleBatteryInfo()
@@ -3418,7 +3139,7 @@ local function run(event)
         lcd.drawText(HUD_X+HUD_WIDTH+1,TOPBAR_HEIGHT,"B1+B2",SMLSIZE+INVERS)
 #endif --X9
 #ifdef X7
-        lcd.drawText(HUD_X+2,BOTTOMBAR_Y - 8,"2B",SMLSIZE+INVERS)
+        lcd.drawText(HUD_X+8,BOTTOMBAR_Y - 8,"2B",SMLSIZE+INVERS)
 #endif --X7
         drawBatteryPane(HUD_X+HUD_WIDTH+1,battsource,batt1current+batt2current,getBatt1Capacity()+getBatt2Capacity(),batt1mah+batt2mah,calcCellMin(cell1min,cell2min),calcCellMin(cell1minFC,cell2minFC),cellminA2,calcCellMin(cell1sum,cell2sum),calcCellMin(cell1sumFC,cell2sumFC),cellsumA2,MIN_CELL_FC,MIN_BATT_FC,MAX_CURR)
       else
@@ -3489,19 +3210,6 @@ local function run(event)
 #ifdef BGTELERATE    
     lcd.drawNumber(20,39,bgtelerate,SMLSIZE+INVERS)
 #endif --BGTELERATE
-#ifdef FRAMETYPE
-#ifdef X9
-    if showDualBattery == false then
-      local fn = frameNames[frameType]
-      if fn ~= nil then
-        lcd.drawText(0,39,fn,SMLSIZE+INVERS)
-      end
-    end
-#ifdef DEBUG
-    lcd.drawNumber(lcd.getLastRightPos() + 1,39,frameType,SMLSIZE+INVERS)
-#endif --DEBUG
-#endif --X9
-#endif --FRAMETYPE
     drawNoTelemetryData()
   end
 end
