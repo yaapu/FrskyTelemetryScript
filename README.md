@@ -44,6 +44,7 @@ Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4 
  - per model configuration saved in MODELS/yaapu/modelname.cfg
  - flight [modes](#supported-flight-modes) based on frame type:copter,plane or rover with vocal sound support
  - artificial horizon with roll,pitch and yaw with numeric compass heading
+ - vertical variometer gauge on left side of center panel
  - mini home icon on yaw compass at home angle position
  - battery voltage from 3 sources (in order of priority), short pressing [ENTER] cycles between the sources
    - frsky FLVSS voltage sensor if available (vs is displayed next to voltage)
@@ -177,6 +178,9 @@ This in turn means that:
 For 3s and 2s the limit is so low that's not a problem.
 
 Please note that the voltage used for the calculation is the maximum pack voltage so if after detection the cell voltage lowers below the above limits it will be ok.
+
+The script supports autodetection up to 6s.
+It's always possible to override auto detection from the menu and set cell count up to 12s.
 
 ## Alerts
 
