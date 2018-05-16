@@ -10,17 +10,17 @@ Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4 
 
 ## Screenshots
 
-![Taranis X9D+](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x9d.png)
+![Taranis X9D+](https://github.com/yaapu/FrskyTelemetryScript/raw/master/IMAGES/x9d.png)
 
-![Taranis X9D+](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x9ddual.png)
+![Taranis X9D+](https://github.com/yaapu/FrskyTelemetryScript/raw/master/IMAGES/x9ddual.png)
 
-![Taranis X9D+](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x9dmessages.png)
+![Taranis X9D+](https://github.com/yaapu/FrskyTelemetryScript/raw/master/IMAGES/x9dmessages.png)
 
-![Taranis X7](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7.png)
+![Taranis X7](https://github.com/yaapu/FrskyTelemetryScript/raw/master/IMAGES/x7.png)
 
-![Taranis X7](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7dual.png)
+![Taranis X7](https://github.com/yaapu/FrskyTelemetryScript/raw/master/IMAGES/x7dual.png)
 
-![Taranis X7](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7messages.png)
+![Taranis X7](https://github.com/yaapu/FrskyTelemetryScript/raw/master/IMAGES/x7messages.png)
 
 ## Index
 
@@ -74,9 +74,9 @@ Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4 
  - capacity ovveride for battery 1 and 2
  - tracking of min/max values for battery/cell voltage, current, altitude, ground and vertical speed, short press [MENU] to display them, an up pointing arrow will indicate max values whereas a down pointing arrow will indicate min values
  
- ![X9D menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x9dminmax.png)
+ ![X9D menu](https://github.com/yaapu/FrskyTelemetryScript/raw/master/IMAGES/x9dminmax.png)
  
- ![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7minmax.png)
+ ![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/raw/master/IMAGES/x7minmax.png)
 
  - vocal alerts for battery levels, 
  - vocal fence: max distance and min/max altitude alerts
@@ -208,11 +208,11 @@ When the vehicle moves outside of the fence the script will play a vocal alert e
 
 ## Configuration
 
-![X9D menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x9dmenupag1.png)
+![X9D menu](https://github.com/yaapu/FrskyTelemetryScript/raw/master/IMAGES/x9dmenupag1.png)
 
-![X9D menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x9dmenupag2.png)
+![X9D menu](https://github.com/yaapu/FrskyTelemetryScript/raw/master/IMAGES/x9dmenupag2.png)
 
-![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7menupag1.png)
+![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/raw/master/IMAGES/x7menupag1.png)
 
 ![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/raw/master/IMAGES/x7menupag2.png)
 
