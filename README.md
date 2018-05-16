@@ -14,11 +14,13 @@ Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4 
 
 ![X9D](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9d.png)
 
+![X7](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7.png)
+
 dual battery view
 
-![X9Ddual](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9ddual.png)
-
 ![X10dual](https://github.com/yaapu/FrskyTelemetryScript/raw/master/HORUS/IMAGES/x10dualbattery.png)
+
+![X9Ddual](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9ddual.png)
 
 ![X7dual](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7dual.png)
 
@@ -27,9 +29,6 @@ mavlink message history
 ![X10messages](https://github.com/yaapu/FrskyTelemetryScript/raw/master/HORUS/IMAGES/x10messages.png)
 
 ![X9Dmessages](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9dmessages.png)
-
-![X7](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7.png)
-
 
 ![X7messages](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7messages.png)
 
