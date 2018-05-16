@@ -214,7 +214,7 @@ When the vehicle moves outside of the fence the script will play a vocal alert e
 
 ![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7menupag1.png)
 
-![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/blob/master/IMAGES/x7menupag2.png)
+![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/raw/master/IMAGES/x7menupag2.png)
 
 The language of the vocal alerts is independent from the radio language and can be configured from the menu.
 Right now only english, italian and french are supported but new languages can be added with ease.
