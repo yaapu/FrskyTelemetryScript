@@ -259,7 +259,7 @@ I do provide already compiled versions for X10/X12,X9D and QX7.
 
 To enable sound files playback copy them to /SOUNDS/yaapu0/en, /SOUNDS/yaapu0/it and SOUNDS/yaapu0/fr folders.
 
-On the Horus the script needs to be started iin one time mode, see the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12) on how to do it.
+**Note: On the Horus the script needs to be started in one time mode, see the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12) on how to do it.**
 
 ## Sound files customization
 
