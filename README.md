@@ -1,6 +1,6 @@
 # Yaapu Frsky Telemetry script
 
-A lua based telemetry script for the Taranis X9D+,X9E and X7 radio using the frsky passthrough protocol.
+A lua based telemetry script for the Frsky Horus X10,X10S,X12 and Taranis X9D+,X9E and X7 radios using the frsky passthrough protocol.
 
 The script supports all of the telemetry DIY 0x5000 packets sent by ardupilot’s [frsky passthrough protocol library](https://github.com/ArduPilot/ardupilot/tree/master/libraries/AP_Frsky_Telem)
 
@@ -10,17 +10,23 @@ Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4 
 
 ## Screenshots
 
-![Taranis X9D+](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9d.png)
+![X10](https://github.com/yaapu/FrskyTelemetryScript/raw/master/HORUS/IMAGES/x10.png)
 
-![Taranis X9D+](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9ddual.png)
+![X10dual](https://github.com/yaapu/FrskyTelemetryScript/raw/master/HORUS/IMAGES/x10dualbattery.png)
 
-![Taranis X9D+](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9dmessages.png)
+![X10messages](https://github.com/yaapu/FrskyTelemetryScript/raw/master/HORUS/IMAGES/x10messages.png)
 
-![Taranis X7](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7.png)
+![X9D](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9d.png)
 
-![Taranis X7](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7dual.png)
+![X9Ddual](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9ddual.png)
 
-![Taranis X7](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7messages.png)
+![X9Dmessages](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9dmessages.png)
+
+![X7](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7.png)
+
+![X7dual](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7dual.png)
+
+![X7messages](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7messages.png)
 
 ## Index
 
@@ -40,13 +46,13 @@ Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4 
  
 ## Features
 
- - configuration menu, long press [MENU] to display
- - per model configuration saved in MODELS/yaapu/modelname.cfg
+ - configuration menu, long press [MENU] on Taranis or [MDL] on Horus
+ - per model configuration saved in MODELS/yaapu/modelname.cfg on Taranis, SCRIPTS/YAAPU/CFG/modelname.cfg on Horus
  - flight [modes](#supported-flight-modes) based on frame type:copter,plane or rover with vocal sound support
  - artificial horizon with roll,pitch and yaw with numeric compass heading
  - vertical variometer gauge on left side of center panel
  - mini home icon on yaw compass at home angle position
- - battery voltage from 3 sources (in order of priority), short pressing [ENTER] cycles between the sources
+ - battery voltage from 3 sources (in order of priority), short pressing [ENTER]/[ENCODER] cycles between the sources
    - frsky FLVSS voltage sensor if available (vs is displayed next to voltage)
    - frsky analog port if available (a2 is displayed next to voltage)
    - flight controller via telemetry (fc is displayed next to voltage)
@@ -65,23 +71,29 @@ Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4 
  - home distance
  - horizontal ground speed or air speed (available if configured in mission planner)
  - home heading as rotating triangle
- - mavlink messages with history accessible with +/- buttons short press
+ - mavlink messages with history accessible with [PLUS]/[MINUS] or by turning the [ENCODER] buttons
  - english, italian and french sound files for selected events: battery levels, failsafe, flightmodes, alerts and landing
 
 ## Advanced Features 
 
-- dual battery support (dual FLVSS and/or dual battery from ArduPilot) short press [ENTER] to display second battery info. If a second battery is detected there will be a "B1+B2" label on screen.
+- dual battery support (dual FLVSS and/or dual battery from ArduPilot) short press [ENTER] on Taranis or [ENCODER] on Horus to display second battery info. If a second battery is detected there will be a "B1+B2" label on screen.
  - capacity ovveride for battery 1 and 2
- - tracking of min/max values for battery/cell voltage, current, altitude, ground and vertical speed, short press [MENU] to display them, an up pointing arrow will indicate max values whereas a down pointing arrow will indicate min values
+ - tracking of min/max values for battery/cell voltage, current, altitude, ground and vertical speed, short press [MENU] on Taranis or [SYS] on Horus to display them, an up pointing arrow will indicate max values whereas a down pointing arrow will indicate min values
  
- ![X9D menu](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9dminmax.png)
+ ![X10 minmax](https://github.com/yaapu/FrskyTelemetryScript/raw/master/HORUS/IMAGES/x10minmax.png)
  
- ![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7minmax.png)
+ ![X9D minmax](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9dminmax.png)
+ 
+ ![X7 minmax](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7minmax.png)
 
  - vocal alerts for battery levels, 
  - vocal fence: max distance and min/max altitude alerts
  - configurable vocal timer alert every n minutes
- - sensors VFAS,CURR,Alt,VSpd,GAlt,Hdg,GSpd,Fuel,Tmp1,Tmp2 are exposed to OpenTX, see the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki/Exposed-Telemetry-Variables) for details. You need to run "discover new sensors" in your model telemetry page to use the sensors in OpenTX.
+ - sensors VFAS,CURR,Alt,VSpd,GAlt,Hdg,GSpd,Fuel,Tmp1,Tmp2 are exposed to OpenTX, see the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki/Exposed-Telemetry-Variables) for details.
+ On the Taranis you need to run "discover new sensors" in your model telemetry page to use the sensors in OpenTX.
+ On the Horus sensors cannot be discovered and need to be created manually in the model telemetry page.
+ 
+ ![X10 sensors](https://github.com/yaapu/FrskyTelemetryScript/raw/master/HORUS/IMAGES/x10sensors.png)
  
 Sensor valus are passed to OpenTX only when the script receives valid telemetry from the rx!
  
@@ -151,15 +163,15 @@ Sensor valus are passed to OpenTX only when the script receives valid telemetry 
 
 ## Voltage Sources
 
-Battery voltage is tracked independentely for 3 battery sources: FLVSS, analog port A2 and flight controller. (The script can use the A2 analog voltage source from X4R and X6R receivers, a2 would be displayed next to cell voltage). A short press of [ENTER] cycles between all the sources. Min value is also tracked for the 3 sources and can be shown with a [MENU] short press.
+Battery voltage is tracked independentely for 3 battery sources: FLVSS, analog port A2 and flight controller. (The script can use the A2 analog voltage source from X4R and X6R receivers, a2 would be displayed next to cell voltage). A short press of [ENTER] on Taranis or [ENCODER on Horus ]cycles between all the sources. Min value is also tracked for the 3 sources and can be shown with a [MENU] short press on Taranis or [SYS] on the Horus.
 
 If you use a second FLVSS voltage sensor the OpenTX variable has to be renamed to "Cel2"
 
-When a second battery is detected the script also tracks "aggregate" battery values and shows a "B1+B2" label in the right panel. Cell value and battery voltage is the "minimum" between the two batteries, current is summed and capacity percent is averaged. A short press of [MENU] will show min/max values for this aggregate view.
+When a second battery is detected the script also tracks "aggregate" battery values and shows a "B1+B2" label in the right panel. Cell value and battery voltage is the "minimum" between the two batteries, current is summed and capacity percent is averaged. A short press of [MENU] on Taranis or [ENCODER] on the Horus will show min/max values for this aggregate view.
 
-A short press of [ENTER] switches from single aggregate view to individual dual battery view. Subsequent short presses of [ENTER] in this dual view will cycle between voltage sources. In dual view a short press of [MENU] shows individual packs min/max values.
+A short press of [ENTER] on the Taranis or [ENCODER] on the Horus switches from single aggregate view to individual dual battery view. Subsequent short presses of [ENTER]/[ENCODER] in this dual view will cycle between voltage sources. In dual view a short press of [MENU] on Taranis or [SYS] on Horus shows individual packs min/max values.
 
-To get back to aggregate view short press [EXIT].
+To get back to aggregate view short press [EXIT] on Taranis or [RTN] on Horus.
 
 ## Cell Count Detection
 
@@ -197,16 +209,18 @@ It's also possible to configure a timer that will trigger a vocal alert every n 
 The script also support a "vocal fence" feature by setting a minimun altitude, a maximum altitude and a maximum distance alert.
 When the vehicle moves outside of the fence the script will play a vocal alert every n seconds.
 
-## Script timing and update rates
+## Script update rates
 
 - The script processes telemetry up to 60Hz
 - Sport telemetry stream is at around 40Hz
 - Screen is redrawn at 20Hz
-- VSpd sensor is exposed to OpenTX at 20Hz
+- VSpd sensor is exposed to OpenTX at 8Hz
 - All other frsky sensors are exposed to OpenTX at 4Hz
 - Events and alarms are checked at 2Hz
 
 ## Configuration
+
+![X10 menu](https://github.com/yaapu/FrskyTelemetryScript/raw/master/HORUS/IMAGES/x10menu.png)
 
 ![X9D menu](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9dmenupag1.png)
 
@@ -224,19 +238,21 @@ Battery capacity for battery 1 and battery 2 is automatically read from the valu
 ## Installation
 
 Copy the contents of the SD folder to your radio SD Card.
-Make sure to have the SOUNDS/yaapu0 and MODELS/yaapu folders.
+On Taranis Make sure to have the SOUNDS/yaapu0 and MODELS/yaapu folders.
+On Horus make sure you have the SOUNDS/yaapu0, SCRIPTS/YAAPU/CFG and SCRIPTS/YAAPU/IMAGES folders.
 
+For the X10/X12 use the yaapux.lua script.
 For the X9D/X9D+ and X9E use the yaapu9.lua script.
 For the QX7 radio use the yaapu7.lua script.
 
 The script is quite big and compilation on your radio may fail.
-The safest way is to compile it on Companion and then copy the .luac compiled version to the SD card in the /SCRIPTS/TELEMETRY folder.
+The safest way is to compile it on Companion and then copy the .luac compiled version to the SD card in the /SCRIPTS/TELEMETRY folder on Taranis or to the /SCRIPTS/YAAPU folder on the Horus.
 
-I do provide already compiled versions for both X9D and QX7.
+I do provide already compiled versions for X10/X12,X9D and QX7.
 
-**Note: On radios without the luac option enabled it is necessary to rename the script from yaapu9.luac to yaapu9.lua and from yaapu7.luac to yaapu7.lua**
+**Note: On radios without the luac option enabled it is necessary to rename the script from .luac to .lua**
 
-To enable sound files playback copy them to /SOUNDS/yaapu0/en and /SOUNDS/yaapu0/it folders.
+To enable sound files playback copy them to /SOUNDS/yaapu0/en, /SOUNDS/yaapu0/it and SOUNDS/yaapu0/fr folders.
 
 ## Sound files customization
 
@@ -315,16 +331,16 @@ Sound files can be customized but must be compatible with [OpenTX](https://opent
 An easy way to automate creation of sound files is by using the [TTSAutomate](https://github.com/CaffeineAU/TTSAutomate) tool with a phrase file.
 
 A reference [phrase file](https://github.com/yaapu/FrskyTelemetryScript/blob/master/TARANIS/SOURCES/english.psv) for the english language is provided as a template for other languages.
+Taranis and Horus phrase files may differ so make sure to pick the right one.
 
 **Note:In order to add new languages the script needs to be recompiled because the language must be added to the script configuration menu.**
 
 ## Compilation
 
-In order to compile your own version you must first preprocess the SOURCES/yaapu0.lua script with the pproc.lua preprocessor.
+To compile your own version you must first preprocess the SOURCES/yaapu0.lua script with the pproc.lua preprocessor.
 Details on the preprocessor can be found [here](https://gist.github.com/incinirate/d52e03f453df94a65e1335d9c36d114e)
 
 There are many #define each activates a specific feature of the script.
-The most important ones are X9/X7 to build for different radio models.
 
 You need a working lua interpreter for this to work.
 On a command line simply run "lua pproc.lua yaapu0.lua yaapu9.lua"
@@ -343,8 +359,14 @@ For information on how to connect the FrSky equipment together, please refer to
  ## Credits
  
  Thanks go to 
- - Marco Robustini (tester X9D), 
- - Chris Rey (tester QX7)
+ - Marco Robustini (X9D tester), 
+ - Chris Rey (QX7 tester)
  - Alain Chartier (frech sound files)
  - [Johnex](https://github.com/Johnex) for TTSAutomate phrase file
+ - Franck Perruchoud (X12 main beta tester)
+ - Chen Zhengzhong (X10 tester)
+ - Andras Schaffer (X12 tester)
+ - Massild (X10 tester)
+ - Zeek (X10 tester)
+ - Vova Reznik (X10 tester)
  - Craft&Theory for the passthrough protocol
