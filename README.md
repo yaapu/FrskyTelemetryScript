@@ -10,17 +10,17 @@ Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4 
 
 ## Screenshots
 
-![Taranis X9D+](https://github.com/yaapu/FrskyTelemetryScript/raw/master/IMAGES/x9d.png)
+![Taranis X9D+](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9d.png)
 
-![Taranis X9D+](https://github.com/yaapu/FrskyTelemetryScript/raw/master/IMAGES/x9ddual.png)
+![Taranis X9D+](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9ddual.png)
 
-![Taranis X9D+](https://github.com/yaapu/FrskyTelemetryScript/raw/master/IMAGES/x9dmessages.png)
+![Taranis X9D+](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9dmessages.png)
 
-![Taranis X7](https://github.com/yaapu/FrskyTelemetryScript/raw/master/IMAGES/x7.png)
+![Taranis X7](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7.png)
 
-![Taranis X7](https://github.com/yaapu/FrskyTelemetryScript/raw/master/IMAGES/x7dual.png)
+![Taranis X7](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7dual.png)
 
-![Taranis X7](https://github.com/yaapu/FrskyTelemetryScript/raw/master/IMAGES/x7messages.png)
+![Taranis X7](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7messages.png)
 
 ## Index
 
@@ -74,9 +74,9 @@ Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4 
  - capacity ovveride for battery 1 and 2
  - tracking of min/max values for battery/cell voltage, current, altitude, ground and vertical speed, short press [MENU] to display them, an up pointing arrow will indicate max values whereas a down pointing arrow will indicate min values
  
- ![X9D menu](https://github.com/yaapu/FrskyTelemetryScript/raw/master/IMAGES/x9dminmax.png)
+ ![X9D menu](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9dminmax.png)
  
- ![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/raw/master/IMAGES/x7minmax.png)
+ ![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7minmax.png)
 
  - vocal alerts for battery levels, 
  - vocal fence: max distance and min/max altitude alerts
@@ -208,13 +208,13 @@ When the vehicle moves outside of the fence the script will play a vocal alert e
 
 ## Configuration
 
-![X9D menu](https://github.com/yaapu/FrskyTelemetryScript/raw/master/IMAGES/x9dmenupag1.png)
+![X9D menu](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9dmenupag1.png)
 
-![X9D menu](https://github.com/yaapu/FrskyTelemetryScript/raw/master/IMAGES/x9dmenupag2.png)
+![X9D menu](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9dmenupag2.png)
 
-![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/raw/master/IMAGES/x7menupag1.png)
+![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7menupag1.png)
 
-![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/raw/master/IMAGES/x7menupag2.png)
+![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7menupag2.png)
 
 The language of the vocal alerts is independent from the radio language and can be configured from the menu.
 Right now only english, italian and french are supported but new languages can be added with ease.
@@ -314,7 +314,7 @@ Sound files can be customized but must be compatible with [OpenTX](https://opent
 
 An easy way to automate creation of sound files is by using the [TTSAutomate](https://github.com/CaffeineAU/TTSAutomate) tool with a phrase file.
 
-A reference [phrase file](https://github.com/yaapu/FrskyTelemetryScript/blob/master/SOURCES/english.psv) for the english language is provided as a template for other languages.
+A reference [phrase file](https://github.com/yaapu/FrskyTelemetryScript/blob/master/TARANIS/SOURCES/english.psv) for the english language is provided as a template for other languages.
 
 **Note:In order to add new languages the script needs to be recompiled because the language must be added to the script configuration menu.**
 
