@@ -246,9 +246,9 @@ Copy the contents of the SD folder to your radio SD Card.
 On Taranis Make sure to have the SOUNDS/yaapu0 and MODELS/yaapu folders.
 On Horus make sure you have the SOUNDS/yaapu0, SCRIPTS/YAAPU/CFG and SCRIPTS/YAAPU/IMAGES folders.
 
-For the X10/X12 use the yaapux.lua script.
-For the X9D/X9D+ and X9E use the yaapu9.lua script.
-For the QX7 radio use the yaapu7.lua script.
+- For the X10/X12 use the yaapux.luac script (rename it to yaapux.lua if the radio doesn't start it, see the note below).
+- For the X9D/X9D+ and X9E use the yaapu9.luac script (rename it to yaapu9.lua if the radio doesn't start it, see the note below).
+- For the QX7 radio use the yaapu7.luac script (rename it to yaapu7.lua if the radio doesn't start it, see the note below).
 
 The script is quite big and compilation on your radio may fail.
 The safest way is to compile it on Companion and then copy the .luac compiled version to the SD card in the /SCRIPTS/TELEMETRY folder on Taranis or to the /SCRIPTS/YAAPU folder on the Horus.
