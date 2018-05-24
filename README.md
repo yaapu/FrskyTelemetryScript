@@ -101,6 +101,8 @@ mavlink message history
  
 On the Horus the procedure is different: you start sensor discovery in the model telemetry page, leave it running and run the Yaapu Script as usual. Close the script and go back to the telemetry page where discovery should still be running and all sensors should have been discovered.
 If this does not work sensors can still be created manually in the model telemetry page.
+
+Note: The A2 sensor (analog input port) will only be discovered on X4R and X6R receivers.
  
  ![X10 sensors](https://github.com/yaapu/FrskyTelemetryScript/raw/master/HORUS/IMAGES/x10sensors.png)
  
