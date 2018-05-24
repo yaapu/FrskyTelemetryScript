@@ -96,8 +96,11 @@ mavlink message history
  - vocal fence: max distance and min/max altitude alerts
  - configurable vocal timer alert every n minutes
  - sensors VFAS,CURR,Alt,VSpd,GAlt,Hdg,GSpd,Fuel,Tmp1,Tmp2 are exposed to OpenTX, see the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki/Exposed-Telemetry-Variables) for details.
- On the Taranis you need to run "discover new sensors" in your model telemetry page to use the sensors in OpenTX.
- On the Horus sensors cannot be discovered and need to be created manually in the model telemetry page.
+ 
+ On the Taranis you need to run "discover new sensors" in your model telemetry page to use the sensors in OpenTX, the script has to be running for this to work.
+ 
+On the Horus the procedure is different: you start sensor discovery in the model telemetry page, leave it running and run the Yaapu Script as usual. Close the script and go back to the telemetry page where discovery should still be running and all sensors should have been discovered.
+If this does not work sensors can still be created manually in the model telemetry page.
  
  ![X10 sensors](https://github.com/yaapu/FrskyTelemetryScript/raw/master/HORUS/IMAGES/x10sensors.png)
  
