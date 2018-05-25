@@ -26,16 +26,16 @@
 ---------------------
 -- radio model
 ---------------------
---#define X9
-#define X7
+#define X9
+--#define X7
 
 ---------------------
 -- script version 
 ---------------------
 #ifdef X9
-  #define VERSION "Yaapu X9 telemetry script 1.5.1"
+  #define VERSION "Yaapu X9 telemetry script 1.6.0-beta1"
 #else
-  #define VERSION "Yaapu X7 1.5.1"
+  #define VERSION "Yaapu X7 1.6.0-beta1"
 #endif
 
 ---------------------
@@ -48,9 +48,9 @@
 -- features
 ---------------------
 #define SENSORS
---#define MENUEX
-#define FRAMETYPE
+--#define FRAMETYPE
 #define YAWRIBBON
+--#define BATTMAH3DEC
 ---------------------
 -- dev features
 ---------------------
@@ -58,10 +58,12 @@
 --#define LOGMESSAGES
 --
 --#define DEBUG
+--#define PLAYLOG
 --#define DEBUGMENU
 --#define TESTMODE
 --#define BATT2TEST
---#define CELLCOUNT 5
+--#define FLVSS2TEST
+--#define CELLCOUNT 4
 --#define DEMO
 --#define DEV
 
@@ -177,6 +179,7 @@
 ]]--
 #endif --DEBUG
 
+#ifdef X9
 #ifdef FRAMETYPE
 local frameNames = {}
 -- copter
@@ -210,7 +213,7 @@ frameNames[10]  = "ROV"
 frameNames[11]  = "BOAT"
 #endif --ROVER
 #endif --FRAMETYPE
-
+#endif -- X9
 local frameTypes = {}
 -- copter
 frameTypes[0]   = "c"
@@ -351,6 +354,7 @@ flightModes["r"][22]=""
 local soundFileBasePath = "/SOUNDS/yaapu0"
 local gpsStatuses = {}
 
+#ifdef X9
 gpsStatuses[0]="NoGPS"
 gpsStatuses[1]="NoLock"
 gpsStatuses[2]="2D"
@@ -358,6 +362,17 @@ gpsStatuses[3]="3D"
 gpsStatuses[4]="DGPS"
 gpsStatuses[5]="RTK"
 gpsStatuses[6]="RTK"
+#endif --X9
+
+#ifdef X7
+gpsStatuses[0]="GPS"
+gpsStatuses[1]="Lock"
+gpsStatuses[2]="2D"
+gpsStatuses[3]="3D"
+gpsStatuses[4]="DG"
+gpsStatuses[5]="RT"
+gpsStatuses[6]="RT"
+#endif --X7
 
 local mavSeverity = {}
 mavSeverity[0]="EMR"
@@ -439,9 +454,14 @@ local lastMsgTime = 0
 local vSpeed = 0
 local hSpeed = 0
 local yaw = 0
+-- SYNTH VSPEED SUPPORT
+local vspd = 0
+local synthVSpeedTime = 0
+local prevHomeAlt = 0
 -- ROLLPITCH
 local roll = 0
 local pitch = 0
+local range = 0 
 -- PARAMS
 local paramId,paramValue
 local frameType = -1
@@ -510,9 +530,11 @@ local showDualBattery = false
 #define MAX_VSPEED 25
 #define MAX_HSPEED 26
 #define MAX_DIST 27
+#define MAX_RANGE 28
 
 -- offsets
 local minmaxOffsets = {}
+--
 minmaxOffsets["fc"] = 0
 minmaxOffsets["vs"] = 3
 minmaxOffsets["a2"] = 6
@@ -548,6 +570,7 @@ minmaxValues[24] = 0
 minmaxValues[25] = 0
 minmaxValues[26] = 0
 minmaxValues[27] = 0
+minmaxValues[28] = 0
 
 local showMinMaxValues = false
 --
@@ -555,6 +578,10 @@ local showMinMaxValues = false
 local logfile
 local logfilename
 #endif --LOGTELEMETRY
+--
+#ifdef PLAYLOG
+local logfile
+#endif -- PLAYLOG
 --
 #ifdef TESTMODE
 -- TEST MODE
@@ -618,9 +645,15 @@ local thrOut = 0
 #define BATTGAUGE_HEIGHT 5
 #define BATTGAUGE_STEPS 10
 
-#define BATTMAH_X 12
+#ifdef BATTMAH3DEC
+#define BATTMAH_X 6
 #define BATTMAH_Y 35
 #define BATTMAH_FLAGS SMLSIZE+PREC1
+#else --BATTMAH3DEC
+#define BATTMAH_X 10
+#define BATTMAH_Y 35
+#define BATTMAH_FLAGS SMLSIZE+PREC1
+#endif --BATTMAH3DEC
 
 #define FLIGHTMODE_X 1
 #define FLIGHTMODE_Y 0
@@ -645,22 +678,23 @@ local thrOut = 0
 #define GPS_Y 6
 #define GPS_BORDER 0
 
-#define ALTASL_X 2
-#define ALTASL_Y 32
-#define ALTASL_XLABEL 2
-#define ALTASL_YLABEL 24
+#define ALTASL_X 63
+#define ALTASL_Y 26
+#define ALTASL_XLABEL 4
+#define ALTASL_YLABEL 25
+#define ALTASL_FLAGS RIGHT
 
-#define BATTPOWER_X 35
-#define BATTPOWER_Y 39
-#define BATTPOWER_YW 39
-#define BATTPOWER_FLAGS SMLSIZE+INVERS
-#define BATTPOWER_FLAGSW SMLSIZE+INVERS
+#define BATTPOWER_X 63
+#define BATTPOWER_Y 45
+#define BATTPOWER_XLABEL 2
+#define BATTPOWER_YLABEL 45
+#define BATTPOWER_FLAGS SMLSIZE+RIGHT
 
-#define HOMEDIST_X 35
-#define HOMEDIST_Y 32
-#define HOMEDIST_XLABEL 34
-#define HOMEDIST_YLABEL 25
-#define HOMEDIST_FLAGS SMLSIZE
+#define HOMEDIST_X 62
+#define HOMEDIST_Y 36
+#define HOMEDIST_XLABEL 2
+#define HOMEDIST_YLABEL 36
+#define HOMEDIST_FLAGS RIGHT
 #define HOMEDIST_ARROW_WIDTH 8
 
 #define HOMEDIR_X 82
@@ -704,9 +738,9 @@ local thrOut = 0
 #define BOX1_HEIGHT 15
 
 #define BOX2_X 65
-#define BOX2_Y 46
-#define BOX2_WIDTH 17  
-#define BOX2_HEIGHT 12
+#define BOX2_Y 7
+#define BOX2_WIDTH 38  
+#define BOX2_HEIGHT 7
 
 #define BATTVOLT_X 1
 #define BATTVOLT_Y 29
@@ -726,7 +760,7 @@ local thrOut = 0
 #define BATTCURR_FLAGS INVERS+SMLSIZE+PREC1
 #define BATTCURR_FLAGSA INVERS+SMLSIZE
 
-#define BATTPERC_X 16
+#define BATTPERC_X 5
 #define BATTPERC_Y 44
 #define BATTPERC_YPERC 48
 #define BATTPERC_FLAGS MIDSIZE
@@ -738,9 +772,17 @@ local thrOut = 0
 #define BATTGAUGE_HEIGHT 0
 #define BATTGAUGE_STEPS 0
 
+
+#ifdef BATTMAH3DEC
 #define BATTMAH_X 64
 #define BATTMAH_Y 43
 #define BATTMAH_FLAGS SMLSIZE+PREC1
+#else --BATTMAH3DEC
+#define BATTMAH_X 64
+#define BATTMAH_Y 43
+#define BATTMAH_FLAGS SMLSIZE+PREC1
+#endif --BATTMAH3DEC
+
 
 #define FLIGHTMODE_X 1
 #define FLIGHTMODE_Y 0
@@ -752,40 +794,40 @@ local thrOut = 0
 #define HOMEANGLE_YLABEL 0
 #define HOMEANGLE_FLAGS SMLSIZE
 
-#define HSPEED_X 0
-#define HSPEED_Y 0
-#define HSPEED_XLABEL 0
-#define HSPEED_YLABEL 0
-#define HSPEED_XDIM 0
-#define HSPEED_YDIM 0
+#define HSPEED_X 107
+#define HSPEED_Y 8
+#define HSPEED_XLABEL 66
+#define HSPEED_YLABEL 10
+#define HSPEED_XDIM 102
+#define HSPEED_YDIM 9
 #define HSPEED_FLAGS SMLSIZE
-#define HSPEED_ARROW_WIDTH 10
+#define HSPEED_ARROW_WIDTH 6
 
 #define GPS_X 65
 #define GPS_Y 6
 #define GPS_BORDER 0
 
-#define ALTASL_X 0
-#define ALTASL_Y 0
-#define ALTASL_XLABEL 0
-#define ALTASL_YLABEL 0
+#define ALTASL_X 87
+#define ALTASL_Y 9
+#define ALTASL_XLABEL 67
+#define ALTASL_YLABEL 9
 
-#define HOMEDIST_X 76
-#define HOMEDIST_Y 21
+#define HOMEDIST_X 103
+#define HOMEDIST_Y 19
 #define HOMEDIST_XLABEL 66
-#define HOMEDIST_YLABEL 21
-#define HOMEDIST_FLAGS SMLSIZE
+#define HOMEDIST_YLABEL 19
+#define HOMEDIST_FLAGS SMLSIZE+RIGHT
 #define HOMEDIST_ARROW_WIDTH 7
 
-#define HOMEDIR_X 73
-#define HOMEDIR_Y 50
+#define HOMEDIR_X 54
+#define HOMEDIR_Y 48
 #define HOMEDIR_R 7
 
 #define FLIGHTTIME_X 96
 #define FLIGHTTIME_Y 0
 #define FLIGHTTIME_FLAGS SMLSIZE+INVERS
 
-#define RSSI_X 60
+#define RSSI_X 66
 #define RSSI_Y 0
 #define RSSI_FLAGS SMLSIZE+INVERS 
 
@@ -795,32 +837,13 @@ local thrOut = 0
 
 #endif --X7
 --------------------------------------------------------------------------------
--- CONFIGURATION MENU
---------------------------------------------------------------------------------
-local conf = {
-  language = "en",
-  defaultBattSource = nil, -- auto
-  battAlertLevel1 = 0,
-  battAlertLevel2 = 0,
-  battCapOverride1 = 0,
-  battCapOverride2 = 0,
-  disableAllSounds = false,
-  disableMsgBeep = false,
-  disableMsgBlink = false,
-  timerAlert = 0,
-  minAltitudeAlert = 0,
-  maxAltitudeAlert = 0,
-  maxDistanceAlert = 0,
-  cellCount = 0,
-}
---
---------------------------------------------------------------------------------
 -- MENU VALUE,COMBO
 --------------------------------------------------------------------------------
 #define TYPEVALUE 0
 #define TYPECOMBO 1
 #define MENU_Y 7
 #define MENU_PAGESIZE 7
+#define MENU_WRAPOFFSET 10
 #ifdef X9
 #define MENU_ITEM_X 150
 #else
@@ -842,6 +865,8 @@ local conf = {
 #define D1 13
 #define T2 14
 #define CC 15
+#define RM 16
+#define SVS 17
   
 local menu  = {
   selectedItem = 1,
@@ -852,7 +877,7 @@ local menu  = {
 #ifdef X9
 local menuItems = {
   {"voice language:", TYPECOMBO, "L1", 1, { "english", "italian", "french" } , {"en","it","fr"} },
-  {"batt alert level 1:", TYPEVALUE, "V1", 350, 320,420,"V",PREC2,5 },
+  {"batt alert level 1:", TYPEVALUE, "V1", 375, 320,420,"V",PREC2,5 },
   {"batt alert level 2:", TYPEVALUE, "V2", 350, 320,420,"V",PREC2,5 },
   {"batt[1] capacity override:", TYPEVALUE, "B1", 0, 0,5000,"Ah",PREC2,10 },
   {"batt[2] capacity override:", TYPEVALUE, "B2", 0, 0,5000,"Ah",PREC2,10 },
@@ -866,13 +891,15 @@ local menuItems = {
   {"max distance alert:", TYPEVALUE, "D1", 0, 0,100000,"m",0,10 },
   {"repeat alerts every:", TYPEVALUE, "T2", 10, 10,600,"sec",0,5 },
   {"cell count override:", TYPEVALUE, "CC", 0, 0,12," cells",0,1 },
+  {"rangefinder max:", TYPEVALUE, "RM", 0, 0,10000," cm",0,10 },
+  {"enable synthetic vspeed:", TYPECOMBO, "SVS", 1, { "no", "yes" }, { false, true } },
 }
 #endif --X9
 
 #ifdef X7
 local menuItems = {
   {"voice language:", TYPECOMBO, "L1", 1, { "eng", "ita", "fre" } , {"en","it","fr"} },
-  {"batt alert level 1:", TYPEVALUE, "V1", 350, 320,420,"V",PREC2,5 },
+  {"batt alert level 1:", TYPEVALUE, "V1", 375, 320,420,"V",PREC2,5 },
   {"batt alert level 2:", TYPEVALUE, "V2", 350, 320,420,"V",PREC2,5 },
   {"batt[1] mAh override:", TYPEVALUE, "B1", 0, 0,5000,"Ah",PREC2,10 },
   {"batt[2] mAh override:", TYPEVALUE, "B2", 0, 0,5000,"Ah",PREC2,10 },
@@ -886,6 +913,8 @@ local menuItems = {
   {"max distance alert:", TYPEVALUE, "D1", 0, 0,100000,"m",0,10 },
   {"repeat alerts every:", TYPEVALUE, "T2", 10, 10,600,"sec",0,5 },
   {"cell count override:", TYPEVALUE, "CC", 0, 0,12,"s",0,1 },
+  {"rangefinder max:", TYPEVALUE, "RM", 0, 0,10000," cm",0,10 },
+  {"enable synth.vspeed:", TYPECOMBO, "SVS", 1, { "no", "yes" }, { false, true } },
 }
 #endif --X7
 
@@ -894,24 +923,27 @@ local function getConfigFilename()
   return "/MODELS/yaapu/" .. string.lower(string.gsub(info.name, "[%c%p%s%z]", "")..".cfg")
 end
 
+#define CONF_LANGUAGE menuItems[L1][6][menuItems[L1][4]]
+#define CONF_BATT_LEVEL1 menuItems[V1][4]
+#define CONF_BATT_LEVEL2 menuItems[V2][4]
+#define CONF_BATT_CAP1 menuItems[B1][4]*0.1
+#define CONF_BATT_CAP2 menuItems[B2][4]*0.1
+#define CONF_DISABLE_SOUNDS menuItems[S1][6][menuItems[S1][4]]
+#define CONF_DISABLE_MSGBEEP menuItems[S2][6][menuItems[S2][4]]
+#define CONF_DISABLE_MSGBLINK menuItems[S3][6][menuItems[S3][4]]
+#define CONF_BATT_SOURCE menuItems[VS][6][menuItems[VS][4]]
+#define CONF_TIMER_ALERT menuItems[T1][4]*0.1*60
+#define CONF_MINALT_ALERT menuItems[A1][4]*0.1
+#define CONF_MAXALT_ALERT menuItems[A2][4]
+#define CONF_MAXDIST_ALERT menuItems[D1][4]
+#define CONF_REPEAT menuItems[T2][4]
+#define CONF_CELL_COUNT menuItems[CC][4]
+#define CONF_RANGE_MAX menuItems[RM][4]
+#define CONF_ENABLE_SYNTHVSPEED menuItems[SVS][6][menuItems[SVS][4]]
+
 local function applyConfigValues()
-  conf.language = menuItems[L1][6][menuItems[L1][4]]
-  conf.battAlertLevel1 = menuItems[V1][4]
-  conf.battAlertLevel2 = menuItems[V2][4]
-  conf.battCapOverride1 = menuItems[B1][4]*0.1
-  conf.battCapOverride2 = menuItems[B2][4]*0.1
-  conf.disableAllSounds = menuItems[S1][6][menuItems[S1][4]]
-  conf.disableMsgBeep = menuItems[S2][6][menuItems[S2][4]]
-  conf.disableMsgBlink = menuItems[S3][6][menuItems[S3][4]]  
-  conf.defaultBattSource = menuItems[VS][6][menuItems[VS][4]]
-  conf.timerAlert = math.floor(menuItems[T1][4]*0.1*60)
-  conf.minAltitudeAlert = menuItems[A1][4]*0.1
-  conf.maxAltitudeAlert = menuItems[A2][4]
-  conf.maxDistanceAlert = menuItems[D1][4]
-  conf.cellCount = menuItems[CC][4]
-  --
-  if conf.defaultBattSource ~= nil then
-    battsource = conf.defaultBattSource
+  if CONF_BATT_SOURCE ~= nil then
+    battsource = CONF_BATT_SOURCE
   end
   collectgarbage()
 end
@@ -1021,16 +1053,16 @@ local function drawConfigMenu(event)
   drawConfigMenuBars()
   if event == EVT_ENTER_BREAK then
 	menu.editSelected = not menu.editSelected
-  elseif menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT or event == EVT_PLUS_REPT) then
+  elseif menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_LEFT or event == EVT_PLUS_REPT) then
     incMenuItem(menu.selectedItem)
-  elseif menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_LEFT or event == EVT_MINUS_REPT) then
+  elseif menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_RIGHT or event == EVT_MINUS_REPT) then
     decMenuItem(menu.selectedItem)
-  elseif not menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT) then
+  elseif not menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_LEFT) then
     menu.selectedItem = (menu.selectedItem - 1)
     if menu.offset >=  menu.selectedItem then
       menu.offset = menu.offset - 1
     end
-  elseif not menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_LEFT) then
+  elseif not menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_RIGHT) then
     menu.selectedItem = (menu.selectedItem + 1)
     if menu.selectedItem - MENU_PAGESIZE > menu.offset then
       menu.offset = menu.offset + 1
@@ -1042,7 +1074,8 @@ local function drawConfigMenu(event)
     menu.offset = 0
   elseif menu.selectedItem  < 1 then
     menu.selectedItem = #menuItems
-    menu.offset = MENU_PAGESIZE + #menuItems % MENU_PAGESIZE
+    -- 
+    menu.offset = MENU_WRAPOFFSET
   end
   --
   for m=1+menu.offset,math.min(#menuItems,MENU_PAGESIZE+menu.offset) do
@@ -1063,22 +1096,22 @@ local function drawConfigMenu(event)
 end
 
 local function playSound(soundFile)
-  if conf.disableAllSounds then
+  if CONF_DISABLE_SOUNDS then
     return
   end
-  playFile(soundFileBasePath .."/"..conf.language.."/".. soundFile..".wav")
+  playFile(soundFileBasePath .."/"..CONF_LANGUAGE.."/".. soundFile..".wav")
 end
 
 ----------------------------------------------
 -- sound file has same name as flightmode all lowercase with .wav extension
 ----------------------------------------------
 local function playSoundByFrameTypeAndFlightMode(frameType,flightMode)
-  if conf.disableAllSounds then
+  if CONF_DISABLE_SOUNDS then
     return
   end
   if frameType ~= -1 then
     if flightModes[frameTypes[frameType]][flightMode] ~= nil then
-      playFile(soundFileBasePath.."/"..conf.language.."/".. string.lower(flightModes[frameTypes[frameType]][flightMode])..".wav")
+      playFile(soundFileBasePath.."/"..CONF_LANGUAGE.."/".. string.lower(flightModes[frameTypes[frameType]][flightMode])..".wav")
     end
   end
 end
@@ -1250,7 +1283,9 @@ end
 #endif --DEV
 
 local function drawNumberWithTwoDims(x,y,yTop,yBottom,number,topDim,bottomDim,flags,topFlags,bottomFlags)
-  lcd.drawNumber(x, y, number, flags)
+  -- +0.5 because PREC2 does a math.floor()  and not a math.round()
+  lcd.drawNumber(x, y, number + 0.5, flags)
+  --lcd.drawText(x,y,string.format("%.2f",number*0.01),flags)
   local lx = lcd.getLastRightPos()
   lcd.drawText(lx, yTop, topDim, topFlags)
   lcd.drawText(lx, yBottom, bottomDim, bottomFlags)
@@ -1267,6 +1302,12 @@ local function getLogFilename(date)
   local modelName = string.lower(string.gsub(info.name, "[%c%p%s%z]", ""))
   return string.format("%s-%04d%02d%02d_%02d%02d%02d.plog",modelName,date.year,date.mon,date.day,date.hour,date.min,date.sec)
 end
+
+#ifdef PLAYLOG
+local function sportTelemetryPopLog()
+end
+#endif
+
 #ifdef LOGMESSAGES
 local function logMessageToFile(msg)
   -- flight time
@@ -1312,7 +1353,7 @@ local messages = {
 }
 
 local function pushMessage(severity, msg)
-  if  conf.disableMsgBeep == false and conf.disableAllSounds == false then
+  if  CONF_DISABLE_MSGBEEP == false and CONF_DISABLE_SOUNDS == false then
     if ( severity < 4) then
       playTone(400,300,0)
     else
@@ -1370,8 +1411,8 @@ end
 local function symGPS()
   thrOut = getValue("thr")
   if thrOut > 500 then
-    numSats = 13
-    gpsStatus = 5
+    numSats = 17
+    gpsStatus = 4
     gpsHdopC = 6
     ekfFailsafe = 0
     battFailsafe = 0
@@ -1379,7 +1420,7 @@ local function symGPS()
     statusArmed = 1
   elseif thrOut < 500 and thrOut > 0  then
     numSats = 13
-    gpsStatus = 4
+    gpsStatus = 5
     gpsHdopC = 6
     ekfFailsafe = 1
     battFailsafe = 0
@@ -1487,7 +1528,7 @@ local function symBatt()
 #else --DEMO
     flightMode = math.floor(20 * math.abs(thrOut)*0.001)
     gpsAlt = math.floor(10 * math.abs(thrOut)*0.1)
-    homeDist = math.floor(10 * math.abs(thrOut)*0.1)
+    homeDist = math.floor(15 * math.abs(thrOut)*0.1)
 #endif --DEMO
   else
     batt1mah = 0
@@ -1532,10 +1573,11 @@ local function symHome()
   minmaxValues[MAX_VSPEED] = 4
   minmaxValues[MAX_HSPEED] = 77
   homeAlt = 24
-  vSpeed = 2
+  vSpeed = 22
   hSpeed = 34
 #else --DEMO
-  homeAlt = yawCh * 0.1
+  homeAlt = yawCh * 0.01
+  range = 10 * yawCh * 0.1
   vSpeed = yawCh * 0.1 * -1
   hSpeed = vSpeed
 #endif --DEMO  
@@ -1577,6 +1619,9 @@ local telestart = 0
 #endif --TELERATE
 --
 local function processTelemetry()
+#ifdef PLAYLOG
+
+#endif
   SENSOR_ID,FRAME_ID,DATA_ID,VALUE = sportTelemetryPop()
   if ( FRAME_ID == 0x10) then
 #ifdef LOGTELEMETRY
@@ -1604,6 +1649,9 @@ local function processTelemetry()
       roll = (bit32.extract(VALUE,0,11) - 900) * 0.2
       -- pitch [0,900] ==> [-90,90]
       pitch = (bit32.extract(VALUE,11,10) - 450) * 0.2
+      -- #define ATTIANDRNG_RNGFND_OFFSET    21
+      -- number encoded on 11 bits: 10 bits for digits + 1 for 10^power
+      range = bit32.extract(VALUE,22,10) * (10^bit32.extract(VALUE,21,1)) -- cm
     elseif ( DATA_ID == 0x5005) then -- VELANDYAW
       vSpeed = bit32.extract(VALUE,1,7) * (10^bit32.extract(VALUE,0,1))
       if (bit32.extract(VALUE,8,1) == 1) then
@@ -1643,7 +1691,7 @@ local function processTelemetry()
       batt2mah = bit32.extract(VALUE,17,15)
     elseif ( DATA_ID == 0x5004) then -- HOME
       homeDist = bit32.extract(VALUE,2,10) * (10^bit32.extract(VALUE,0,2))
-      homeAlt = bit32.extract(VALUE,14,10) * (10^bit32.extract(VALUE,12,2)) * 0.1
+      homeAlt = bit32.extract(VALUE,14,10) * (10^bit32.extract(VALUE,12,2)) * 0.1 --m
       if (bit32.extract(VALUE,24,1) == 1) then
         homeAlt = homeAlt * -1
       end
@@ -1655,10 +1703,19 @@ local function processTelemetry()
         c2 = bit32.extract(VALUE,8,7)
         c3 = bit32.extract(VALUE,16,7)
         c4 = bit32.extract(VALUE,24,7)
-        msgBuffer = msgBuffer .. string.char(c4)
-        msgBuffer = msgBuffer .. string.char(c3)
-        msgBuffer = msgBuffer .. string.char(c2)
-        msgBuffer = msgBuffer .. string.char(c1)
+        --
+        if (c4 ~= 0) then
+          msgBuffer = msgBuffer .. string.char(c4)
+        end
+        if (c3 ~= 0) then
+          msgBuffer = msgBuffer .. string.char(c3)
+        end
+        if (c2 ~= 0) then
+          msgBuffer = msgBuffer .. string.char(c2)
+        end
+        if (c1 ~= 0) then
+          msgBuffer = msgBuffer .. string.char(c1)
+        end
         if (c1 == 0 or c2 == 0 or c3 == 0 or c4 == 0) then
           local severity = (bit32.extract(VALUE,15,1) * 4) + (bit32.extract(VALUE,23,1) * 2) + (bit32.extract(VALUE,30,1) * 1)
           pushMessage( severity, msgBuffer)
@@ -1739,8 +1796,8 @@ local function calcCellMin(v1,v2)
 end
 
 local function calcCellCount(battmax)
-  if conf.cellCount ~= nil and conf.cellCount > 0 then
-    return conf.cellCount
+  if CONF_CELL_COUNT ~= nil and CONF_CELL_COUNT > 0 then
+    return CONF_CELL_COUNT
   end
   -- cellcount is cached
   if cellcount > 1 then
@@ -1815,11 +1872,11 @@ local function calcBattery()
   ------------
   -- FLVSS 2
   ------------
-#ifdef BATT2TEST
+#ifdef FLVSS2TEST
   cellResult = getValue("Cels")
-#else --BATT2TEST
+#else --FLVSS2TEST
   cellResult = getValue("Cel2")
-#endif --BATT2TEST
+#endif --FLVSS2TEST
   if type(cellResult) == "table" then
     cell2min = CELLFULL
     cell2sum = 0
@@ -1941,16 +1998,16 @@ local function calcFlightTime()
 end
 
 local function getBatt1Capacity()
-  if conf.battCapOverride1 > 0 then
-    return conf.battCapOverride1*100
+  if CONF_BATT_CAP1 > 0 then
+    return CONF_BATT_CAP1*100
   else
     return batt1Capacity
   end
 end
 
 local function getBatt2Capacity()
-  if conf.battCapOverride2 > 0 then
-    return conf.battCapOverride2*100
+  if CONF_BATT_CAP2 > 0 then
+    return CONF_BATT_CAP2*100
   else
     return batt2Capacity
   end
@@ -1985,14 +2042,14 @@ end
   only then will it trigger the alarm
 ]]--
 local alarms = {
-  --{ triggered, time, armed, type(0=min,1=max,2=timer,3=batt),  }  
-    { false, 0 , false, ALARM_TYPE_MIN},
-    { false, 0 , true, ALARM_TYPE_MAX },
-    { false, 0 , true, ALARM_TYPE_MAX },
-    { false, 0 , true, ALARM_TYPE_MAX },
-    { false, 0 , true, ALARM_TYPE_MAX },
-    { false, 0 , true, ALARM_TYPE_TIMER },
-    { false, 0 , false, ALARM_TYPE_BATT }
+  --{ triggered, time, armed, type(0=min,1=max,2=timer,3=batt), last_trigger }  
+    { false, 0 , false, ALARM_TYPE_MIN, 0},
+    { false, 0 , true, ALARM_TYPE_MAX, 0 },
+    { false, 0 , true, ALARM_TYPE_MAX, 0 },
+    { false, 0 , true, ALARM_TYPE_MAX, 0 },
+    { false, 0 , true, ALARM_TYPE_MAX, 0 },
+    { false, 0 , true, ALARM_TYPE_TIMER, 0 },
+    { false, 0 , false, ALARM_TYPE_BATT, 0 }
 }
 
 #ifdef SENSORS
@@ -2072,20 +2129,28 @@ local function drawBatteryPane(x,battsource,battcurrent,battcapacity,battmah,cel
   -- battery mah
 #ifdef X7
   lcd.drawText(x+BATTMAH_X, BATTMAH_Y, "Ah", SMLSIZE+RIGHT)
-  lcd.drawNumber(lcd.getLastLeftPos()-1, BATTMAH_Y, battmah/100, BATTMAH_FLAGS+RIGHT)
+#ifdef BATTMAH3DEC
+  lcd.drawText(lcd.getLastLeftPos()-1, BATTMAH_Y, string.format("%0.3f",battmah/1000), BATTMAH_FLAGS+RIGHT)
+#else
+  lcd.drawNumber(lcd.getLastLeftPos()-1, BATTMAH_Y, battmah/10, SMLSIZE+PREC2+RIGHT)
+#endif --BATTMAH3DEC
   lcd.drawText(x+BATTMAH_X, BATTMAH_Y+8, "Ah", SMLSIZE+RIGHT+INVERS)
-  lcd.drawNumber(lcd.getLastLeftPos()-1, BATTMAH_Y+8, battcapacity/100, BATTMAH_FLAGS+RIGHT+INVERS)
+  lcd.drawNumber(lcd.getLastLeftPos()-1, BATTMAH_Y+8, battcapacity/10, SMLSIZE+PREC2+RIGHT+INVERS)
 #endif --X7
 #ifdef X9
-  lcd.drawNumber(x+BATTMAH_X, BATTMAH_Y, battmah/100, BATTMAH_FLAGS)
+#ifdef BATTMAH3DEC
+  lcd.drawText(x+BATTMAH_X, BATTMAH_Y, string.format("%0.3f",battmah/1000), SMLSIZE)
+#else
+  lcd.drawNumber(x+BATTMAH_X, BATTMAH_Y, battmah/10, SMLSIZE+PREC2)
+#endif --BATTMAH3DEC
   lcd.drawText(lcd.getLastRightPos(), BATTMAH_Y, "/", SMLSIZE)
   lcd.drawNumber(lcd.getLastRightPos(), BATTMAH_Y, battcapacity/100, BATTMAH_FLAGS)
   lcd.drawText(lcd.getLastRightPos(), BATTMAH_Y, "Ah", SMLSIZE)
 #endif --X9
 #ifdef X7
   -- tx voltage
-  local vTx = string.format("Tx%.1fv",getValue(getFieldInfo("tx-voltage").id))
-  lcd.drawText(TXVOLTAGE_X, TXVOLTAGE_Y, vTx, TXVOLTAGE_FLAGS)
+  --local vTx = string.format("Tx%.1fv",getValue(getFieldInfo("tx-voltage").id))
+  --lcd.drawText(TXVOLTAGE_X, TXVOLTAGE_Y, vTx, TXVOLTAGE_FLAGS)
 #endif --X7
 #ifdef X9
   if showMinMaxValues == true then
@@ -2095,6 +2160,55 @@ local function drawBatteryPane(x,battsource,battcurrent,battcapacity,battmah,cel
   end
 #endif --X9
 #ifdef X7
+  if showMinMaxValues == true then
+    flags = 0
+  end
+  -- varrow is shared
+  if CONF_RANGE_MAX > 0 then
+    -- rng finder
+    local rng = range
+    if rng > CONF_RANGE_MAX then
+      flags = BLINK+INVERS
+    end
+      -- update max only with 3d or better lock
+    rng = getMaxValue(rng,MAX_RANGE)
+    --
+    if showMinMaxValues == true then
+      drawVArrow(ALTASL_XLABEL + 1, ALTASL_YLABEL,5,true,false)
+    else
+      lcd.drawText(ALTASL_XLABEL - 1, ALTASL_YLABEL, "Rn", SMLSIZE)
+    end
+    lcd.drawText(ALTASL_X + 9, ALTASL_Y+1 , string.format("%.1f",rng*0.01), SMLSIZE+flags + RIGHT)
+    lcd.drawText(ALTASL_X + 16, ALTASL_Y+1 , "m", SMLSIZE+RIGHT)
+  else
+    -- alt asl, always display gps altitude even without 3d lock
+    local alt = gpsAlt/10
+    flags = BLINK
+    if gpsStatus  > 2 then
+      flags = 0
+      -- update max only with 3d or better lock
+      alt = getMaxValue(alt,MAX_GPSALT)
+    end
+    if showMinMaxValues == true then
+      drawVArrow(ALTASL_XLABEL + 1, ALTASL_YLABEL + 1,5,true,false)
+    else
+      drawVArrow(ALTASL_XLABEL + 1,ALTASL_YLABEL,6,true,true)
+    end
+    lcd.drawText(ALTASL_X + 16, ALTASL_Y+1 , string.format("%dm",alt), SMLSIZE+flags+RIGHT)
+  end
+  -- hspeed (moved to center HUD)
+  --[[
+  local speed = getMaxValue(hSpeed,MAX_HSPEED)
+  if showMinMaxValues == true then
+    drawVArrow(HSPEED_XLABEL + 2,HSPEED_YLABEL - 2 ,5,true,false)
+  else
+    drawHArrow(HSPEED_XLABEL + 4,HSPEED_YLABEL,3,false,true)
+    lcd.drawPoint(HSPEED_XLABEL + 2,HSPEED_YLABEL)
+    lcd.drawPoint(HSPEED_XLABEL,HSPEED_YLABEL)
+  end
+  lcd.drawNumber(HSPEED_X - 10, HSPEED_Y - 1, speed, HSPEED_FLAGS+RIGHT+PREC1)
+  ]]
+  --
   if showMinMaxValues == true then
     drawVArrow(x+BATTCELL_X+36, BATTCELL_Y+2,6,false,true)
   end
@@ -2122,10 +2236,10 @@ local function drawX7BatteryLeftPane(battsource,battcurrent,battcapacity,battmah
   local flags = 0
   local dimFlags = 0
   if showMinMaxValues == false then
-    if celm < conf.battAlertLevel2 then
+    if celm < CONF_BATT_LEVEL2 then
       flags = BLINK
       dimFlags = BLINK
-    elseif celm < conf.battAlertLevel1 then
+    elseif celm < CONF_BATT_LEVEL1 then
       dimFlags = BLINK+INVERS
     end  
   end
@@ -2136,16 +2250,16 @@ local function drawX7BatteryLeftPane(battsource,battcurrent,battcapacity,battmah
   local current = getMaxValue(battcurrent,currIdx)
   drawNumberWithDim(41+BATTCURR_X,BATTCURR_Y,BATTCURR_YA,current,"A",BATTCURR_FLAGS,BATTCURR_FLAGSA)
   -- battery percentage
-  lcd.drawNumber(17+BATTPERC_X, BATTPERC_Y, perc, BATTPERC_FLAGS)
+  lcd.drawNumber(38+BATTPERC_X, BATTPERC_Y, perc, BATTPERC_FLAGS)
   lcd.drawText(lcd.getLastRightPos(), BATTPERC_YPERC, "%", BATTPERC_FLAGSPERC)
   -- box
   lcd.drawRectangle(0,BATTMAH_Y + 7,6,7,SOLID)
   lcd.drawFilledRectangle(0,BATTMAH_Y + 7,6,7,SOLID)
   -- battery mah
-  lcd.drawText(-35+BATTMAH_X, BATTMAH_Y, "Ah", SMLSIZE+RIGHT)
-  lcd.drawNumber(lcd.getLastLeftPos()-1, BATTMAH_Y, battmah/100, BATTMAH_FLAGS+RIGHT)
-  lcd.drawText(-35+BATTMAH_X, BATTMAH_Y+8, "Ah", SMLSIZE+RIGHT+INVERS)
-  lcd.drawNumber(lcd.getLastLeftPos()-1, BATTMAH_Y+8, battcapacity/100, BATTMAH_FLAGS+RIGHT+INVERS)
+  lcd.drawText(-30+BATTMAH_X, BATTMAH_Y, "Ah", SMLSIZE+RIGHT)
+  lcd.drawNumber(lcd.getLastLeftPos()-1, BATTMAH_Y, battmah/10, SMLSIZE+PREC2+RIGHT)
+  lcd.drawText(-30+BATTMAH_X, BATTMAH_Y+8, "Ah", SMLSIZE+RIGHT+INVERS)
+  lcd.drawNumber(lcd.getLastLeftPos()-1, BATTMAH_Y+8, battcapacity/10, SMLSIZE+PREC2+RIGHT+INVERS)
   if showMinMaxValues == true then
     drawVArrow(36, BATTCELL_Y+2,6,false,true)
   end
@@ -2243,14 +2357,14 @@ local function drawBottomBar()
   local now = getTime()
   local msg = getMessage(#messages)
 #ifdef X9
-  if (now - lastMsgTime ) > 150 or conf.disableMsgBlink then
+  if (now - lastMsgTime ) > 150 or CONF_DISABLE_MSGBLINK then
     lcd.drawText(0, BOTTOMBAR_Y+1, msg,SMLSIZE+INVERS)
   else
     lcd.drawText(0, BOTTOMBAR_Y+1, msg,SMLSIZE+INVERS+BLINK)
   end
 #endif --X9
 #ifdef X7
-  if (now - lastMsgTime ) > 150 or conf.disableMsgBlink then
+  if (now - lastMsgTime ) > 150 or CONF_DISABLE_MSGBLINK then
     lcd.drawText(0, BOTTOMBAR_Y + 1,  msg,SMLSIZE+INVERS)
   else
     lcd.drawText(0, BOTTOMBAR_Y + 1,  msg,SMLSIZE+INVERS+BLINK)
@@ -2260,7 +2374,6 @@ end
 
 #ifdef X7
 local function drawHomeDist()
-  drawHArrow(HOMEDIST_XLABEL,HOMEDIST_YLABEL + 2,HOMEDIST_ARROW_WIDTH,true,true)
   local flags = 0
   if homeAngle == -1 then
     flags = BLINK
@@ -2269,10 +2382,11 @@ local function drawHomeDist()
   if showMinMaxValues == true then
     flags = 0
   end
-  lcd.drawNumber(HOMEDIST_X, HOMEDIST_Y, dist, HOMEDIST_FLAGS+flags)
-  lcd.drawText(lcd.getLastRightPos(), HOMEDIST_Y, "m",HOMEDIST_FLAGS+flags)
+  lcd.drawText(HOMEDIST_X, HOMEDIST_Y, string.format("%dm",dist),HOMEDIST_FLAGS+flags)
   if showMinMaxValues == true then
-    drawVArrow(lcd.getLastRightPos() + 2, HOMEDIST_Y,6,true,false)
+    drawVArrow(HOMEDIST_XLABEL + 2, HOMEDIST_YLABEL,5,true,false)
+  else
+    drawHArrow(HOMEDIST_XLABEL,HOMEDIST_YLABEL + 3,HOMEDIST_ARROW_WIDTH,true,true)
   end
 end
 #endif --X7
@@ -2287,6 +2401,7 @@ end
 local function drawLeftPane(battcurrent,cellsumFC)
   -- gps status
   local strStatus = gpsStatuses[gpsStatus]
+  local strNumSats = ""
   local flags = BLINK
   local mult = 1
   if gpsStatus  > 2 then
@@ -2299,30 +2414,46 @@ local function drawLeftPane(battcurrent,cellsumFC)
     end
     lcd.drawText(GPS_X,GPS_Y + 2, strStatus, SMLSIZE)
     lcd.drawText(GPS_X,GPS_Y + 8, "fix", SMLSIZE)
-    lcd.drawNumber(GPS_X + 34, GPS_Y + 2, numSats, MIDSIZE+RIGHT)
-    lcd.drawText(GPS_X + 37, GPS_Y + 7 , "Hd", SMLSIZE)
+    if numSats >= 15 then
+      strNumSats = string.format("%d+",15)
+    else
+      strNumSats = string.format("%d",numSats)
+    end
+    lcd.drawText(GPS_X + 40, GPS_Y + 2, strNumSats, MIDSIZE+RIGHT)
+    lcd.drawText(GPS_X + 42, GPS_Y + 2 , "H", SMLSIZE)
     lcd.drawNumber(GPS_X + 66, GPS_Y + 2, gpsHdopC*mult , MIDSIZE+flags+RIGHT)
-    lcd.drawLine(GPS_X + 34,GPS_Y+1,GPS_X+34,GPS_Y + 14,SOLID,FORCE)
+    lcd.drawLine(GPS_X + 40,GPS_Y+1,GPS_X+40,GPS_Y + 14,SOLID,FORCE)
   else
     lcd.drawText(GPS_X + 10, GPS_Y + 2, strStatus, MIDSIZE+INVERS+BLINK)
   end  
   lcd.drawLine(GPS_X ,GPS_Y + 15,GPS_X+66,GPS_Y + 15,SOLID,FORCE)
-  -- alt asl
-  flags = BLINK
-  -- always display gps altitude even without 3d lock
-  local alt = gpsAlt/10
-  if gpsStatus  > 2 then
-    flags = 0
-    -- update max only with 3d or better lock
-    alt = getMaxValue(alt,MAX_GPSALT)
-  end
   if showMinMaxValues == true then
     flags = 0
   end
-  lcd.drawText(ALTASL_XLABEL + 4, ALTASL_YLABEL, "Asl", SMLSIZE)
+  -- varrow is shared
   drawVArrow(ALTASL_XLABEL,ALTASL_YLABEL - 1,7,true,true)
-  lcd.drawNumber(ALTASL_X, ALTASL_Y-1, alt, SMLSIZE+flags)
-  lcd.drawText(lcd.getLastRightPos(), ALTASL_Y-1 , "m", SMLSIZE+flags)
+  if CONF_RANGE_MAX > 0 then
+    -- rng finder
+    local rng = range
+    if rng > CONF_RANGE_MAX then
+      flags = BLINK+INVERS
+    end
+      -- update max only with 3d or better lock
+    rng = getMaxValue(rng,MAX_RANGE)
+    lcd.drawText(ALTASL_XLABEL + 4, ALTASL_YLABEL, "Rng", SMLSIZE)
+    lcd.drawText(ALTASL_X, ALTASL_Y-1 , string.format("%.1fm",rng*0.01), ALTASL_FLAGS+flags)
+  else
+    -- alt asl, always display gps altitude even without 3d lock
+    local alt = gpsAlt/10
+    flags = BLINK
+    if gpsStatus  > 2 then
+      flags = 0
+      -- update max only with 3d or better lock
+      alt = getMaxValue(alt,MAX_GPSALT)
+    end
+    lcd.drawText(ALTASL_XLABEL + 4, ALTASL_YLABEL, "Asl", SMLSIZE)
+    lcd.drawText(ALTASL_X, ALTASL_Y-1 , string.format("%dm",alt), ALTASL_FLAGS+flags)
+  end
   -- home distance
   drawHomeIcon(HOMEDIST_XLABEL + 1,HOMEDIST_YLABEL,7)
   drawHArrow(HOMEDIST_XLABEL + 10,HOMEDIST_YLABEL + 2,HOMEDIST_ARROW_WIDTH,true,true)
@@ -2335,29 +2466,13 @@ local function drawLeftPane(battcurrent,cellsumFC)
     flags = 0
   end
   lcd.drawNumber(HOMEDIST_X, HOMEDIST_Y-1, dist, HOMEDIST_FLAGS+flags)
-  lcd.drawText(lcd.getLastRightPos(), HOMEDIST_Y-1, "m",HOMEDIST_FLAGS+flags)
-  -- hspeed
-  local speed = getMaxValue(hSpeed,MAX_HSPEED)
-  drawHArrow(HSPEED_XLABEL + 4,HSPEED_YLABEL,4,false,true)
-  drawHArrow(HSPEED_XLABEL + 6,HSPEED_YLABEL + 4,5,false,true)
-  lcd.drawPoint(HSPEED_XLABEL + 2,HSPEED_YLABEL)
-  lcd.drawPoint(HSPEED_XLABEL,HSPEED_YLABEL)
-  lcd.drawPoint(HSPEED_XLABEL + 4,HSPEED_YLABEL + 4)
-  lcd.drawPoint(HSPEED_XLABEL + 2,HSPEED_YLABEL + 4)
-  lcd.drawNumber(HSPEED_X - 10, HSPEED_Y - 1, speed, HSPEED_FLAGS+RIGHT+PREC1)
-  lcd.drawText(HSPEED_XDIM - 4, HSPEED_YDIM - 4, "m",HSPEED_FLAGS+RIGHT)
-  lcd.drawText(HSPEED_XDIM + 1, HSPEED_YDIM, "s",HSPEED_FLAGS+RIGHT)
-  lcd.drawLine(HSPEED_XDIM -6,HSPEED_YDIM + 3,HSPEED_XDIM -3,HSPEED_YDIM,SOLID,0)
-  -- power box
-  lcd.drawRectangle(BOX1_X,BOX1_Y,BOX1_WIDTH,BOX1_HEIGHT,FORCE)
-  lcd.drawFilledRectangle(BOX1_X,BOX1_Y,BOX1_WIDTH,BOX1_HEIGHT,FORCE)
-  lcd.drawLine(BOX1_X+BOX1_WIDTH/2,BOX1_Y,BOX1_X+BOX1_WIDTH/2,BOX1_Y+BOX1_HEIGHT - 1,SOLID,0)
+  lcd.drawText(lcd.getLastRightPos()+1, HOMEDIST_Y-1, "m",HOMEDIST_FLAGS+flags)
   -- power
   local power = cellsumFC*battcurrent*0.1
   power = getMaxValue(power,MAX_POWER)
-  drawNumberWithDim(BATTPOWER_X,BATTPOWER_Y,BATTPOWER_YW,power,"w",BATTPOWER_FLAGS,BATTPOWER_FLAGSW)
+  lcd.drawText(BATTPOWER_XLABEL, BATTPOWER_YLABEL, "PWR", SMLSIZE)
+  lcd.drawText(BATTPOWER_X,BATTPOWER_Y,string.format("%dw",power),BATTPOWER_FLAGS)
 #ifdef FRAMETYPE
-#ifdef X9
   local fn = frameNames[frameType]
   if fn ~= nil then
     lcd.drawText(0,39,fn,SMLSIZE+INVERS)
@@ -2365,13 +2480,11 @@ local function drawLeftPane(battcurrent,cellsumFC)
 #ifdef DEBUG
   lcd.drawNumber(lcd.getLastRightPos() + 1,39,frameType,SMLSIZE+INVERS)
 #endif --DEBUG
-#endif --X9
 #endif --FRAMETYPE
   if showMinMaxValues == true then
-    drawVArrow(BATTPOWER_X + 28, BATTPOWER_Y, 5,true,false)
-    drawVArrow(HOMEDIST_X + 28, HOMEDIST_Y - 2,6,true,false)
-    drawVArrow(HSPEED_XDIM + 2,HSPEED_Y - 2 ,6,true,false)
-    drawVArrow(ALTASL_X + 26, ALTASL_Y - 2,6,true,false)
+    drawVArrow(BATTPOWER_XLABEL + 23, BATTPOWER_Y, 5,true,false)
+    drawVArrow(HOMEDIST_XLABEL + 23, HOMEDIST_Y - 2,6,true,false)
+    drawVArrow(ALTASL_XLABEL + 21, ALTASL_Y - 2,6,true,false)
   end
 end
 #endif --X9
@@ -2381,6 +2494,8 @@ local function drawGPSStatus()
   local strStatus = gpsStatuses[gpsStatus]
   local flags = BLINK+PREC1
   local mult = 1
+  lcd.drawLine(GPS_X + 38,GPS_Y+1,GPS_X+38,GPS_Y+19,SOLID,FORCE)
+  lcd.drawLine(GPS_X + 38,GPS_Y + 20,GPS_X+63,GPS_Y + 20,SOLID,FORCE)
   if gpsStatus  > 2 then
     if homeAngle ~= -1 then
       flags = PREC1
@@ -2389,15 +2504,19 @@ local function drawGPSStatus()
       flags = 0
       mult=0.1
     end
-    lcd.drawText(GPS_X + 1,GPS_Y + 6, strStatus, SMLSIZE)
-    lcd.drawNumber(GPS_X + 34, GPS_Y + 1, numSats, MIDSIZE+RIGHT)
-    lcd.drawText(GPS_X + 39, GPS_Y + 6 , "H", SMLSIZE)
-    lcd.drawNumber(lcd.getLastRightPos() + 1, GPS_Y + 1, gpsHdopC*mult , MIDSIZE+flags)
-    lcd.drawLine(GPS_X + 34,GPS_Y+1,GPS_X+34,GPS_Y+12,SOLID,FORCE)
+    lcd.drawText(GPS_X + 40,GPS_Y+13, strStatus, SMLSIZE)
+    local strNumSats = string.format("%d",math.min(15,numSats))
+    --if numSats >= 15 then
+    --  strNumSats = strNumSats.."+"
+    --end
+    lcd.drawText(GPS_X + 63, GPS_Y + 13, strNumSats, SMLSIZE+RIGHT)
+    lcd.drawText(GPS_X + 40, GPS_Y + 2 , "H", SMLSIZE)
+    lcd.drawNumber(GPS_X + 63, GPS_Y+1, gpsHdopC*mult ,MIDSIZE+flags+RIGHT)
+    
   else
-    lcd.drawText(GPS_X + 9, GPS_Y+1, strStatus, MIDSIZE+INVERS+BLINK)
+    lcd.drawText(GPS_X + 46, GPS_Y+3, "No", SMLSIZE+INVERS+BLINK)
+    lcd.drawText(GPS_X + 43, GPS_Y+12, strStatus, SMLSIZE+INVERS+BLINK)
   end
-  lcd.drawLine(GPS_X ,GPS_Y + 13,GPS_X+63,GPS_Y + 13,SOLID,FORCE)
 end
 #endif --X7
 
@@ -2553,6 +2672,7 @@ local function drawCompassRibbon()
   --
   local homeIconX = yawMinX
   local homeIconY = yawY + 10
+#ifdef X9
   if rightYaw >= leftYaw then
     if centerHome > leftYaw and centerHome < rightYaw then
       drawHomeIcon(math.min(yawMinX + ((centerHome - leftYaw)/180)*HUD_WIDTH,yawMaxX - 2),homeIconY)
@@ -2564,15 +2684,36 @@ local function drawCompassRibbon()
       drawHomeIcon(math.min(yawMinX + ((centerHome-leftYaw)/180)*HUD_WIDTH,yawMaxX-2),homeIconY)
     end
   end
+#else
+  if rightYaw >= leftYaw then
+    if centerHome > leftYaw and centerHome < rightYaw then
+      drawHomeIcon(math.min(yawMinX + ((centerHome - leftYaw)/180)*HUD_WIDTH,yawMaxX - 2),homeIconY)
+    end
+  else
+    if centerHome < rightYaw then
+      drawHomeIcon(math.min(yawMinX + (((360-leftYaw) + centerHome)/180)*HUD_WIDTH,yawMaxX-2),homeIconY)
+    elseif centerHome >= leftYaw then
+      drawHomeIcon(math.min(yawMinX + ((centerHome-leftYaw)/180)*HUD_WIDTH,yawMaxX-2),homeIconY)
+    end
+  end
+#endif
   -- when abs(home angle) > 90 draw home icon close to left/right border
   local angle = homeAngle - yaw
   local cos = math.cos(math.rad(angle - 90))    
   local sin = math.sin(math.rad(angle - 90))    
+#ifdef X9
   if cos > 0 and sin > 0 then
     drawHomeIcon(yawMaxX - 2, yawY + 10)
   elseif cos < 0 and sin > 0 then
     drawHomeIcon(yawMinX - 2, yawY + 10)
   end
+#else
+  if cos > 0 and sin > 0 then
+    drawHomeIcon(yawMaxX - 2, yawY + 10)
+  elseif cos < 0 and sin > 0 then
+    drawHomeIcon(yawMinX - 2, yawY + 10)
+  end
+#endif
   --
   lcd.drawLine(yawMinX - 2, yawY + 7, yawMaxX + 2, yawY + 7, SOLID, 0)
   local xx = 0
@@ -2703,15 +2844,35 @@ local function drawHud()
       end
     end
   end
+  ------------------------------------
+  -- synthetic vSpeed based on 
+  -- home altitude when EKF is disabled
+  -- updated at 4Hz (i.e every 250ms)
+  -------------------------------------
+  if CONF_ENABLE_SYNTHVSPEED == true then
+    if (synthVSpeedTime == 0) then
+      -- first time do nothing
+      synthVSpeedTime = getTime()
+      prevHomeAlt = homeAlt -- dm
+    elseif (getTime() - synthVSpeedTime > 25) then
+      -- calc vspeed
+      vspd = 1000*(homeAlt-prevHomeAlt)/(getTime()-synthVSpeedTime) -- m/s
+      -- update counters
+      synthVSpeedTime = getTime()
+      prevHomeAlt = homeAlt -- m
+    end
+  else
+    vspd = vSpeed
+  end
   -------------------------------------
   -- vario indicator on left
   -------------------------------------
   lcd.drawFilledRectangle(HUD_X, yPos, 7, 50, ERASE, 0)
   lcd.drawLine(HUD_X + 5, yPos, HUD_X + 5, yPos + 40, SOLID, FORCE)
   local varioMax = math.log(10)
-  local varioSpeed = math.log(1+math.min(math.abs(0.1*vSpeed),10))
+  local varioSpeed = math.log(1+math.min(math.abs(0.1*vspd),10))
   local varioY = 0
-  if vSpeed > 0 then
+  if vspd > 0 then
     varioY = HUD_X_MID - 4 - varioSpeed/varioMax*15
   else
     varioY = HUD_X_MID + 6
@@ -2742,32 +2903,24 @@ local function drawHud()
   lcd.drawLine(HUD_X + HUD_WIDTH - RIGHTWIDTH - 3,HUD_X_MID + 3,HUD_X + HUD_WIDTH - RIGHTWIDTH - 1,HUD_X_MID + 5, SOLID, FORCE)
     -- altitude
   local alt = getMaxValue(homeAlt,MINMAX_ALT)
-  if alt > 0 then
-    if alt < 10 then -- 2 digits with decimal
+  --
+  if math.abs(alt) < 10 then
       lcd.drawNumber(HUD_X + HUD_WIDTH,HUD_X_MID - 3,alt * 10,SMLSIZE+PREC1+RIGHT)
-    else -- 3 digits
-      lcd.drawNumber(HUD_X + HUD_WIDTH,HUD_X_MID - 3,alt,SMLSIZE+RIGHT)
-    end
   else
-    if alt > -10 then -- 1 digit with sign
-      lcd.drawNumber(HUD_X + HUD_WIDTH,HUD_X_MID - 3,alt * 10,SMLSIZE+PREC1+RIGHT)
-    else -- 3 digits with sign
       lcd.drawNumber(HUD_X + HUD_WIDTH,HUD_X_MID - 3,alt,SMLSIZE+RIGHT)
-    end
   end
   -- vertical speed
-  if (vSpeed > 999) then
-    lcd.drawNumber(HUD_X+1,HUD_X_MID - 3,vSpeed*0.1,SMLSIZE)
-  elseif (vSpeed < -99) then
-    lcd.drawNumber(HUD_X+1,HUD_X_MID - 3,vSpeed*0.1,SMLSIZE)
+  if (vspd > 999) then
+    lcd.drawNumber(HUD_X+1,HUD_X_MID - 3,vspd*0.1,SMLSIZE)
+  elseif (vspd < -99) then
+    lcd.drawNumber(HUD_X+1,HUD_X_MID - 3,vspd*0.1,SMLSIZE)
   else
-    lcd.drawNumber(HUD_X+1,HUD_X_MID - 3,vSpeed,SMLSIZE+PREC1)
+    lcd.drawNumber(HUD_X+1,HUD_X_MID - 3,vspd,SMLSIZE+PREC1)
   end
--- center arrow
+  -- center arrow
   local arrowX = math.floor(HUD_X + HUD_WIDTH/2)
   lcd.drawLine(arrowX - 4,HUD_X_MID + 4,arrowX ,HUD_X_MID ,SOLID,0)
   lcd.drawLine(arrowX + 1,HUD_X_MID + 1,arrowX + 4, HUD_X_MID + 4,SOLID,0)
-  --
 #ifdef X9
   lcd.drawLine(HUD_X + 22,HUD_X_MID,HUD_X + 30,HUD_X_MID ,SOLID,0)
   lcd.drawLine(HUD_X + HUD_WIDTH - 24,HUD_X_MID,HUD_X + HUD_WIDTH - 31,HUD_X_MID ,SOLID,0)
@@ -2775,9 +2928,29 @@ local function drawHud()
   lcd.drawLine(HUD_X + 22,HUD_X_MID,HUD_X + 28,HUD_X_MID ,SOLID,0)
   lcd.drawLine(HUD_X + HUD_WIDTH - 23,HUD_X_MID,HUD_X + HUD_WIDTH - 28,HUD_X_MID ,SOLID,0)
 #endif
+  -- hspeed
+  local speed = getMaxValue(hSpeed,MAX_HSPEED)
+#ifdef X9
+  lcd.drawFilledRectangle((LCD_W)/2 - 10, LCD_H - 17, 20, 10, ERASE, 0)
+  lcd.drawNumber((LCD_W)/2 + 9, LCD_H - 15, speed, HSPEED_FLAGS+RIGHT+PREC1)
+  -- hspeed box
+  lcd.drawRectangle((LCD_W)/2 - 10, LCD_H - 17, 20, 10, SOLID, FORCE)
+  if showMinMaxValues == true then
+    drawVArrow((LCD_W)/2 + 12,LCD_H - 16,6,true,false)
+  end
+#endif --X9
+#ifdef X7
+  lcd.drawFilledRectangle((HUD_WIDTH)/2 - 10, LCD_H - 16, 20, 10, ERASE, 0)
+  lcd.drawNumber((HUD_WIDTH)/2 + 9, LCD_H - 14, speed, HSPEED_FLAGS+RIGHT+PREC1)
+  -- hspeed box
+  lcd.drawRectangle((HUD_WIDTH)/2 - 10, LCD_H - 16, 20, 10, SOLID, FORCE)
+  if showMinMaxValues == true then
+    drawVArrow((HUD_WIDTH)/2 + 12,LCD_H - 15,6,true,false)
+  end
+#endif --X7
   -- min/max arrows
   if showMinMaxValues == true then
-    drawVArrow(HUD_X + HUD_WIDTH - 23, HUD_X_MID - 4,6,true,false)
+    drawVArrow(HUD_X + HUD_WIDTH - 24, HUD_X_MID - 4,6,true,false)
   end
   -- failsafe
   if ekfFailsafe == 0 and battFailsafe == 0 and timerRunning == 0 then
@@ -2826,13 +2999,13 @@ local function checkAlarm(level,value,idx,sign,sound,delay)
   -- once landed reset all alarms except battery alerts
   if timerRunning == 0 then
     if alarms[idx][4] == ALARM_TYPE_MIN then
-      alarms[idx] = { false, 0, false, ALARM_TYPE_MIN} 
+      alarms[idx] = { false, 0, false, ALARM_TYPE_MIN, 0} 
     elseif alarms[idx][4] == ALARM_TYPE_MAX then
-      alarms[idx] = { false, 0, true, ALARM_TYPE_MAX}
+      alarms[idx] = { false, 0, true, ALARM_TYPE_MAX, 0}
     elseif  alarms[idx][4] == ALARM_TYPE_TIMER then
-      alarms[idx] = { false, 0, true, ALARM_TYPE_TIMER}
+      alarms[idx] = { false, 0, true, ALARM_TYPE_TIMER, 0}
     elseif  alarms[idx][4] == ALARM_TYPE_BATT then
-      alarms[idx] = { false, 0 , false, ALARM_TYPE_BATT }
+      alarms[idx] = { false, 0 , false, ALARM_TYPE_BATT, 0}
     end
   end
   -- for minimum type alarms, arm the alarm only after value has reached level  
@@ -2852,11 +3025,14 @@ local function checkAlarm(level,value,idx,sign,sound,delay)
           alarms[idx][1] = false
       end
     else
-      -- fire once
+      -- fire once but only every 2secs max
       if alarms[idx][2] == 0 then
         alarms[idx][1] = true
         alarms[idx][2] = flightTime
-        playSound(sound)
+        if (flightTime - alarms[idx][5]) > 5 then
+          playSound(sound)
+          alarms[idx][5] = flightTime
+        end
       end
       -- ...and then fire every conf secs after the first shot
       if math.floor(flightTime - alarms[idx][2]) %  delay == 0 then
@@ -2874,15 +3050,20 @@ local function checkAlarm(level,value,idx,sign,sound,delay)
 end
 
 local function checkEvents()
-  checkAlarm(conf.minAltitudeAlert,homeAlt,ALARMS_MIN_ALT,-1,"minalt",menuItems[T2][4])
-  checkAlarm(conf.maxAltitudeAlert,homeAlt,ALARMS_MAX_ALT,1,"maxalt",menuItems[T2][4])  
-  checkAlarm(conf.maxDistanceAlert,homeDist,ALARMS_MAX_DIST,1,"maxdist",menuItems[T2][4])  
-  checkAlarm(1,2*ekfFailsafe,ALARMS_EKF,1,"ekf",menuItems[T2][4])  
-  checkAlarm(1,2*battFailsafe,ALARMS_BATT,1,"lowbat",menuItems[T2][4])  
-  checkAlarm(conf.timerAlert,flightTime,ALARMS_TIMER,1,"timealert",conf.timerAlert)
+  checkAlarm(CONF_MINALT_ALERT,homeAlt,ALARMS_MIN_ALT,-1,"minalt",CONF_REPEAT)
+  checkAlarm(CONF_MAXALT_ALERT,homeAlt,ALARMS_MAX_ALT,1,"maxalt",CONF_REPEAT)  
+  checkAlarm(CONF_MAXDIST_ALERT,homeDist,ALARMS_MAX_DIST,1,"maxdist",CONF_REPEAT)  
+  checkAlarm(1,2*ekfFailsafe,ALARMS_EKF,1,"ekf",CONF_REPEAT)  
+  checkAlarm(1,2*battFailsafe,ALARMS_BATT,1,"lowbat",CONF_REPEAT)  
+  checkAlarm(math.floor(CONF_TIMER_ALERT),flightTime,ALARMS_TIMER,1,"timealert",math.floor(CONF_TIMER_ALERT))
   --
-  local capacity = getBatt1Capacity() + getBatt2Capacity()
-  local mah = batt1mah + batt2mah
+  local capacity = getBatt1Capacity()
+  local mah = batt1mah
+  -- only if dual battery has been detected
+  if batt2sources.fc or batt2sources.vs then
+      capacity = capacity + getBatt2Capacity()
+      mah = mah  + batt2mah
+  end
   if (capacity > 0) then
     batLevel = (1 - (mah/capacity))*100
   else
@@ -2923,19 +3104,19 @@ end
 local function checkCellVoltage(battsource,cellmin,cellminFC,cellminA2)
   local celm = getVoltageBySource(battsource,cellmin,cellminFC,cellminA2)*100
   -- trigger batt1 and batt2
-  if celm > conf.battAlertLevel2 and celm < conf.battAlertLevel1 and battLevel1 == false then
+  if celm > CONF_BATT_LEVEL2 and celm < CONF_BATT_LEVEL1 and battLevel1 == false then
     battLevel1 = true
     playSound("batalert1")
   end
-  if celm > 320 and celm < conf.battAlertLevel2 then
+  if celm > 320 and celm < CONF_BATT_LEVEL2 then
     battLevel2 = true
   end
   --
-  checkAlarm(conf.battAlertLevel2,celm,ALARMS_BATT2,-1,"batalert2",menuItems[T2][4])  
+  checkAlarm(CONF_BATT_LEVEL2,celm,ALARMS_BATT2,-1,"batalert2",CONF_REPEAT)
 end
 
 local function cycleBatteryInfo()
-  if showDualBattery == false and batt2volt > 0 then
+  if showDualBattery == false and (batt2sources.fc or batt2sources.vs) then
     showDualBattery = true
     return
   end
@@ -3010,9 +3191,11 @@ local function background()
     --
     bgtelecounter=bgtelecounter+1
 #endif --BGTELERATE
+end
+  -- NORMAL: this runs at 10Hz (every 100ms)
+  if telemetryEnabled() and (bgclock % 2 == 0) then
+    setTelemetryValue(VSpd_ID, VSpd_SUBID, VSpd_INSTANCE, vSpeed, 5 , VSpd_PRECISION , VSpd_NAME)
   end
-  -- NORMAL: this runs at 20Hz (every 50ms)
-  setTelemetryValue(VSpd_ID, VSpd_SUBID, VSpd_INSTANCE, vSpeed, 5 , VSpd_PRECISION , VSpd_NAME)
   -- SLOW: this runs at 4Hz (every 250ms)
   if (bgclock % 4 == 0) then
 #ifdef SENSORS  
@@ -3077,9 +3260,6 @@ local function run(event)
     --
     if event == EVT_EXIT_BREAK then
       menu.editSelected = false
-#ifdef MENUEX
-      editComboValue = false
-#endif --MENUEX
       showConfigMenu = false
       saveConfig()
     end
@@ -3130,9 +3310,10 @@ local function run(event)
     drawGrid()
 #ifdef X7    
     drawCustomBoxes()
+    drawGPSStatus()
 #endif --X7
     -- with dual battery default is to show aggregate view
-    if batt2sources.fc or batt2sources.vs or batt2sources.a2 then
+    if batt2sources.fc or batt2sources.vs then
       if showDualBattery == false then
         -- dual battery: aggregate view
 #ifdef X9
@@ -3176,11 +3357,6 @@ local function run(event)
       drawHomeDirection()
     end
     drawHomeDist()
-    drawGPSStatus()
-    if showMinMaxValues == true then
-      drawVArrow(HSPEED_XDIM + 2,HSPEED_Y - 2 ,6,true,false)
-      drawVArrow(ALTASL_X + 26, ALTASL_Y - 1,6,true,false)
-    end
 #endif --X7
 #ifdef X9
     drawHomeDirection()
@@ -3243,6 +3419,9 @@ local function init()
   logfile = io.open(logfilename,"a")
   pushMessage(6,logfilename)
 #endif --LOGTELEMETRY
+#ifdef PLAYLOG
+  logfile = io.open("yaapu.plog","r")
+#endif --PLAYLOG
 end
 
 --------------------------------------------------------------------------------
