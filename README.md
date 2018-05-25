@@ -52,6 +52,8 @@ mavlink message history
 
 ![X9D](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9displayinfo.png)
 
+![QX7](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7displayinfo.png)
+
  - configuration menu, long press [MENU] on Taranis or [MDL] on Horus
  - per model configuration saved in MODELS/yaapu/modelname.cfg on Taranis, SCRIPTS/YAAPU/CFG/modelname.cfg on Horus
  - flight [modes](#supported-flight-modes) based on frame type:copter,plane or rover with vocal sound support
