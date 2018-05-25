@@ -59,6 +59,7 @@ mavlink message history
  - flight [modes](#supported-flight-modes) based on frame type:copter,plane or rover with vocal sound support
  - artificial horizon with roll,pitch and yaw with numeric compass heading
  - vertical variometer gauge on left side of center panel
+ - rangefinder with max range support in config menu
  - mini home icon on yaw compass at home angle position
  - battery voltage from 3 sources (in order of priority), short pressing [ENTER]/[ENCODER] cycles between the sources
    - frsky FLVSS voltage sensor if available (vs is displayed next to voltage)
@@ -69,6 +70,7 @@ mavlink message history
  - battery capacity and battery capacity used in mAh and %
  - power as battery voltage * current
  - vertical speed on left side of HUD
+ - "synthetic vertical speed" calculated from altitude variations (no vspeed is sent by the autopilot in DCM mode)
  - altitude on right side of HUD 
  - gps altitude
  - gps fix extendend status (2D,3D,DGPS,RTK)
