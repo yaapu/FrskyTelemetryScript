@@ -2854,7 +2854,7 @@ local function drawHud()
       -- first time do nothing
       synthVSpeedTime = getTime()
       prevHomeAlt = homeAlt -- dm
-    elseif (getTime() - synthVSpeedTime > 25) then
+    elseif (getTime() - synthVSpeedTime > 75) then
       -- calc vspeed
       vspd = 1000*(homeAlt-prevHomeAlt)/(getTime()-synthVSpeedTime) -- m/s
       -- update counters
