@@ -26,7 +26,7 @@
 ---------------------
 -- script version 
 ---------------------
-#define VERSION "Yaapu Horus telemetry script 1.5.1-beta10"
+#define VERSION "Yaapu Horus telemetry script 1.5.1-beta11"
 -- 480x272 LCD_WxLCD_H
 
 -- fix for issue OpenTX 2.2.1 on X10/X10S - https://github.com/opentx/opentx/issues/5764
@@ -58,10 +58,10 @@
 -- calc and show run function rate
 --#define FGRATE
 -- calc and show hud refresh rate
-#define HUDRATE
+--#define HUDRATE
 --#define HUDTIMER
 -- calc and show telemetry process rate
-#define BGTELERATE
+--#define BGTELERATE
 -- calc and show actual incoming telemetry rate
 --#define TELERATE
 

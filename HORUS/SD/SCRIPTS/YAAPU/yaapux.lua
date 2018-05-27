@@ -55,8 +55,10 @@
 -- calc and show run function rate
 --#define FGRATE
 -- calc and show hud refresh rate
+--#define HUDRATE
 --#define HUDTIMER
 -- calc and show telemetry process rate
+--#define BGTELERATE
 -- calc and show actual incoming telemetry rate
 --#define TELERATE
 
@@ -530,7 +532,7 @@ local function drawConfigMenuBars()
   local itemIdx = string.format("%d/%d",menu.selectedItem,#menuItems)
   lcd.drawFilledRectangle(0,0, LCD_W, 20, TITLE_BGCOLOR)
   lcd.drawRectangle(0, 0, LCD_W, 20, TITLE_BGCOLOR)
-  lcd.drawText(2,0,"Yaapu Horus telemetry script 1.5.1-beta10",MENU_TITLE_COLOR)
+  lcd.drawText(2,0,"Yaapu Horus telemetry script 1.5.1-beta11",MENU_TITLE_COLOR)
   lcd.drawFilledRectangle(0,LCD_H - 20, LCD_W, 20, TITLE_BGCOLOR)
   lcd.drawRectangle(0, LCD_H - 20, LCD_W, 20, TITLE_BGCOLOR)
   lcd.drawText(2,LCD_H - 20+1,getConfigFilename(),MENU_TITLE_COLOR)
@@ -1272,7 +1274,7 @@ local function drawNoTelemetryData()
   if (not telemetryEnabled()) then
     lcd.drawFilledRectangle(75,90, 330, 100, TITLE_BGCOLOR)
     lcd.drawText(140, 120, "no telemetry data", MIDSIZE+INVERS)
-    lcd.drawText(90, 155, "Yaapu Horus telemetry script 1.5.1-beta10", SMLSIZE+INVERS)
+    lcd.drawText(90, 155, "Yaapu Horus telemetry script 1.5.1-beta11", SMLSIZE+INVERS)
     return
   end
 end
@@ -2052,12 +2054,6 @@ end
 local showMessages = false
 local showConfigMenu = false
 local bgclock = 0
-local hudcounter = 0
-local hudrate = 0
-local hudstart = 0
-local bgtelecounter = 0
-local bgtelerate = 0
-local bgtelestart = 0
 
 -------------------------------
 -- running at 20Hz (every 50ms)
@@ -2067,18 +2063,6 @@ local function background()
   for i=1,3
   do
     processTelemetry()
-    ------------------------
-    -- CALC BG TELE PROCESSING RATE
-    ------------------------
-    -- skip first iteration
-    local now = getTime()/100
-    if bgtelecounter == 0 then
-      bgtelestart = now
-    else
-      bgtelerate = bgtelecounter / (now - bgtelestart)
-    end
-    --
-    bgtelecounter=bgtelecounter+1
   end
   -- NORMAL: this runs at 20Hz (every 50ms)
   setTelemetryValue(0x0110, 0, 1, vSpeed, 5 , 1 , "VSpd")
@@ -2166,18 +2150,6 @@ local function run(event)
     if event == EVT_ROT_BREAK then
       cycleBatteryInfo()
     end
-    ------------------------
-    -- CALC HUD REFRESH RATE
-    ------------------------
-    -- skip first iteration
-    local hudnow = getTime()/100
-    if hudcounter == 0 then
-      hudstart = hudnow
-    else
-      hudrate = hudcounter / (hudnow - hudstart)
-    end
-    --
-    hudcounter=hudcounter+1
     drawHomeDirection()
     drawHud()
     drawCompassRibbon()
@@ -2213,10 +2185,6 @@ local function run(event)
     drawFailsafe()
     drawArmStatus()
     if showDualBattery == false then
-      local hudrateTxt = string.format("H:%.01fHz",hudrate)
-      lcd.drawText(2,76,hudrateTxt,SMLSIZE)
-      local bgtelerateTxt = string.format("B:%.01fHz",bgtelerate)
-      lcd.drawText(160,76,bgtelerateTxt,SMLSIZE+RIGHT)
     end
     drawNoTelemetryData()
   end
@@ -2225,7 +2193,7 @@ end
 
 local function init()
   loadConfig()
-  pushMessage(6,"Yaapu Horus telemetry script 1.5.1-beta10")
+  pushMessage(6,"Yaapu Horus telemetry script 1.5.1-beta11")
   playSound("yaapu")
 end
 
