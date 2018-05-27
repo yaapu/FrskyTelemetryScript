@@ -6,7 +6,7 @@ The script supports all of the telemetry DIY 0x5000 packets sent by ardupilot’
 
 Requires OpenTX 2.2 and a recent release of arducoper, arduplane or rover.
 
-Tested on a pixracer with copter 3.5.3 and on a pixhawk clone with copter 3.5.4 and 3.5.5
+Tested on a pixracer with copter 3.5.5 and on a pixhawk clone with copter 3.5.4 and 3.5.5
 
 ## Screenshots
 
@@ -211,7 +211,7 @@ It's always possible to override auto detection from the menu and set cell count
 
 ## Alerts
 
-There are 2 battery level alerts, both are set as cell voltage so independent from cell count. Battery level 1 should be set higher then battery level 2.
+There are 2 battery level alerts, both are set as cell voltage so independent from cell count. Battery level 1 should be set higher than battery level 2.
 
 When cell voltage falls below level 1 it will trigger a vocal alert and the V next to the cell voltage will start blinking: once triggered blinking will persist even if the voltage raises above level 1.
 
