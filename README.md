@@ -34,6 +34,7 @@ mavlink message history
 
 ## Index
 
+ - [display layout](#display-layout)
  - [features](#features)
  - [advanced features](#advanced-features)
  - [supported flight modes](#supported-flight-modes)
@@ -48,13 +49,15 @@ mavlink message history
  - [hardware requirements](#hardware-requirements)
  - [credits](#credits)
  
-## Features
+## Display layout
 
 ![X12](https://github.com/yaapu/FrskyTelemetryScript/raw/master/HORUS/IMAGES/x12displayinfo.png)
 
 ![X9D](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9displayinfo.png)
 
 ![QX7](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7displayinfo.png)
+
+## Features
 
  - configuration menu, long press [MENU] on Taranis or [MDL] on Horus
  - per model configuration saved in MODELS/yaapu/modelname.cfg on Taranis, SCRIPTS/YAAPU/CFG/modelname.cfg on Horus
