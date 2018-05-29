@@ -50,6 +50,8 @@ mavlink message history
  
 ## Features
 
+![X12](https://github.com/yaapu/FrskyTelemetryScript/raw/master/HORUS/IMAGES/x12displayinfo.png)
+
 ![X9D](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9displayinfo.png)
 
 ![QX7](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7displayinfo.png)
