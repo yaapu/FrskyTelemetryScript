@@ -34,7 +34,6 @@
 ---------------------
 --#define RESETBATTALARMS
 --#define HUD_ALGO1
---#define HUD_BIG
 --#define BATTPERC_BY_VOLTAGE
 ---------------------
 -- dev features
@@ -46,6 +45,7 @@
 --#define DEBUGEVT
 --#define TESTMODE
 --#define BATT2TEST
+--#define FLVSS2TEST
 --#define CELLCOUNT 4
 --#define DEMO
 --#define DEV
@@ -54,11 +54,15 @@
 --#define BGRATE
 -- calc and show run function rate
 --#define FGRATE
+
 -- calc and show hud refresh rate
---#define HUDRATE
+-- default for beta
+
 --#define HUDTIMER
+
 -- calc and show telemetry process rate
---#define BGTELERATE
+-- default for beta
+
 -- calc and show actual incoming telemetry rate
 --#define TELERATE
 
@@ -278,9 +282,14 @@ local lastMsgTime = 0
 local vSpeed = 0
 local hSpeed = 0
 local yaw = 0
+-- SYNTH VSPEED SUPPORT
+local vspd = 0
+local synthVSpeedTime = 0
+local prevHomeAlt = 0
 -- ROLLPITCH
 local roll = 0
 local pitch = 0
+local range = 0
 -- PARAMS
 local paramId,paramValue
 local frameType = -1
@@ -365,6 +374,7 @@ minmaxValues[24] = 0
 minmaxValues[25] = 0
 minmaxValues[26] = 0
 minmaxValues[27] = 0
+minmaxValues[28] = 0
 
 local showMinMaxValues = false
 --
@@ -418,7 +428,10 @@ local conf = {
   maxAltitudeAlert = 0,
   maxDistanceAlert = 0,
   cellCount = 0,
-  disableCurrentSensor = false
+  disableCurrentSensor = false,
+  rangeMax=0,
+  enableSynthVSpeed=false,
+  horSpeedMultiplier=1
 }
 --------------------------------------------------------------------------------
 -- MENU VALUE,COMBO
@@ -448,6 +461,9 @@ local menuItems = {
   {"max distance alert:", 0, "D1", 0, 0,100000,"m",0,10 },
   {"repeat alerts every:", 0, "T2", 10, 10,600,"sec",0,5 },
   {"cell count override:", 0, "CC", 0, 0,12,"cells",0,1 },
+  {"rangefinder max:", 0, "RM", 0, 0,10000," cm",0,10 },
+  {"enable synthetic vspeed:", 1, "SVS", 1, { "no", "yes" }, { false, true } },
+  {"air/groundspeed unit:", 1, "HS", 1, { "m/s", "km/h" }, { 1, 3.6 } },
 }
 
 local function getConfigFilename()
@@ -483,6 +499,9 @@ local function applyConfigValues()
   conf.maxAltitudeAlert = menuItems[12][4]
   conf.maxDistanceAlert = menuItems[13][4]
   conf.cellCount = menuItems[15][4]
+  conf.rangeMax=menuItems[16][4]
+  conf.enableSynthVSpeed=menuItems[17][6][menuItems[17][4]]
+  conf.horSpeedMultiplier=menuItems[18][6][menuItems[18][4]]
   --
   if conf.defaultBattSource ~= nil then
     battsource = conf.defaultBattSource
@@ -532,7 +551,7 @@ local function drawConfigMenuBars()
   local itemIdx = string.format("%d/%d",menu.selectedItem,#menuItems)
   lcd.drawFilledRectangle(0,0, LCD_W, 20, TITLE_BGCOLOR)
   lcd.drawRectangle(0, 0, LCD_W, 20, TITLE_BGCOLOR)
-  lcd.drawText(2,0,"Yaapu Horus telemetry script 1.5.1-beta11",MENU_TITLE_COLOR)
+  lcd.drawText(2,0,"Yaapu Horus telemetry script 1.6.0-beta1",MENU_TITLE_COLOR)
   lcd.drawFilledRectangle(0,LCD_H - 20, LCD_W, 20, TITLE_BGCOLOR)
   lcd.drawRectangle(0, LCD_H - 20, LCD_W, 20, TITLE_BGCOLOR)
   lcd.drawText(2,LCD_H - 20+1,getConfigFilename(),MENU_TITLE_COLOR)
@@ -605,7 +624,7 @@ local function drawConfigMenu(event)
     menu.offset = 0
   elseif menu.selectedItem  < 1 then
     menu.selectedItem = #menuItems
-    menu.offset = 4
+    menu.offset = 7
   end
   --
   for m=1+menu.offset,math.min(#menuItems,11+menu.offset) do
@@ -767,7 +786,8 @@ end
 
 
 local function drawNumberWithTwoDims(x,y,xDim,yTop,yBottom,number,topDim,bottomDim,flags,topFlags,bottomFlags)
-  lcd.drawNumber(x, y, number, flags)
+  --PREC2 forces a math.floor() whereas a math.round() is required, math.round(f) = math.floor(f+0.5)
+  lcd.drawNumber(x, y, number + 0.5, flags)
   local lx = xDim
   lcd.drawText(lx, yTop, topDim, topFlags)
   lcd.drawText(lx, yBottom, bottomDim, bottomFlags)
@@ -837,6 +857,9 @@ local function processTelemetry()
       roll = (bit32.extract(VALUE,0,11) - 900) * 0.2
       -- pitch [0,900] ==> [-90,90]
       pitch = (bit32.extract(VALUE,11,10) - 450) * 0.2
+      -- #define ATTIANDRNG_RNGFND_OFFSET    21
+      -- number encoded on 11 bits: 10 bits for digits + 1 for 10^power
+      range = bit32.extract(VALUE,22,10) * (10^bit32.extract(VALUE,21,1)) -- cm
     elseif ( DATA_ID == 0x5005) then -- VELANDYAW
       vSpeed = bit32.extract(VALUE,1,7) * (10^bit32.extract(VALUE,0,1))
       if (bit32.extract(VALUE,8,1) == 1) then
@@ -883,11 +906,29 @@ local function processTelemetry()
         c2 = bit32.extract(VALUE,8,7)
         c3 = bit32.extract(VALUE,16,7)
         c4 = bit32.extract(VALUE,24,7)
-        msgBuffer = msgBuffer .. string.char(c4)
-        msgBuffer = msgBuffer .. string.char(c3)
-        msgBuffer = msgBuffer .. string.char(c2)
-        msgBuffer = msgBuffer .. string.char(c1)
-        if (c1 == 0 or c2 == 0 or c3 == 0 or c4 == 0) then
+        --
+        local msgEnd = false
+        if (c4 ~= 0) then
+          msgBuffer = msgBuffer .. string.char(c4)
+        else
+          msgEnd = true;
+        end
+        if (c3 ~= 0 and not msgEnd) then
+          msgBuffer = msgBuffer .. string.char(c3)
+        else
+          msgEnd = true;
+        end
+        if (c2 ~= 0 and not msgEnd) then
+          msgBuffer = msgBuffer .. string.char(c2)
+        else
+          msgEnd = true;
+        end
+        if (c1 ~= 0 and not msgEnd) then
+          msgBuffer = msgBuffer .. string.char(c1)
+        else
+          msgEnd = true;
+        end
+        if (msgEnd) then
           local severity = (bit32.extract(VALUE,15,1) * 4) + (bit32.extract(VALUE,23,1) * 2) + (bit32.extract(VALUE,30,1) * 1)
           pushMessage( severity, msgBuffer)
           msgBuffer = ""
@@ -1274,7 +1315,7 @@ local function drawNoTelemetryData()
   if (not telemetryEnabled()) then
     lcd.drawFilledRectangle(75,90, 330, 100, TITLE_BGCOLOR)
     lcd.drawText(140, 120, "no telemetry data", MIDSIZE+INVERS)
-    lcd.drawText(90, 155, "Yaapu Horus telemetry script 1.5.1-beta11", SMLSIZE+INVERS)
+    lcd.drawText(90, 155, "Yaapu Horus telemetry script 1.6.0-beta1", SMLSIZE+INVERS)
     return
   end
 end
@@ -1416,20 +1457,34 @@ local function drawLeftPane(battcurrent,cellsumFC)
   else
     drawBlinkBitmap("nolockicon",4,24)
   end  
-  flags = BLINK
-  -- always display gps altitude even without 3d lock
-  local alt = gpsAlt/10
-  if gpsStatus  > 2 then
+  if conf.rangeMax > 0 then
     flags = 0
-    -- update max only with 3d or better lock
-    alt = getMaxValue(alt,24)
+    local rng = range
+    if rng > conf.rangeMax then
+      flags = BLINK+INVERS
+    end
+    rng = getMaxValue(rng,28)
+    if showMinMaxValues == true then
+      flags = 0
+    end
+    lcd.drawText(10, 106, "Range(m)", SMLSIZE)
+    lcd.drawText(82, 123, string.format("%.1f",rng*0.01), MIDSIZE+flags+RIGHT)
+  else
+    flags = BLINK
+    -- always display gps altitude even without 3d lock
+    local alt = gpsAlt/10
+    if gpsStatus  > 2 then
+      flags = 0
+      -- update max only with 3d or better lock
+      alt = getMaxValue(alt,24)
+    end
+    if showMinMaxValues == true then
+      flags = 0
+    end
+    lcd.drawText(10, 106, "AltAsl(m)", SMLSIZE)
+    local stralt = string.format("%d",alt)
+    lcd.drawText(82, 123, stralt, MIDSIZE+flags+RIGHT)
   end
-  if showMinMaxValues == true then
-    flags = 0
-  end
-  lcd.drawText(10, 106, "AltAsl(m)", SMLSIZE)
-  local stralt = string.format("%d",alt)
-  lcd.drawText(82, 123, stralt, MIDSIZE+flags+RIGHT)
   -- home distance
   drawHomeIcon(91,106,7)
   lcd.drawText(165, 106, "Dist(m)", SMLSIZE+RIGHT)
@@ -1445,8 +1500,8 @@ local function drawLeftPane(battcurrent,cellsumFC)
   lcd.drawText(165, 123, strdist, MIDSIZE+flags+RIGHT)
   -- hspeed
   local speed = getMaxValue(hSpeed,26)
-  lcd.drawText(85, 152, "Speed(m/s)", SMLSIZE+RIGHT)
-  lcd.drawNumber(84,170,speed,MIDSIZE+RIGHT+PREC1)
+  lcd.drawText(85, 152, "Spd("..menuItems[18][5][menuItems[18][4]]..")", SMLSIZE+RIGHT)
+  lcd.drawNumber(84,170,speed * conf.horSpeedMultiplier,MIDSIZE+RIGHT+PREC1)
   -- power
   local power = cellsumFC*battcurrent*0.1
   power = getMaxValue(power,22)
@@ -1651,6 +1706,7 @@ local function fillTriangle(ox, oy, x1, x2, roll, angle,color)
 end
 
 -------------------------------------------
+
 local function drawHud()
 
   local r = -roll
@@ -1683,25 +1739,25 @@ local function drawHud()
     cccx = math.cos(math.rad(90 - r)) * 3 * 10
     cccy = math.sin(math.rad(90 - r)) * 3 * 10
   end
-  local rollX = math.floor((LCD_W-70)/2 + 70/2)
+  local rollX = math.floor((LCD_W-92)/2 + 92/2)
   -----------------------
   -- dark color for "ground"
   -----------------------
-  -- 70x70
-  local minY = 43
-  local maxY = 113
-  local minX = (LCD_W-70)/2 + 1
-  local maxX = (LCD_W-70)/2 + 70
+  -- 90x70
+  local minY = 44
+  local maxY = 114
+  local minX = (LCD_W-92)/2 + 1
+  local maxX = (LCD_W-92)/2 + 92
   --
-  local ox = (LCD_W-70)/2 + 70/2 + dx
+  local ox = (LCD_W-92)/2 + 92/2 + dx
   --
-  local oy = 80 + dy
+  local oy = 79 + dy
   local yy = 0
   
   --lcd.setColor(CUSTOM_COLOR,lcd.RGB(179, 204, 255))
-  lcd.setColor(CUSTOM_COLOR,lcd.RGB(51, 102, 255))
+  lcd.setColor(CUSTOM_COLOR,lcd.RGB(0x7a, 0x9c, 0xff))
   
-  lcd.drawFilledRectangle(minX,minY,70,maxY - minY,CUSTOM_COLOR)
+  lcd.drawFilledRectangle(minX,minY,92,maxY - minY,CUSTOM_COLOR)
   -- angle of the line passing on point(ox,oy)
   local angle = math.tan(math.rad(-roll))
   -- for each pixel of the hud base/top draw vertical black 
@@ -1823,34 +1879,56 @@ local function drawHud()
   -- parallel lines above and below horizon of increasing length 5,7,16,16,7,5
   lcd.setColor(CUSTOM_COLOR,lcd.RGB(255, 255, 255))
   --
-  drawCroppedLine(rollX + dx - cccx,dy + 80 + cccy,r,40,DOTTED,(LCD_W-70)/2,(LCD_W-70)/2 + 70,minY,maxY,CUSTOM_COLOR)
-  drawCroppedLine(rollX + dx - ccx,dy + 80 + ccy,r,20,DOTTED,(LCD_W-70)/2,(LCD_W-70)/2 + 70,minY,maxY,CUSTOM_COLOR)
-  drawCroppedLine(rollX + dx - cx,dy + 80 + cy,r,40,DOTTED,(LCD_W-70)/2,(LCD_W-70)/2 + 70,minY,maxY,CUSTOM_COLOR)
-  drawCroppedLine(rollX + dx + cx,dy + 80 - cy,r,40,DOTTED,(LCD_W-70)/2,(LCD_W-70)/2 + 70,minY,maxY,CUSTOM_COLOR)
-  drawCroppedLine(rollX + dx + ccx,dy + 80 - ccy,r,20,DOTTED,(LCD_W-70)/2,(LCD_W-70)/2 + 70,minY,maxY,CUSTOM_COLOR)
-  drawCroppedLine(rollX + dx + cccx,dy + 80 - cccy,r,40,DOTTED,(LCD_W-70)/2,(LCD_W-70)/2 + 70,minY,maxY,CUSTOM_COLOR)
+  drawCroppedLine(rollX + dx - cccx,dy + 79 + cccy,r,40,DOTTED,(LCD_W-92)/2,(LCD_W-92)/2 + 92,minY,maxY,CUSTOM_COLOR)
+  drawCroppedLine(rollX + dx - ccx,dy + 79 + ccy,r,20,DOTTED,(LCD_W-92)/2,(LCD_W-92)/2 + 92,minY,maxY,CUSTOM_COLOR)
+  drawCroppedLine(rollX + dx - cx,dy + 79 + cy,r,40,DOTTED,(LCD_W-92)/2,(LCD_W-92)/2 + 92,minY,maxY,CUSTOM_COLOR)
+  drawCroppedLine(rollX + dx + cx,dy + 79 - cy,r,40,DOTTED,(LCD_W-92)/2,(LCD_W-92)/2 + 92,minY,maxY,CUSTOM_COLOR)
+  drawCroppedLine(rollX + dx + ccx,dy + 79 - ccy,r,20,DOTTED,(LCD_W-92)/2,(LCD_W-92)/2 + 92,minY,maxY,CUSTOM_COLOR)
+  drawCroppedLine(rollX + dx + cccx,dy + 79 - cccy,r,40,DOTTED,(LCD_W-92)/2,(LCD_W-92)/2 + 92,minY,maxY,CUSTOM_COLOR)
   -------------------------------------
   -- hud bitmap
   -------------------------------------
-  lcd.drawBitmap(getBitmap("hud_70x70d"),(LCD_W-86)/2,32) --86x92
+  lcd.drawBitmap(getBitmap("hud_90x70a"),(LCD_W-106)/2,34) --106x90
+  --lcd.drawBitmap(getBitmap("hud_80x80a"),(LCD_W-96)/2,29) --96x100
+  ------------------------------------
+  -- synthetic vSpeed based on 
+  -- home altitude when EKF is disabled
+  -- updated at 1Hz (i.e every 1000ms)
+  -------------------------------------
+  if conf.enableSynthVSpeed == true then
+    if (synthVSpeedTime == 0) then
+      -- first time do nothing
+      synthVSpeedTime = getTime()
+      prevHomeAlt = homeAlt -- dm
+    elseif (getTime() - synthVSpeedTime > 100) then
+      -- calc vspeed
+      vspd = 1000*(homeAlt-prevHomeAlt)/(getTime()-synthVSpeedTime) -- m/s
+      -- update counters
+      synthVSpeedTime = getTime()
+      prevHomeAlt = homeAlt -- m
+    end
+  else
+    vspd = vSpeed
+  end
+
   -------------------------------------
   -- vario bitmap
   -------------------------------------
   local varioMax = math.log(5)
-  local varioSpeed = math.log(1 + math.min(math.abs(0.05*vSpeed),4))
+  local varioSpeed = math.log(1 + math.min(math.abs(0.05*vspd),4))
   local varioH = 0
-  if vSpeed > 0 then
-    varioY = math.min(79 - varioSpeed/varioMax*44,125)
+  if vspd > 0 then
+    varioY = math.min(79 - varioSpeed/varioMax*55,125)
   else
     varioY = 78
   end
   lcd.setColor(CUSTOM_COLOR,lcd.RGB(255, 0xce, 0))
-  lcd.drawFilledRectangle(176 + 2, varioY, 8, varioSpeed/varioMax*44, CUSTOM_COLOR, 0)  
-  lcd.drawBitmap(getBitmap("variogauge"),176,24)
+  lcd.drawFilledRectangle(172+2, varioY, 7, varioSpeed/varioMax*55, CUSTOM_COLOR, 0)  
+  lcd.drawBitmap(getBitmap("variogauge_big"),172,19)
   if vSpeed > 0 then
-    lcd.drawBitmap(getBitmap("varioline"),173,varioY)
+    lcd.drawBitmap(getBitmap("varioline"),172-3,varioY)
   else
-    lcd.drawBitmap(getBitmap("varioline"),173,78 + varioSpeed/varioMax*44)
+    lcd.drawBitmap(getBitmap("varioline"),172-3,77 + varioSpeed/varioMax*55)
   end
   -------------------------------------
   -- left and right indicators on HUD
@@ -1875,12 +1953,12 @@ local function drawHud()
   end
   -- vertical speed
   lcd.drawText(170,LCD_H-37,"vspd(m/s)",SMLSIZE)
-  if (vSpeed > 999) then
-    lcd.drawNumber(180,LCD_H-60,vSpeed*0.1,MIDSIZE+PREC1)
-  elseif (vSpeed < -99) then
-    lcd.drawNumber(180,LCD_H-60,vSpeed * 0.1,MIDSIZE+PREC1)
+  if (vspd > 999) then
+    lcd.drawNumber(180,LCD_H-60,vspd*0.1,MIDSIZE+PREC1)
+  elseif (vspd < -99) then
+    lcd.drawNumber(180,LCD_H-60,vspd * 0.1,MIDSIZE+PREC1)
   else
-    lcd.drawNumber(180,LCD_H-60,vSpeed,MIDSIZE+PREC1)
+    lcd.drawNumber(180,LCD_H-60,vspd,MIDSIZE+PREC1)
   end
   -- min/max arrows
   if showMinMaxValues == true then
@@ -1889,8 +1967,8 @@ local function drawHud()
 end
 
 local function drawGrid()
-  lcd.drawLine((LCD_W-70)/2 - 1, 7 ,(LCD_W-70)/2 - 1, 57, SOLID, 0)
-  lcd.drawLine((LCD_W-70)/2 + 70, 7, (LCD_W-70)/2 + 70, 57, SOLID, 0)
+  lcd.drawLine((LCD_W-92)/2 - 1, 7 ,(LCD_W-92)/2 - 1, 57, SOLID, 0)
+  lcd.drawLine((LCD_W-92)/2 + 92, 7, (LCD_W-92)/2 + 92, 57, SOLID, 0)
 end
 
 local function drawHomeDirection()
@@ -1944,15 +2022,13 @@ local function checkAlarm(level,value,idx,sign,sound,delay)
           alarms[idx][1] = false
       end
     else
-      -- fire once but only every 2secs max
+      -- fire once but only every 5secs max
       if alarms[idx][2] == 0 then
         alarms[idx][1] = true
         alarms[idx][2] = flightTime
-        if (flightTime - alarms[idx][5]) > 2 then
+        if (flightTime - alarms[idx][5]) > 5 then
           playSound(sound)
-          if alarms[idx][5] == 0 then
-            alarms[idx][5] = flightTime
-          end
+          alarms[idx][5] = flightTime
         end
       end
       -- ...and then fire every conf secs after the first shot
@@ -1981,9 +2057,16 @@ local function checkEvents()
     checkAlarm(1,2*battFailsafe,5,1,"lowbat",menuItems[14][4])  
     checkAlarm(conf.timerAlert,flightTime,6,1,"timealert",conf.timerAlert)
   end
+  -- default is use battery 1
+  local capacity = getBatt1Capacity()
+  local mah = batt1mah
+  -- only if dual battery has been detected use battery 2
+  if batt2sources.fc or batt2sources.vs then
+      capacity = capacity + getBatt2Capacity()
+      mah = mah  + batt2mah
+  end
 
-  local capacity = getBatt1Capacity() + getBatt2Capacity()
-  local mah = batt1mah + batt2mah
+  
   if (capacity > 0) then
     batLevel = (1 - (mah/capacity))*100
   else
@@ -2036,7 +2119,7 @@ local function checkCellVoltage(battsource,cellmin,cellminFC,cellminA2)
 end
 
 local function cycleBatteryInfo()
-  if showDualBattery == false and batt2volt > 0 then
+  if showDualBattery == false and (batt2sources.fc or batt2sources.vs) then
     showDualBattery = true
     return
   end
@@ -2054,6 +2137,12 @@ end
 local showMessages = false
 local showConfigMenu = false
 local bgclock = 0
+local hudcounter = 0
+local hudrate = 0
+local hudstart = 0
+local bgtelecounter = 0
+local bgtelerate = 0
+local bgtelestart = 0
 
 -------------------------------
 -- running at 20Hz (every 50ms)
@@ -2063,6 +2152,18 @@ local function background()
   for i=1,3
   do
     processTelemetry()
+    ------------------------
+    -- CALC BG TELE PROCESSING RATE
+    ------------------------
+    -- skip first iteration
+    local now = getTime()/100
+    if bgtelecounter == 0 then
+      bgtelestart = now
+    else
+      bgtelerate = bgtelecounter / (now - bgtelestart)
+    end
+    --
+    bgtelecounter=bgtelecounter+1
   end
   -- NORMAL: this runs at 20Hz (every 50ms)
   setTelemetryValue(0x0110, 0, 1, vSpeed, 5 , 1 , "VSpd")
@@ -2150,12 +2251,24 @@ local function run(event)
     if event == EVT_ROT_BREAK then
       cycleBatteryInfo()
     end
+    ------------------------
+    -- CALC HUD REFRESH RATE
+    ------------------------
+    -- skip first iteration
+    local hudnow = getTime()/100
+    if hudcounter == 0 then
+      hudstart = hudnow
+    else
+      hudrate = hudcounter / (hudnow - hudstart)
+    end
+    --
+    hudcounter=hudcounter+1
     drawHomeDirection()
     drawHud()
     drawCompassRibbon()
     --drawGrid()
     -- with dual battery default is to show aggregate view
-    if batt2sources.fc or batt2sources.vs or batt2sources.a2 then
+    if batt2sources.fc or batt2sources.vs then
       if showDualBattery == false then
         -- dual battery: aggregate view
         lcd.drawText(285+67,85,"BATTERY: 1+2",SMLSIZE+INVERS)
@@ -2185,6 +2298,10 @@ local function run(event)
     drawFailsafe()
     drawArmStatus()
     if showDualBattery == false then
+      local hudrateTxt = string.format("H:%.01fHz",hudrate)
+      lcd.drawText(2,76,hudrateTxt,SMLSIZE)
+      local bgtelerateTxt = string.format("B:%.01fHz",bgtelerate)
+      lcd.drawText(160,76,bgtelerateTxt,SMLSIZE+RIGHT)
     end
     drawNoTelemetryData()
   end
@@ -2193,7 +2310,7 @@ end
 
 local function init()
   loadConfig()
-  pushMessage(6,"Yaapu Horus telemetry script 1.5.1-beta11")
+  pushMessage(6,"Yaapu Horus telemetry script 1.6.0-beta1")
   playSound("yaapu")
 end
 

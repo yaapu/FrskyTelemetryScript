@@ -26,7 +26,7 @@
 ---------------------
 -- script version 
 ---------------------
-#define VERSION "Yaapu Horus telemetry script 1.5.1-beta11"
+#define VERSION "Yaapu Horus telemetry script 1.6.0-beta1"
 -- 480x272 LCD_WxLCD_H
 
 -- fix for issue OpenTX 2.2.1 on X10/X10S - https://github.com/opentx/opentx/issues/5764
@@ -37,7 +37,7 @@
 --#define RESETBATTALARMS
 --#define HUD_ALGO1
 #define HUD_ALGO2
---#define HUD_BIG
+#define HUD_BIG
 --#define BATTPERC_BY_VOLTAGE
 ---------------------
 -- dev features
@@ -49,6 +49,7 @@
 --#define DEBUGEVT
 --#define TESTMODE
 --#define BATT2TEST
+--#define FLVSS2TEST
 --#define CELLCOUNT 4
 --#define DEMO
 --#define DEV
@@ -57,11 +58,17 @@
 --#define BGRATE
 -- calc and show run function rate
 --#define FGRATE
+
 -- calc and show hud refresh rate
---#define HUDRATE
+-- default for beta
+#define HUDRATE
+
 --#define HUDTIMER
+
 -- calc and show telemetry process rate
---#define BGTELERATE
+-- default for beta
+#define BGTELERATE
+
 -- calc and show actual incoming telemetry rate
 --#define TELERATE
 
@@ -407,9 +414,14 @@ local lastMsgTime = 0
 local vSpeed = 0
 local hSpeed = 0
 local yaw = 0
+-- SYNTH VSPEED SUPPORT
+local vspd = 0
+local synthVSpeedTime = 0
+local prevHomeAlt = 0
 -- ROLLPITCH
 local roll = 0
 local pitch = 0
+local range = 0
 -- PARAMS
 local paramId,paramValue
 local frameType = -1
@@ -483,6 +495,7 @@ local showDualBattery = false
 #define MAX_VSPEED 25
 #define MAX_HSPEED 26
 #define MAX_DIST 27
+#define MAX_RANGE 28
 
 -- offsets
 local minmaxOffsets = {}
@@ -521,6 +534,7 @@ minmaxValues[24] = 0
 minmaxValues[25] = 0
 minmaxValues[26] = 0
 minmaxValues[27] = 0
+minmaxValues[28] = 0
 
 local showMinMaxValues = false
 --
@@ -540,8 +554,8 @@ local thrOut = 0
 #endif --TESTMODE
 
 #ifdef HUD_BIG
-#define HUD_WIDTH 82
-#define HUD_X (LCD_W-82)/2
+#define HUD_WIDTH 92
+#define HUD_X (LCD_W-92)/2
 #define HUD_Y_MID 79
 #else
 #define HUD_WIDTH 70
@@ -707,7 +721,10 @@ local conf = {
   maxAltitudeAlert = 0,
   maxDistanceAlert = 0,
   cellCount = 0,
-  disableCurrentSensor = false
+  disableCurrentSensor = false,
+  rangeMax=0,
+  enableSynthVSpeed=false,
+  horSpeedMultiplier=1
 }
 --------------------------------------------------------------------------------
 -- MENU VALUE,COMBO
@@ -716,7 +733,7 @@ local conf = {
 #define TYPECOMBO 1
 #define MENU_Y 25
 #define MENU_PAGESIZE 11
-#define MENU_WRAPOFFSET 4
+#define MENU_WRAPOFFSET 7
 #define MENU_ITEM_X 300
 
 #define L1 1
@@ -734,7 +751,10 @@ local conf = {
 #define D1 13
 #define T2 14
 #define CC 15
-#define CS 16
+#define RM 16
+#define SVS 17
+#define HS 18
+#define CS 19
   
 local menu  = {
   selectedItem = 1,
@@ -759,6 +779,9 @@ local menuItems = {
   {"max distance alert:", TYPEVALUE, "D1", 0, 0,100000,"m",0,10 },
   {"repeat alerts every:", TYPEVALUE, "T2", 10, 10,600,"sec",0,5 },
   {"cell count override:", TYPEVALUE, "CC", 0, 0,12,"cells",0,1 },
+  {"rangefinder max:", TYPEVALUE, "RM", 0, 0,10000," cm",0,10 },
+  {"enable synthetic vspeed:", TYPECOMBO, "SVS", 1, { "no", "yes" }, { false, true } },
+  {"air/groundspeed unit:", TYPECOMBO, "HS", 1, { "m/s", "km/h" }, { 1, 3.6 } },
 #ifdef BATTPERC_BY_VOLTAGE  
   {"current sensor unavailable:", TYPECOMBO, "CS", 1, { "no", "yes" }, { false, true } }
 #endif --BATTPERC_BY_VOLTAGE
@@ -797,6 +820,9 @@ local function applyConfigValues()
   conf.maxAltitudeAlert = menuItems[A2][4]
   conf.maxDistanceAlert = menuItems[D1][4]
   conf.cellCount = menuItems[CC][4]
+  conf.rangeMax=menuItems[RM][4]
+  conf.enableSynthVSpeed=menuItems[SVS][6][menuItems[SVS][4]]
+  conf.horSpeedMultiplier=menuItems[HS][6][menuItems[HS][4]]
   #ifdef BATTPERC_BY_VOLTAGE
   conf.disableCurrentSensor = menuItems[CS][6][menuItems[CS][4]]
   #endif --BATTPERC_BY_VOLTAGE
@@ -1147,7 +1173,8 @@ end
 #endif --DEV
 
 local function drawNumberWithTwoDims(x,y,xDim,yTop,yBottom,number,topDim,bottomDim,flags,topFlags,bottomFlags)
-  lcd.drawNumber(x, y, number, flags)
+  --PREC2 forces a math.floor() whereas a math.round() is required, math.round(f) = math.floor(f+0.5)
+  lcd.drawNumber(x, y, number + 0.5, flags)
   local lx = xDim
   lcd.drawText(lx, yTop, topDim, topFlags)
   lcd.drawText(lx, yBottom, bottomDim, bottomFlags)
@@ -1431,6 +1458,7 @@ local function symHome()
   hSpeed = 34
 #else --DEMO
   homeAlt = yawCh * 0.1
+  range = 10 * yawCh * 0.1
   vSpeed = yawCh * 0.1 * -1
   hSpeed = vSpeed
 #endif --DEMO  
@@ -1499,6 +1527,9 @@ local function processTelemetry()
       roll = (bit32.extract(VALUE,0,11) - 900) * 0.2
       -- pitch [0,900] ==> [-90,90]
       pitch = (bit32.extract(VALUE,11,10) - 450) * 0.2
+      -- #define ATTIANDRNG_RNGFND_OFFSET    21
+      -- number encoded on 11 bits: 10 bits for digits + 1 for 10^power
+      range = bit32.extract(VALUE,22,10) * (10^bit32.extract(VALUE,21,1)) -- cm
     elseif ( DATA_ID == 0x5005) then -- VELANDYAW
       vSpeed = bit32.extract(VALUE,1,7) * (10^bit32.extract(VALUE,0,1))
       if (bit32.extract(VALUE,8,1) == 1) then
@@ -1550,11 +1581,29 @@ local function processTelemetry()
         c2 = bit32.extract(VALUE,8,7)
         c3 = bit32.extract(VALUE,16,7)
         c4 = bit32.extract(VALUE,24,7)
-        msgBuffer = msgBuffer .. string.char(c4)
-        msgBuffer = msgBuffer .. string.char(c3)
-        msgBuffer = msgBuffer .. string.char(c2)
-        msgBuffer = msgBuffer .. string.char(c1)
-        if (c1 == 0 or c2 == 0 or c3 == 0 or c4 == 0) then
+        --
+        local msgEnd = false
+        if (c4 ~= 0) then
+          msgBuffer = msgBuffer .. string.char(c4)
+        else
+          msgEnd = true;
+        end
+        if (c3 ~= 0 and not msgEnd) then
+          msgBuffer = msgBuffer .. string.char(c3)
+        else
+          msgEnd = true;
+        end
+        if (c2 ~= 0 and not msgEnd) then
+          msgBuffer = msgBuffer .. string.char(c2)
+        else
+          msgEnd = true;
+        end
+        if (c1 ~= 0 and not msgEnd) then
+          msgBuffer = msgBuffer .. string.char(c1)
+        else
+          msgEnd = true;
+        end
+        if (msgEnd) then
           local severity = (bit32.extract(VALUE,15,1) * 4) + (bit32.extract(VALUE,23,1) * 2) + (bit32.extract(VALUE,30,1) * 1)
           pushMessage( severity, msgBuffer)
 #ifdef LOGTELEMETRY
@@ -1734,9 +1783,9 @@ local function calcBattery()
   ------------
   -- FLVSS 2
   ------------
-#ifdef BATT2TEST
+#ifdef FLVSS2TEST
   cellResult = getValue("Cels")
-#else --BATT2TEST
+#else --FLVSS2TEST
   cellResult = getValue("Cel2")
 #endif --BATT2TEST
   if type(cellResult) == "table" then
@@ -2166,20 +2215,34 @@ local function drawLeftPane(battcurrent,cellsumFC)
   else
     drawBlinkBitmap("nolockicon",4,24)
   end  
-  flags = BLINK
-  -- always display gps altitude even without 3d lock
-  local alt = gpsAlt/10
-  if gpsStatus  > 2 then
+  if conf.rangeMax > 0 then
     flags = 0
-    -- update max only with 3d or better lock
-    alt = getMaxValue(alt,MAX_GPSALT)
+    local rng = range
+    if rng > conf.rangeMax then
+      flags = BLINK+INVERS
+    end
+    rng = getMaxValue(rng,MAX_RANGE)
+    if showMinMaxValues == true then
+      flags = 0
+    end
+    lcd.drawText(ALTASL_XLABEL, ALTASL_YLABEL, "Range(m)", SMLSIZE)
+    lcd.drawText(ALTASL_X, ALTASL_Y, string.format("%.1f",rng*0.01), MIDSIZE+flags+RIGHT)
+  else
+    flags = BLINK
+    -- always display gps altitude even without 3d lock
+    local alt = gpsAlt/10
+    if gpsStatus  > 2 then
+      flags = 0
+      -- update max only with 3d or better lock
+      alt = getMaxValue(alt,MAX_GPSALT)
+    end
+    if showMinMaxValues == true then
+      flags = 0
+    end
+    lcd.drawText(ALTASL_XLABEL, ALTASL_YLABEL, "AltAsl(m)", SMLSIZE)
+    local stralt = string.format("%d",alt)
+    lcd.drawText(ALTASL_X, ALTASL_Y, stralt, MIDSIZE+flags+RIGHT)
   end
-  if showMinMaxValues == true then
-    flags = 0
-  end
-  lcd.drawText(ALTASL_XLABEL, ALTASL_YLABEL, "AltAsl(m)", SMLSIZE)
-  local stralt = string.format("%d",alt)
-  lcd.drawText(ALTASL_X, ALTASL_Y, stralt, MIDSIZE+flags+RIGHT)
   -- home distance
   drawHomeIcon(HOMEDIST_XLABEL,HOMEDIST_YLABEL,7)
   lcd.drawText(HOMEDIST_X, HOMEDIST_YLABEL, "Dist(m)", SMLSIZE+RIGHT)
@@ -2195,8 +2258,8 @@ local function drawLeftPane(battcurrent,cellsumFC)
   lcd.drawText(HOMEDIST_X, HOMEDIST_Y, strdist, HOMEDIST_FLAGS+flags+RIGHT)
   -- hspeed
   local speed = getMaxValue(hSpeed,MAX_HSPEED)
-  lcd.drawText(HSPEED_XLABEL, HSPEED_YLABEL, "Speed(m/s)", SMLSIZE+RIGHT)
-  lcd.drawNumber(HSPEED_X,HSPEED_Y,speed,HSPEED_FLAGS+RIGHT+PREC1)
+  lcd.drawText(HSPEED_XLABEL, HSPEED_YLABEL, "Spd("..menuItems[HS][5][menuItems[HS][4]]..")", SMLSIZE+RIGHT)
+  lcd.drawNumber(HSPEED_X,HSPEED_Y,speed * conf.horSpeedMultiplier,HSPEED_FLAGS+RIGHT+PREC1)
   -- power
   local power = cellsumFC*battcurrent*0.1
   power = getMaxValue(power,MAX_POWER)
@@ -2414,6 +2477,9 @@ local function fillTriangle(ox, oy, x1, x2, roll, angle,color)
 end
 
 -------------------------------------------
+#define VARIO_X 172
+#define VARIO_Y 19
+
 local function drawHud()
 #ifdef HUDTIMER
   local hudStart = getTime()
@@ -2454,9 +2520,9 @@ local function drawHud()
   -- dark color for "ground"
   -----------------------
 #ifdef HUD_BIG
-  -- 80x80
-  local minY = 39
-  local maxY = 119
+  -- 90x70
+  local minY = 44
+  local maxY = 114
 #else
   -- 70x70
   local minY = 43
@@ -2639,43 +2705,65 @@ local function drawHud()
   -- hud bitmap
   -------------------------------------
 #ifdef HUD_BIG
-  lcd.drawBitmap(getBitmap("hud_80x80a"),(LCD_W-96)/2,29) --96x100
+  lcd.drawBitmap(getBitmap("hud_90x70a"),(LCD_W-106)/2,34) --106x90
+  --lcd.drawBitmap(getBitmap("hud_80x80a"),(LCD_W-96)/2,29) --96x100
 #else
   lcd.drawBitmap(getBitmap("hud_70x70d"),(LCD_W-86)/2,32) --86x92
 #endif --HUD_BIG
+  ------------------------------------
+  -- synthetic vSpeed based on 
+  -- home altitude when EKF is disabled
+  -- updated at 1Hz (i.e every 1000ms)
+  -------------------------------------
+  if conf.enableSynthVSpeed == true then
+    if (synthVSpeedTime == 0) then
+      -- first time do nothing
+      synthVSpeedTime = getTime()
+      prevHomeAlt = homeAlt -- dm
+    elseif (getTime() - synthVSpeedTime > 100) then
+      -- calc vspeed
+      vspd = 1000*(homeAlt-prevHomeAlt)/(getTime()-synthVSpeedTime) -- m/s
+      -- update counters
+      synthVSpeedTime = getTime()
+      prevHomeAlt = homeAlt -- m
+    end
+  else
+    vspd = vSpeed
+  end
+
   -------------------------------------
   -- vario bitmap
   -------------------------------------
   local varioMax = math.log(5)
-  local varioSpeed = math.log(1 + math.min(math.abs(0.05*vSpeed),4))
+  local varioSpeed = math.log(1 + math.min(math.abs(0.05*vspd),4))
   local varioH = 0
 #ifdef HUD_BIG
-  if vSpeed > 0 then
+  if vspd > 0 then
     varioY = math.min(79 - varioSpeed/varioMax*55,125)
   else
     varioY = 78
   end
   lcd.setColor(CUSTOM_COLOR,lcd.RGB(255, 0xce, 0))
-  lcd.drawFilledRectangle(176, varioY, 7, varioSpeed/varioMax*55, CUSTOM_COLOR, 0)  
-  lcd.drawBitmap(getBitmap("variogauge_big"),174,19)
+  lcd.drawFilledRectangle(VARIO_X+2, varioY, 7, varioSpeed/varioMax*55, CUSTOM_COLOR, 0)  
+  lcd.drawBitmap(getBitmap("variogauge_big"),VARIO_X,VARIO_Y)
   if vSpeed > 0 then
-    lcd.drawBitmap(getBitmap("varioline"),171,varioY)
+    lcd.drawBitmap(getBitmap("varioline"),VARIO_X-3,varioY)
   else
-    lcd.drawBitmap(getBitmap("varioline"),171,77 + varioSpeed/varioMax*55)
+    lcd.drawBitmap(getBitmap("varioline"),VARIO_X-3,77 + varioSpeed/varioMax*55)
   end
 #else
-  if vSpeed > 0 then
+  if vspd > 0 then
     varioY = math.min(79 - varioSpeed/varioMax*44,125)
   else
     varioY = 78
   end
   lcd.setColor(CUSTOM_COLOR,lcd.RGB(255, 0xce, 0))
-  lcd.drawFilledRectangle(176 + 2, varioY, 8, varioSpeed/varioMax*44, CUSTOM_COLOR, 0)  
-  lcd.drawBitmap(getBitmap("variogauge"),176,24)
-  if vSpeed > 0 then
-    lcd.drawBitmap(getBitmap("varioline"),173,varioY)
+  lcd.drawFilledRectangle(VARIO_X+2, varioY, 8, varioSpeed/varioMax*44, CUSTOM_COLOR, 0)  
+  lcd.drawBitmap(getBitmap("variogauge"),VARIO_X + 2,VARIO_Y + 5)
+  if vspd > 0 then
+    lcd.drawBitmap(getBitmap("varioline"),VARIO_X-1,varioY)
   else
-    lcd.drawBitmap(getBitmap("varioline"),173,78 + varioSpeed/varioMax*44)
+    lcd.drawBitmap(getBitmap("varioline"),VARIO_X-1,78 + varioSpeed/varioMax*44)
   end
 #endif --HUD_BIG
   -------------------------------------
@@ -2701,12 +2789,12 @@ local function drawHud()
   end
   -- vertical speed
   lcd.drawText(VSPEED_XLABEL,VSPEED_YLABEL,"vspd(m/s)",VSPEED_FLAGSLABEL)
-  if (vSpeed > 999) then
-    lcd.drawNumber(VSPEED_X,VSPEED_Y,vSpeed*0.1,VSPEED_FLAGS+PREC1)
-  elseif (vSpeed < -99) then
-    lcd.drawNumber(VSPEED_X,VSPEED_Y,vSpeed * 0.1,VSPEED_FLAGS+PREC1)
+  if (vspd > 999) then
+    lcd.drawNumber(VSPEED_X,VSPEED_Y,vspd*0.1,VSPEED_FLAGS+PREC1)
+  elseif (vspd < -99) then
+    lcd.drawNumber(VSPEED_X,VSPEED_Y,vspd * 0.1,VSPEED_FLAGS+PREC1)
   else
-    lcd.drawNumber(VSPEED_X,VSPEED_Y,vSpeed,VSPEED_FLAGS+PREC1)
+    lcd.drawNumber(VSPEED_X,VSPEED_Y,vspd,VSPEED_FLAGS+PREC1)
   end
 #ifdef HUDTIMER
   hudDrawTime = hudDrawTime + (getTime() - hudStart)
@@ -2781,15 +2869,13 @@ local function checkAlarm(level,value,idx,sign,sound,delay)
           alarms[idx][1] = false
       end
     else
-      -- fire once but only every 2secs max
+      -- fire once but only every 5secs max
       if alarms[idx][2] == 0 then
         alarms[idx][1] = true
         alarms[idx][2] = flightTime
-        if (flightTime - alarms[idx][5]) > 2 then
+        if (flightTime - alarms[idx][5]) > 5 then
           playSound(sound)
-          if alarms[idx][5] == 0 then
-            alarms[idx][5] = flightTime
-          end
+          alarms[idx][5] = flightTime
         end
       end
       -- ...and then fire every conf secs after the first shot
@@ -2818,9 +2904,16 @@ local function checkEvents()
     checkAlarm(1,2*battFailsafe,ALARMS_BATT,1,"lowbat",menuItems[T2][4])  
     checkAlarm(conf.timerAlert,flightTime,ALARMS_TIMER,1,"timealert",conf.timerAlert)
   end
+  -- default is use battery 1
+  local capacity = getBatt1Capacity()
+  local mah = batt1mah
+  -- only if dual battery has been detected use battery 2
+  if batt2sources.fc or batt2sources.vs then
+      capacity = capacity + getBatt2Capacity()
+      mah = mah  + batt2mah
+  end
 
-  local capacity = getBatt1Capacity() + getBatt2Capacity()
-  local mah = batt1mah + batt2mah
+  
   if (capacity > 0) then
     batLevel = (1 - (mah/capacity))*100
   else
@@ -2873,7 +2966,7 @@ local function checkCellVoltage(battsource,cellmin,cellminFC,cellminA2)
 end
 
 local function cycleBatteryInfo()
-  if showDualBattery == false and batt2volt > 0 then
+  if showDualBattery == false and (batt2sources.fc or batt2sources.vs) then
     showDualBattery = true
     return
   end
@@ -3088,7 +3181,7 @@ local function run(event)
     drawCompassRibbon()
     --drawGrid()
     -- with dual battery default is to show aggregate view
-    if batt2sources.fc or batt2sources.vs or batt2sources.a2 then
+    if batt2sources.fc or batt2sources.vs then
       if showDualBattery == false then
         -- dual battery: aggregate view
         lcd.drawText(285+BATTINFO_B1B2_X,BATTINFO_Y,"BATTERY: 1+2",SMLSIZE+INVERS)
