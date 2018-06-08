@@ -193,6 +193,10 @@ In dual battery mode a short press of [ENTER] on the Taranis or [ENCODER] on the
 
 To get back to aggregate view and retain the selected voltage source short press [EXIT] on Taranis or [RTN] on Horus.
 
+## Supported battery configurations
+
+- A2 analog port only: In this configuration only 1 battery will be detected,a2 will be displayed next to the cell voltage, Cell voltage is A2 battery voltage divided by cell count. No current or battery consumption will be availbale. If the user overrides battery capacity from the config menu battery % will be stuck at 99%.
+
 ## Cell Count Detection
 
 The script uses a simple way to calculate cell count for voltage sources fc and a2:
