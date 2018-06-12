@@ -41,6 +41,7 @@ mavlink message history
  - [voltage sources](#voltage-sources)
  - [supported battery configurations](#supported-battery-configurations)
  - [cell count detection](#cell-count-detection)
+ - [airspeed vs groundspeed](#airspeed-vs-groundspeed)
  - [alerts](#alerts)
  - [script timing and update rates](#script-timing-and-update-rates)
  - [configuration](#configuration)
@@ -228,6 +229,18 @@ Please note that the voltage used for the calculation is the maximum pack voltag
 
 The script supports autodetection up to 6s.
 It's always possible to override auto detection from the menu and set cell count up to 12s.
+
+## airspeed vs groundspeed
+
+The frsky passthrough telemetry library can send on the radio link only 1 speed value.
+Where it picks that speed value depends on arduplane configuration.
+
+- ARSPD_TYPE > 0 : an airspeed sensor has been enabled in arduplane.
+The telemetry library will try to use airspeed even if the sensor is unhealthy, if it’s unhealty the reported speed will be 0, with a healthy airspeed sensor the reported speed will be actual airspeed.
+
+- ARSPD_TYPE = 0 : no airspeed sensor defined in arduplane. The telemetry library will always send groundspeed (gps)
+
+To recap: the script has no control and simply displays what arduplane is sending based on airspeed sensor configuration.
 
 ## Alerts
 
