@@ -195,9 +195,14 @@ To get back to aggregate view and retain the selected voltage source short press
 
 ## Supported battery configurations
 
-- A2 analog port only: In this configuration only 1 battery will be detected,a2 will be displayed next to the cell voltage, Cell voltage is A2 battery voltage divided by cell count. No current or battery consumption will be availbale. If the user overrides battery capacity from the config menu battery % will be stuck at 99%.
-- Single and dual power brick, voltage and current monitoring and display
-- Single and dual FLVSS sensor, voltage only monitoring and display
+- A2 analog port only: In this configuration only 1 battery will be detected,a2 will be displayed next to the cell voltage, Cell voltage is calculated as A2 battery voltage divided by cell count. No current or battery consumption will be availbale. If the user overrides battery capacity from the config menu battery % will be stuck at 99%.
+- Single power module: In this configuration only 1 battery will be detected, fc will be displayed next to the cell voltage, Cell voltage is calculated as battery pack voltage divided by cell count. Current and consumed mAh will be reported. Battery percentage depends on battery capacity either received from ArduPilot or overriden from the menu.
+- Dual power module: In this configuration 2 batteries will be detected, fc will be displayed next to the cell voltage, Cell voltage is calculated as battery pack voltage divided by cell count. Current and consumed mAh will be reported. Battery percentage depends on battery capacity either received from ArduPilot or overriden from the menu. Battery stats can be displayed in aggregate view or separate battery view (battery 1 in right pane and battery 2 in left pane)
+In aggregate battery view Cell voltage is the minimun cell voltage between battery 1 and 2, current is the sum of current 1 and current 2, consumed mAh is the sum of mAh 1 and mAh 2 and battery percentage is the weighted average of percentage 1 and percentage 2
+- Single FLVSS sensor:  In this configuration only 1 battery will be detected,vs will be displayed next to the cell voltage, Cell voltage is the minimum cell voltage of the pack. No current or battery consumption will be availbale. If the user overrides battery capacity from the config menu battery % will be stuck at 99%.
+- Dual FLVSS sensor:  In this configuration only 2 batteries will be detected,vs will be displayed next to the cell voltage, Cell voltage is the minimum cell voltage of the pack. No current or battery consumption will be availbale. If the user overrides battery capacity from the config menu battery % will be stuck at 99%.
+Battery stats can be displayed in aggregate view or separate battery view (battery 1 in right pane and battery 2 in left pane)
+In aggregate battery view Cell voltage is the minimun cell voltage between battery 1 and 2.
 
 ## Cell Count Detection
 
