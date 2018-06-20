@@ -295,8 +295,8 @@ On Horus make sure you have the SOUNDS/yaapu0, SCRIPTS/YAAPU/CFG and SCRIPTS/YAA
 - For the X9D/X9D+ and X9E use the yaapu9.luac script (rename it to yaapu9.lua if the radio doesn't start it, see the note below).
 - For the QX7 radio use the yaapu7.luac script (rename it to yaapu7.lua if the radio doesn't start it, see the note below).
 
-The script is quite big and compilation on your radio may fail.
-The safest way is to compile it on Companion and then copy the .luac compiled version to the SD card in the /SCRIPTS/TELEMETRY folder on Taranis or to the /SCRIPTS/YAAPU folder on the Horus.
+The script is quite big and compilation on your radio will fail with a memory error.
+The correct way is to compile it on Companion and then copy the .luac compiled version to the SD card in the /SCRIPTS/TELEMETRY folder on Taranis or to the /SCRIPTS/YAAPU folder on the Horus.
 
 I do provide already compiled versions for X10/X12,X9D and QX7.
 
@@ -304,7 +304,7 @@ I do provide already compiled versions for X10/X12,X9D and QX7.
 
 To enable sound files playback copy them to /SOUNDS/yaapu0/en, /SOUNDS/yaapu0/it and SOUNDS/yaapu0/fr folders.
 
-**Note: On the Horus the script needs to be started in one time mode, see the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12) on how to do it.**
+**Note: On the Horus the script needs to be started as a "one time script", see the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12) on how to do it.**
 
 ## Sound files customization
 
