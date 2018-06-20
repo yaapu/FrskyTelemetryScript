@@ -75,7 +75,7 @@ mavlink message history
    - flight controller via telemetry (fc is displayed next to voltage)
  - battery lowest cell if available or cell average if not
  - battery current
- - battery capacity and battery capacity used in mAh and %
+ - battery capacity and battery capacity used in mAh and % with vocal alerts for 90,80,70,60,50,40,30,25,20,15,10,4 levels
  - power as battery voltage * current
  - vertical speed on left side of HUD
  - "synthetic vertical speed" calculated from altitude variations (no vspeed is sent by the autopilot in DCM mode)
