@@ -83,6 +83,7 @@ mavlink message history
  - gps altitude
  - gps fix extendend status (2D,3D,DGPS,RTK)
  - gps HDop
+ - satellite count (Note: the highest reported count is 15 sats due to telemetry library restrictions)
  - flight time
  - rssi value
  - transmitter voltage
