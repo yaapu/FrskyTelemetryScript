@@ -211,7 +211,7 @@ Battery stats can be displayed in aggregate view or separate battery view (batte
 In aggregate battery view Cell voltage is the minimun cell voltage between battery 1 and 2.
 - Single FLVSS sensor + single power module: voltage will be available from 2 sources, user can choose which one to display. Current will always be visible. 
 - Dual FLVSS sensors + dual power module: voltage will be available from 2 sources, user can choose which one to display. Current will always be visible. Voltage and current visible in dual battery view as well as aggregate battery view.
-- Dual FLVSS + single power module: voltage will be available from 2 sources, user can choose which one to display. Current reading is only available for battery 1: the script assumes that the load is equally shared between the two batteries. In dual battery view current,mAh and battery capacity will be split half on battery 1,between the left and right panels.
+- Dual FLVSS + single power module: voltage will be available from 2 sources, user can choose which one to display. Current reading is only available for battery 1: the script assumes that the load is equally shared between the two batteries.
 
 ## Cell Count Detection
 
@@ -303,46 +303,46 @@ The correct way is to compile it on Companion and then copy the .luac compiled v
 
 On Taranis X9D radios the correct folder structure is
 
-/MODELS/yaapu/<modelname>.cfg
-/SCRIPTS/TELEMETRY/yaapu9.lua
-/SCRIPTS/TELEMETRY/yaapu9.luac
-/SCRIPTS/TELEMETRY/yaapu/copter.lua
-/SCRIPTS/TELEMETRY/yaapu/copter.luac
-/SCRIPTS/TELEMETRY/yaapu/plane.lua
-/SCRIPTS/TELEMETRY/yaapu/plane.luac
-/SCRIPTS/TELEMETRY/yaapu/rover.lua
-/SCRIPTS/TELEMETRY/yaapu/rover.luac
-/SOUNDS/yaapu0/en
-/SOUNDS/yaapu0/it
-/SOUNDS/yaapu0/fr
-/SOUNDS/yaapu0/de
+-/MODELS/yaapu/<modelname>.cfg
+-/SCRIPTS/TELEMETRY/yaapu9.lua
+-/SCRIPTS/TELEMETRY/yaapu9.luac
+-/SCRIPTS/TELEMETRY/yaapu/copter.lua
+-/SCRIPTS/TELEMETRY/yaapu/copter.luac
+-/SCRIPTS/TELEMETRY/yaapu/plane.lua
+-/SCRIPTS/TELEMETRY/yaapu/plane.luac
+-/SCRIPTS/TELEMETRY/yaapu/rover.lua
+-/SCRIPTS/TELEMETRY/yaapu/rover.luac
+-/SOUNDS/yaapu0/en
+-/SOUNDS/yaapu0/it
+-/SOUNDS/yaapu0/fr
+-/SOUNDS/yaapu0/de
  
 On Taranis QX7 radios the correct folder structure is
 
-/MODELS/yaapu/<modelname>.cfg
-/SCRIPTS/TELEMETRY/yaapu7.lua
-/SCRIPTS/TELEMETRY/yaapu7.luac
-/SCRIPTS/TELEMETRY/yaapu/copter.lua
-/SCRIPTS/TELEMETRY/yaapu/copter.luac
-/SCRIPTS/TELEMETRY/yaapu/plane.lua
-/SCRIPTS/TELEMETRY/yaapu/plane.luac
-/SCRIPTS/TELEMETRY/yaapu/rover.lua
-/SCRIPTS/TELEMETRY/yaapu/rover.luac
-/SOUNDS/yaapu0/en
-/SOUNDS/yaapu0/it
-/SOUNDS/yaapu0/fr
-/SOUNDS/yaapu0/de
+-/MODELS/yaapu/<modelname>.cfg
+-/SCRIPTS/TELEMETRY/yaapu7.lua
+-/SCRIPTS/TELEMETRY/yaapu7.luac
+-/SCRIPTS/TELEMETRY/yaapu/copter.lua
+-/SCRIPTS/TELEMETRY/yaapu/copter.luac
+-/SCRIPTS/TELEMETRY/yaapu/plane.lua
+-/SCRIPTS/TELEMETRY/yaapu/plane.luac
+-/SCRIPTS/TELEMETRY/yaapu/rover.lua
+-/SCRIPTS/TELEMETRY/yaapu/rover.luac
+-/SOUNDS/yaapu0/en
+-/SOUNDS/yaapu0/it
+-/SOUNDS/yaapu0/fr
+-/SOUNDS/yaapu0/de
 
 On Horus radios the correct folder structure is
 
-/SCRIPTS/YAAPU/CFG
-/SCRIPTS/YAAPU/IMAGES
-/SCRIPTS/YAAPU/yaapux.lua
-/SCRIPTS/YAAPU/yaapux.luac
-/SOUNDS/yaapu0/en
-/SOUNDS/yaapu0/it
-/SOUNDS/yaapu0/fr
-/SOUNDS/yaapu0/de
+-/SCRIPTS/YAAPU/CFG
+-/SCRIPTS/YAAPU/IMAGES
+-/SCRIPTS/YAAPU/yaapux.lua
+-/SCRIPTS/YAAPU/yaapux.luac
+-/SOUNDS/yaapu0/en
+-/SOUNDS/yaapu0/it
+-/SOUNDS/yaapu0/fr
+-/SOUNDS/yaapu0/de
  
 I do provide already compiled versions for X10/X12,X9D and QX7.
 
