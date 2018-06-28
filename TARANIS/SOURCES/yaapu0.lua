@@ -23,33 +23,70 @@
 -- Borrowed some code from the LI-xx BATTCHECK v3.30 script
 --  http://frskytaranis.forumactif.org/t2800-lua-download-un-testeur-de-batterie-sur-la-radio
 
+--[[
+	MAV_TYPE_GENERIC=0,               /* Generic micro air vehicle. | */
+	MAV_TYPE_FIXED_WING=1,            /* Fixed wing aircraft. | */
+	MAV_TYPE_QUADROTOR=2,             /* Quadrotor | */
+	MAV_TYPE_COAXIAL=3,               /* Coaxial helicopter | */
+	MAV_TYPE_HELICOPTER=4,            /* Normal helicopter with tail rotor. | */
+	MAV_TYPE_ANTENNA_TRACKER=5,       /* Ground installation | */
+	MAV_TYPE_GCS=6,                   /* Operator control unit / ground control station | */
+	MAV_TYPE_AIRSHIP=7,               /* Airship, controlled | */
+	MAV_TYPE_FREE_BALLOON=8,          /* Free balloon, uncontrolled | */
+	MAV_TYPE_ROCKET=9,                /* Rocket | */
+	MAV_TYPE_GROUND_ROVER=10,         /* Ground rover | */
+	MAV_TYPE_SURFACE_BOAT=11,         /* Surface vessel, boat, ship | */
+	MAV_TYPE_SUBMARINE=12,            /* Submarine | */
+  MAV_TYPE_HEXAROTOR=13,            /* Hexarotor | */
+	MAV_TYPE_OCTOROTOR=14,            /* Octorotor | */
+	MAV_TYPE_TRICOPTER=15,            /* Tricopter | */
+	MAV_TYPE_FLAPPING_WING=16,        /* Flapping wing | */
+	MAV_TYPE_KITE=17,                 /* Kite | */
+	MAV_TYPE_ONBOARD_CONTROLLER=18,   /* Onboard companion controller | */
+	MAV_TYPE_VTOL_DUOROTOR=19,        /* Two-rotor VTOL using control surfaces in vertical operation in addition. Tailsitter. | */
+	MAV_TYPE_VTOL_QUADROTOR=20,       /* Quad-rotor VTOL using a V-shaped quad config in vertical operation. Tailsitter. | */
+	MAV_TYPE_VTOL_TILTROTOR=21,       /* Tiltrotor VTOL | */
+	MAV_TYPE_VTOL_RESERVED2=22,       /* VTOL reserved 2 | */
+	MAV_TYPE_VTOL_RESERVED3=23,       /* VTOL reserved 3 | */
+	MAV_TYPE_VTOL_RESERVED4=24,       /* VTOL reserved 4 | */
+	MAV_TYPE_VTOL_RESERVED5=25,       /* VTOL reserved 5 | */
+	MAV_TYPE_GIMBAL=26,               /* Onboard gimbal | */
+	MAV_TYPE_ADSB=27,                 /* Onboard ADSB peripheral | */
+	MAV_TYPE_PARAFOIL=28,             /* Steerable, nonrigid airfoil | */
+	MAV_TYPE_DODECAROTOR=29,          /* Dodecarotor | */
+]]--
+
 ---------------------
 -- radio model
 ---------------------
 #define X9
 --#define X7
+-- to compile lua in luac files
+--#define COMPILE
+-- force loading of .lua files even after compilation
+-- usefull if you rename .luac in .lua
+--#define LOAD_LUA
 
+#ifdef COMPILE
+#define LOAD_LUA
+#endif
 ---------------------
 -- script version 
 ---------------------
 #ifdef X9
-  #define VERSION "Yaapu X9 telemetry script 1.6.0-beta1"
+  #define VERSION "Yaapu X9 telemetry script 1.6.2"
 #else
-  #define VERSION "Yaapu X7 1.6.0-beta1"
+  #define VERSION "Yaapu X7 1.6.2"
 #endif
-
----------------------
--- frame types: copter always enabled
----------------------
-#define PLANE
-#define ROVER
 
 ---------------------
 -- features
 ---------------------
-#define SENSORS
+-- metric   version displays: hspeed=m/s,     vspeed=m/s, distance=m
+-- imperial version displays: hspeed=miles/h, vspeed=f/s, distance=f
+--#define IMPERIAL
+
 --#define FRAMETYPE
-#define YAWRIBBON
 --#define BATTMAH3DEC
 ---------------------
 -- dev features
@@ -57,6 +94,8 @@
 --#define LOGTELEMETRY
 --#define LOGMESSAGES
 --
+--#define MEMDEBUG
+#define COLLECTGARBAGE
 --#define DEBUG
 --#define PLAYLOG
 --#define DEBUGMENU
@@ -79,9 +118,6 @@
 --#define TELERATE
 
 --
-
-#ifdef SENSORS
-
 #define VFAS_ID 0x0210
 #define VFAS_SUBID 0
 #define VFAS_INSTANCE 2
@@ -142,59 +178,20 @@
 #define Fuel_PRECISION 0
 #define Fuel_NAME "Fuel"
 
-#endif --SENSORS
-
-#ifdef DEBUG
---[[
-	MAV_TYPE_GENERIC=0,               /* Generic micro air vehicle. | */
-	MAV_TYPE_FIXED_WING=1,            /* Fixed wing aircraft. | */
-	MAV_TYPE_QUADROTOR=2,             /* Quadrotor | */
-	MAV_TYPE_COAXIAL=3,               /* Coaxial helicopter | */
-	MAV_TYPE_HELICOPTER=4,            /* Normal helicopter with tail rotor. | */
-	MAV_TYPE_ANTENNA_TRACKER=5,       /* Ground installation | */
-	MAV_TYPE_GCS=6,                   /* Operator control unit / ground control station | */
-	MAV_TYPE_AIRSHIP=7,               /* Airship, controlled | */
-	MAV_TYPE_FREE_BALLOON=8,          /* Free balloon, uncontrolled | */
-	MAV_TYPE_ROCKET=9,                /* Rocket | */
-	MAV_TYPE_GROUND_ROVER=10,         /* Ground rover | */
-	MAV_TYPE_SURFACE_BOAT=11,         /* Surface vessel, boat, ship | */
-	MAV_TYPE_SUBMARINE=12,            /* Submarine | */
-  MAV_TYPE_HEXAROTOR=13,            /* Hexarotor | */
-	MAV_TYPE_OCTOROTOR=14,            /* Octorotor | */
-	MAV_TYPE_TRICOPTER=15,            /* Tricopter | */
-	MAV_TYPE_FLAPPING_WING=16,        /* Flapping wing | */
-	MAV_TYPE_KITE=17,                 /* Kite | */
-	MAV_TYPE_ONBOARD_CONTROLLER=18,   /* Onboard companion controller | */
-	MAV_TYPE_VTOL_DUOROTOR=19,        /* Two-rotor VTOL using control surfaces in vertical operation in addition. Tailsitter. | */
-	MAV_TYPE_VTOL_QUADROTOR=20,       /* Quad-rotor VTOL using a V-shaped quad config in vertical operation. Tailsitter. | */
-	MAV_TYPE_VTOL_TILTROTOR=21,       /* Tiltrotor VTOL | */
-	MAV_TYPE_VTOL_RESERVED2=22,       /* VTOL reserved 2 | */
-	MAV_TYPE_VTOL_RESERVED3=23,       /* VTOL reserved 3 | */
-	MAV_TYPE_VTOL_RESERVED4=24,       /* VTOL reserved 4 | */
-	MAV_TYPE_VTOL_RESERVED5=25,       /* VTOL reserved 5 | */
-	MAV_TYPE_GIMBAL=26,               /* Onboard gimbal | */
-	MAV_TYPE_ADSB=27,                 /* Onboard ADSB peripheral | */
-	MAV_TYPE_PARAFOIL=28,             /* Steerable, nonrigid airfoil | */
-	MAV_TYPE_DODECAROTOR=29,          /* Dodecarotor | */
-]]--
-#endif --DEBUG
-
 #ifdef X9
 #ifdef FRAMETYPE
 local frameNames = {}
 -- copter
 frameNames[0]   = "GEN"
+frameNames[1]   = "WING"
 frameNames[2]   = "QUAD"
 frameNames[3]   = "COAX"
 frameNames[4]   = "HELI"
+frameNames[10]  = "ROV"
+frameNames[11]  = "BOAT"
 frameNames[13]  = "HEX"
 frameNames[14]  = "OCTO"
 frameNames[15]  = "TRI"
-frameNames[29]  = "DODE"
-
-#ifdef PLANE
--- plane
-frameNames[1]   = "WING"
 frameNames[16]  = "FLAP"
 frameNames[19]  = "VTOL2"
 frameNames[20]  = "VTOL4"
@@ -204,16 +201,10 @@ frameNames[23]  = "VTOL"
 frameNames[24]  = "VTOL"
 frameNames[25]  = "VTOL"
 frameNames[28]  = "FOIL"
-#endif --PLANE
-
-#ifdef ROVER
--- rover
-frameNames[10]  = "ROV"
--- boat
-frameNames[11]  = "BOAT"
-#endif --ROVER
+frameNames[29]  = "DODE"
 #endif --FRAMETYPE
 #endif -- X9
+
 local frameTypes = {}
 -- copter
 frameTypes[0]   = "c"
@@ -224,8 +215,6 @@ frameTypes[13]  = "c"
 frameTypes[14]  = "c"
 frameTypes[15]  = "c"
 frameTypes[29]  = "c"
-
-#ifdef PLANE
 -- plane
 frameTypes[1]   = "p"
 frameTypes[16]  = "p"
@@ -237,14 +226,10 @@ frameTypes[23]  = "p"
 frameTypes[24]  = "p"
 frameTypes[25]  = "p"
 frameTypes[28]  = "p"
-#endif --PLANE
-
-#ifdef ROVER
 -- rover
 frameTypes[10]  = "r"
 -- boat
 frameTypes[11]  = "b"
-#endif --ROVER
 
 #ifdef TESTMODE
 -- undefined
@@ -261,99 +246,11 @@ frameTypes[27] = ""
 frameTypes[30] = ""
 #endif --TESTMODE
 --
-local flightModes = {}
-flightModes["c"] = {}
-#ifdef PLANE
-flightModes["p"] = {}
-#endif --PLANE
-#ifdef ROVER
-flightModes["r"] = {}
-#endif --ROVER
--- copter flight modes
-flightModes["c"][1]="Stabilize"
-flightModes["c"][2]="Acro"
-flightModes["c"][3]="AltHold"
-flightModes["c"][4]="Auto"
-flightModes["c"][5]="Guided"
-flightModes["c"][6]="Loiter"
-flightModes["c"][7]="RTL"
-flightModes["c"][8]="Circle"
-flightModes["c"][10]="Land"
-flightModes["c"][12]="Drift"
-flightModes["c"][14]="Sport"
-flightModes["c"][15]="Flip"
-flightModes["c"][16]="AutoTune"
-flightModes["c"][17]="PosHold"
-flightModes["c"][18]="Brake"
-flightModes["c"][19]="Throw"
-flightModes["c"][20]="AvoidADSB"
-flightModes["c"][21]="GuidedNOGPS"
-flightModes["c"][22]="SmartRTL"
-#ifdef TESTMODE
-flightModes["c"][0]=""
-flightModes["c"][9]=""
-flightModes["c"][11]=""
-flightModes["c"][13]=""
-#endif --TESTMODE
-#ifdef PLANE
--- plane flight modes
-flightModes["p"][1]="Manual"
-flightModes["p"][2]="Circle"
-flightModes["p"][3]="Stabilize"
-flightModes["p"][4]="Training"
-flightModes["p"][5]="Acro"
-flightModes["p"][6]="FlyByWireA"
-flightModes["p"][7]="FlyByWireB"
-flightModes["p"][8]="Cruise"
-flightModes["p"][9]="Autotune"
-flightModes["p"][11]="Auto"
-flightModes["p"][12]="RTL"
-flightModes["p"][13]="Loiter"
-flightModes["p"][15]="AvoidADSB"
-flightModes["p"][16]="Guided"
-flightModes["p"][17]="Initializing"
-flightModes["p"][18]="QStabilize"
-flightModes["p"][19]="QHover"
-flightModes["p"][20]="QLoiter"
-flightModes["p"][21]="Qland"
-flightModes["p"][22]="QRTL"
-#ifdef TESTMODE
-flightModes["p"][0]=""
-flightModes["p"][10]=""
-flightModes["p"][14]=""
-#endif --TESTMODE
-#endif --PLANE
-#ifdef ROVER
--- rover flight modes
-flightModes["r"][1]="Manual"
-flightModes["r"][2]="Acro"
-flightModes["r"][4]="Steering"
-flightModes["r"][5]="Hold"
-flightModes["r"][11]="Auto"
-flightModes["r"][12]="RTL"
-flightModes["r"][13]="SmartRTL"
-flightModes["r"][16]="Guided"
-flightModes["r"][17]="Initializing"
-#ifdef TESTMODE
-flightModes["r"][0]=""
-flightModes["r"][6]=""
-flightModes["r"][7]=""
-flightModes["r"][8]=""
-flightModes["r"][9]=""
-flightModes["r"][10]=""
-flightModes["r"][14]=""
-flightModes["r"][15]=""
-flightModes["r"][18]=""
-flightModes["r"][19]=""
-flightModes["r"][20]=""
-flightModes["r"][21]=""
-flightModes["r"][22]=""
-#endif --TESTMODE
-#endif --ROVER
+local frame = {}
 --
 local soundFileBasePath = "/SOUNDS/yaapu0"
 local gpsStatuses = {}
-
+--
 #ifdef X9
 gpsStatuses[0]="NoGPS"
 gpsStatuses[1]="NoLock"
@@ -373,18 +270,10 @@ gpsStatuses[4]="DG"
 gpsStatuses[5]="RT"
 gpsStatuses[6]="RT"
 #endif --X7
-
-local mavSeverity = {}
-mavSeverity[0]="EMR"
-mavSeverity[1]="ALR"
-mavSeverity[2]="CRT"
-mavSeverity[3]="ERR"
-mavSeverity[4]="WRN"
-mavSeverity[5]="NOT"
-mavSeverity[6]="INF"
-mavSeverity[7]="DBG"
-
-#define CELLFULL 4.35
+-- EMR,ALR,CRT,ERR,WRN,NOT,INF,DBG
+#define mavSeverity(idx) string.sub("EMRALRCRTERRWRNNOTINFDBG",idx*3+1,idx*3+3)
+--
+#define CELLFULL 4.36
 --------------------------------
 -- FLVSS 1
 local cell1min = 0
@@ -393,16 +282,14 @@ local cell1sum = 0
 local cell2min = 0
 local cell2sum = 0
 -- FC 1
-local cell1minFC = 0
 local cell1sumFC = 0
+-- used to calculate cellcount
 local cell1maxFC = 0
 -- FC 2
-local cell2minFC = 0
 local cell2sumFC = 0
-local cell2maxFC = 0
 -- A2
-local cellminA2 = 0
 local cellsumA2 = 0
+-- used to calculate cellcount
 local cellmaxA2 = 0
 --------------------------------
 -- STATUS
@@ -439,8 +326,6 @@ local batt2sources = {
   fc = false
 }
 -- TELEMETRY
-local SENSOR_ID,FRAME_ID,DATA_ID,VALUE
-local c1,c2,c3,c4
 local noTelemetryData = 1
 -- HOME
 local homeDist = 0
@@ -463,14 +348,13 @@ local roll = 0
 local pitch = 0
 local range = 0 
 -- PARAMS
-local paramId,paramValue
 local frameType = -1
-local battFailsafeVoltage = 0
-local battFailsafeCapacity = 0
 local batt1Capacity = 0
 local batt2Capacity = 0
 -- FLIGHT TIME
+--[[ migrated to model.timer(2)
 local seconds = 0
+--]]
 local lastTimerStart = 0
 local timerRunning = 0
 local flightTime = 0
@@ -478,67 +362,41 @@ local flightTime = 0
 local lastStatusArmed = 0
 local lastGpsStatus = 0
 local lastFlightMode = 0
+local lastSimpleMode = 0
 -- battery levels
 local batLevel = 99
-local batLevels = {}
 local battLevel1 = false
 local battLevel2 = false
 --
 local lastBattLevel = 13
-batLevels[0]=0
-batLevels[1]=5
-batLevels[2]=10
-batLevels[3]=15
-batLevels[4]=20
-batLevels[5]=25
-batLevels[6]=30
-batLevels[7]=40
-batLevels[8]=50
-batLevels[9]=60
-batLevels[10]=70
-batLevels[11]=80
-batLevels[12]=90
+--
+-- 00 05 10 15 20 25 30 40 50 60 70 80 90
+#define batLevels(idx) tonumber(string.sub("00051015202530405060708090",idx*2+1,idx*2+2))
 -- dual battery
 local showDualBattery = false
 --
-#define MIN_CELL_FC 1
-#define MIN_CELL1_FC 2
-#define MIN_CELL2_FC 3
-#define MIN_CELL_VS 4
-#define MIN_CELL1_VS 5
-#define MIN_CELL2_VS 6
-#define MIN_CELL_A2 7
-#define MIN_CELL1_A2 8
-#define MIN_CELL2_A2 9
+#define MIN_BATT1_FC 1
+#define MIN_BATT2_FC 2
+#define MIN_CELL1_VS 3
+#define MIN_CELL2_VS 4
+#define MIN_BATT1_VS 5
+#define MIN_BATT2_VS 6
+#define MIN_BATT_A2 7
 
-#define MIN_BATT_FC 10
-#define MIN_BATT1_FC 11
-#define MIN_BATT2_FC 12
-#define MIN_BATT_VS 13
-#define MIN_BATT1_VS 14
-#define MIN_BATT2_VS 15
-#define MIN_BATT_A2 16
-#define MIN_BATT1_A2 17
-#define MIN_BATT2_A2 18
+#define MAX_CURR 8
+#define MAX_CURR1 9
+#define MAX_CURR2 10
+#define MAX_POWER 11
+#define MINMAX_ALT 12
+#define MAX_GPSALT 13
+#define MAX_VSPEED 14
+#define MAX_HSPEED 15
+#define MAX_DIST 16
+#define MAX_RANGE 17
 
-#define MAX_CURR 19
-#define MAX_CURR1 20
-#define MAX_CURR2 21
-#define MAX_POWER 22
-#define MINMAX_ALT 23
-#define MAX_GPSALT 24
-#define MAX_VSPEED 25
-#define MAX_HSPEED 26
-#define MAX_DIST 27
-#define MAX_RANGE 28
-
--- offsets
-local minmaxOffsets = {}
---
-minmaxOffsets["fc"] = 0
-minmaxOffsets["vs"] = 3
-minmaxOffsets["a2"] = 6
-minmaxOffsets["na"] = 0
+#ifdef MEMDEBUG
+local maxmem = 0
+#endif
 --
 local minmaxValues = {}
 -- min
@@ -549,6 +407,7 @@ minmaxValues[4] = 0
 minmaxValues[5] = 0
 minmaxValues[6] = 0
 minmaxValues[7] = 0
+-- max
 minmaxValues[8] = 0
 minmaxValues[9] = 0
 minmaxValues[10] = 0
@@ -559,20 +418,14 @@ minmaxValues[14] = 0
 minmaxValues[15] = 0
 minmaxValues[16] = 0
 minmaxValues[17] = 0
-minmaxValues[18] = 0
--- max
-minmaxValues[19] = 0
-minmaxValues[20] = 0
-minmaxValues[21] = 0
-minmaxValues[22] = 0
-minmaxValues[23] = 0
-minmaxValues[24] = 0
-minmaxValues[25] = 0
-minmaxValues[26] = 0
-minmaxValues[27] = 0
-minmaxValues[28] = 0
 
 local showMinMaxValues = false
+-- messages
+local lastMessage
+local lastMessageSeverity = 0
+local lastMessageCount = 1
+local messageCount = 0
+local messages = {}
 --
 #ifdef LOGTELEMETRY
 local logfile
@@ -678,19 +531,19 @@ local thrOut = 0
 #define GPS_Y 6
 #define GPS_BORDER 0
 
-#define ALTASL_X 63
+#define ALTASL_X 65
 #define ALTASL_Y 26
 #define ALTASL_XLABEL 4
 #define ALTASL_YLABEL 25
 #define ALTASL_FLAGS RIGHT
 
-#define BATTPOWER_X 63
+#define BATTPOWER_X 65
 #define BATTPOWER_Y 45
 #define BATTPOWER_XLABEL 2
 #define BATTPOWER_YLABEL 45
 #define BATTPOWER_FLAGS SMLSIZE+RIGHT
 
-#define HOMEDIST_X 62
+#define HOMEDIST_X 65
 #define HOMEDIST_Y 36
 #define HOMEDIST_XLABEL 2
 #define HOMEDIST_YLABEL 36
@@ -701,7 +554,7 @@ local thrOut = 0
 #define HOMEDIR_Y 48
 #define HOMEDIR_R 7
 
-#define FLIGHTTIME_X 180
+#define FLIGHTTIME_X 179
 #define FLIGHTTIME_Y 0
 #define FLIGHTTIME_FLAGS SMLSIZE+INVERS
 
@@ -807,8 +660,8 @@ local thrOut = 0
 #define GPS_Y 6
 #define GPS_BORDER 0
 
-#define ALTASL_X 87
-#define ALTASL_Y 9
+#define ALTASL_X 103
+#define ALTASL_Y 8
 #define ALTASL_XLABEL 67
 #define ALTASL_YLABEL 9
 
@@ -816,7 +669,7 @@ local thrOut = 0
 #define HOMEDIST_Y 19
 #define HOMEDIST_XLABEL 66
 #define HOMEDIST_YLABEL 19
-#define HOMEDIST_FLAGS SMLSIZE+RIGHT
+#define HOMEDIST_FLAGS RIGHT
 #define HOMEDIST_ARROW_WIDTH 7
 
 #define HOMEDIR_X 54
@@ -827,7 +680,7 @@ local thrOut = 0
 #define FLIGHTTIME_Y 0
 #define FLIGHTTIME_FLAGS SMLSIZE+INVERS
 
-#define RSSI_X 66
+#define RSSI_X 70
 #define RSSI_Y 0
 #define RSSI_FLAGS SMLSIZE+INVERS 
 
@@ -836,6 +689,37 @@ local thrOut = 0
 #define TXVOLTAGE_FLAGS SMLSIZE
 
 #endif --X7
+
+--------------------------------------------------------------------------------
+-- ALARMS
+--------------------------------------------------------------------------------
+#define ALARMS_MIN_ALT 1
+#define ALARMS_MAX_ALT 2
+#define ALARMS_MAX_DIST 3
+#define ALARMS_EKF 4
+#define ALARMS_BATT 5
+#define ALARMS_TIMER 6
+#define ALARMS_BATT2 7
+
+#define ALARM_TYPE_MIN 0
+#define ALARM_TYPE_MAX 1
+#define ALARM_TYPE_TIMER 2
+#define ALARM_TYPE_BATT 3
+--[[
+  min alarms need to be armed, i.e since values start at 0 in order to avoid
+  immediate triggering upon start, the value must first reach the treshold
+  only then will it trigger the alarm
+]]--
+local alarms = {
+  --{ triggered, time, armed, type(0=min,1=max,2=timer,3=batt), last_trigger }  
+    { false, 0 , false, ALARM_TYPE_MIN, 0},
+    { false, 0 , true, ALARM_TYPE_MAX, 0 },
+    { false, 0 , true, ALARM_TYPE_MAX, 0 },
+    { false, 0 , true, ALARM_TYPE_MAX, 0 },
+    { false, 0 , true, ALARM_TYPE_MAX, 0 },
+    { false, 0 , true, ALARM_TYPE_TIMER, 0 },
+    { false, 0 , false, ALARM_TYPE_BATT, 0 }
+}
 --------------------------------------------------------------------------------
 -- MENU VALUE,COMBO
 --------------------------------------------------------------------------------
@@ -843,11 +727,11 @@ local thrOut = 0
 #define TYPECOMBO 1
 #define MENU_Y 7
 #define MENU_PAGESIZE 7
-#define MENU_WRAPOFFSET 10
+#define MENU_WRAPOFFSET 11
 #ifdef X9
 #define MENU_ITEM_X 150
 #else
-#define MENU_ITEM_X 102
+#define MENU_ITEM_X 99
 #endif
 
 #define L1 1
@@ -867,62 +751,8 @@ local thrOut = 0
 #define CC 15
 #define RM 16
 #define SVS 17
+#define HS 18
   
-local menu  = {
-  selectedItem = 1,
-  editSelected = false,
-  offset = 0
-}
-
-#ifdef X9
-local menuItems = {
-  {"voice language:", TYPECOMBO, "L1", 1, { "english", "italian", "french" } , {"en","it","fr"} },
-  {"batt alert level 1:", TYPEVALUE, "V1", 375, 320,420,"V",PREC2,5 },
-  {"batt alert level 2:", TYPEVALUE, "V2", 350, 320,420,"V",PREC2,5 },
-  {"batt[1] capacity override:", TYPEVALUE, "B1", 0, 0,5000,"Ah",PREC2,10 },
-  {"batt[2] capacity override:", TYPEVALUE, "B2", 0, 0,5000,"Ah",PREC2,10 },
-  {"disable all sounds:", TYPECOMBO, "S1", 1, { "no", "yes" }, { false, true } },
-  {"disable msg beep:", TYPECOMBO, "S2", 1, { "no", "yes" }, { false, true } },
-  {"disable msg blink:", TYPECOMBO, "S3", 1, { "no", "yes" }, { false, true } },
-  {"default voltage source:", TYPECOMBO, "VS", 1, { "auto", "FLVSS", "A2", "fc" }, { nil, "vs", "a2", "fc" } },
-  {"timer alert every:", TYPEVALUE, "T1", 0, 0,600,"min",PREC1,5 },
-  {"min altitude alert:", TYPEVALUE, "A1", 0, 0,500,"m",PREC1,5 },
-  {"max altitude alert:", TYPEVALUE, "A2", 0, 0,10000,"m",0,1 },
-  {"max distance alert:", TYPEVALUE, "D1", 0, 0,100000,"m",0,10 },
-  {"repeat alerts every:", TYPEVALUE, "T2", 10, 10,600,"sec",0,5 },
-  {"cell count override:", TYPEVALUE, "CC", 0, 0,12," cells",0,1 },
-  {"rangefinder max:", TYPEVALUE, "RM", 0, 0,10000," cm",0,10 },
-  {"enable synthetic vspeed:", TYPECOMBO, "SVS", 1, { "no", "yes" }, { false, true } },
-}
-#endif --X9
-
-#ifdef X7
-local menuItems = {
-  {"voice language:", TYPECOMBO, "L1", 1, { "eng", "ita", "fre" } , {"en","it","fr"} },
-  {"batt alert level 1:", TYPEVALUE, "V1", 375, 320,420,"V",PREC2,5 },
-  {"batt alert level 2:", TYPEVALUE, "V2", 350, 320,420,"V",PREC2,5 },
-  {"batt[1] mAh override:", TYPEVALUE, "B1", 0, 0,5000,"Ah",PREC2,10 },
-  {"batt[2] mAh override:", TYPEVALUE, "B2", 0, 0,5000,"Ah",PREC2,10 },
-  {"disable all sounds:", TYPECOMBO, "S1", 1, { "no", "yes" }, { false, true } },
-  {"disable msg beep:", TYPECOMBO, "S2", 1, { "no", "yes" }, { false, true } },
-  {"disable msg blink:", TYPECOMBO, "S3", 1, { "no", "yes" }, { false, true } },
-  {"def voltage source:", TYPECOMBO, "VS", 1, { "auto", "FLVSS", "A2", "fc" }, { nil, "vs", "a2", "fc" } },
-  {"timer alert every:", TYPEVALUE, "T1", 0, 0,600,"min",PREC1,5 },
-  {"min altitude alert:", TYPEVALUE, "A1", 0, 0,500,"m",PREC1,5 },
-  {"max altitude alert:", TYPEVALUE, "A2", 0, 0,10000,"m",0,1 },
-  {"max distance alert:", TYPEVALUE, "D1", 0, 0,100000,"m",0,10 },
-  {"repeat alerts every:", TYPEVALUE, "T2", 10, 10,600,"sec",0,5 },
-  {"cell count override:", TYPEVALUE, "CC", 0, 0,12,"s",0,1 },
-  {"rangefinder max:", TYPEVALUE, "RM", 0, 0,10000," cm",0,10 },
-  {"enable synth.vspeed:", TYPECOMBO, "SVS", 1, { "no", "yes" }, { false, true } },
-}
-#endif --X7
-
-local function getConfigFilename()
-  local info = model.getInfo()
-  return "/MODELS/yaapu/" .. string.lower(string.gsub(info.name, "[%c%p%s%z]", "")..".cfg")
-end
-
 #define CONF_LANGUAGE menuItems[L1][6][menuItems[L1][4]]
 #define CONF_BATT_LEVEL1 menuItems[V1][4]
 #define CONF_BATT_LEVEL2 menuItems[V2][4]
@@ -940,12 +770,94 @@ end
 #define CONF_CELL_COUNT menuItems[CC][4]
 #define CONF_RANGE_MAX menuItems[RM][4]
 #define CONF_ENABLE_SYNTHVSPEED menuItems[SVS][6][menuItems[SVS][4]]
+-- MULT 1 = m/s, MULT 3.6 = km/h
+#define CONF_HSPEED_MULT menuItems[HS][6][menuItems[HS][4]]
+
+
+local menu  = {
+  selectedItem = 1,
+  editSelected = false,
+  offset = 0
+}
+
+#ifdef X9
+local menuItems = {
+  {"voice language:", TYPECOMBO, "L1", 1, { "english", "italian", "french", "german" } , {"en","it","fr","de"} },
+  {"batt alert level 1:", TYPEVALUE, "V1", 375, 320,420,"V",PREC2,5 },
+  {"batt alert level 2:", TYPEVALUE, "V2", 350, 320,420,"V",PREC2,5 },
+  {"batt[1] capacity override:", TYPEVALUE, "B1", 0, 0,5000,"Ah",PREC2,10 },
+  {"batt[2] capacity override:", TYPEVALUE, "B2", 0, 0,5000,"Ah",PREC2,10 },
+  {"disable all sounds:", TYPECOMBO, "S1", 1, { "no", "yes" }, { false, true } },
+  {"disable msg beep:", TYPECOMBO, "S2", 1, { "no", "yes" }, { false, true } },
+  {"disable msg blink:", TYPECOMBO, "S3", 1, { "no", "yes" }, { false, true } },
+  {"default voltage source:", TYPECOMBO, "VS", 1, { "auto", "FLVSS", "A2", "fc" }, { nil, "vs", "a2", "fc" } },
+  {"timer alert every:", TYPEVALUE, "T1", 0, 0,600,"min",PREC1,5 },
+#ifdef IMPERIAL  
+  {"min altitude alert:", TYPEVALUE, "A1", 0, 0,500,"ft",PREC1,5 },
+  {"max altitude alert:", TYPEVALUE, "A2", 0, 0,10000,"ft",0,1 },
+  {"max distance alert:", TYPEVALUE, "D1", 0, 0,100000,"ft",0,10 },
+#else  
+  {"min altitude alert:", TYPEVALUE, "A1", 0, 0,500,"m",PREC1,5 },
+  {"max altitude alert:", TYPEVALUE, "A2", 0, 0,10000,"m",0,1 },
+  {"max distance alert:", TYPEVALUE, "D1", 0, 0,100000,"m",0,10 },
+#endif  
+  {"repeat alerts every:", TYPEVALUE, "T2", 10, 10,600,"sec",0,5 },
+  {"cell count override:", TYPEVALUE, "CC", 0, 0,12," cells",0,1 },
+#ifdef IMPERIAL  
+  {"rangefinder max:", TYPEVALUE, "RM", 0, 0,10000," ft",0,1 },
+#else
+  {"rangefinder max:", TYPEVALUE, "RM", 0, 0,10000," cm",0,10 },
+#endif
+  {"enable synthetic vspeed:", TYPECOMBO, "SVS", 1, { "no", "yes" }, { false, true } },
+  {"ground/airspeed unit:", TYPECOMBO, "HS", 1, { "m/s", "km/h" }, { 1, 3.6 } },
+}
+#endif --X9
+
+#ifdef X7
+local menuItems = {
+  {"voice language:", TYPECOMBO, "L1", 1, { "eng", "ita", "fre", "ger" } , {"en","it","fr","de"} },
+  {"batt alert level 1:", TYPEVALUE, "V1", 375, 320,420,"V",PREC2,5 },
+  {"batt alert level 2:", TYPEVALUE, "V2", 350, 320,420,"V",PREC2,5 },
+  {"batt[1] mAh override:", TYPEVALUE, "B1", 0, 0,5000,"Ah",PREC2,10 },
+  {"batt[2] mAh override:", TYPEVALUE, "B2", 0, 0,5000,"Ah",PREC2,10 },
+  {"disable all sounds:", TYPECOMBO, "S1", 1, { "no", "yes" }, { false, true } },
+  {"disable msg beep:", TYPECOMBO, "S2", 1, { "no", "yes" }, { false, true } },
+  {"disable msg blink:", TYPECOMBO, "S3", 1, { "no", "yes" }, { false, true } },
+  {"def voltage source:", TYPECOMBO, "VS", 1, { "auto", "FLVSS", "A2", "fc" }, { nil, "vs", "a2", "fc" } },
+  {"timer alert every:", TYPEVALUE, "T1", 0, 0,600,"min",PREC1,5 },
+#ifdef IMPERIAL  
+  {"min altitude alert:", TYPEVALUE, "A1", 0, 0,500,"ft",PREC1,5 },
+  {"max altitude alert:", TYPEVALUE, "A2", 0, 0,10000,"ft",0,1 },
+  {"max distance alert:", TYPEVALUE, "D1", 0, 0,100000,"ft",0,10 },
+#else
+  {"min altitude alert:", TYPEVALUE, "A1", 0, 0,500,"m",PREC1,5 },
+  {"max altitude alert:", TYPEVALUE, "A2", 0, 0,10000,"m",0,1 },
+  {"max distance alert:", TYPEVALUE, "D1", 0, 0,100000,"m",0,10 },
+#endif
+  {"repeat alerts every:", TYPEVALUE, "T2", 10, 10,600,"sec",0,5 },
+  {"cell count override:", TYPEVALUE, "CC", 0, 0,12,"s",0,1 },
+#ifdef IMPERIAL  
+  {"rangefinder max:", TYPEVALUE, "RM", 0, 0,10000," ft",0,1 },
+#else
+  {"rangefinder max:", TYPEVALUE, "RM", 0, 0,10000," cm",0,10 },
+#endif
+  {"enable synth.vspeed:", TYPECOMBO, "SVS", 1, { "no", "yes" }, { false, true } },
+  {"ground/airspd unit:", TYPECOMBO, "HS", 1, { "m/s", "km/h" }, { 1, 3.6 } }
+}
+#endif --X7
+
+local function getConfigFilename()
+  local info = model.getInfo()
+  return "/MODELS/yaapu/" .. string.lower(string.gsub(info.name, "[%c%p%s%z]", "")..".cfg")
+end
 
 local function applyConfigValues()
   if CONF_BATT_SOURCE ~= nil then
     battsource = CONF_BATT_SOURCE
   end
+#ifdef COLLECTGARBAGE
   collectgarbage()
+#endif
 end
 
 local function loadConfig()
@@ -1001,9 +913,9 @@ local function drawConfigMenuBars()
   lcd.drawFilledRectangle(0,TOPBAR_Y, TOPBAR_WIDTH, 7, SOLID)
   lcd.drawRectangle(0, TOPBAR_Y, TOPBAR_WIDTH, 7, SOLID)
   lcd.drawText(0,0,VERSION,SMLSIZE+INVERS)
-  lcd.drawFilledRectangle(0,BOTTOMBAR_Y-2, BOTTOMBAR_WIDTH, 9, SOLID)
-  lcd.drawRectangle(0, BOTTOMBAR_Y-2, BOTTOMBAR_WIDTH, 9, SOLID)
-  lcd.drawText(0,BOTTOMBAR_Y-1,string.sub(getConfigFilename(),8),SMLSIZE+INVERS)
+  lcd.drawFilledRectangle(0,BOTTOMBAR_Y-1, BOTTOMBAR_WIDTH, 9, SOLID)
+  lcd.drawRectangle(0, BOTTOMBAR_Y-1, BOTTOMBAR_WIDTH, 9, SOLID)
+  lcd.drawText(0,BOTTOMBAR_Y,string.sub(getConfigFilename(),8),SMLSIZE+INVERS)
 #endif --X7
   lcd.drawText(BOTTOMBAR_WIDTH,BOTTOMBAR_Y+1,itemIdx,SMLSIZE+INVERS+RIGHT)
 end
@@ -1094,30 +1006,27 @@ local function drawConfigMenu(event)
     lcd.drawNumber(LCD_W-50,LCD_H-8, menu.offset,SMLSIZE)
 #endif --DEBUGMENU
 end
-
+-----------------------
+-- SOUNDS
+-----------------------
 local function playSound(soundFile)
   if CONF_DISABLE_SOUNDS then
     return
   end
   playFile(soundFileBasePath .."/"..CONF_LANGUAGE.."/".. soundFile..".wav")
 end
-
 ----------------------------------------------
--- sound file has same name as flightmode all lowercase with .wav extension
+-- NOTE: sound file has same name as flightmode all lowercase with .wav extension
 ----------------------------------------------
 local function playSoundByFrameTypeAndFlightMode(frameType,flightMode)
   if CONF_DISABLE_SOUNDS then
     return
   end
-  if frameType ~= -1 then
-    if flightModes[frameTypes[frameType]][flightMode] ~= nil then
-      playFile(soundFileBasePath.."/"..CONF_LANGUAGE.."/".. string.lower(flightModes[frameTypes[frameType]][flightMode])..".wav")
+  if frame.flightModes then
+    if frame.flightModes[flightMode] ~= nil then
+      playFile(soundFileBasePath.."/"..CONF_LANGUAGE.."/".. string.lower(frame.flightModes[flightMode])..".wav")
     end
   end
-end
-
-local function roundTo(val,int)
-  return math.floor(val/int) * int
 end
 
 local function drawHArrow(x,y,width,left,right)
@@ -1283,9 +1192,8 @@ end
 #endif --DEV
 
 local function drawNumberWithTwoDims(x,y,yTop,yBottom,number,topDim,bottomDim,flags,topFlags,bottomFlags)
-  -- +0.5 because PREC2 does a math.floor()  and not a math.round()
+  -- +0.5 because PREC2 does a math.floor() and not a math.round()
   lcd.drawNumber(x, y, number + 0.5, flags)
-  --lcd.drawText(x,y,string.format("%.2f",number*0.01),flags)
   local lx = lcd.getLastRightPos()
   lcd.drawText(lx, yTop, topDim, topFlags)
   lcd.drawText(lx, yBottom, bottomDim, bottomFlags)
@@ -1302,7 +1210,6 @@ local function getLogFilename(date)
   local modelName = string.lower(string.gsub(info.name, "[%c%p%s%z]", ""))
   return string.format("%s-%04d%02d%02d_%02d%02d%02d.plog",modelName,date.year,date.mon,date.day,date.hour,date.min,date.sec)
 end
-
 #ifdef PLAYLOG
 local function sportTelemetryPopLog()
 end
@@ -1313,82 +1220,95 @@ local function logMessageToFile(msg)
   -- flight time
   local fmins = math.floor(flightTime / 60)
   local fsecs = flightTime % 60
-  -- local date tiime from radio
-  local dateTime = getDateTime()
-  io.write(logfile,string.format("%d,%d-%d-%d %02d:%02d:%02d;%02d:%02d;%s", getTime(), dateTime.year,dateTime.mon,dateTime.day,dateTime.hour,dateTime.min,dateTime.sec, fmins,fsecs,msg),"\r\n")
+  io.write(logfile,string.format("%d;%02d:%02d;%s", getTime(),fmins,fsecs,msg),"\r\n")
 end
 #endif --LOGMESSAGES
 
-local function logTelemetryToFile(S_ID,F_ID,D_ID,VA)
-  local lc1 = 0
-  local lc2 = 0
-  local lc3 = 0
-  local lc4 = 0
-  if (S_ID) then
-    lc1 = S_ID
-  end
-  if (F_ID) then
-    lc2 = F_ID
-  end
-  if (D_ID) then
-    lc3 = D_ID
-  end
-  if (VA) then
-    lc4 = VA
-  end
+local function logTelemetryToFile(lc1,lc2,lc3,lc4)
   -- flight time
   local fmins = math.floor(flightTime / 60)
   local fsecs = flightTime % 60
   -- local date tiime from radio
-  local dateTime = getDateTime()
-  io.write(logfile,string.format("%d;%04d%02d%02d %02d:%02d:%02d;%02d:%02d;%#04x;%#04x;%#04x;%#04x", getTime(), dateTime.year,dateTime.mon,dateTime.day,dateTime.hour,dateTime.min,dateTime.sec, fmins,fsecs, lc1, lc2, lc3, lc4),"\r\n")
+  io.write(logfile,string.format("%d;%02d:%02d;%#01x;%#01x;%#02x;%#04x",getTime(),fmins,fsecs, lc1, lc2, lc3, lc4),"\r\n")
+#ifdef COLLECTGARBAGE  
   collectgarbage()
+#endif
 end
 #endif --LOGTELEMETRY
 
-#define MAX_MESSAGES 9
 
-local messages = {
-  -- { idx,severity,message,duplicates }
-}
+#ifdef X9
+local function formatMessage(severity,msg)
+  if lastMessageCount > 1 then
+    if #msg > 36 then
+      msg = string.sub(msg,1,36)
+    end
+    return string.format("%02d:%s %s (x%d)", messageCount, mavSeverity(severity), msg, lastMessageCount)
+  else
+    if #msg > 40 then
+      msg = string.sub(msg,1,40)
+    end
+    return string.format("%02d:%s %s", messageCount, mavSeverity(severity), msg)
+  end
+end
+#endif --X9
+#ifdef X7
+local function formatMessage(severity,msg)
+  if lastMessageCount > 1 then
+    if #msg > 16 then
+      msg = string.sub(msg,1,16)
+    end
+    return string.format("%d:%s %s (x%d)", messageCount, mavSeverity(severity), msg, lastMessageCount)
+  else
+    if #msg > 23 then
+      msg = string.sub(msg,1,23)
+    end
+    return string.format("%d:%s %s", messageCount, mavSeverity(severity), msg)
+  end
+end
+#endif --X7
+
+#define MAX_MESSAGES 9
 
 local function pushMessage(severity, msg)
   if  CONF_DISABLE_MSGBEEP == false and CONF_DISABLE_SOUNDS == false then
-    if ( severity < 4) then
-      playTone(400,300,0)
+    if ( severity < 5) then
+      playSound("../err")
     else
-      playTone(600,300,0)
+      playSound("../inf")
     end
   end
-  -- wrap at 9
-  if #messages == MAX_MESSAGES and messages[#messages][3] ~= msg then
+  -- check if wrapping is needed
+  if #messages == MAX_MESSAGES and msg ~= lastMessage then
     for i=1,MAX_MESSAGES-1 do
       messages[i]=messages[i+1]
     end
     -- trunc at 9
     messages[MAX_MESSAGES] = nil
   end
-  -- is there at least 1 message?
-  local nextIdx = 1
-  if messages[#messages] then
-    -- is it a duplicate?
-    if messages[#messages][3] == msg then
-      messages[#messages][4] = messages[#messages][4] + 1
-      return
-    end
-    nextIdx = messages[#messages][1] + 1
+  -- is it a duplicate?
+  if msg == lastMessage then
+    lastMessageCount = lastMessageCount + 1
+    messages[#messages] = formatMessage(severity,msg)
+  else  
+    lastMessageCount = 1
+    messageCount = messageCount + 1
+    messages[#messages+1] = formatMessage(severity,msg)
   end
-  -- append new message
-  messages[#messages+1] = {nextIdx, severity, msg, 1}
+  lastMessage = msg
+  lastMessageSeverity = severity
+#ifdef COLLECTGARBAGE  
   collectgarbage()
+#endif
 end
 --
 local function startTimer()
   lastTimerStart = getTime()/100
+  model.setTimer(2,{mode=1})
 end
 
 local function stopTimer()
-  seconds = seconds + getTime()/100 - lastTimerStart
+  model.setTimer(2,{mode=0})
   lastTimerStart = 0
 end
 
@@ -1449,10 +1369,13 @@ local function symFrameType()
   local ch11 = getValue("ch11")
   if ch11 < -300 then
     frameType = 2
+    simpleMode = 0
   elseif ch11 < 300 then
     frameType = 1
+    simpleMode = 1
   else
     frameType = 10
+    simpleMode = 2
   end
 end
 
@@ -1461,12 +1384,8 @@ local function symBatt()
   if (thrOut > -500 ) then
 #ifdef DEMO
     if battFailsafe == 1 then
-      minmaxValues[MIN_BATT_FC] = CELLCOUNT * 3.40 * 10
       minmaxValues[MIN_BATT1_FC] = CELLCOUNT * 3.40 * 10
       minmaxValues[MIN_BATT2_FC] = CELLCOUNT * 3.43 * 10
-      minmaxValues[MIN_CELL_FC] = 340
-      minmaxValues[MIN_CELL1_FC] = 340
-      minmaxValues[MIN_CELL2_FC] = 343
       minmaxValues[MAX_CURR] = 341 + 335
       minmaxValues[MAX_CURR1] = 341
       minmaxValues[MAX_CURR2] = 335
@@ -1483,12 +1402,8 @@ local function symBatt()
       batt2mah = 4500
 #endif --BATT2TEST
     else
-      minmaxValues[MIN_BATT_FC] = CELLCOUNT * 3.75 * 10
       minmaxValues[MIN_BATT1_FC] = CELLCOUNT * 3.75 * 10
       minmaxValues[MIN_BATT2_FC] = CELLCOUNT * 3.77 * 10
-      minmaxValues[MIN_CELL_FC] = 375
-      minmaxValues[MIN_CELL1_FC] = 375
-      minmaxValues[MIN_CELL2_FC] = 377
       minmaxValues[MAX_CURR] = 341+335
       minmaxValues[MAX_CURR1] = 341
       minmaxValues[MAX_CURR2] = 335
@@ -1617,16 +1532,25 @@ local telecounter = 0
 local telerate = 0
 local telestart = 0
 #endif --TELERATE
+#ifdef LOGTELEMETRY
+local lastAttiLogTime = 0
+#endif --LOGTELEMETRY
 --
 local function processTelemetry()
+  local SENSOR_ID,FRAME_ID,DATA_ID,VALUE
 #ifdef PLAYLOG
-
 #endif
   SENSOR_ID,FRAME_ID,DATA_ID,VALUE = sportTelemetryPop()
   if ( FRAME_ID == 0x10) then
 #ifdef LOGTELEMETRY
-    -- log all but pitch and roll
-    if DATA_ID ~= 0x5006 then
+    -- log all pitch and roll at ma
+    if lastAttiLogTime == 0 then
+      logTelemetryToFile(SENSOR_ID,FRAME_ID,DATA_ID,VALUE)
+      lastAttiLogTime = getTime()
+    elseif DATA_ID == 0x5006 and getTime() - lastAttiLogTime > 100 then -- 1000ms
+      logTelemetryToFile(SENSOR_ID,FRAME_ID,DATA_ID,VALUE)
+      lastAttiLogTime = getTime()
+    else
       logTelemetryToFile(SENSOR_ID,FRAME_ID,DATA_ID,VALUE)
     end
 #endif --LOGTELEMETRY
@@ -1649,7 +1573,6 @@ local function processTelemetry()
       roll = (bit32.extract(VALUE,0,11) - 900) * 0.2
       -- pitch [0,900] ==> [-90,90]
       pitch = (bit32.extract(VALUE,11,10) - 450) * 0.2
-      -- #define ATTIANDRNG_RNGFND_OFFSET    21
       -- number encoded on 11 bits: 10 bits for digits + 1 for 10^power
       range = bit32.extract(VALUE,22,10) * (10^bit32.extract(VALUE,21,1)) -- cm
     elseif ( DATA_ID == 0x5005) then -- VELANDYAW
@@ -1699,29 +1622,44 @@ local function processTelemetry()
     elseif ( DATA_ID == 0x5000) then -- MESSAGES
       if (VALUE ~= lastMsgValue) then
         lastMsgValue = VALUE
-        c1 = bit32.extract(VALUE,0,7)
-        c2 = bit32.extract(VALUE,8,7)
-        c3 = bit32.extract(VALUE,16,7)
-        c4 = bit32.extract(VALUE,24,7)
+        local c1 = bit32.extract(VALUE,0,7)
+        local c2 = bit32.extract(VALUE,8,7)
+        local c3 = bit32.extract(VALUE,16,7)
+        local c4 = bit32.extract(VALUE,24,7)
         --
+        local msgEnd = false
         if (c4 ~= 0) then
           msgBuffer = msgBuffer .. string.char(c4)
+        else
+          msgEnd = true;
         end
-        if (c3 ~= 0) then
+        if (c3 ~= 0 and not msgEnd) then
           msgBuffer = msgBuffer .. string.char(c3)
+        else
+          msgEnd = true;
         end
-        if (c2 ~= 0) then
+        if (c2 ~= 0 and not msgEnd) then
           msgBuffer = msgBuffer .. string.char(c2)
+        else
+          msgEnd = true;
         end
-        if (c1 ~= 0) then
+        if (c1 ~= 0 and not msgEnd) then
           msgBuffer = msgBuffer .. string.char(c1)
+        else
+          msgEnd = true;
         end
-        if (c1 == 0 or c2 == 0 or c3 == 0 or c4 == 0) then
-          local severity = (bit32.extract(VALUE,15,1) * 4) + (bit32.extract(VALUE,23,1) * 2) + (bit32.extract(VALUE,30,1) * 1)
+        --[[
+        _msg_chunk.chunk |= (_statustext_queue[0]->severity & 0x4)<<21;
+        _msg_chunk.chunk |= (_statustext_queue[0]->severity & 0x2)<<14;
+        _msg_chunk.chunk |= (_statustext_queue[0]->severity & 0x1)<<7;
+        --]]
+        if (msgEnd) then
+          -- local severity = (bit32.extract(VALUE,15,1) * 4) + (bit32.extract(VALUE,23,1) * 2) + (bit32.extract(VALUE,31,1) * 1)
+          local severity = (bit32.extract(VALUE,7,1) * 1) + (bit32.extract(VALUE,15,1) * 2) + (bit32.extract(VALUE,23,1) * 4)
           pushMessage( severity, msgBuffer)
 #ifdef LOGTELEMETRY
 #ifdef LOGMESSAGES
-          logMessageToFile(string.format("[%s] %s",mavSeverity[severity],msgBuffer))
+          logMessageToFile(string.format("[%s] %s",mavSeverity(severity),msgBuffer))
 #endif --LOGMESSAGES
 #endif --LOGTELEMETRY
           msgBuffer = ""
@@ -1732,10 +1670,6 @@ local function processTelemetry()
       paramValue = bit32.extract(VALUE,0,24)
       if paramId == 1 then
         frameType = paramValue
-      elseif paramId == 2 then
-        battFailsafeVoltage = paramValue
-      elseif paramId == 3 then
-        battFailsafeCapacity = paramValue
       elseif paramId == 4 then
         batt1Capacity = paramValue
 #ifdef BATT2TEST
@@ -1761,86 +1695,35 @@ local function telemetryEnabled()
 end
 #endif --TESTMODE
 
-local function getMinValue(value,idx)
-  if showMinMaxValues == true then
-    return minmaxValues[idx]
-  end
-  return value
-end
-
 local function getMaxValue(value,idx)
   minmaxValues[idx] = math.max(value,minmaxValues[idx])
-  if showMinMaxValues == true then
-    return minmaxValues[idx]
-  end
-  return value
+  return showMinMaxValues == true and minmaxValues[idx] or value
 end
 
 local function calcMinValue(value,min)
-  if min == 0 then
-    return value
-  else
-    return math.min(value,min)
-  end
+  return min == 0 and value or math.min(value,min)
 end
 
 -- returns the actual minimun only if both are > 0
-local function calcCellMin(v1,v2)
-  if v1 == 0 then
-    return v2
-  elseif v2 == 0 then
-    return v1
-  else
-    return math.min(v1,v2)
-  end
+local function getNonZeroMin(v1,v2)
+  return v1 == 0 and v2 or ( v2 == 0 and v1 or math.min(v1,v2))
 end
 
-local function calcCellCount(battmax)
+local function calcCellCount()
+  -- cellcount override from menu
   if CONF_CELL_COUNT ~= nil and CONF_CELL_COUNT > 0 then
     return CONF_CELL_COUNT
   end
-  -- cellcount is cached
-  if cellcount > 1 then
+  -- cellcount is cached only for FLVSS
+  if batt1sources.vs == true and cellcount > 1 then
     return cellcount
   end
-  local count = 0
-  if battmax*0.1 > 21.75 then
-    -- battmax > 4.35 * 5 ==> 6s (lowest allowed cell on boot 3.625)
-    count = 6
-  elseif battmax*0.1 > 17.4 then
-    -- battmax > 4.35 * 4 ==> 5s (lowest allowed cell on boot 3.48)
-    count = 5
-  elseif battmax*0.1 > 13.05 then
-    -- battmax > 4.35 * 3 ==> 4s (lowest allowed cell on boot 3.27)
-    count = 4
-  elseif battmax*0.1 > 8.7 then
-    -- battmax > 4.35 * 2 ==> 3s (lowest allowed cell on boot 2.9)
-    count = 3
-  else
-    count = 2
-  end
-  return count
+  -- round in excess and return
+  -- Note: cellcount is not cached because max voltage can rise during initialization)
+  return math.floor( (( math.max(cell1maxFC,cellmaxA2)*0.1 ) / CELLFULL) + 1)
 end
-
-#ifdef DEV
-local function calcCellValue(cellsum)
-  local cellcount = 0
-  if cellsum > 21 then
-    cellcount = 6
-  elseif cellsum > 17 then
-    cellcount = 5
-  elseif cellsum > 13 then
-    cellcount = 4
-  else
-    cellcount = 3
-  end
-  return cellsum/cellcount
-end
-#endif --DEV
 
 local function calcBattery()
-  local battA2 = 0
-  local cell = {0, 0, 0, 0, 0 ,0}
   ------------
   -- FLVSS 1
   ------------
@@ -1880,7 +1763,6 @@ local function calcBattery()
   if type(cellResult) == "table" then
     cell2min = CELLFULL
     cell2sum = 0
-    for i = 1, #cell do cell[i] = 0 end
     -- cellcount is global and shared
     cellcount = #cellResult
     for i, v in pairs(cellResult) do
@@ -1908,14 +1790,12 @@ local function calcBattery()
   if batt1volt > 0 then
     cell1sumFC = batt1volt*0.1
     cell1maxFC = math.max(batt1volt,cell1maxFC)
-    cell1minFC = cell1sumFC/calcCellCount(cell1maxFC)
     if battsource == "na" then
       battsource = "fc"
     end
     batt1sources.fc = true
   else
     batt1sources.fc = false
-    cell1minFC = 0
     cell1sumFC = 0
   end
   --------------------------------
@@ -1923,59 +1803,41 @@ local function calcBattery()
   --------------------------------
   if batt2volt > 0 then
     cell2sumFC = batt2volt*0.1
-    cell2maxFC = math.max(batt2volt,cell2maxFC)
-    cell2minFC = cell2sumFC/calcCellCount(cell2maxFC)
     if battsource == "na" then
       battsource = "fc"
     end
     batt2sources.fc = true
   else
     batt2sources.fc = false
-    cell2minFC = 0
     cell2sumFC = 0
   end
   ----------------------------------
   -- A2 analog voltage only 1 supported
   ----------------------------------
-  battA2 = getValue("A2")
+  local battA2 = getValue("A2")
   --
   if battA2 > 0 then
     cellsumA2 = battA2
     cellmaxA2 = math.max(battA2*10,cellmaxA2)
-    cellminA2 = cellsumA2/calcCellCount(cellmaxA2)
-    batt1sources.a2 = true
     if battsource == "na" then
       battsource = "a2"
     end
+    batt1sources.a2 = true
   else
     batt1sources.a2 = false
-    cellminA2 = 0
     cellsumA2 = 0
   end
-  -- cell fc
-  minmaxValues[MIN_CELL_FC] = calcMinValue(calcCellMin(cell1minFC,cell2minFC)*100,minmaxValues[MIN_CELL_FC])
-  minmaxValues[MIN_CELL1_FC] = calcMinValue(cell1minFC*100,minmaxValues[MIN_CELL1_FC])
-  minmaxValues[MIN_CELL2_FC] = calcMinValue(cell2minFC*100,minmaxValues[MIN_CELL2_FC])
-  -- cell flvss
-  minmaxValues[MIN_CELL_VS] = calcMinValue(calcCellMin(cell1min,cell2min)*100,minmaxValues[MIN_CELL_VS])
-  minmaxValues[MIN_CELL1_VS] = calcMinValue(cell1min*100,minmaxValues[MIN_CELL1_VS])
-  minmaxValues[MIN_CELL2_VS] = calcMinValue(cell2min*100,minmaxValues[MIN_CELL2_VS])
-  -- cell A2
-  minmaxValues[MIN_CELL_A2] = calcMinValue(cellminA2*100,minmaxValues[MIN_CELL_A2])
-  minmaxValues[MIN_CELL1_A2] = minmaxValues[MIN_CELL_A2]
-  minmaxValues[MIN_CELL2_A2] = 0
   -- batt fc
-  minmaxValues[MIN_BATT_FC] = calcMinValue(calcCellMin(cell1sumFC,cell2sumFC)*10,minmaxValues[MIN_BATT_FC])
-  minmaxValues[MIN_BATT1_FC] = calcMinValue(cell1sumFC*10,minmaxValues[MIN_BATT1_FC])
-  minmaxValues[MIN_BATT2_FC] = calcMinValue(cell2sumFC*10,minmaxValues[MIN_BATT2_FC])
+  minmaxValues[MIN_BATT1_FC] = calcMinValue(cell1sumFC,minmaxValues[MIN_BATT1_FC])
+  minmaxValues[MIN_BATT2_FC] = calcMinValue(cell2sumFC,minmaxValues[MIN_BATT2_FC])
+  -- cell flvss
+  minmaxValues[MIN_CELL1_VS] = calcMinValue(cell1min,minmaxValues[MIN_CELL1_VS])
+  minmaxValues[MIN_CELL2_VS] = calcMinValue(cell2min,minmaxValues[MIN_CELL2_VS])
   -- batt flvss
-  minmaxValues[MIN_BATT_VS] = calcMinValue(calcCellMin(cell1sum,cell2sum)*10,minmaxValues[MIN_BATT_VS])
-  minmaxValues[MIN_BATT1_VS] = calcMinValue(cell1sum*10,minmaxValues[MIN_BATT1_VS])
-  minmaxValues[MIN_BATT2_VS] = calcMinValue(cell2sum*10,minmaxValues[MIN_BATT2_VS])
+  minmaxValues[MIN_BATT1_VS] = calcMinValue(cell1sum,minmaxValues[MIN_BATT1_VS])
+  minmaxValues[MIN_BATT2_VS] = calcMinValue(cell2sum,minmaxValues[MIN_BATT2_VS])
   -- batt A2
-  minmaxValues[MIN_BATT_A2] = calcMinValue(cellsumA2*10,minmaxValues[MIN_BATT_A2])
-  minmaxValues[MIN_BATT1_A2] = minmaxValues[MIN_BATT_A2]
-  minmaxValues[MIN_BATT2_A2] = 0
+  minmaxValues[MIN_BATT_A2] = calcMinValue(cellsumA2,minmaxValues[MIN_BATT_A2])
 end
 
 local function checkLandingStatus()
@@ -1990,69 +1852,42 @@ local function checkLandingStatus()
 end
 
 local function calcFlightTime()
-  local elapsed = 0
-  if ( lastTimerStart ~= 0) then
-    elapsed = getTime()/100 - lastTimerStart
-  end
-  flightTime = elapsed + seconds
+  -- update local variable with timer 3 value
+  flightTime = model.getTimer(2).value
 end
 
 local function getBatt1Capacity()
-  if CONF_BATT_CAP1 > 0 then
-    return CONF_BATT_CAP1*100
-  else
-    return batt1Capacity
-  end
+  return CONF_BATT_CAP1 > 0 and CONF_BATT_CAP1*100 or batt1Capacity  
 end
 
 local function getBatt2Capacity()
-  if CONF_BATT_CAP2 > 0 then
-    return CONF_BATT_CAP2*100
-  else
-    return batt2Capacity
-  end
+  return CONF_BATT_CAP2 > 0 and CONF_BATT_CAP2*100 or batt2Capacity  
 end
 
-local function getVoltageBySource(battsource,cell,cellFC,cellA2)
-  if battsource == "vs" then
-    return cell
-  elseif battsource == "fc" then
-    return cellFC
-  elseif battsource == "a2" then
-    return cellA2
+-- gets the voltage based on source and min value, battId = [1|2]
+local function getMinVoltageBySource(source,cell,cellFC,cellA2,battId)
+  -- offset 0 for cell voltage, 2 for pack voltage
+  local offset = 0
+  --
+  if cell > CELLFULL*2 or cellFC > CELLFULL*2 or cellA2 > CELLFULL*2 then
+    offset = 2
   end
+  --
+  if source == "vs" then
+    return showMinMaxValues == true and minmaxValues[2+offset+battId] or cell
+  elseif source == "fc" then
+      -- FC only tracks batt1 and batt2 no cell voltage tracking
+      local minmax = (offset == 2 and minmaxValues[battId] or minmaxValues[battId]/calcCellCount())
+      return showMinMaxValues == true and minmax or cellFC
+  elseif source == "a2" then
+      -- A2 does not depend on battery id
+      local minmax = (offset == 2 and minmaxValues[MIN_BATT_A2] or minmaxValues[MIN_BATT_A2]/calcCellCount())
+      return showMinMaxValues == true and minmax or cellA2
+  end
+  --
   return 0
 end
 
-#define ALARMS_MIN_ALT 1
-#define ALARMS_MAX_ALT 2
-#define ALARMS_MAX_DIST 3
-#define ALARMS_EKF 4
-#define ALARMS_BATT 5
-#define ALARMS_TIMER 6
-#define ALARMS_BATT2 7
-
-#define ALARM_TYPE_MIN 0
-#define ALARM_TYPE_MAX 1
-#define ALARM_TYPE_TIMER 2
-#define ALARM_TYPE_BATT 3
---[[
-  min alarms need to be armed, i.e since values start at 0 in order to avoid
-  immediate triggering upon start, the value must first reach the treshold
-  only then will it trigger the alarm
-]]--
-local alarms = {
-  --{ triggered, time, armed, type(0=min,1=max,2=timer,3=batt), last_trigger }  
-    { false, 0 , false, ALARM_TYPE_MIN, 0},
-    { false, 0 , true, ALARM_TYPE_MAX, 0 },
-    { false, 0 , true, ALARM_TYPE_MAX, 0 },
-    { false, 0 , true, ALARM_TYPE_MAX, 0 },
-    { false, 0 , true, ALARM_TYPE_MAX, 0 },
-    { false, 0 , true, ALARM_TYPE_TIMER, 0 },
-    { false, 0 , false, ALARM_TYPE_BATT, 0 }
-}
-
-#ifdef SENSORS
 local function setSensorValues()
   if (not telemetryEnabled()) then
     return
@@ -2071,7 +1906,7 @@ local function setSensorValues()
     end  
   end
   setTelemetryValue(Fuel_ID, Fuel_SUBID, Fuel_INSTANCE, perc, 13 , Fuel_PRECISION , Fuel_NAME)
-  setTelemetryValue(VFAS_ID, VFAS_SUBID, VFAS_INSTANCE, calcCellMin(batt1volt,batt2volt)*10, 1 , VFAS_PRECISION , VFAS_NAME)
+  setTelemetryValue(VFAS_ID, VFAS_SUBID, VFAS_INSTANCE, getNonZeroMin(batt1volt,batt2volt)*10, 1 , VFAS_PRECISION , VFAS_NAME)
   setTelemetryValue(CURR_ID, CURR_SUBID, CURR_INSTANCE, batt1current+batt2current, 2 , CURR_PRECISION , CURR_NAME)
   setTelemetryValue(VSpd_ID, VSpd_SUBID, VSpd_INSTANCE, vSpeed, 5 , VSpd_PRECISION , VSpd_NAME)
   setTelemetryValue(GSpd_ID, GSpd_SUBID, GSpd_INSTANCE, hSpeed*0.1, 4 , GSpd_PRECISION , GSpd_NAME)
@@ -2081,15 +1916,11 @@ local function setSensorValues()
   setTelemetryValue(Tmp1_ID, Tmp1_SUBID, Tmp1_INSTANCE, flightMode, 11 , Tmp1_PRECISION , Tmp1_NAME)
   setTelemetryValue(Tmp2_ID, Tmp2_SUBID, Tmp2_INSTANCE, numSats*10+gpsStatus, 11 , Tmp2_PRECISION , Tmp2_NAME)
 end
-#endif --SENSORS
 --------------------
 -- Single long function much more memory efficient than many little functions
 ---------------------
-local function drawBatteryPane(x,battsource,battcurrent,battcapacity,battmah,cellmin,cellminFC,cellminA2,cellsum,cellsumFC,cellsumA2,cellIdx,lipoIdx,currIdx)
-  local celm = getVoltageBySource(battsource,cellmin,cellminFC,cellminA2)*100
-  local lipo = getVoltageBySource(battsource,cellsum,cellsumFC,cellsumA2)*10
-  celm = getMinValue(celm,cellIdx + minmaxOffsets[battsource])
-  lipo = getMinValue(lipo,lipoIdx + minmaxOffsets[battsource])
+#ifdef X9
+local function drawX9BatteryPane(x,battVolt,cellVolt,current,battmah,battcapacity)
   local perc = 0
   if (battcapacity > 0) then
     perc = (1 - (battmah/battcapacity))*100
@@ -2108,16 +1939,14 @@ local function drawBatteryPane(x,battsource,battcurrent,battcapacity,battmah,cel
       dimFlags = BLINK+INVERS
     end
   end
-  drawNumberWithTwoDims(x+BATTCELL_X, BATTCELL_Y, BATTCELL_YV, BATTCELL_YS,celm,"V",battsource,BATTCELL_FLAGS+flags,dimFlags,SMLSIZE)
+  drawNumberWithTwoDims(x+BATTCELL_X, BATTCELL_Y, BATTCELL_YV, BATTCELL_YS,cellVolt,"V",battsource,BATTCELL_FLAGS+flags,dimFlags,SMLSIZE)
   -- battery voltage
-  drawNumberWithDim(x+BATTVOLT_X,BATTVOLT_Y,BATTVOLT_YV, lipo,"V",BATTVOLT_FLAGS,BATTVOLT_FLAGSV)
+  drawNumberWithDim(x+BATTVOLT_X,BATTVOLT_Y,BATTVOLT_YV, battVolt,"V",BATTVOLT_FLAGS,BATTVOLT_FLAGSV)
   -- battery current
-  local current = getMaxValue(battcurrent,currIdx)
   drawNumberWithDim(x+BATTCURR_X,BATTCURR_Y,BATTCURR_YA,current,"A",BATTCURR_FLAGS,BATTCURR_FLAGSA)
   -- battery percentage
   lcd.drawNumber(x+BATTPERC_X, BATTPERC_Y, perc, BATTPERC_FLAGS)
   lcd.drawText(lcd.getLastRightPos(), BATTPERC_YPERC, "%", BATTPERC_FLAGSPERC)
-#ifdef X9
   -- display capacity bar %
   lcd.drawFilledRectangle(x+BATTGAUGE_X, BATTGAUGE_Y, 2 + math.floor(perc * 0.01 * (BATTGAUGE_WIDTH - 3)), BATTGAUGE_HEIGHT, SOLID)
   lcd.drawRectangle(x+BATTGAUGE_X, BATTGAUGE_Y, 2 + math.floor(perc * 0.01 * (BATTGAUGE_WIDTH - 3)), BATTGAUGE_HEIGHT, SOLID)
@@ -2125,19 +1954,7 @@ local function drawBatteryPane(x,battsource,battcurrent,battcapacity,battmah,cel
   for s=1,BATTGAUGE_STEPS - 1 do
     lcd.drawLine(x+BATTGAUGE_X + s*step - 1,BATTGAUGE_Y, x+BATTGAUGE_X + s*step - 1, BATTGAUGE_Y + BATTGAUGE_HEIGHT - 1,SOLID,0)
   end
-#endif --X9
   -- battery mah
-#ifdef X7
-  lcd.drawText(x+BATTMAH_X, BATTMAH_Y, "Ah", SMLSIZE+RIGHT)
-#ifdef BATTMAH3DEC
-  lcd.drawText(lcd.getLastLeftPos()-1, BATTMAH_Y, string.format("%0.3f",battmah/1000), BATTMAH_FLAGS+RIGHT)
-#else
-  lcd.drawNumber(lcd.getLastLeftPos()-1, BATTMAH_Y, battmah/10, SMLSIZE+PREC2+RIGHT)
-#endif --BATTMAH3DEC
-  lcd.drawText(x+BATTMAH_X, BATTMAH_Y+8, "Ah", SMLSIZE+RIGHT+INVERS)
-  lcd.drawNumber(lcd.getLastLeftPos()-1, BATTMAH_Y+8, battcapacity/10, SMLSIZE+PREC2+RIGHT+INVERS)
-#endif --X7
-#ifdef X9
 #ifdef BATTMAH3DEC
   lcd.drawText(x+BATTMAH_X, BATTMAH_Y, string.format("%0.3f",battmah/1000), SMLSIZE)
 #else
@@ -2146,27 +1963,107 @@ local function drawBatteryPane(x,battsource,battcurrent,battcapacity,battmah,cel
   lcd.drawText(lcd.getLastRightPos(), BATTMAH_Y, "/", SMLSIZE)
   lcd.drawNumber(lcd.getLastRightPos(), BATTMAH_Y, battcapacity/100, BATTMAH_FLAGS)
   lcd.drawText(lcd.getLastRightPos(), BATTMAH_Y, "Ah", SMLSIZE)
-#endif --X9
-#ifdef X7
-  -- tx voltage
-  --local vTx = string.format("Tx%.1fv",getValue(getFieldInfo("tx-voltage").id))
-  --lcd.drawText(TXVOLTAGE_X, TXVOLTAGE_Y, vTx, TXVOLTAGE_FLAGS)
-#endif --X7
-#ifdef X9
   if showMinMaxValues == true then
     drawVArrow(x+BATTVOLT_X+29,BATTVOLT_Y + 6, 5,false,true)
     drawVArrow(x+BATTCURR_X+27,BATTCURR_Y + 6,5,true,false)
     drawVArrow(x+BATTCELL_X+37, BATTCELL_Y + 3,6,false,true)
   end
-#endif --X9
+end
+#endif
+
 #ifdef X7
+local function drawX7RightPane(x,battVolt,cellVolt,current,battmah,battcapacity)
+  local perc = 0
+  if (battcapacity > 0) then
+    perc = (1 - (battmah/battcapacity))*100
+    if perc > 99 then
+      perc = 99
+    end
+  end
+  --  battery min cell
+  local flags = 0
+  local dimFlags = 0
+  if showMinMaxValues == false then
+    if battLevel2 == true then
+      flags = BLINK
+      dimFlags = BLINK
+    elseif battLevel1 == true then
+      dimFlags = BLINK+INVERS
+    end
+  end
+  drawNumberWithTwoDims(x+BATTCELL_X, BATTCELL_Y, BATTCELL_YV, BATTCELL_YS,cellVolt,"V",battsource,BATTCELL_FLAGS+flags,dimFlags,SMLSIZE)
+  -- battery voltage
+  drawNumberWithDim(x+BATTVOLT_X,BATTVOLT_Y,BATTVOLT_YV, battVolt,"V",BATTVOLT_FLAGS,BATTVOLT_FLAGSV)
+  -- battery current
+  drawNumberWithDim(x+BATTCURR_X,BATTCURR_Y,BATTCURR_YA,current,"A",BATTCURR_FLAGS,BATTCURR_FLAGSA)
+  -- battery percentage
+  lcd.drawNumber(x+BATTPERC_X, BATTPERC_Y, perc, BATTPERC_FLAGS)
+  lcd.drawText(lcd.getLastRightPos(), BATTPERC_YPERC, "%", BATTPERC_FLAGSPERC)
+  -- battery mah
+  lcd.drawText(x+BATTMAH_X, BATTMAH_Y, "Ah", SMLSIZE+RIGHT)
+#ifdef BATTMAH3DEC
+  lcd.drawText(lcd.getLastLeftPos()-1, BATTMAH_Y, string.format("%0.3f",battmah/1000), BATTMAH_FLAGS+RIGHT)
+#else
+  lcd.drawNumber(lcd.getLastLeftPos()-1, BATTMAH_Y, battmah/10, SMLSIZE+PREC2+RIGHT)
+#endif --BATTMAH3DEC
+  lcd.drawText(x+BATTMAH_X, BATTMAH_Y+8, "Ah", SMLSIZE+RIGHT+INVERS)
+  lcd.drawNumber(lcd.getLastLeftPos()-1, BATTMAH_Y+8, battcapacity/10, SMLSIZE+PREC2+RIGHT+INVERS)
+  -- tx voltage
+  --local vTx = string.format("Tx%.1fv",getValue(getFieldInfo("tx-voltage").id))
+  --lcd.drawText(TXVOLTAGE_X, TXVOLTAGE_Y, vTx, TXVOLTAGE_FLAGS)
+  --
+  -- GPS status
+  local strStatus = gpsStatuses[gpsStatus]
+  flags = BLINK+PREC1
+  local mult = 1
+  lcd.drawLine(GPS_X + 38,GPS_Y+1,GPS_X+38,GPS_Y+19,SOLID,FORCE)
+  lcd.drawLine(GPS_X + 38,GPS_Y + 20,GPS_X+63,GPS_Y + 20,SOLID,FORCE)
+  if gpsStatus  > 2 then
+    if homeAngle ~= -1 then
+      flags = PREC1
+    end
+    if gpsHdopC > 99 then
+      flags = 0
+      mult=0.1
+    end
+    lcd.drawText(GPS_X + 40,GPS_Y+13, strStatus, SMLSIZE)
+    local strNumSats = string.format("%d",math.min(15,numSats))
+    --if numSats >= 15 then
+    --  strNumSats = strNumSats.."+"
+    --end
+    lcd.drawText(GPS_X + 63, GPS_Y + 13, strNumSats, SMLSIZE+RIGHT)
+    lcd.drawText(GPS_X + 40, GPS_Y + 2 , "H", SMLSIZE)
+    lcd.drawNumber(GPS_X + 63, GPS_Y+1, gpsHdopC*mult ,MIDSIZE+flags+RIGHT)
+    
+  else
+    lcd.drawText(GPS_X + 46, GPS_Y+3, "No", SMLSIZE+INVERS+BLINK)
+    lcd.drawText(GPS_X + 43, GPS_Y+12, strStatus, SMLSIZE+INVERS+BLINK)
+  end
+  -- alt asl/rng
   if showMinMaxValues == true then
     flags = 0
   end
   -- varrow is shared
+    flags = 0
   if CONF_RANGE_MAX > 0 then
     -- rng finder
     local rng = range
+#ifdef IMPERIAL
+    -- rng is cm, CONF_RANGE_MAX in feet
+    if rng > CONF_RANGE_MAX * 30.48 then
+      flags = BLINK+INVERS
+    end
+      -- update max only with 3d or better lock
+    rng = getMaxValue(rng,MAX_RANGE)
+    --
+    if showMinMaxValues == true then
+      drawVArrow(ALTASL_XLABEL + 1, ALTASL_YLABEL,5,true,false)
+    else
+      lcd.drawText(ALTASL_XLABEL - 1, ALTASL_YLABEL, "Rn", SMLSIZE)
+    end
+    lcd.drawText(ALTASL_X, ALTASL_Y+1 , "f", SMLSIZE+RIGHT)
+    lcd.drawText(lcd.getLastLeftPos(), ALTASL_Y , string.format("%.1f",rng*0.01*3.28), flags + RIGHT)
+#else
     if rng > CONF_RANGE_MAX then
       flags = BLINK+INVERS
     end
@@ -2178,8 +2075,9 @@ local function drawBatteryPane(x,battsource,battcurrent,battcapacity,battmah,cel
     else
       lcd.drawText(ALTASL_XLABEL - 1, ALTASL_YLABEL, "Rn", SMLSIZE)
     end
-    lcd.drawText(ALTASL_X + 9, ALTASL_Y+1 , string.format("%.1f",rng*0.01), SMLSIZE+flags + RIGHT)
-    lcd.drawText(ALTASL_X + 16, ALTASL_Y+1 , "m", SMLSIZE+RIGHT)
+    lcd.drawText(ALTASL_X, ALTASL_Y+1 , "m", SMLSIZE+RIGHT)
+    lcd.drawText(lcd.getLastLeftPos(), ALTASL_Y, string.format("%.2f",rng*0.01), flags + RIGHT)
+#endif --IMPERIAL
   else
     -- alt asl, always display gps altitude even without 3d lock
     local alt = gpsAlt/10
@@ -2194,35 +2092,47 @@ local function drawBatteryPane(x,battsource,battcurrent,battcapacity,battmah,cel
     else
       drawVArrow(ALTASL_XLABEL + 1,ALTASL_YLABEL,6,true,true)
     end
-    lcd.drawText(ALTASL_X + 16, ALTASL_Y+1 , string.format("%dm",alt), SMLSIZE+flags+RIGHT)
+#ifdef IMPERIAL    
+    lcd.drawText(ALTASL_X, ALTASL_Y+1 ,"f", SMLSIZE+RIGHT)
+    lcd.drawText(lcd.getLastLeftPos(), ALTASL_Y , string.format("%d",alt*3.28), flags+RIGHT)
+#else    
+    lcd.drawText(ALTASL_X, ALTASL_Y+1 ,"m", SMLSIZE+RIGHT)
+    lcd.drawText(lcd.getLastLeftPos(), ALTASL_Y , string.format("%d",alt), flags+RIGHT)
+#endif  
   end
-  -- hspeed (moved to center HUD)
-  --[[
-  local speed = getMaxValue(hSpeed,MAX_HSPEED)
+  -- home dist
+  local flags = 0
+  if homeAngle == -1 then
+    flags = BLINK
+  end
+  local dist = getMaxValue(homeDist,MAX_DIST)
   if showMinMaxValues == true then
-    drawVArrow(HSPEED_XLABEL + 2,HSPEED_YLABEL - 2 ,5,true,false)
-  else
-    drawHArrow(HSPEED_XLABEL + 4,HSPEED_YLABEL,3,false,true)
-    lcd.drawPoint(HSPEED_XLABEL + 2,HSPEED_YLABEL)
-    lcd.drawPoint(HSPEED_XLABEL,HSPEED_YLABEL)
+    flags = 0
   end
-  lcd.drawNumber(HSPEED_X - 10, HSPEED_Y - 1, speed, HSPEED_FLAGS+RIGHT+PREC1)
-  ]]
+#ifdef IMPERIAL
+  lcd.drawText(HOMEDIST_X, HOMEDIST_Y+1, "f",SMLSIZE+RIGHT)
+  lcd.drawText(lcd.getLastLeftPos(), HOMEDIST_Y, string.format("%d",dist*3.28),HOMEDIST_FLAGS+flags)
+#else
+  lcd.drawText(HOMEDIST_X, HOMEDIST_Y+1, "m",SMLSIZE+RIGHT)
+  lcd.drawText(lcd.getLastLeftPos(), HOMEDIST_Y, string.format("%d",dist),HOMEDIST_FLAGS+flags)
+#endif
+  if showMinMaxValues == true then
+    drawVArrow(HOMEDIST_XLABEL + 2, HOMEDIST_YLABEL,5,true,false)
+  else
+    drawHArrow(HOMEDIST_XLABEL,HOMEDIST_YLABEL + 3,HOMEDIST_ARROW_WIDTH,true,true)
+  end
   --
   if showMinMaxValues == true then
     drawVArrow(x+BATTCELL_X+36, BATTCELL_Y+2,6,false,true)
   end
-#endif --X7
 end
+#endif
+
 #ifdef X7
 ---------------------
 -- Single long function much more memory efficient than many little functions
 ---------------------
-local function drawX7BatteryLeftPane(battsource,battcurrent,battcapacity,battmah,cellmin,cellminFC,cellminA2,cellsum,cellsumFC,cellsumA2,cellIdx,lipoIdx,currIdx)
-  local celm = getVoltageBySource(battsource,cellmin,cellminFC,cellminA2)*100
-  local lipo = getVoltageBySource(battsource,cellsum,cellsumFC,cellsumA2)*10
-  celm = getMinValue(celm,cellIdx + minmaxOffsets[battsource])
-  lipo = getMinValue(lipo,lipoIdx + minmaxOffsets[battsource])
+local function drawX7LeftPane(battVolt,cellVolt,current,battmah,battcapacity)
   local perc = 0
   if (battcapacity > 0) then
     perc = (1 - (battmah/battcapacity))*100
@@ -2236,18 +2146,17 @@ local function drawX7BatteryLeftPane(battsource,battcurrent,battcapacity,battmah
   local flags = 0
   local dimFlags = 0
   if showMinMaxValues == false then
-    if celm < CONF_BATT_LEVEL2 then
+    if cellVolt < CONF_BATT_LEVEL2 then
       flags = BLINK
       dimFlags = BLINK
-    elseif celm < CONF_BATT_LEVEL1 then
+    elseif cellVolt < CONF_BATT_LEVEL1 then
       dimFlags = BLINK+INVERS
     end  
   end
-  drawNumberWithTwoDims(0, BATTCELL_Y, BATTCELL_YV, BATTCELL_YS,celm,"V",battsource,BATTCELL_FLAGS+flags,dimFlags,SMLSIZE)
+  drawNumberWithTwoDims(0, BATTCELL_Y, BATTCELL_YV, BATTCELL_YS,cellVolt,"V",battsource,BATTCELL_FLAGS+flags,dimFlags,SMLSIZE)
   -- battery voltage
-  drawNumberWithDim(41+BATTVOLT_X,BATTVOLT_Y,BATTVOLT_YV, lipo,"V",BATTVOLT_FLAGS,BATTVOLT_FLAGSV)
+  drawNumberWithDim(41+BATTVOLT_X,BATTVOLT_Y,BATTVOLT_YV, battVolt,"V",BATTVOLT_FLAGS,BATTVOLT_FLAGSV)
   -- battery current
-  local current = getMaxValue(battcurrent,currIdx)
   drawNumberWithDim(41+BATTCURR_X,BATTCURR_Y,BATTCURR_YA,current,"A",BATTCURR_FLAGS,BATTCURR_FLAGSA)
   -- battery percentage
   lcd.drawNumber(38+BATTPERC_X, BATTPERC_Y, perc, BATTPERC_FLAGS)
@@ -2285,50 +2194,18 @@ local function drawNoTelemetryData()
 #endif --X9
 end
 
-#ifdef X9
-local function getMessage(index)
-  local msg = messages[index][3]
-  if messages[index][4] > 1 then
-    if #msg > 36 then
-      msg = string.sub(msg,1,36)
-    end
-    return string.format("%02d:%s %s (x%d)", messages[index][1], mavSeverity[messages[index][2]], msg, messages[index][4])
-  else
-    if #msg > 40 then
-      msg = string.sub(msg,1,40)
-    end
-    return string.format("%02d:%s %s", messages[index][1], mavSeverity[messages[index][2]], msg)
-  end
-end
-#endif --X9
-#ifdef X7
-local function getMessage(index)
-  local msg = messages[index][3]
-  if messages[index][4] > 1 then
-    if #msg > 16 then
-      msg = string.sub(msg,1,16)
-    end
-    return string.format("%d:%s %s (x%d)", messages[index][1], mavSeverity[messages[index][2]], msg, messages[index][4])
-  else
-    if #msg > 23 then
-      msg = string.sub(msg,1,23)
-    end
-    return string.format("%d:%s %s", messages[index][1], mavSeverity[messages[index][2]], msg)
-  end
-end
-#endif --X7
-
 local function drawTopBar()
   -- black bar
   lcd.drawFilledRectangle(0,TOPBAR_Y, TOPBAR_WIDTH, 7, SOLID)
   lcd.drawRectangle(0, TOPBAR_Y, TOPBAR_WIDTH, 7, SOLID)
   -- flight mode
-  if frameTypes[frameType] ~= nil then
-    local strMode = flightModes[frameTypes[frameType]][flightMode]
+  if frame.flightModes then
+    local strMode = frame.flightModes[flightMode]
     if strMode ~= nil then
       lcd.drawText(FLIGHTMODE_X, FLIGHTMODE_Y, strMode, FLIGHTMODE_FLAGS)
-      if ( simpleMode == 1) then
-        lcd.drawText(lcd.getLastRightPos(), 1, "(S)", FLIGHTMODE_FLAGS)
+      if ( simpleMode > 0 ) then
+        local strSimpleMode = simpleMode == 1 and "(S)" or "(SS)"
+        lcd.drawText(lcd.getLastRightPos(), FLIGHTMODE_Y, strSimpleMode, FLIGHTMODE_FLAGS)
       end
     end  
   end
@@ -2355,7 +2232,7 @@ local function drawBottomBar()
   lcd.drawRectangle(0, BOTTOMBAR_Y, BOTTOMBAR_WIDTH, 8, SOLID)
   -- message text
   local now = getTime()
-  local msg = getMessage(#messages)
+  local msg = messages[#messages]
 #ifdef X9
   if (now - lastMsgTime ) > 150 or CONF_DISABLE_MSGBLINK then
     lcd.drawText(0, BOTTOMBAR_Y+1, msg,SMLSIZE+INVERS)
@@ -2372,33 +2249,14 @@ local function drawBottomBar()
 #endif --X7
 end
 
-#ifdef X7
-local function drawHomeDist()
-  local flags = 0
-  if homeAngle == -1 then
-    flags = BLINK
-  end
-  local dist = getMaxValue(homeDist,MAX_DIST)
-  if showMinMaxValues == true then
-    flags = 0
-  end
-  lcd.drawText(HOMEDIST_X, HOMEDIST_Y, string.format("%dm",dist),HOMEDIST_FLAGS+flags)
-  if showMinMaxValues == true then
-    drawVArrow(HOMEDIST_XLABEL + 2, HOMEDIST_YLABEL,5,true,false)
-  else
-    drawHArrow(HOMEDIST_XLABEL,HOMEDIST_YLABEL + 3,HOMEDIST_ARROW_WIDTH,true,true)
-  end
-end
-#endif --X7
-
 local function drawAllMessages()
   for i=1,#messages do
-    lcd.drawText(1, 1 + 7*(i-1), getMessage(i),SMLSIZE)
+    lcd.drawText(1, 1 + 7*(i-1), messages[i],SMLSIZE)
   end
 end
 
 #ifdef X9
-local function drawLeftPane(battcurrent,cellsumFC)
+local function drawX9LeftPane(battcurrent,cellsumFC)
   -- gps status
   local strStatus = gpsStatuses[gpsStatus]
   local strNumSats = ""
@@ -2434,17 +2292,29 @@ local function drawLeftPane(battcurrent,cellsumFC)
   drawVArrow(ALTASL_XLABEL,ALTASL_YLABEL - 1,7,true,true)
   if CONF_RANGE_MAX > 0 then
     -- rng finder
+    flags = 0
     local rng = range
+#ifdef IMPERIAL
+    -- rng is centimeters, RANGE_MAX is feet
+    if rng > CONF_RANGE_MAX * 30.48 then
+      flags = BLINK+INVERS
+    end
+    rng = getMaxValue(rng,MAX_RANGE)
+    lcd.drawText(ALTASL_XLABEL + 4, ALTASL_YLABEL, "Rng", SMLSIZE)
+    lcd.drawText(ALTASL_X, ALTASL_Y , "ft", SMLSIZE+RIGHT)
+    lcd.drawText(lcd.getLastLeftPos()-1, ALTASL_Y-1 , string.format("%.2f",rng*0.01*3.28), ALTASL_FLAGS+flags)
+#else
     if rng > CONF_RANGE_MAX then
       flags = BLINK+INVERS
     end
-      -- update max only with 3d or better lock
     rng = getMaxValue(rng,MAX_RANGE)
     lcd.drawText(ALTASL_XLABEL + 4, ALTASL_YLABEL, "Rng", SMLSIZE)
-    lcd.drawText(ALTASL_X, ALTASL_Y-1 , string.format("%.1fm",rng*0.01), ALTASL_FLAGS+flags)
+    lcd.drawText(ALTASL_X, ALTASL_Y , "m", SMLSIZE+RIGHT)
+    lcd.drawText(lcd.getLastLeftPos()-1, ALTASL_Y-1 , string.format("%.2f",rng*0.01), ALTASL_FLAGS+flags)
+#endif
   else
     -- alt asl, always display gps altitude even without 3d lock
-    local alt = gpsAlt/10
+    local alt = gpsAlt/10 -- meters
     flags = BLINK
     if gpsStatus  > 2 then
       flags = 0
@@ -2452,7 +2322,13 @@ local function drawLeftPane(battcurrent,cellsumFC)
       alt = getMaxValue(alt,MAX_GPSALT)
     end
     lcd.drawText(ALTASL_XLABEL + 4, ALTASL_YLABEL, "Asl", SMLSIZE)
-    lcd.drawText(ALTASL_X, ALTASL_Y-1 , string.format("%dm",alt), ALTASL_FLAGS+flags)
+#ifdef IMPERIAL    
+    lcd.drawText(ALTASL_X, ALTASL_Y, "ft", SMLSIZE+RIGHT)
+    lcd.drawText(lcd.getLastLeftPos()-1, ALTASL_Y-1 , string.format("%d",alt*3.28), ALTASL_FLAGS+flags)
+#else
+    lcd.drawText(ALTASL_X, ALTASL_Y , "m", SMLSIZE+RIGHT)
+    lcd.drawText(lcd.getLastLeftPos()-1, ALTASL_Y-1 , string.format("%d",alt), ALTASL_FLAGS+flags)
+#endif
   end
   -- home distance
   drawHomeIcon(HOMEDIST_XLABEL + 1,HOMEDIST_YLABEL,7)
@@ -2465,13 +2341,18 @@ local function drawLeftPane(battcurrent,cellsumFC)
   if showMinMaxValues == true then
     flags = 0
   end
-  lcd.drawNumber(HOMEDIST_X, HOMEDIST_Y-1, dist, HOMEDIST_FLAGS+flags)
-  lcd.drawText(lcd.getLastRightPos()+1, HOMEDIST_Y-1, "m",HOMEDIST_FLAGS+flags)
+#ifdef IMPERIAL
+  lcd.drawText(HOMEDIST_X, HOMEDIST_Y-1, "ft",SMLSIZE+RIGHT)
+  lcd.drawNumber(lcd.getLastLeftPos()-1, HOMEDIST_Y-1, dist*3.28, HOMEDIST_FLAGS+flags)
+#else
+  lcd.drawText(HOMEDIST_X, HOMEDIST_Y-1, "m",SMLSIZE+RIGHT)
+  lcd.drawNumber(lcd.getLastLeftPos()-1, HOMEDIST_Y-1, dist, HOMEDIST_FLAGS+flags)
+#endif
   -- power
   local power = cellsumFC*battcurrent*0.1
   power = getMaxValue(power,MAX_POWER)
   lcd.drawText(BATTPOWER_XLABEL, BATTPOWER_YLABEL, "PWR", SMLSIZE)
-  lcd.drawText(BATTPOWER_X,BATTPOWER_Y,string.format("%dw",power),BATTPOWER_FLAGS)
+  lcd.drawText(BATTPOWER_X,BATTPOWER_Y,string.format("%d w",power),BATTPOWER_FLAGS)
 #ifdef FRAMETYPE
   local fn = frameNames[frameType]
   if fn ~= nil then
@@ -2488,37 +2369,6 @@ local function drawLeftPane(battcurrent,cellsumFC)
   end
 end
 #endif --X9
-
-#ifdef X7
-local function drawGPSStatus()
-  local strStatus = gpsStatuses[gpsStatus]
-  local flags = BLINK+PREC1
-  local mult = 1
-  lcd.drawLine(GPS_X + 38,GPS_Y+1,GPS_X+38,GPS_Y+19,SOLID,FORCE)
-  lcd.drawLine(GPS_X + 38,GPS_Y + 20,GPS_X+63,GPS_Y + 20,SOLID,FORCE)
-  if gpsStatus  > 2 then
-    if homeAngle ~= -1 then
-      flags = PREC1
-    end
-    if gpsHdopC > 99 then
-      flags = 0
-      mult=0.1
-    end
-    lcd.drawText(GPS_X + 40,GPS_Y+13, strStatus, SMLSIZE)
-    local strNumSats = string.format("%d",math.min(15,numSats))
-    --if numSats >= 15 then
-    --  strNumSats = strNumSats.."+"
-    --end
-    lcd.drawText(GPS_X + 63, GPS_Y + 13, strNumSats, SMLSIZE+RIGHT)
-    lcd.drawText(GPS_X + 40, GPS_Y + 2 , "H", SMLSIZE)
-    lcd.drawNumber(GPS_X + 63, GPS_Y+1, gpsHdopC*mult ,MIDSIZE+flags+RIGHT)
-    
-  else
-    lcd.drawText(GPS_X + 46, GPS_Y+3, "No", SMLSIZE+INVERS+BLINK)
-    lcd.drawText(GPS_X + 43, GPS_Y+12, strStatus, SMLSIZE+INVERS+BLINK)
-  end
-end
-#endif --X7
 
 local function drawFailsafe()
   local xoffset = 0
@@ -2538,89 +2388,7 @@ local function drawFailsafe()
     lcd.drawText(xoffset + HUD_X + HUD_WIDTH/2 - 33, 22 + yoffset, " BATT FAILSAFE ", SMLSIZE+INVERS+BLINK)
   end
 end
-#ifndef YAWRIBBON
---
-local yawLabels = {
-  {39,47,"NE"},
-  {89,92,"E"},
-  {129,132,"SE"},
-  {179,182,"S"},
-  {219,227,"SW"},
-  {269,272,"W"},
-  {309,317,"NW"},
-  {359,2,"N"}
-}
---
-local function drawYaw()
-  local hw = math.floor(HUD_WIDTH/2)
-  local ww = hw - 6
-  local degL = 0
-  local degR = 0
-  local steps = 9
-  local yawRounded = roundTo(yaw,10)
-  local homeRounded = roundTo(homeAngle,10)
-  local minY = TOPBAR_Y + TOPBAR_HEIGHT
-  --
-  local cx = HUD_X + hw
-  for step = 0,steps
-  do
-    --
-    degR = (yawRounded + step*10) % 360
-    degL = (yawRounded - step*10) % 360
-    --
-    for l=1,#yawLabels - 1 do
-      if degR > yawLabels[l][1] and degR < yawLabels[l][2] then
-        lcd.drawText(cx + step/steps*ww, minY+1, yawLabels[l][3], SMLSIZE)
-      end
-      if degL > yawLabels[l][1] and degL < yawLabels[l][2] then
-        lcd.drawText(cx - step/steps*ww - 6, minY+1, yawLabels[l][3], SMLSIZE)
-      end
-    end
-    
-    if degR > yawLabels[#yawLabels][1] or degR < yawLabels[#yawLabels][2] then
-      lcd.drawText(cx + step/steps*ww, minY+1, yawLabels[#yawLabels][3], SMLSIZE)
-    end
-    if degL > yawLabels[#yawLabels][1] or degL < yawLabels[#yawLabels][2] then
-      lcd.drawText(cx - step/steps*ww - 6, minY+1, yawLabels[#yawLabels][3], SMLSIZE)
-    end
 
-    if degR > homeRounded - 5 and degR < homeRounded + 5 and degL > homeRounded - 5  and degL < homeRounded + 5  then
-      drawHomeIcon(cx - 2,minY + 10)
-    else
-      if degR > homeRounded - 5 and degR < homeRounded + 5 then
-        drawHomeIcon(cx + step/steps*ww ,minY + 10)
-      end
-      if degL > homeRounded - 5  and degL < homeRounded + 5 then
-        drawHomeIcon(cx - step/steps*ww - 6,minY + 10)
-      end
-    end
-    -- when abs(home angle) > 90 draw home icon close to left/right border
-    local angle = homeAngle - yaw
-    local cos = math.cos(math.rad(angle - 90))    
-    local sin = math.sin(math.rad(angle - 90))    
-    if cos > 0 and sin > 0 then
-      drawHomeIcon(cx + ww ,minY + 10)
-    elseif cos < 0 and sin > 0 then
-      drawHomeIcon(cx - ww - 5,minY + 10)
-    end
-  end
-
-  lcd.drawLine(HUD_X, minY + 7, HUD_X + HUD_WIDTH - 1, minY + 7, SOLID, 0)
-  local xx = 0
-  if ( yaw < 10) then
-    xx = 1
-  elseif (yaw < 100) then
-    xx = -2
-  else
-    xx = -5
-  end
-  lcd.drawRectangle(HUD_X + hw - 6, minY, 12,12, SOLID)
-  lcd.drawFilledRectangle(HUD_X + hw - 6, minY, 12,12, SOLID)
-  lcd.drawNumber(HUD_X + hw + xx - 4, minY, yaw, MIDSIZE+INVERS)
-end
-#endif --YAWRIBBON ifndef
-
-#ifdef YAWRIBBON
 #ifdef X9
 #define YAW_STEPWIDTH 17
 #else
@@ -2643,7 +2411,7 @@ local function drawCompassRibbon()
   -- ribbon centered +/- 90 on yaw
   local centerYaw = (yaw+270)%360
   -- this is the first point left to be drawn on the compass ribbon
-  local nextPoint = roundTo(centerYaw,45)
+  local nextPoint = math.floor(centerYaw/45) * 45 --roundTo(centerYaw,45)
   -- distance in degrees between leftmost ribbon point and first 45° multiple normalized to YAW_WIDTH/8
 #ifdef X9
   local yawMinX = (LCD_W - HUD_WIDTH)/2 + 2
@@ -2730,30 +2498,12 @@ local function drawCompassRibbon()
   lcd.drawNumber(HUD_WIDTH/2 + xx - 4, yawY, yaw, MIDSIZE+INVERS)
 #endif
 end
-#endif --YAWRIBBON
-#ifdef DEV
-local function clearHud()
-  lcd.drawFilledRectangle(HUD_X,TOPBAR_Y + TOPBAR_HEIGHT + 8,HUD_WIDTH,49,ERASE,0)
-end
 
-local function clearLeftPane()
-#ifdef X9
-  lcd.drawFilledRectangle(0,TOPBAR_Y + TOPBAR_HEIGHT,HUD_X - 1,49,ERASE,0)
-#endif --X9
-end
-
-local function clearRightPane()
-#ifdef X7
-  lcd.drawFilledRectangle(HUD_X+HUD_WIDTH,TOPBAR_Y + TOPBAR_HEIGHT,128 - HUD_X + HUD_WIDTH,49,ERASE,0)
-#endif --X7
---
-#ifdef X9
-  lcd.drawFilledRectangle(HUD_X+HUD_WIDTH,TOPBAR_Y + TOPBAR_HEIGHT,212 - HUD_X + HUD_WIDTH,49,ERASE,0)
-#endif --X9
-end
-#endif --DEV
-
+#ifdef IMPERIAL
+#define LEFTWIDTH   22
+#else
 #define LEFTWIDTH   17
+#endif
 #define RIGHTWIDTH  17
 -- vertical distance between roll horiz segments
 #define R2 6
@@ -2847,14 +2597,14 @@ local function drawHud()
   ------------------------------------
   -- synthetic vSpeed based on 
   -- home altitude when EKF is disabled
-  -- updated at 4Hz (i.e every 250ms)
+  -- updated at 1Hz (i.e every 1000ms)
   -------------------------------------
   if CONF_ENABLE_SYNTHVSPEED == true then
     if (synthVSpeedTime == 0) then
       -- first time do nothing
       synthVSpeedTime = getTime()
       prevHomeAlt = homeAlt -- dm
-    elseif (getTime() - synthVSpeedTime > 75) then
+    elseif (getTime() - synthVSpeedTime > 100) then
       -- calc vspeed
       vspd = 1000*(homeAlt-prevHomeAlt)/(getTime()-synthVSpeedTime) -- m/s
       -- update counters
@@ -2902,7 +2652,11 @@ local function drawHud()
   lcd.drawLine(HUD_X + HUD_WIDTH - RIGHTWIDTH - 3,HUD_X_MID - 3,HUD_X + HUD_WIDTH - RIGHTWIDTH - 1,HUD_X_MID - 5, SOLID, FORCE)
   lcd.drawLine(HUD_X + HUD_WIDTH - RIGHTWIDTH - 3,HUD_X_MID + 3,HUD_X + HUD_WIDTH - RIGHTWIDTH - 1,HUD_X_MID + 5, SOLID, FORCE)
     -- altitude
-  local alt = getMaxValue(homeAlt,MINMAX_ALT)
+#ifdef IMPERIAL
+  local alt = getMaxValue(homeAlt,MINMAX_ALT) * 3.28 -- homeAlt is meters*3.28 = feet
+#else
+  local alt = getMaxValue(homeAlt,MINMAX_ALT) -- homeAlt is meters
+#endif
   --
   if math.abs(alt) < 10 then
       lcd.drawNumber(HUD_X + HUD_WIDTH,HUD_X_MID - 3,alt * 10,SMLSIZE+PREC1+RIGHT)
@@ -2910,29 +2664,52 @@ local function drawHud()
       lcd.drawNumber(HUD_X + HUD_WIDTH,HUD_X_MID - 3,alt,SMLSIZE+RIGHT)
   end
   -- vertical speed
-  if (vspd > 999) then
-    lcd.drawNumber(HUD_X+1,HUD_X_MID - 3,vspd*0.1,SMLSIZE)
-  elseif (vspd < -99) then
+#ifdef IMPERIAL
+  if math.abs(vspd*3.28*60) > 99 then
+    lcd.drawNumber(HUD_X+1,HUD_X_MID - 3,vspd*0.1*3.28*60,SMLSIZE)
+  else
+    lcd.drawNumber(HUD_X+1,HUD_X_MID - 3,vspd*3.28*60,SMLSIZE+PREC1)
+  end
+#else
+  if math.abs(vspd) > 99 then
     lcd.drawNumber(HUD_X+1,HUD_X_MID - 3,vspd*0.1,SMLSIZE)
   else
     lcd.drawNumber(HUD_X+1,HUD_X_MID - 3,vspd,SMLSIZE+PREC1)
   end
+#endif
   -- center arrow
   local arrowX = math.floor(HUD_X + HUD_WIDTH/2)
   lcd.drawLine(arrowX - 4,HUD_X_MID + 4,arrowX ,HUD_X_MID ,SOLID,0)
   lcd.drawLine(arrowX + 1,HUD_X_MID + 1,arrowX + 4, HUD_X_MID + 4,SOLID,0)
 #ifdef X9
+#ifdef IMPERIAL
+  lcd.drawLine(HUD_X + 25,HUD_X_MID,HUD_X + 30,HUD_X_MID ,SOLID,0)
+#else
   lcd.drawLine(HUD_X + 22,HUD_X_MID,HUD_X + 30,HUD_X_MID ,SOLID,0)
+#endif --IMPERIAL
   lcd.drawLine(HUD_X + HUD_WIDTH - 24,HUD_X_MID,HUD_X + HUD_WIDTH - 31,HUD_X_MID ,SOLID,0)
 #else
+#ifdef IMPERIAL
+  lcd.drawLine(HUD_X + 25,HUD_X_MID,HUD_X + 28,HUD_X_MID ,SOLID,0)
+#else
   lcd.drawLine(HUD_X + 22,HUD_X_MID,HUD_X + 28,HUD_X_MID ,SOLID,0)
+#endif --IMPERIAL
   lcd.drawLine(HUD_X + HUD_WIDTH - 23,HUD_X_MID,HUD_X + HUD_WIDTH - 28,HUD_X_MID ,SOLID,0)
 #endif
   -- hspeed
-  local speed = getMaxValue(hSpeed,MAX_HSPEED)
+#ifdef IMPERIAL
+  local speed = getMaxValue(hSpeed,MAX_HSPEED) * 2.23694 -- miles/h
+#else
+  local speed = getMaxValue(hSpeed,MAX_HSPEED) * CONF_HSPEED_MULT
+#endif
+--
 #ifdef X9
   lcd.drawFilledRectangle((LCD_W)/2 - 10, LCD_H - 17, 20, 10, ERASE, 0)
-  lcd.drawNumber((LCD_W)/2 + 9, LCD_H - 15, speed, HSPEED_FLAGS+RIGHT+PREC1)
+  if math.abs(speed) > 99 then -- 
+    lcd.drawNumber((LCD_W)/2 + 9, LCD_H - 15, speed*0.1, HSPEED_FLAGS+RIGHT)
+  else
+    lcd.drawNumber((LCD_W)/2 + 9, LCD_H - 15, speed, HSPEED_FLAGS+RIGHT+PREC1)
+  end
   -- hspeed box
   lcd.drawRectangle((LCD_W)/2 - 10, LCD_H - 17, 20, 10, SOLID, FORCE)
   if showMinMaxValues == true then
@@ -2941,7 +2718,11 @@ local function drawHud()
 #endif --X9
 #ifdef X7
   lcd.drawFilledRectangle((HUD_WIDTH)/2 - 10, LCD_H - 16, 20, 10, ERASE, 0)
-  lcd.drawNumber((HUD_WIDTH)/2 + 9, LCD_H - 14, speed, HSPEED_FLAGS+RIGHT+PREC1)
+  if math.abs(speed) > 99 then -- 
+    lcd.drawNumber((HUD_WIDTH)/2 + 9, LCD_H - 14, speed*0.1, HSPEED_FLAGS+RIGHT)
+  else
+    lcd.drawNumber((HUD_WIDTH)/2 + 9, LCD_H - 14, speed, HSPEED_FLAGS+RIGHT+PREC1)
+  end
   -- hspeed box
   lcd.drawRectangle((HUD_WIDTH)/2 - 10, LCD_H - 16, 20, 10, SOLID, FORCE)
   if showMinMaxValues == true then
@@ -2952,7 +2733,7 @@ local function drawHud()
   if showMinMaxValues == true then
     drawVArrow(HUD_X + HUD_WIDTH - 24, HUD_X_MID - 4,6,true,false)
   end
-  -- failsafe
+  -- arming status, show only if timer is not running, hide otherwise
   if ekfFailsafe == 0 and battFailsafe == 0 and timerRunning == 0 then
     if (statusArmed == 1) then
       lcd.drawText(HUD_X + HUD_WIDTH/2 - 15, 22, " ARMED ", SMLSIZE+INVERS)
@@ -2995,6 +2776,7 @@ end
 -- This function checks alarm condition and as long as the condition persists it plays
 -- a warning sound.
 ---------------------------------
+--{ triggered, time, armed, type(0=min,1=max,2=timer,3=batt), last_trigger }  
 local function checkAlarm(level,value,idx,sign,sound,delay)
   -- once landed reset all alarms except battery alerts
   if timerRunning == 0 then
@@ -3012,47 +2794,91 @@ local function checkAlarm(level,value,idx,sign,sound,delay)
   if alarms[idx][3] == false and timerRunning == 1 and level > 0 and -1 * sign*value > -1 * sign*level then
     alarms[idx][3] = true
   end
-  -- if alarm is armed and value is "outside" level
-  if alarms[idx][3] == true and timerRunning == 1 and level > 0 and sign*value > sign*level then
-    -- for timer alarms trigger when flighttime is a multiple of delay
-    if alarms[idx][4] == ALARM_TYPE_TIMER then
-      if math.floor(flightTime) %  delay == 0 then
-        if alarms[idx][1] == false then 
-          alarms[idx][1] = true
-          playSound(sound)
+  -- for timer alarms trigger when flighttime is a multiple of delay
+  if alarms[idx][3] == true and timerRunning == 1 and alarms[idx][4] == ALARM_TYPE_TIMER then
+    if flightTime > 0 and math.floor(flightTime) %  delay == 0 then
+      if alarms[idx][1] == false then 
+        alarms[idx][1] = true
+        playSound(sound)
+         -- flightime is a multiple of 1 minute
+        if (flightTime % 60 == 0 ) then
+          -- minutes
+          playNumber(flightTime / 60,25) -- 25=minutes,26=seconds
+        else
+          -- minutes
+          if (flightTime > 60) then playNumber(flightTime / 60,25) end
+          -- seconds
+          playNumber(flightTime % 60,26)
         end
-      else
-          alarms[idx][1] = false
       end
     else
-      -- fire once but only every 2secs max
-      if alarms[idx][2] == 0 then
+        alarms[idx][1] = false
+    end
+  elseif alarms[idx][3] == true and timerRunning == 1 and level > 0 and sign*value > sign*level then
+    -- if alarm is armed and value is "outside" level fire once but only every 2secs max
+    if alarms[idx][2] == 0 then
+      alarms[idx][1] = true
+      alarms[idx][2] = flightTime
+      if (flightTime - alarms[idx][5]) > 5 then
+        playSound(sound)
+        alarms[idx][5] = flightTime
+      end
+    end
+    -- ...and then fire every conf secs after the first shot
+    if math.floor(flightTime - alarms[idx][2]) %  delay == 0 then
+      if alarms[idx][1] == false then 
         alarms[idx][1] = true
-        alarms[idx][2] = flightTime
-        if (flightTime - alarms[idx][5]) > 5 then
-          playSound(sound)
-          alarms[idx][5] = flightTime
-        end
+        playSound(sound)
       end
-      -- ...and then fire every conf secs after the first shot
-      if math.floor(flightTime - alarms[idx][2]) %  delay == 0 then
-        if alarms[idx][1] == false then 
-          alarms[idx][1] = true
-          playSound(sound)
-        end
-      else
-          alarms[idx][1] = false
-      end
+    else
+        alarms[idx][1] = false
     end
   elseif alarms[idx][3] == true then
     alarms[idx][2] = 0
   end
 end
 
+
+local function loadFlightModes()
+  if frame.flightModes then
+    return
+  end
+  if frameType ~= -1 then
+#ifdef LOAD_LUA
+    if frameTypes[frameType] == "c" then
+      frame = dofile("/SCRIPTS/TELEMETRY/yaapu/copter.lua")
+    elseif frameTypes[frameType] == "p" then
+      frame = dofile("/SCRIPTS/TELEMETRY/yaapu/plane.lua")
+    elseif frameTypes[frameType] == "r" then
+      frame = dofile("/SCRIPTS/TELEMETRY/yaapu/rover.lua")
+    end
+#else
+    if frameTypes[frameType] == "c" then
+      frame = dofile("/SCRIPTS/TELEMETRY/yaapu/copter.luac")
+    elseif frameTypes[frameType] == "p" then
+      frame = dofile("/SCRIPTS/TELEMETRY/yaapu/plane.luac")
+    elseif frameTypes[frameType] == "r" then
+      frame = dofile("/SCRIPTS/TELEMETRY/yaapu/rover.luac")
+    end
+#endif
+    if frame.flightModes then
+      frameTypes = nil
+    end
+  end
+end
+
 local function checkEvents()
+  loadFlightModes()
+#ifdef IMPERIAL  
+  -- homeAlt/homeDist is meters, MINALT/MAXALT/MAXDIST is feet
+  checkAlarm(CONF_MINALT_ALERT/3.28,homeAlt,ALARMS_MIN_ALT,-1,"minalt",CONF_REPEAT)
+  checkAlarm(CONF_MAXALT_ALERT/3.28,homeAlt,ALARMS_MAX_ALT,1,"maxalt",CONF_REPEAT)  
+  checkAlarm(CONF_MAXDIST_ALERT/3.28,homeDist,ALARMS_MAX_DIST,1,"maxdist",CONF_REPEAT)
+#else
   checkAlarm(CONF_MINALT_ALERT,homeAlt,ALARMS_MIN_ALT,-1,"minalt",CONF_REPEAT)
   checkAlarm(CONF_MAXALT_ALERT,homeAlt,ALARMS_MAX_ALT,1,"maxalt",CONF_REPEAT)  
-  checkAlarm(CONF_MAXDIST_ALERT,homeDist,ALARMS_MAX_DIST,1,"maxdist",CONF_REPEAT)  
+  checkAlarm(CONF_MAXDIST_ALERT,homeDist,ALARMS_MAX_DIST,1,"maxdist",CONF_REPEAT)
+#endif
   checkAlarm(1,2*ekfFailsafe,ALARMS_EKF,1,"ekf",CONF_REPEAT)  
   checkAlarm(1,2*battFailsafe,ALARMS_BATT,1,"lowbat",CONF_REPEAT)  
   checkAlarm(math.floor(CONF_TIMER_ALERT),flightTime,ALARMS_TIMER,1,"timealert",math.floor(CONF_TIMER_ALERT))
@@ -3072,9 +2898,10 @@ local function checkEvents()
 
   for l=0,12 do
     -- trigger alarm as as soon as it falls below level + 1 (i.e 91%,81%,71%,...)
-    if batLevel <= batLevels[l] + 1 and l < lastBattLevel then
+    local level = batLevels(l)
+    if batLevel <= level + 1 and l < lastBattLevel then
       lastBattLevel = l
-      playSound("bat"..batLevels[l])
+      playSound("bat"..level)
       break
     end
   end
@@ -3095,14 +2922,30 @@ local function checkEvents()
     playSound("gpsnofix")
   end
 
-  if frameType ~= -1 and flightMode ~= lastFlightMode then
+  if frame.flightModes ~= nil and flightMode ~= lastFlightMode then
     lastFlightMode = flightMode
     playSoundByFrameTypeAndFlightMode(frameType,flightMode)
+  end
+  
+  if simpleMode ~= lastSimpleMode then
+    if simpleMode == 0 then
+      playSound( lastSimpleMode == 1 and "simpleoff" or "ssimpleoff" )
+    else
+      playSound( simpleMode == 1 and "simpleon" or "ssimpleon" )
+    end
+    lastSimpleMode = simpleMode
   end
 end
 
 local function checkCellVoltage(battsource,cellmin,cellminFC,cellminA2)
-  local celm = getVoltageBySource(battsource,cellmin,cellminFC,cellminA2)*100
+  local celm = 0
+  if battsource == "vs" then
+    celm = cellmin*100
+  elseif battsource == "fc" then
+    celm = cellminFC*100
+  elseif battsource == "a2" then
+    celm = cellminA2*100
+  end
   -- trigger batt1 and batt2
   if celm > CONF_BATT_LEVEL2 and celm < CONF_BATT_LEVEL1 and battLevel1 == false then
     battLevel1 = true
@@ -3111,8 +2954,11 @@ local function checkCellVoltage(battsource,cellmin,cellminFC,cellminA2)
   if celm > 320 and celm < CONF_BATT_LEVEL2 then
     battLevel2 = true
   end
-  --
-  checkAlarm(CONF_BATT_LEVEL2,celm,ALARMS_BATT2,-1,"batalert2",CONF_REPEAT)
+  -- ignore batt alarm if current voltage outside "lipo" proper range
+  -- this helps when cycling battery sources and one or more sources has 0 voltage
+  if celm > 320 then
+    checkAlarm(CONF_BATT_LEVEL2,celm,ALARMS_BATT2,-1,"batalert2",CONF_REPEAT)
+  end
 end
 
 local function cycleBatteryInfo()
@@ -3198,9 +3044,7 @@ end
   end
   -- SLOW: this runs at 4Hz (every 250ms)
   if (bgclock % 4 == 0) then
-#ifdef SENSORS  
     setSensorValues()
-#endif --SENSORS
   end
   -- SLOWER: this runs at 2Hz (every 500ms)
   if (bgclock % 8 == 0) then
@@ -3208,10 +3052,13 @@ end
     calcFlightTime()
     checkEvents()
     checkLandingStatus()
-    checkCellVoltage(battsource,calcCellMin(cell1min,cell2min),calcCellMin(cell1minFC,cell2minFC),cellminA2)
+    checkCellVoltage(battsource,getNonZeroMin(cell1min,cell2min),getNonZeroMin(cell1sumFC/calcCellCount(),cell2sumFC/calcCellCount()),cellsumA2/calcCellCount())
+    -- aggregate value
+    minmaxValues[MAX_CURR] = math.max(batt1current+batt2current,minmaxValues[MAX_CURR])
+    -- indipendent values
     minmaxValues[MAX_CURR1] = math.max(batt1current,minmaxValues[MAX_CURR1])
     minmaxValues[MAX_CURR2] = math.max(batt2current,minmaxValues[MAX_CURR2])
-    bgclock = 0
+    bgclock=0
   end
   bgclock = bgclock+1
 end
@@ -3237,12 +3084,18 @@ local function run(event)
   ---------------------
   if showConfigMenu == false and (event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT) then
     showMessages = true
+#ifdef COLLECTGARBAGE  
+    collectgarbage()
+#endif
   end
   ---------------------
   -- SHOW CONFIG MENU
   ---------------------
   if showMessages == false and (event == EVT_MENU_LONG) then
     showConfigMenu = true
+#ifdef COLLECTGARBAGE  
+    collectgarbage()
+#endif
   end
   if showMessages then
     ---------------------
@@ -3302,61 +3155,88 @@ local function run(event)
       drawHud()
     end
 #endif --X7
-#ifdef YAWRIBBON
     drawCompassRibbon()
-#else
-    drawYaw()
-#endif --YAWRIBBON
     drawGrid()
 #ifdef X7    
     drawCustomBoxes()
-    drawGPSStatus()
+    --drawGPSStatus()
 #endif --X7
+    --
+    -- Note: these can be calculated. not necessary to track them as min/max 
+    -- cell1minFC = cell1sumFC/calcCellCount()
+    -- cell2minFC = cell2sumFC/calcCellCount()
+    -- cell1minA2 = cell1sumA2/calcCellCount()
+    local cel1m = getMinVoltageBySource(battsource,cell1min,cell1sumFC/calcCellCount(),cellsumA2/calcCellCount(),1)*100
+    local cel2m = getMinVoltageBySource(battsource,cell2min,cell2sumFC/calcCellCount(),cellsumA2/calcCellCount(),2)*100
+    local batt1 = getMinVoltageBySource(battsource,cell1sum,cell1sumFC,cellsumA2,1)*10
+    local batt2 = getMinVoltageBySource(battsource,cell2sum,cell2sumFC,cellsumA2,2)*10
+    local curr  = getMaxValue(batt1current+batt2current,MAX_CURR)
+    local curr1 = getMaxValue(batt1current,MAX_CURR1)
+    local curr2 = getMaxValue(batt2current,MAX_CURR2)
+    local mah1 = batt1mah
+    local mah2 = batt2mah
+    local cap1 = getBatt1Capacity()
+    local cap2 = getBatt2Capacity()
     -- with dual battery default is to show aggregate view
     if batt2sources.fc or batt2sources.vs then
       if showDualBattery == false then
         -- dual battery: aggregate view
 #ifdef X9
         lcd.drawText(HUD_X+HUD_WIDTH+1,TOPBAR_HEIGHT,"B1+B2",SMLSIZE+INVERS)
+        drawX9BatteryPane(HUD_X+HUD_WIDTH+1,getNonZeroMin(batt1,batt2),getNonZeroMin(cel1m,cel2m),curr,mah1+mah2,cap1+cap2)
 #endif --X9
 #ifdef X7
         lcd.drawText(HUD_X+8,BOTTOMBAR_Y - 8,"2B",SMLSIZE+INVERS)
+        drawX7RightPane(HUD_X+HUD_WIDTH+1,getNonZeroMin(batt1,batt2),getNonZeroMin(cel1m,cel2m),curr,mah1+mah2,cap1+cap2)
 #endif --X7
-        drawBatteryPane(HUD_X+HUD_WIDTH+1,battsource,batt1current+batt2current,getBatt1Capacity()+getBatt2Capacity(),batt1mah+batt2mah,calcCellMin(cell1min,cell2min),calcCellMin(cell1minFC,cell2minFC),cellminA2,calcCellMin(cell1sum,cell2sum),calcCellMin(cell1sumFC,cell2sumFC),cellsumA2,MIN_CELL_FC,MIN_BATT_FC,MAX_CURR)
       else
+        -- dual battery: do I have also dual current monitor?
+        if curr1 > 0 and curr2 == 0 then
+          -- special case: assume 1 power brick is monitoring batt1+batt2 in parallel
+          curr1 = curr1/2
+          curr2 = curr1
+          --
+          mah1 = mah1/2
+          mah2 = mah1
+          --
+          cap1 = cap1/2
+          cap2 = cap1
+        end
         -- dual battery:battery 1 right pane
 #ifdef X9
         lcd.drawText(HUD_X+HUD_WIDTH+1,TOPBAR_HEIGHT,"B1",SMLSIZE+INVERS)
+        drawX9BatteryPane(HUD_X+HUD_WIDTH+1,batt1,cel1m,curr1,mah1,cap1)
 #endif --X9
-        drawBatteryPane(HUD_X+HUD_WIDTH+1,battsource,batt1current,getBatt1Capacity(),batt1mah,cell1min,cell1minFC,cellminA2,cell1sum,cell1sumFC,cellsumA2,MIN_CELL1_FC,MIN_BATT1_FC,MAX_CURR1)
+#ifdef X7
+        drawX7RightPane(HUD_X+HUD_WIDTH+1,batt1,cel1m,curr1,mah1,cap1)
+#endif --X7
         -- dual battery:battery 2 left pane
 #ifdef X9
         lcd.drawText(0,TOPBAR_HEIGHT,"B2",SMLSIZE+INVERS)
-        drawBatteryPane(0,battsource,batt2current,getBatt2Capacity(),batt2mah,cell2min,cell2minFC,0,cell2sum,cell2sumFC,0,MIN_CELL2_FC,MIN_BATT2_FC,MAX_CURR2)
+        drawX9BatteryPane(0,batt2,cel2m,curr2,mah2,cap2)
 #endif --X9
 #ifdef X7
-        drawX7BatteryLeftPane(battsource,batt2current,getBatt2Capacity(),batt2mah,cell2min,cell2minFC,0,cell2sum,cell2sumFC,0,MIN_CELL2_FC,MIN_BATT2_FC,MAX_CURR2)
+        drawX7LeftPane(batt2,cel2m,curr2,mah2,cap2)
 #endif --X7
       end
     else
 #ifdef X9      
       -- battery 1 right pane in single battery mode
-      drawBatteryPane(HUD_X+HUD_WIDTH+1,battsource,batt1current,getBatt1Capacity(),batt1mah,cell1min,cell1minFC,cellminA2,cell1sum,cell1sumFC,cellsumA2,MIN_CELL1_FC,MIN_BATT1_FC,MAX_CURR1)
+        drawX9BatteryPane(HUD_X+HUD_WIDTH+1,batt1,cel1m,curr1,mah1,cap1)
     end
     -- left pane info when not in dual battery mode
     if showDualBattery == false then
-      -- power is always based on flight controller values
-      drawLeftPane(batt1current+batt2current,calcCellMin(cell1sumFC,cell2sumFC))
+      -- power is always based on FC current+voltage
+      drawX9LeftPane(curr1+curr2,getNonZeroMin(cell1sumFC,cell2sumFC))
     end
 #endif --X9
 #ifdef X7
       --- battery 1 right pane in single battery mode
-      drawBatteryPane(HUD_X+HUD_WIDTH+1,battsource,batt1current,getBatt1Capacity(),batt1mah,cell1min,cell1minFC,cellminA2,cell1sum,cell1sumFC,cellsumA2,MIN_CELL1_FC,MIN_BATT1_FC,MAX_CURR1)
+      drawX7RightPane(HUD_X+HUD_WIDTH+1,batt1,cel1m,curr1,mah1,cap1)
     end
     if showDualBattery == false then
       drawHomeDirection()
     end
-    drawHomeDist()
 #endif --X7
 #ifdef X9
     drawHomeDirection()
@@ -3366,7 +3246,7 @@ local function run(event)
     drawFailsafe()
 #ifdef DEBUG    
     lcd.drawNumber(0,40,cell1maxFC,SMLSIZE+PREC1)
-    lcd.drawNumber(25,40,calcCellCount(cell1maxFC),SMLSIZE)
+    lcd.drawNumber(25,40,calcCellCount(),SMLSIZE)
 #endif --DEBUG
 #ifdef BGRATE    
     lcd.drawNumber(0,39,bgrate*10,PREC1+SMLSIZE+INVERS)
@@ -3388,9 +3268,26 @@ local function run(event)
 #endif --BGTELERATE
     drawNoTelemetryData()
   end
+#ifdef MEMDEBUG
+  -- debug info, allocated memory
+  maxmem = math.max(maxmem,collectgarbage("count")*1024)
+#ifdef X9
+  lcd.drawNumber(LCD_W,LCD_H-7,maxmem,SMLSIZE+INVERS+RIGHT)
+#else
+  lcd.drawNumber(LCD_W,LCD_H-6,maxmem,SMLSIZE+INVERS+RIGHT)
+#endif
+#endif  
 end
 
 local function init()
+-- initialize flight timer
+  model.setTimer(2,{mode=0})
+  model.setTimer(2,{value=0})
+#ifdef COMPILE
+  loadScript("/SCRIPTS/TELEMETRY/yaapu/copter.lua")
+  loadScript("/SCRIPTS/TELEMETRY/yaapu/plane.lua")
+  loadScript("/SCRIPTS/TELEMETRY/yaapu/rover.lua")
+#endif
   loadConfig()
 #ifdef X9
   pushMessage(6,VERSION)
@@ -3400,16 +3297,17 @@ local function init()
 #endif --X7
 #ifdef TESTMODE
 #ifdef DEMO
-  pushMessage(7,"APM:Copter V3.5.4 (284349c3) QUAD")
-  pushMessage(7,"Calibrating barometer")
+  pushMessage(6,"APM:Copter V3.5.4 (284349c3) QUAD")
+  pushMessage(6,"Calibrating barometer")
   pushMessage(6,"Initialising APM")
-  pushMessage(7,"Barometer calibration complete")
-  pushMessage(7,"EKF2 IMU0 initial yaw alignment complete")
-  pushMessage(7,"EKF2 IMU1 initial yaw alignment complete")
-  pushMessage(7,"GPS 1: detected as u-blox at 115200 baud")
+  pushMessage(6,"Barometer calibration complete")
+  pushMessage(6,"EKF2 IMU0 initial yaw alignment complete")
+  pushMessage(6,"EKF2 IMU1 initial yaw alignment complete")
+  pushMessage(6,"GPS 1: detected as u-blox at 115200 baud")
   pushMessage(6,"EKF2 IMU0 tilt alignment complete")
   pushMessage(6,"EKF2 IMU1 tilt alignment complete")
-  pushMessage(7,"u-blox 1 HW: 00080000 SW: 2.01 (75331)")
+  pushMessage(6,"u-blox 1 HW: 00080000 SW: 2.01 (75331)")
+  pushMessage(4,"Bad AHRS")
   pushMessage(4,"Bad AHRS")
 #endif --DEMO
 #endif --TESTMODE

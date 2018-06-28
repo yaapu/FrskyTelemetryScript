@@ -84,11 +84,11 @@ mavlink message history
  - gps fix extendend status (2D,3D,DGPS,RTK)
  - gps HDop
  - satellite count (Note: the highest reported count is 15 sats due to telemetry library restrictions)
- - flight time
+ - flight time (uses OpenTX timer 3)
  - rssi value
  - transmitter voltage
  - home distance
- - horizontal ground speed or air speed (available if configured in mission planner)
+ - horizontal ground speed or airspeed (available if configured in mission planner)
  - home heading as rotating triangle
  - mavlink messages with history accessible with [PLUS]/[MINUS] or by turning the [ENCODER] buttons
  - english, italian and french sound files for selected events: battery levels, failsafe, flightmodes, alerts and landing
@@ -146,6 +146,8 @@ Sensor valus are passed to OpenTX only when the script receives valid telemetry 
 |20|AvoidADSB|YES|
 |21|GuidedNOGPS|YES|
 |22|SmartRTL|YES|
+|23|FlowHold|YES|
+|24|Follow|YES|
 
 ### Plane
 | #  | flight mode | sound support |
@@ -209,30 +211,15 @@ Battery stats can be displayed in aggregate view or separate battery view (batte
 In aggregate battery view Cell voltage is the minimun cell voltage between battery 1 and 2.
 - Single FLVSS sensor + single power module: voltage will be available from 2 sources, user can choose which one to display. Current will always be visible. 
 - Dual FLVSS sensors + dual power module: voltage will be available from 2 sources, user can choose which one to display. Current will always be visible. Voltage and current visible in dual battery view as well as aggregate battery view.
-- Dual FLVSS + single power modeule: voltage will be available from 2 sources, user can choose which one to display. Current is only available for battery 1, so in dual battery view current 2 and mAh 2 will be zero.
+- Dual FLVSS + single power module: voltage will be available from 2 sources, user can choose which one to display. Current reading is only available for battery 1: the script assumes that the load is equally shared between the two batteries. In dual battery view current,mAh and battery capacity will be split half on battery 1,between the left and right panels.
 
 ## Cell Count Detection
 
-The script uses a simple way to calculate cell count for voltage sources fc and a2:
-- if the maximum pack voltage is higher then 21.75v i.e 4.35x5 then it's a 6s.
-- if the maximum pack voltage is higher then 17.4v i.e 4.35x4 then it's a 5s.
-- if the maximum pack voltage is higher then 13.05v i.e 4.35x3 then it's a 4s.
-- if the maximum pack voltage is higher then 8.7v i.e 4.35x2 then it's a 3s.
-- else it's a 2s
+The script tries to autodetect the cell count by monitoring the maximum pack voltage.
 
-This in turn means that:
-- if you hook a 6s with cell voltage lower then 3.625V it will be detected as a 5s.
-- if you hook a 5s with cell voltage lower then 3.48V it will be detected as a 4s.
-- if you hook a 4s with cell voltage lower then 3.27V it will be detected as a 3s.
+If autodetection fails it's possible to override cell count in the configuration menu up to 12s.
 
-For 3s and 2s the limit is so low that's not a problem.
-
-Please note that the voltage used for the calculation is the maximum pack voltage so if after detection the cell voltage lowers below the above limits it will be ok.
-
-The script supports autodetection up to 6s.
-It's always possible to override auto detection from the menu and set cell count up to 12s.
-
-## airspeed vs groundspeed
+## Airspeed vs Groundspeed
 
 The frsky passthrough telemetry library can send on the radio link only 1 speed value.
 Where it picks that speed value depends on arduplane configuration.
@@ -262,7 +249,6 @@ When the vehicle moves outside of the fence the script will play a vocal alert e
 ## Script update rates
 
 - The script processes telemetry up to 60Hz
-- Sport telemetry stream is at around 40Hz
 - Screen is redrawn at 20Hz
 - VSpd sensor is exposed to OpenTX at 8Hz
 - All other frsky sensors are exposed to OpenTX at 4Hz
@@ -274,11 +260,27 @@ When the vehicle moves outside of the fence the script will play a vocal alert e
 
 ![X9D menu](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9dmenupag1.png)
 
-![X9D menu](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9dmenupag2.png)
-
 ![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7menupag1.png)
 
-![X7 menu](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7menupag2.png)
+Complete menu options list:
+- voice language: english, italian, french and german
+- battery alert level 1, default is 3.75V
+- battery alert level 2, default is 3.5V
+- capacity override for battery 1
+- capacity override for battery 2
+- disable all sounds
+- disable msg beep: disable sound on incoming message
+- disable msg blink: disable text blink on incoming message
+- default voltage source: disable autodetection and force either FLVSS,A2 or ArduPilot as battery voltage source
+- timer alert every: play a vocal timer alert and speak flight time at configured intervals
+- min altitude alert: minimum altitude vocal fence
+- max altitude alert: maximum altitude vocal fence
+- max distance alert: maximum distance vocal fence
+- repeat alerts every: alert period in seconds
+- cell count override: disable cell count detection and override it manually
+- rangefinder max: enable rangefinder and enter maximum rangefinder distance
+- enable synthetic vspeed: ignore telemetry vertical speed and calculate it from atitude variations
+- ground/airspeed unit: select either m/s or km/h
 
 The language of the vocal alerts is independent from the radio language and can be configured from the menu.
 Right now only english, italian and french are supported but new languages can be added with ease.
@@ -289,21 +291,62 @@ Battery capacity for battery 1 and battery 2 is automatically read from the valu
 
 Copy the contents of the SD folder to your radio SD Card.
 
-On Taranis Make sure to have the SOUNDS/yaapu0 and MODELS/yaapu folders.
-On Horus make sure you have the SOUNDS/yaapu0, SCRIPTS/YAAPU/CFG and SCRIPTS/YAAPU/IMAGES folders.
+On Taranis Make sure to have the /SOUNDS/yaapu0, MODELS/yaapu and /SCRIPTS/TELEMETRY/yaapu folders.
+On Horus make sure you have the /SOUNDS/yaapu0, SCRIPTS/YAAPU/CFG and SCRIPTS/YAAPU/IMAGES folders.
 
 - For the X10/X12 use the yaapux.luac script (rename it to yaapux.lua if the radio doesn't start it, see the note below).
-- For the X9D/X9D+ and X9E use the yaapu9.luac script (rename it to yaapu9.lua if the radio doesn't start it, see the note below).
-- For the QX7 radio use the yaapu7.luac script (rename it to yaapu7.lua if the radio doesn't start it, see the note below).
+- For the X9D/X9D+ and X9E use the yaapu9.luac script (use the yaapu9.lua if the radio doesn't start it, see the note below).
+- For the QX7 radio use the yaapu7.luac script (use yaapu7.lua if the radio doesn't start it, see the note below).
 
 The script is quite big and compilation on your radio will fail with a memory error.
 The correct way is to compile it on Companion and then copy the .luac compiled version to the SD card in the /SCRIPTS/TELEMETRY folder on Taranis or to the /SCRIPTS/YAAPU folder on the Horus.
 
+On Taranis X9D radios the correct folder structure is
+
+/MODELS/yaapu/<modelname>.cfg
+/SCRIPTS/TELEMETRY/yaapu9.lua
+/SCRIPTS/TELEMETRY/yaapu9.luac
+/SCRIPTS/TELEMETRY/yaapu/copter.lua
+/SCRIPTS/TELEMETRY/yaapu/copter.luac
+/SCRIPTS/TELEMETRY/yaapu/plane.lua
+/SCRIPTS/TELEMETRY/yaapu/plane.luac
+/SCRIPTS/TELEMETRY/yaapu/rover.lua
+/SCRIPTS/TELEMETRY/yaapu/rover.luac
+/SOUNDS/yaapu0/en
+/SOUNDS/yaapu0/it
+/SOUNDS/yaapu0/fr
+/SOUNDS/yaapu0/de
+ 
+On Taranis QX7 radios the correct folder structure is
+
+/MODELS/yaapu/<modelname>.cfg
+/SCRIPTS/TELEMETRY/yaapu7.lua
+/SCRIPTS/TELEMETRY/yaapu7.luac
+/SCRIPTS/TELEMETRY/yaapu/copter.lua
+/SCRIPTS/TELEMETRY/yaapu/copter.luac
+/SCRIPTS/TELEMETRY/yaapu/plane.lua
+/SCRIPTS/TELEMETRY/yaapu/plane.luac
+/SCRIPTS/TELEMETRY/yaapu/rover.lua
+/SCRIPTS/TELEMETRY/yaapu/rover.luac
+/SOUNDS/yaapu0/en
+/SOUNDS/yaapu0/it
+/SOUNDS/yaapu0/fr
+/SOUNDS/yaapu0/de
+
+On Horus radios the correct folder structure is
+
+/SCRIPTS/YAAPU/CFG
+/SCRIPTS/YAAPU/IMAGES
+/SCRIPTS/YAAPU/yaapux.lua
+/SCRIPTS/YAAPU/yaapux.luac
+/SOUNDS/yaapu0/en
+/SOUNDS/yaapu0/it
+/SOUNDS/yaapu0/fr
+/SOUNDS/yaapu0/de
+ 
 I do provide already compiled versions for X10/X12,X9D and QX7.
 
-**Note: On radios without the luac option enabled it is necessary to rename the script from .luac to .lua**
-
-To enable sound files playback copy them to /SOUNDS/yaapu0/en, /SOUNDS/yaapu0/it and SOUNDS/yaapu0/fr folders.
+**Note: On radios without the luac option enabled it is necessary to use the .lua versions**
 
 **Note: On the Horus the script needs to be started as a "one time script", see the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12) on how to do it.**
 
@@ -343,6 +386,8 @@ All sound files are inside the SOUNDS/yaapu0/"language" folder, where language i
 |SOUNDS/yaapu0/en|drift|Drift flight mode|
 |SOUNDS/yaapu0/en|ekf|E K F failsafe|
 |SOUNDS/yaapu0/en|flip|Flip flight mode|
+|SOUNDS/yaapu0/en|flowhold|flow hold flight mode|
+|SOUNDS/yaapu0/en|follow|follow flight mode|
 |SOUNDS/yaapu0/en|flybywirea|Fly by wire a flight mode|
 |SOUNDS/yaapu0/en|flybywireb|Fly by wire b flight mode|
 |SOUNDS/yaapu0/en|gpsfix|GPS 3D fix lock|
@@ -369,6 +414,10 @@ All sound files are inside the SOUNDS/yaapu0/"language" folder, where language i
 |SOUNDS/yaapu0/en|qstabilize|Q stabilize flight mode|
 |SOUNDS/yaapu0/en|rtl|Return to home|
 |SOUNDS/yaapu0/en|rtl_r|Return to home mode|
+|SOUNDS/yaapu0/en|simpleon|simple mode enabled|
+|SOUNDS/yaapu0/en|simpleoff|simple mode disabled|
+|SOUNDS/yaapu0/en|ssimpleon|super simple mode enabled|
+|SOUNDS/yaapu0/en|ssimpleoff|super simple mode disabled|
 |SOUNDS/yaapu0/en|smartrtl|Smart return to home flight mode|
 |SOUNDS/yaapu0/en|smartrtl_r|Smart return to home mode|
 |SOUNDS/yaapu0/en|sport|Sport flight mode|
@@ -392,8 +441,6 @@ Taranis and Horus phrase files may differ so make sure to pick the right one.
 
 To compile your own version you must first preprocess the SOURCES/yaapu0.lua script with the pproc.lua preprocessor.
 Details on the preprocessor can be found [here](https://gist.github.com/incinirate/d52e03f453df94a65e1335d9c36d114e)
-
-There are many #define each activates a specific feature of the script.
 
 You need a working lua interpreter for this to work.
 On a command line simply run "lua pproc.lua yaapu0.lua yaapu9.lua"

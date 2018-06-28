@@ -29,6 +29,8 @@ SOUNDS/yaapu0/en|disarmed|Motors disarmed
 SOUNDS/yaapu0/en|drift|Drift flight mode
 SOUNDS/yaapu0/en|ekf|E K F failsafe
 SOUNDS/yaapu0/en|flip|Flip flight mode
+SOUNDS/yaapu0/en|flowhold|flow hold flight mode
+SOUNDS/yaapu0/en|follow|follow flight mode
 SOUNDS/yaapu0/en|flybywirea|Fly by wire a flight mode
 SOUNDS/yaapu0/en|flybywireb|Fly by wire b flight mode
 SOUNDS/yaapu0/en|gpsfix|GPS 3D fix lock
@@ -57,6 +59,10 @@ SOUNDS/yaapu0/en|rtl|Return to home
 SOUNDS/yaapu0/en|rtl_r|Return to home mode
 SOUNDS/yaapu0/en|smartrtl|Smart return to home flight mode
 SOUNDS/yaapu0/en|smartrtl_r|Smart return to home mode
+SOUNDS/yaapu0/en|simpleon|simple mode enabled
+SOUNDS/yaapu0/en|simpleoff|simple mode disabled
+SOUNDS/yaapu0/en|ssimpleon|super simple mode enabled
+SOUNDS/yaapu0/en|ssimpleoff|super simple mode disabled
 SOUNDS/yaapu0/en|sport|Sport flight mode
 SOUNDS/yaapu0/en|stabilize|Stabilize flight mode
 SOUNDS/yaapu0/en|steering_r|Steering mode
