@@ -467,6 +467,6 @@ For information on how to connect the FrSky equipment together, please refer to
  - Massild (X10 tester)
  - Zeek (X10 tester)
  - Vova Reznik (X10 tester)
- - athertop
- - zs6buj
+ - [athertop](https://github.com/athertop)
+ - [zs6buj](https://github.com/zs6buj)
  - Craft&Theory for the passthrough protocol
