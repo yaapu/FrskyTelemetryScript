@@ -469,4 +469,5 @@ For information on how to connect the FrSky equipment together, please refer to
  - Vova Reznik (X10 tester)
  - [athertop](https://github.com/athertop)
  - [zs6buj](https://github.com/zs6buj)
+ - [BFD Systems](https://www.bfdsystems.com/) (Horus version sponsor)
  - Craft&Theory for the passthrough protocol
