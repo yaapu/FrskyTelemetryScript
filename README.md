@@ -1,6 +1,6 @@
 # Yaapu Frsky Telemetry script
 
-A lua based telemetry script for the Frsky Horus X12,X10,X10S and Taranis X9D,X9E and QX7 radios using the frsky passthrough protocol.
+A lua based telemetry script for the Frsky Horus X12,X10,X10S and Taranis X9D,X9E,QX7 and X-Lite(OpenTX 2.2.2) radios using the frsky passthrough protocol.
 
 The script supports all of the telemetry DIY 0x5000 packets sent by ardupilot’s [frsky passthrough protocol library](https://github.com/ArduPilot/ardupilot/tree/master/libraries/AP_Frsky_Telem)
 
