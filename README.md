@@ -290,14 +290,12 @@ Battery capacity for battery 1 and battery 2 is automatically read from the valu
 Copy the contents of the SD folder to your radio SD Card.
 
 On Taranis Make sure to have the /SOUNDS/yaapu0, MODELS/yaapu and /SCRIPTS/TELEMETRY/yaapu folders.
-On Horus make sure you have the /SOUNDS/yaapu0, SCRIPTS/YAAPU/CFG and SCRIPTS/YAAPU/IMAGES folders.
 
-- For the X10/X12 use the yaapux.luac script (rename it to yaapux.lua if the radio doesn't start it, see the note below).
 - For the X9D/X9D+ and X9E use the yaapu9.luac script (use the yaapu9.lua if the radio doesn't start it, see the note below).
 - For the QX7 radio use the yaapu7.luac script (use yaapu7.lua if the radio doesn't start it, see the note below).
 
 The script is quite big and compilation on your radio will fail with a memory error.
-The correct way is to compile it on Companion and then copy the .luac compiled version to the SD card in the /SCRIPTS/TELEMETRY folder on Taranis or to the /SCRIPTS/YAAPU folder on the Horus.
+The correct way is to compile it on Companion and then copy the .luac compiled version to the SD card in the /SCRIPTS/TELEMETRY folder on Taranis or to the /SCRIPTS/YAAPU or /WIDGETS/Yaapu folder on the Horus.
 
 On Taranis X9D radios the correct folder structure is
 
@@ -315,7 +313,7 @@ On Taranis X9D radios the correct folder structure is
 - /SOUNDS/yaapu0/fr
 - /SOUNDS/yaapu0/de
  
-On Taranis QX7 radios the correct folder structure is
+On Taranis QX7 and X-Lite radios the correct folder structure is
 
 - /MODELS/yaapu/<modelname>.cfg
 - /SCRIPTS/TELEMETRY/yaapu7.lua
@@ -331,22 +329,30 @@ On Taranis QX7 radios the correct folder structure is
 - /SOUNDS/yaapu0/fr
 - /SOUNDS/yaapu0/de
 
+On Horus make sure you have the /SOUNDS/yaapu0, SCRIPTS/YAAPU/CFG and SCRIPTS/YAAPU/IMAGES folders.
+
+On Horus radios the script can be started in 2 ways:
+- widget (recommended) see this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12-as-a-Widget)
+- one time script by using the yaapux.lua or yaapux.luac script, see this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12)
+
 On Horus radios the correct folder structure is
 
 - /SCRIPTS/YAAPU/CFG
 - /SCRIPTS/YAAPU/IMAGES
 - /SCRIPTS/YAAPU/yaapux.lua
 - /SCRIPTS/YAAPU/yaapux.luac
+- /SCRIPTS/YAAPU/menu.lua
+- /SCRIPTS/YAAPU/menu.luac
 - /SOUNDS/yaapu0/en
 - /SOUNDS/yaapu0/it
 - /SOUNDS/yaapu0/fr
 - /SOUNDS/yaapu0/de
- 
-I do provide already compiled versions for X10/X12,X9D and QX7.
+- /WIDGETS/Yaapu/main.lua
+- /WIDGETS/Yaapu/main.luac 
+
+I do provide compiled versions for all radios: X10/X12,X9D and QX7 and X-Lite
 
 **Note: On radios without the luac option enabled it is necessary to use the .lua versions**
-
-**Note: On the Horus the script needs to be started as a "one time script", see the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12) on how to do it.**
 
 ## Sound files customization
 
