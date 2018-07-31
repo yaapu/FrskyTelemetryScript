@@ -3,8 +3,8 @@
 A lua based telemetry script for the Frsky Horus X12,X10,X10S and Taranis X9D,X9E,QX7 and X-Lite(OpenTX 2.2.2) radios using the frsky passthrough protocol.
 
 Here you'll find
-- a telemetry script for the Taranis radios: X9D,QX7 and X-Lite
-- a widget for the Horus radios: X10/S and X12
+- a **Telemetry** script for the Taranis radios: X9D,QX7 and X-Lite
+- a **Widget** for the Horus radios: X10/S and X12
 
 The script supports all of the telemetry DIY 0x5000 packets sent by ardupilot’s [frsky passthrough protocol library](https://github.com/ArduPilot/ardupilot/tree/master/libraries/AP_Frsky_Telem)
 
