@@ -481,7 +481,7 @@ For information on how to connect the FrSky equipment together, please refer to
  ## Credits
  
  Thanks go to 
- - Marco Robustini (X9D tester), 
+ - Marco Robustini (X9D tester) 
  - Chris Rey (QX7 tester)
  - Alain Chartier (frech sound files)
  - [Johnex](https://github.com/Johnex) for TTSAutomate phrase file
@@ -491,7 +491,7 @@ For information on how to connect the FrSky equipment together, please refer to
  - Massild (X10 tester)
  - Zeek (X10 tester)
  - Vova Reznik (X10 tester)
- - [athertop](https://github.com/athertop)
- - [zs6buj](https://github.com/zs6buj)
+ - [athertop](https://github.com/athertop) (X9D tester)
+ - [zs6buj](https://github.com/zs6buj) (X9D tester)
  - [BFD Systems](https://www.bfdsystems.com/) (Horus version sponsor)
  - Craft&Theory for the passthrough protocol
