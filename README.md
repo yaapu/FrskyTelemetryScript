@@ -334,13 +334,15 @@ On Taranis QX7 and X-Lite radios the correct folder structure is
 - /SOUNDS/yaapu0/fr
 - /SOUNDS/yaapu0/de
 
+**Note: On radios without the luac option enabled it is necessary to use the .lua versions**
+
 ## Installation on Horus
 
 The script can be started in 2 ways:
 
-- widget (recommended) see this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12-as-a-Widget)
+- **Widget** (recommended) see this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12-as-a-Widget)
 
-- one time script by using the yaapux.lua or yaapux.luac script, see this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12)
+- **One time script** by using the yaapux.lua or yaapux.luac script, see this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12)
 
 Make sure you have the /SOUNDS/yaapu0, SCRIPTS/YAAPU/CFG and SCRIPTS/YAAPU/IMAGES folders.
 
