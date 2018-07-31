@@ -1,6 +1,11 @@
-# Yaapu Frsky Telemetry script
+# Yaapu Frsky Telemetry Script
 
-A lua based telemetry script for the Frsky Horus X12,X10,X10S and Taranis X9D,X9E,QX7 and X-Lite(OpenTX 2.2.2) radios using the frsky passthrough protocol.
+This is the home of the Yaapu Telemetry Script project, a [LUA](https://www.lua.org/about.html) telemetry script for the Frsky Horus and Taranis radios using the ArduPilot frsky passthru telemetry.
+
+The supported radios are:
+- Taranis X9D(+) and QX7 on OpenTX 2.2.1/2.2.2
+- X-Lite on OpenTX 2.2.2
+- Horus X10(S) and X12 on OpenTX 2.2.1/2.2.2
 
 Here you'll find
 - a **Telemetry** script for the Taranis radios: X9D,QX7 and X-Lite
