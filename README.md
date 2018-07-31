@@ -26,7 +26,8 @@ Requires [OpenTX 2.2](http://www.open-tx.org/) and a recent release of [ArduPilo
  - [alerts](#alerts)
  - [script timing and update rates](#script-timing-and-update-rates)
  - [configuration](#configuration)
- - [installation](#installation)
+ - [installation on Taranis](#installation-on-taranis)
+ - [installation on Horus](#installation-on-horus)
  - [sound files customization](#sound-files-customization)
  - [compilation](#compilation)
  - [hardware requirements](#hardware-requirements)
@@ -285,7 +286,7 @@ Right now only english, italian and french are supported but new languages can b
 
 Battery capacity for battery 1 and battery 2 is automatically read from the values configured in mission planner but can both be overidden from the menu. When a new capacity is defined from the menu it will immediately be used in all calculations and it's value will be displayed on screen.
 
-## Installation
+## Installation on Taranis
 
 Copy the contents of the SD folder to your radio SD Card.
 
@@ -329,13 +330,17 @@ On Taranis QX7 and X-Lite radios the correct folder structure is
 - /SOUNDS/yaapu0/fr
 - /SOUNDS/yaapu0/de
 
-On Horus make sure you have the /SOUNDS/yaapu0, SCRIPTS/YAAPU/CFG and SCRIPTS/YAAPU/IMAGES folders.
+## Installation on Horus
 
-On Horus radios the script can be started in 2 ways:
+The script can be started in 2 ways:
+
 - widget (recommended) see this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12-as-a-Widget)
+
 - one time script by using the yaapux.lua or yaapux.luac script, see this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12)
 
-On Horus radios the correct folder structure is
+Make sure you have the /SOUNDS/yaapu0, SCRIPTS/YAAPU/CFG and SCRIPTS/YAAPU/IMAGES folders.
+
+The correct folder structure is
 
 - /SCRIPTS/YAAPU/CFG
 - /SCRIPTS/YAAPU/IMAGES
