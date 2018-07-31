@@ -26,27 +26,28 @@
 ---------------------
 -- script version 
 ---------------------
--- 480x272 LCD_WxLCD_H
 
+-- 480x272 LCD_WxLCD_H
+--#define WIDGET
+--#define WIDGETDEBUG
+--#define SPLASH
+--#define MEMDEBUG
 -- fix for issue OpenTX 2.2.1 on X10/X10S - https://github.com/opentx/opentx/issues/5764
 ---------------------
 -- features
 ---------------------
---#define RESETBATTALARMS
 --#define HUD_ALGO1
 --#define BATTPERC_BY_VOLTAGE
+--#define COMPASS_ROSE
 ---------------------
 -- dev features
 ---------------------
 --#define LOGTELEMETRY
---#define LOGMESSAGES
---
 --#define DEBUG
 --#define DEBUGEVT
 --#define TESTMODE
 --#define BATT2TEST
 --#define FLVSS2TEST
---#define CELLCOUNT 4
 --#define DEMO
 --#define DEV
 
@@ -57,16 +58,19 @@
 
 -- calc and show hud refresh rate
 -- default for beta
+--#define HUDRATE
 
 --#define HUDTIMER
 
 -- calc and show telemetry process rate
 -- default for beta
+--#define BGTELERATE
 
 -- calc and show actual incoming telemetry rate
 --#define TELERATE
 
 --
+
 
 
 
@@ -160,6 +164,8 @@ flightModes["c"][19]="Throw"
 flightModes["c"][20]="AvoidADSB"
 flightModes["c"][21]="GuidedNOGPS"
 flightModes["c"][22]="SmartRTL"
+flightModes["c"][23]="FlowHold"
+flightModes["c"][24]="Follow"
 -- plane flight modes
 flightModes["p"][1]="Manual"
 flightModes["p"][2]="Circle"
@@ -203,6 +209,16 @@ gpsStatuses[4]="DGPS"
 gpsStatuses[5]="RTK"
 gpsStatuses[6]="RTK"
 
+--[[
+0	MAV_SEVERITY_EMERGENCY	System is unusable. This is a "panic" condition.
+1	MAV_SEVERITY_ALERT	Action should be taken immediately. Indicates error in non-critical systems.
+2	MAV_SEVERITY_CRITICAL	Action must be taken immediately. Indicates failure in a primary system.
+3	MAV_SEVERITY_ERROR	Indicates an error in secondary/redundant systems.
+4	MAV_SEVERITY_WARNING	Indicates about a possible future error if this is not resolved within a given timeframe. Example would be a low battery warning.
+5	MAV_SEVERITY_NOTICE	An unusual event has occured, though not an error condition. This should be investigated for the root cause.
+6	MAV_SEVERITY_INFO	Normal operational messages. Useful for logging. No action is required for these messages.
+7	MAV_SEVERITY_DEBUG	Useful non-operational messages that can assist in debugging. These should not occur during normal operation.
+--]]
 local mavSeverity = {}
 mavSeverity[0]="EMR"
 mavSeverity[1]="ALR"
@@ -221,17 +237,16 @@ local cell1sum = 0
 local cell2min = 0
 local cell2sum = 0
 -- FC 1
-local cell1minFC = 0
 local cell1sumFC = 0
+-- used to calculate cellcount
 local cell1maxFC = 0
 -- FC 2
-local cell2minFC = 0
 local cell2sumFC = 0
-local cell2maxFC = 0
 -- A2
-local cellminA2 = 0
 local cellsumA2 = 0
+-- used to calculate cellcount
 local cellmaxA2 = 0
+
 --------------------------------
 -- STATUS
 local flightMode = 0
@@ -240,6 +255,7 @@ local landComplete = 0
 local statusArmed = 0
 local battFailsafe = 0
 local ekfFailsafe = 0
+local imuTemp = 0
 -- GPS
 local numSats = 0
 local gpsStatus = 0
@@ -267,8 +283,6 @@ local batt2sources = {
   fc = false
 }
 -- TELEMETRY
-local SENSOR_ID,FRAME_ID,DATA_ID,VALUE
-local c1,c2,c3,c4
 local noTelemetryData = 1
 -- HOME
 local homeDist = 0
@@ -293,12 +307,9 @@ local range = 0
 -- PARAMS
 local paramId,paramValue
 local frameType = -1
-local battFailsafeVoltage = 0
-local battFailsafeCapacity = 0
 local batt1Capacity = 0
 local batt2Capacity = 0
 -- FLIGHT TIME
-local seconds = 0
 local lastTimerStart = 0
 local timerRunning = 0
 local flightTime = 0
@@ -306,43 +317,36 @@ local flightTime = 0
 local lastStatusArmed = 0
 local lastGpsStatus = 0
 local lastFlightMode = 0
+local lastSimpleMode = 0
 -- battery levels
 local batLevel = 99
-local batLevels = {}
 local battLevel1 = false
 local battLevel2 = false
-
 --
 local lastBattLevel = 13
-batLevels[0]=0
-batLevels[1]=5
-batLevels[2]=10
-batLevels[3]=15
-batLevels[4]=20
-batLevels[5]=25
-batLevels[6]=30
-batLevels[7]=40
-batLevels[8]=50
-batLevels[9]=60
-batLevels[10]=70
-batLevels[11]=80
-batLevels[12]=90
+--
+local batLevels = {0,5,10,15,20,25,30,40,50,60,70,80,90}
+-- dual battery
+local showDualBattery = false
+-- messages
+local lastMessage
+local lastMessageSeverity = 0
+local lastMessageCount = 1
+local messageCount = 0
+local messages = {}
 --
 local bitmaps = {}
 local blinktime = getTime()
 local blinkon = false
--- dual battery
-local showDualBattery = false
+-- GPS
+local function getTelemetryId(name)
+  local field = getFieldInfo(name)
+  return field and field.id or -1
+end
 --
-
-
-
--- offsets
-local minmaxOffsets = {}
-minmaxOffsets["fc"] = 0
-minmaxOffsets["vs"] = 3
-minmaxOffsets["a2"] = 6
-minmaxOffsets["na"] = 0
+local gpsDataId = getTelemetryId("GPS")
+--
+--
 --
 local minmaxValues = {}
 -- min
@@ -353,6 +357,7 @@ minmaxValues[4] = 0
 minmaxValues[5] = 0
 minmaxValues[6] = 0
 minmaxValues[7] = 0
+-- max
 minmaxValues[8] = 0
 minmaxValues[9] = 0
 minmaxValues[10] = 0
@@ -363,18 +368,6 @@ minmaxValues[14] = 0
 minmaxValues[15] = 0
 minmaxValues[16] = 0
 minmaxValues[17] = 0
-minmaxValues[18] = 0
--- max
-minmaxValues[19] = 0
-minmaxValues[20] = 0
-minmaxValues[21] = 0
-minmaxValues[22] = 0
-minmaxValues[23] = 0
-minmaxValues[24] = 0
-minmaxValues[25] = 0
-minmaxValues[26] = 0
-minmaxValues[27] = 0
-minmaxValues[28] = 0
 
 local showMinMaxValues = false
 --
@@ -407,9 +400,24 @@ local showMinMaxValues = false
 
 
 
-
 -- model and opentx version
 local ver, radio, maj, minor, rev = getVersion()
+-----------------------------
+-- clears the loaded table 
+-- and recovers memory
+-----------------------------
+local function clearTable(t)
+  if type(t)=="table" then
+    for i,v in pairs(t) do
+      if type(v) == "table" then
+        clearTable(v)
+      end
+      t[i] = nil
+    end
+  end
+  collectgarbage()
+  sharedVars.maxmem=0
+end  
 --------------------------------------------------------------------------------
 -- CONFIGURATION MENU
 --------------------------------------------------------------------------------
@@ -444,9 +452,15 @@ local menu  = {
   offset = 0
 }
 
+
+-- max 4 extra sensors
+local customSensors = {
+    -- {label,name,prec:0,1,2,unit,stype:I,E,1}
+}
+
 local menuItems = {
   -- label, type, alias, currval, min, max, label, flags, increment 
-  {"voice language:", 1, "L1", 1, { "english", "italian", "french" } , {"en","it","fr"} },
+  {"voice language:", 1, "L1", 1, { "english", "italian", "french", "german" } , {"en","it","fr","de"} },
   {"batt alert level 1:", 0, "V1", 375, 320,420,"V", PREC2 ,5 },
   {"batt alert level 2:", 0, "V2", 350, 320,420,"V", PREC2 ,5 },
   {"batt[1] capacity override:", 0, "B1", 0, 0,5000,"Ah",PREC2 ,10 },
@@ -499,9 +513,9 @@ local function applyConfigValues()
   conf.maxAltitudeAlert = menuItems[12][4]
   conf.maxDistanceAlert = menuItems[13][4]
   conf.cellCount = menuItems[15][4]
-  conf.rangeMax=menuItems[16][4]
-  conf.enableSynthVSpeed=menuItems[17][6][menuItems[17][4]]
-  conf.horSpeedMultiplier=menuItems[18][6][menuItems[18][4]]
+  conf.rangeMax = menuItems[16][4]
+  conf.enableSynthVSpeed = menuItems[17][6][menuItems[17][4]]
+  conf.horSpeedMultiplier = menuItems[18][6][menuItems[18][4]]
   --
   if conf.defaultBattSource ~= nil then
     battsource = conf.defaultBattSource
@@ -551,7 +565,7 @@ local function drawConfigMenuBars()
   local itemIdx = string.format("%d/%d",menu.selectedItem,#menuItems)
   lcd.drawFilledRectangle(0,0, LCD_W, 20, TITLE_BGCOLOR)
   lcd.drawRectangle(0, 0, LCD_W, 20, TITLE_BGCOLOR)
-  lcd.drawText(2,0,"Yaapu Horus telemetry script 1.6.0-beta1",MENU_TITLE_COLOR)
+  lcd.drawText(2,0,"Yaapu Telemetry Script 1.6.2_b1",MENU_TITLE_COLOR)
   lcd.drawFilledRectangle(0,LCD_H - 20, LCD_W, 20, TITLE_BGCOLOR)
   lcd.drawRectangle(0, LCD_H - 20, LCD_W, 20, TITLE_BGCOLOR)
   lcd.drawText(2,LCD_H - 20+1,getConfigFilename(),MENU_TITLE_COLOR)
@@ -662,10 +676,6 @@ local function playSoundByFrameTypeAndFlightMode(frameType,flightMode)
   end
 end
 
-local function roundTo(val,int)
-  return math.floor(val/int) * int
-end
-
 local function drawHArrow(x,y,width,left,right)
   lcd.drawLine(x, y, x + width,y, SOLID, 0)
   if left == true then
@@ -686,32 +696,18 @@ local function drawVArrow(x,y,h,top,bottom)
   end
 end
 
-local function drawVArrow2(x,y,h,top,bottom)
-  lcd.drawLine(x,y,x,y + h, SOLID, 0)
-  if top == true then
-    lcd.drawLine(x - 1,y + 1,x - 2,y  + 2, SOLID, 0)
-    lcd.drawLine(x + 1,y + 1,x + 2,y  + 2, SOLID, 0)
-  end
-  if bottom == true then
-    lcd.drawLine(x - 1,y  + h - 1,x - 2,y + h - 2, SOLID, 0)
-    lcd.drawLine(x + 1,y  + h - 1,x + 2,y + h - 2, SOLID, 0)
-  end
-end
-
 local function drawHomeIcon(x,y)
   lcd.drawBitmap(getBitmap("minihomeorange"),x,y)
 end
 
 local function drawLine(x1,y1,x2,y2,flags1,flags2)
-  --if x1~=x2 or y1~=y2 then
+    -- if lines are hor or ver do not fix
+--if string.find(radio, "x10") and rev < 2 and x1 ~= x2 and y1 ~= y2 then
     if string.find(radio, "x10") and rev < 2 then
       lcd.drawLine(LCD_W-x1,LCD_H-y1,LCD_W-x2,LCD_H-y2,flags1,flags2)
     else
       lcd.drawLine(x1,y1,x2,y2,flags1,flags2)
     end
-  --else
-    --lcd.drawLine(x1,y1,x2,y2,flags1,flags2)
-  --end
 end
 
 local function drawCroppedLine(ox,oy,angle,len,style,minX,maxX,minY,maxY,color)
@@ -798,48 +794,102 @@ local function drawNumberWithDim(x,y,xDim,yDim,number,dim,flags,dimFlags)
   lcd.drawText(xDim, yDim, dim, dimFlags)
 end
 
-
-
-local messages = {
-  -- { idx,severity,message,duplicates }
-}
+--
+--
+local function formatMessage(severity,msg)
+  if lastMessageCount > 1 then
+    return string.format("%02d:%s (x%d) %s", messageCount, mavSeverity[severity], lastMessageCount, msg)
+  else
+    return string.format("%02d:%s %s", messageCount, mavSeverity[severity], msg)
+  end
+end
 
 local function pushMessage(severity, msg)
   if  conf.disableMsgBeep == false and conf.disableAllSounds == false then
-    if ( severity < 4) then
-      playTone(400,300,0)
+    if ( severity < 5) then
+      playSound("../err")
     else
-      playTone(600,300,0)
+      playSound("../inf")
     end
   end
-  -- wrap at 9
-  if #messages == 14 and messages[#messages][3] ~= msg then
-    for i=1,14-1 do
+  -- check if wrapping is needed
+  if #messages == 17 and msg ~= lastMessage then
+    for i=1,17-1 do
       messages[i]=messages[i+1]
     end
     -- trunc at 9
-    messages[14] = nil
+    messages[17] = nil
   end
-  -- is there at least 1 message?
-  local nextIdx = 1
-  if messages[#messages] then
-    -- is it a duplicate?
-    if messages[#messages][3] == msg then
-      messages[#messages][4] = messages[#messages][4] + 1
-      return
-    end
-    nextIdx = messages[#messages][1] + 1
+  -- is it a duplicate?
+  if msg == lastMessage then
+    lastMessageCount = lastMessageCount + 1
+    messages[#messages] = formatMessage(severity,msg)
+  else  
+    lastMessageCount = 1
+    messageCount = messageCount + 1
+    messages[#messages+1] = formatMessage(severity,msg)
   end
-  -- append new message
-  messages[#messages+1] = {nextIdx, severity, msg, 1}
+  lastMessage = msg
+  lastMessageSeverity = severity
 end
+
+local function getSensorsConfigFilename()
+  local info = model.getInfo()
+  return "/SCRIPTS/YAAPU/CFG/" .. string.lower(string.gsub(info.name, "[%c%p%s%z]", "")..".sensors")
+end
+
+local function loadSensors()
+  local cfg = io.open(getSensorsConfigFilename(),"r")
+  if cfg == nil then
+    return
+  end
+  local str = io.read(cfg,200)
+  if string.len(str) > 0 then
+    for i=1,4
+    do
+      local label, name, prec, unit, stype, mult = string.match(str, "S"..i..":(%w+),([A-Za-z0-9]+),(%d+),([A-Za-z0-9//%%]+),(%a+),(%d+)")
+      if label ~= nil and name ~= nil and prec ~= nil and unit ~= nil and stype ~= nil then
+        customSensors[i] = { label, name, prec, unit, stype, mult }
+        pushMessage(7,"Custom sensor enabled: "..label)
+      end
+    end
+  end
+  --
+  if cfg 	~= nil then
+    io.close(cfg)
+  end
+end
+
+local customSensorXY = {
+  { 85, 95, 82, 112},
+  { 165, 95, 165, 112},
+  { 85, 152, 84, 170},
+  { 165, 152, 165, 170 }
+}
+
+local function drawCustomSensors()
+    local label,data,prec,mult
+    for i=1,4
+    do
+      if customSensors[i] ~= nil then 
+        label = string.format("%s(%s)",customSensors[i][1],customSensors[i][4])
+        lcd.drawText(customSensorXY[i][1], customSensorXY[i][2],label, SMLSIZE+RIGHT)
+        mult = tonumber(customSensors[i][3])
+        mult =  mult == 0 and 1 or ( mult == 1 and 10 or 100 )
+        prec =  mult == 1 and 0 or (mult == 10 and 32 or 48)
+        lcd.drawNumber(customSensorXY[i][3], customSensorXY[i][4], getValue(customSensors[i][2])*mult*customSensors[i][6], MIDSIZE+RIGHT+prec)
+      end
+    end
+end
+
 --
 local function startTimer()
   lastTimerStart = getTime()/100
+  model.setTimer(2,{mode=1})
 end
 
 local function stopTimer()
-  seconds = seconds + getTime()/100 - lastTimerStart
+  model.setTimer(2,{mode=0})
   lastTimerStart = 0
 end
 
@@ -849,7 +899,7 @@ end
 -----------------------------------------------------------------
 --
 local function processTelemetry()
-  SENSOR_ID,FRAME_ID,DATA_ID,VALUE = sportTelemetryPop()
+  local SENSOR_ID,FRAME_ID,DATA_ID,VALUE = sportTelemetryPop()
   if ( FRAME_ID == 0x10) then
     noTelemetryData = 0
     if ( DATA_ID == 0x5006) then -- ROLLPITCH
@@ -874,6 +924,8 @@ local function processTelemetry()
       statusArmed = bit32.extract(VALUE,8,1)
       battFailsafe = bit32.extract(VALUE,9,1)
       ekfFailsafe = bit32.extract(VALUE,10,2)
+      -- IMU temperature: offset -19, 0 means temp =< 19°, 63 means temp => 82°
+      imuTemp = math.floor((100 * bit32.extract(VALUE,26,6)/64) + 0.5) - 19 -- C° Note. math.round = math.floor( n + 0.5)
     elseif ( DATA_ID == 0x5002) then -- GPS STATUS
       numSats = bit32.extract(VALUE,0,4)
       -- offset  4: NO_GPS = 0, NO_FIX = 1, GPS_OK_FIX_2D = 2, GPS_OK_FIX_3D or GPS_OK_FIX_3D_DGPS or GPS_OK_FIX_3D_RTK_FLOAT or GPS_OK_FIX_3D_RTK_FIXED = 3
@@ -902,12 +954,13 @@ local function processTelemetry()
     elseif ( DATA_ID == 0x5000) then -- MESSAGES
       if (VALUE ~= lastMsgValue) then
         lastMsgValue = VALUE
-        c1 = bit32.extract(VALUE,0,7)
-        c2 = bit32.extract(VALUE,8,7)
-        c3 = bit32.extract(VALUE,16,7)
-        c4 = bit32.extract(VALUE,24,7)
+        local c1 = bit32.extract(VALUE,0,7)
+        local c2 = bit32.extract(VALUE,8,7)
+        local c3 = bit32.extract(VALUE,16,7)
+        local c4 = bit32.extract(VALUE,24,7)
         --
         local msgEnd = false
+        --
         if (c4 ~= 0) then
           msgBuffer = msgBuffer .. string.char(c4)
         else
@@ -928,21 +981,20 @@ local function processTelemetry()
         else
           msgEnd = true;
         end
+        --_msg_chunk.chunk |= (_statustext_queue[0]->severity & 0x4)<<21;
+        --_msg_chunk.chunk |= (_statustext_queue[0]->severity & 0x2)<<14;
+        --_msg_chunk.chunk |= (_statustext_queue[0]->severity & 0x1)<<7;
         if (msgEnd) then
-          local severity = (bit32.extract(VALUE,15,1) * 4) + (bit32.extract(VALUE,23,1) * 2) + (bit32.extract(VALUE,30,1) * 1)
+          local severity = (bit32.extract(VALUE,7,1) * 1) + (bit32.extract(VALUE,15,1) * 2) + (bit32.extract(VALUE,23,1) * 4)
           pushMessage( severity, msgBuffer)
           msgBuffer = ""
         end
-    end
+      end
     elseif ( DATA_ID == 0x5007) then -- PARAMS
       paramId = bit32.extract(VALUE,24,4)
       paramValue = bit32.extract(VALUE,0,24)
       if paramId == 1 then
         frameType = paramValue
-      elseif paramId == 2 then
-        battFailsafeVoltage = paramValue
-      elseif paramId == 3 then
-        battFailsafeCapacity = paramValue
       elseif paramId == 4 then
         batt1Capacity = paramValue
       elseif paramId == 5 then
@@ -959,74 +1011,37 @@ local function telemetryEnabled()
   return noTelemetryData == 0
 end
 
-local function getMinValue(value,idx)
-  if showMinMaxValues == true then
-    return minmaxValues[idx]
-  end
-  return value
-end
-
 local function getMaxValue(value,idx)
   minmaxValues[idx] = math.max(value,minmaxValues[idx])
-  if showMinMaxValues == true then
-    return minmaxValues[idx]
-  end
-  return value
+  return showMinMaxValues == true and minmaxValues[idx] or value
 end
 
 local function calcMinValue(value,min)
-  if min == 0 then
-    return value
-  else
-    return math.min(value,min)
-  end
+  return min == 0 and value or math.min(value,min)
 end
 
 -- returns the actual minimun only if both are > 0
-local function calcCellMin(v1,v2)
-  if v1 == nil or v1 == 0 then
-    return v2
-  elseif v2 == nil or v2 == 0 then
-    return v1
-  else
-    return math.min(v1,v2)
-  end
+local function getNonZeroMin(v1,v2)
+  return v1 == 0 and v2 or ( v2 == 0 and v1 or math.min(v1,v2))
 end
 
 
 
-local function calcCellCount(battmax)
-  -- cellcount is cached
+local function calcCellCount()
+  -- cellcount override from menu
   if conf.cellCount ~= nil and conf.cellCount > 0 then
     return conf.cellCount
   end
-  
-  if cellcount > 1 then
+  -- cellcount is cached only for FLVSS
+  if batt1sources.vs == true and cellcount > 1 then
     return cellcount
   end
-  local count = 0
-  if battmax*0.1 > 21.75 then
-    -- battmax > 4.35 * 5 ==> 6s (lowest allowed cell on boot 3.625)
-    count = 6
-  elseif battmax*0.1 > 17.4 then
-    -- battmax > 4.35 * 4 ==> 5s (lowest allowed cell on boot 3.48)
-    count = 5
-  elseif battmax*0.1 > 13.05 then
-    -- battmax > 4.35 * 3 ==> 4s (lowest allowed cell on boot 3.27)
-    count = 4
-  elseif battmax*0.1 > 8.7 then
-    -- battmax > 4.35 * 2 ==> 3s (lowest allowed cell on boot 2.9)
-    count = 3
-  else
-    count = 2
-  end
-  return count
+  -- round in excess and return
+  -- Note: cellcount is not cached because max voltage can rise during initialization)
+  return math.floor( (( math.max(cell1maxFC,cellmaxA2)*0.1 ) / 4.35) + 1)
 end
 
-
 local function calcBattery()
-  local battA2 = 0
-  local cell = {0, 0, 0, 0, 0 ,0}
   ------------
   -- FLVSS 1
   ------------
@@ -1062,7 +1077,6 @@ local function calcBattery()
   if type(cellResult) == "table" then
     cell2min = 4.35
     cell2sum = 0
-    for i = 1, #cell do cell[i] = 0 end
     -- cellcount is global and shared
     cellcount = #cellResult
     for i, v in pairs(cellResult) do
@@ -1090,14 +1104,12 @@ local function calcBattery()
   if batt1volt > 0 then
     cell1sumFC = batt1volt*0.1
     cell1maxFC = math.max(batt1volt,cell1maxFC)
-    cell1minFC = cell1sumFC/calcCellCount(cell1maxFC)
     if battsource == "na" then
       battsource = "fc"
     end
     batt1sources.fc = true
   else
     batt1sources.fc = false
-    cell1minFC = 0
     cell1sumFC = 0
   end
   --------------------------------
@@ -1105,59 +1117,44 @@ local function calcBattery()
   --------------------------------
   if batt2volt > 0 then
     cell2sumFC = batt2volt*0.1
-    cell2maxFC = math.max(batt2volt,cell2maxFC)
-    cell2minFC = cell2sumFC/calcCellCount(cell2maxFC)
     if battsource == "na" then
       battsource = "fc"
     end
     batt2sources.fc = true
   else
     batt2sources.fc = false
-    cell2minFC = 0
     cell2sumFC = 0
   end
   ----------------------------------
   -- 12 analog voltage only 1 supported
   ----------------------------------
-  battA2 = getValue("A2")
+  local battA2 = getValue("A2")
   --
   if battA2 > 0 then
     cellsumA2 = battA2
     cellmaxA2 = math.max(battA2*10,cellmaxA2)
-    cellminA2 = cellsumA2/calcCellCount(cellmaxA2)
-    batt1sources.a2 = true
+    -- don't force a2, only way to display it
+    -- is by user selection from menu
+    --[[
     if battsource == "na" then
       battsource = "a2"
     end
+    --]]    batt1sources.a2 = true
   else
     batt1sources.a2 = false
-    cellminA2 = 0
     cellsumA2 = 0
   end
-  -- cell fc
-  minmaxValues[1] = calcMinValue(calcCellMin(cell1minFC,cell2minFC)*100,minmaxValues[1])
-  minmaxValues[2] = calcMinValue(cell1minFC*100,minmaxValues[2])
-  minmaxValues[3] = calcMinValue(cell2minFC*100,minmaxValues[3])
-  -- cell flvss
-  minmaxValues[4] = calcMinValue(calcCellMin(cell1min,cell2min)*100,minmaxValues[4])
-  minmaxValues[5] = calcMinValue(cell1min*100,minmaxValues[5])
-  minmaxValues[6] = calcMinValue(cell2min*100,minmaxValues[6])
-  -- cell 12
-  minmaxValues[7] = calcMinValue(cellminA2*100,minmaxValues[7])
-  minmaxValues[8] = minmaxValues[7]
-  minmaxValues[9] = 0
   -- batt fc
-  minmaxValues[10] = calcMinValue(calcCellMin(cell1sumFC,cell2sumFC)*10,minmaxValues[10])
-  minmaxValues[11] = calcMinValue(cell1sumFC*10,minmaxValues[11])
-  minmaxValues[12] = calcMinValue(cell2sumFC*10,minmaxValues[12])
+  minmaxValues[1] = calcMinValue(cell1sumFC,minmaxValues[1])
+  minmaxValues[2] = calcMinValue(cell2sumFC,minmaxValues[2])
+  -- cell flvss
+  minmaxValues[3] = calcMinValue(cell1min,minmaxValues[3])
+  minmaxValues[4] = calcMinValue(cell2min,minmaxValues[4])
   -- batt flvss
-  minmaxValues[13] = calcMinValue(calcCellMin(cell1sum,cell2sum)*10,minmaxValues[13])
-  minmaxValues[14] = calcMinValue(cell1sum*10,minmaxValues[14])
-  minmaxValues[15] = calcMinValue(cell2sum*10,minmaxValues[15])
+  minmaxValues[5] = calcMinValue(cell1sum,minmaxValues[5])
+  minmaxValues[6] = calcMinValue(cell2sum,minmaxValues[6])
   -- batt 12
-  minmaxValues[16] = calcMinValue(cellsumA2*10,minmaxValues[16])
-  minmaxValues[17] = minmaxValues[16]
-  minmaxValues[18] = 0
+  minmaxValues[7] = calcMinValue(cellsumA2,minmaxValues[7])
 end
 
 local function checkLandingStatus()
@@ -1172,39 +1169,42 @@ local function checkLandingStatus()
 end
 
 local function calcFlightTime()
-  local elapsed = 0
-  if ( lastTimerStart ~= 0) then
-    elapsed = getTime()/100 - lastTimerStart
-  end
-  flightTime = elapsed + seconds
+  -- update local variable with timer 3 value
+  flightTime = model.getTimer(2).value
 end
 
 local function getBatt1Capacity()
-  if conf.battCapOverride1 > 0 then
-    return conf.battCapOverride1*100
-  else
-    return batt1Capacity
-  end
+  return conf.battCapOverride1 > 0 and conf.battCapOverride1*100 or batt1Capacity
 end
 
 local function getBatt2Capacity()
-  if conf.battCapOverride2 > 0 then
-    return conf.battCapOverride2*100
-  else
-    return batt2Capacity
-  end
+  return conf.battCapOverride2 > 0 and conf.battCapOverride2*100 or batt2Capacity
 end
 
-local function getVoltageBySource(battsource,cell,cellFC,cellA2)
-  if battsource == "vs" then
-    return cell
-  elseif battsource == "fc" then
-    return cellFC
-  elseif battsource == "a2" then
-    return cellA2
+-- gets the voltage based on source and min value, battId = [1|2]
+local function getMinVoltageBySource(source,cell,cellFC,cellA2,battId,count)
+  -- offset 0 for cell voltage, 2 for pack voltage
+  local offset = 0
+  --
+  if cell > 4.35*2 or cellFC > 4.35*2 or cellA2 > 4.35*2 then
+    offset = 2
   end
+  --
+  if source == "vs" then
+    return showMinMaxValues == true and minmaxValues[2+offset+battId] or cell
+  elseif source == "fc" then
+      -- FC only tracks batt1 and batt2 no cell voltage tracking
+      local minmax = (offset == 2 and minmaxValues[battId] or minmaxValues[battId]/count)
+      return showMinMaxValues == true and minmax or cellFC
+  elseif source == "a2" then
+      -- 12 does not depend on battery id
+      local minmax = (offset == 2 and minmaxValues[7] or minmaxValues[7]/count)
+      return showMinMaxValues == true and minmax or cellA2
+  end
+  --
   return 0
 end
+
 
 
 --[[
@@ -1220,6 +1220,21 @@ end
     { false, 0 , true, 1, 0 },
     { false, 0 , true, 2, 0 },
     { false, 0 , false, 3, 0 }
+}
+
+
+local sensors = {
+  {0x0600, 0, 0,0, 13 , 0 , "Fuel" },
+  {0x0210, 0, 2,0, 1 , 2 , "VFAS"},
+  {0x0200, 0, 3,0, 2 , 1 , "CURR"},
+  {0x0110, 0, 1,0, 5 , 1 , "VSpd"},
+  {0x0830, 0, 4,0, 4 , 0 , "GSpd"},
+  {0x0100, 0, 1,0, 9 , 1 , "Alt"},
+  {0x0820, 0, 4,0, 9 , 0 , "GAlt"},
+  {0x0840, 0, 4,0, 20 , 0 , "Hdg"},
+  {0x0400, 0, 0,0, 11 , 0 , "Tmp1"},
+  {0x0410, 0, 0,0, 11 , 0 , "Tmp2"},
+  {0x0400, 0, 10,0, 11 , 0 , "IMUt"}
 }
 
 local function setSensorValues()
@@ -1239,25 +1254,40 @@ local function setSensorValues()
       perc = 99
     end  
   end
-  setTelemetryValue(0x0600, 0, 0, perc, 13 , 0 , "Fuel")
-  setTelemetryValue(0x0210, 0, 2, calcCellMin(batt1volt,batt2volt)*10, 1 , 2 , "VFAS")
-  setTelemetryValue(0x0200, 0, 3, batt1current+batt2current, 2 , 1 , "CURR")
-  setTelemetryValue(0x0110, 0, 1, vSpeed, 5 , 1 , "VSpd")
-  setTelemetryValue(0x0830, 0, 4, hSpeed*0.1, 4 , 0 , "GSpd")
-  setTelemetryValue(0x0100, 0, 1, homeAlt*10, 9 , 1 , "Alt")
-  setTelemetryValue(0x0820, 0, 4, math.floor(gpsAlt*0.1), 9 , 0 , "GAlt")
-  setTelemetryValue(0x0840, 0, 4, math.floor(yaw), 20 , 0 , "Hdg")
-  setTelemetryValue(0x0400, 0, 0, flightMode, 11 , 0 , "Tmp1")
-  setTelemetryValue(0x0410, 0, 0, numSats*10+gpsStatus, 11 , 0 , "Tmp2")
+  --
+  sensors[1][4] = perc;
+  sensors[2][4] = getNonZeroMin(batt1volt,batt2volt)*10;
+  sensors[3][4] = batt1current+batt2current;
+  sensors[4][4] = vSpeed;
+  sensors[5][4] = hSpeed*0.1;
+  sensors[6][4] = homeAlt*10;
+  sensors[7][4] = math.floor(gpsAlt*0.1);
+  sensors[8][4] = math.floor(yaw);
+  sensors[9][4] = flightMode;
+  sensors[10][4] = numSats*10+gpsStatus;
+  sensors[11][4] = imuTemp;
+  --
+  for s=1,#sensors
+  do
+    local skip = false
+    -- check if sensor
+    for i=1,4
+    do
+      -- if a sensor created by the script has a user defined override then do not expose it to OpenTX
+      if customSensors[i] ~= nil and customSensors[i][2] == sensors[s][7] and customSensors[i][5] == "E" then 
+        -- sensor is external ==> disable the internal one
+        skip = true
+      end
+    end
+    if skip == false then
+      setTelemetryValue(sensors[s][1], sensors[s][2], sensors[s][3], sensors[s][4], sensors[s][5] , sensors[s][6] , sensors[s][7])
+    end
+  end
 end
 --------------------
 -- Single long function much more memory efficient than many little functions
 ---------------------
-local function drawBatteryPane(x,battsource,battcurrent,battcapacity,battmah,cellmin,cellminFC,cellminA2,cellsum,cellsumFC,cellsumA2,cellIdx,lipoIdx,currIdx)
-  local celm = getVoltageBySource(battsource,cellmin,cellminFC,cellminA2)*100
-  local lipo = getVoltageBySource(battsource,cellsum,cellsumFC,cellsumA2)*10
-  celm = getMinValue(celm,cellIdx + minmaxOffsets[battsource])
-  lipo = getMinValue(lipo,lipoIdx + minmaxOffsets[battsource])
+local function drawBatteryPane(x,battVolt,cellVolt,current,battmah,battcapacity)
   local perc = 0
   if (battcapacity > 0) then
     perc = (1 - (battmah/battcapacity))*100
@@ -1279,11 +1309,10 @@ local function drawBatteryPane(x,battsource,battcurrent,battcapacity,battmah,cel
       flags = CUSTOM_COLOR
     end
   end
-  drawNumberWithTwoDims(x+33, 13,x+171, 23, 60,celm,"V",battsource,XXLSIZE+PREC2+flags,flags,flags)
+  drawNumberWithTwoDims(x+33, 13,x+171, 23, 60,cellVolt,"V",battsource,XXLSIZE+PREC2+flags,flags,flags)
   -- battery voltage
-  drawNumberWithDim(x+100,164,x+95, 159, lipo,"V",DBLSIZE+PREC1+RIGHT,SMLSIZE)
+  drawNumberWithDim(x+100,164,x+95, 159, battVolt,"V",DBLSIZE+PREC1+RIGHT,SMLSIZE)
   -- battery current
-  local current = getMaxValue(battcurrent,currIdx)
   drawNumberWithDim(x+192,164,x+186,159,current,"A",DBLSIZE+PREC1+RIGHT,SMLSIZE)
   -- display capacity bar %
   if perc > 50 then
@@ -1315,17 +1344,7 @@ local function drawNoTelemetryData()
   if (not telemetryEnabled()) then
     lcd.drawFilledRectangle(75,90, 330, 100, TITLE_BGCOLOR)
     lcd.drawText(140, 120, "no telemetry data", MIDSIZE+INVERS)
-    lcd.drawText(90, 155, "Yaapu Horus telemetry script 1.6.0-beta1", SMLSIZE+INVERS)
-    return
-  end
-end
-
-local function getMessage(index)
-  local msg = messages[index][3]
-  if messages[index][4] > 1 then
-    return string.format("%02d:%s (x%d) %s", messages[index][1], mavSeverity[messages[index][2]], messages[index][4], msg)
-  else
-    return string.format("%02d:%s %s", messages[index][1], mavSeverity[messages[index][2]], msg)
+    lcd.drawText(130, 160, "Yaapu Telemetry Script 1.6.2_b1", SMLSIZE+INVERS)
   end
 end
 
@@ -1334,8 +1353,9 @@ local function drawFlightMode()
   if frameTypes[frameType] ~= nil then
     local strMode = flightModes[frameTypes[frameType]][flightMode]
     if strMode ~= nil then
-      if ( simpleMode == 1) then
-        strMode = string.format("%s%s",strMode,"(S)")
+      if ( simpleMode > 0 ) then
+        local strSimpleMode = simpleMode == 1 and "(S)" or "(SS)"
+        strMode = string.format("%s%s",strMode,strSimpleMode)
       end
       lcd.drawText(2 + 2, 218, strMode, MIDSIZE)
     end
@@ -1371,7 +1391,7 @@ local function drawFlightTime()
   -- flight time
   lcd.drawText(330, 202, "Flight Time", SMLSIZE)
   lcd.drawLine(330,202 + 16, 330 + 140,202 + 16, SOLID,0)
-  lcd.drawTimer(330, 202 + 16, flightTime, DBLSIZE)
+  lcd.drawTimer(330, 202 + 16, model.getTimer(2).value, DBLSIZE)
 end
 
 local function drawScreenTitle(title,page, pages)
@@ -1385,7 +1405,7 @@ local function drawBottomBar()
   lcd.drawFilledRectangle(0,LCD_H - 20, LCD_W, 20, TITLE_BGCOLOR)
   -- message text
   local now = getTime()
-  local msg = getMessage(#messages)
+  local msg = messages[#messages]
   if (now - lastMsgTime ) > 150 or conf.disableMsgBlink then
     lcd.drawText(2, LCD_H - 20 + 1, msg,MENU_TITLE_COLOR)
   else
@@ -1394,24 +1414,12 @@ local function drawBottomBar()
 end
 
 local function drawAllMessages()
-  collectgarbage()
   for i=1,#messages do
-    if getMessage(i) ~= nil then
-      lcd.drawText(1,19*(i-1), getMessage(i),0)
-    else
-      lcd.drawNumber(1,19*(i-1), i,0)
-    end
+    lcd.drawText(1,16*(i-1), messages[i],SMLSIZE)
   end
 end
 
-local function getTelemetryId(name)
-  local field = getFieldInfo(name)
-  return field and field.id or -1
-end
-
-local gpsDataId = getTelemetryId("GPS")
---
-local function drawLeftPane(battcurrent,cellsumFC)
+local function drawGPSStatus()
   -- gps status
   local strStatus = gpsStatuses[gpsStatus]
   local flags = BLINK
@@ -1444,7 +1452,7 @@ local function drawLeftPane(battcurrent,cellsumFC)
     --
     lcd.drawLine(2 + 91,22 ,2+91,22 + 36,SOLID,0)
     --
-    gpsData = getValue(gpsDataId)
+    gpsData = getValue("GPS")
     --
     if type(gpsData) == "table" and gpsData.lat ~= nil and gpsData.lon ~= nil then
       lcd.drawText(2 ,22 + 38,math.floor(gpsData.lat * 100000) / 100000,SMLSIZE)
@@ -1457,18 +1465,21 @@ local function drawLeftPane(battcurrent,cellsumFC)
   else
     drawBlinkBitmap("nolockicon",4,24)
   end  
+end
+
+local function drawLeftPane(battcurrent,cellsumFC)
   if conf.rangeMax > 0 then
     flags = 0
     local rng = range
     if rng > conf.rangeMax then
       flags = BLINK+INVERS
     end
-    rng = getMaxValue(rng,28)
+    rng = getMaxValue(rng,17)
     if showMinMaxValues == true then
       flags = 0
     end
-    lcd.drawText(10, 106, "Range(m)", SMLSIZE)
-    lcd.drawText(82, 123, string.format("%.1f",rng*0.01), MIDSIZE+flags+RIGHT)
+    lcd.drawText(10, 95, "Range(m)", SMLSIZE)
+    lcd.drawText(82, 112, string.format("%.1f",rng*0.01), MIDSIZE+flags+RIGHT)
   else
     flags = BLINK
     -- always display gps altitude even without 3d lock
@@ -1476,40 +1487,40 @@ local function drawLeftPane(battcurrent,cellsumFC)
     if gpsStatus  > 2 then
       flags = 0
       -- update max only with 3d or better lock
-      alt = getMaxValue(alt,24)
+      alt = getMaxValue(alt,13)
     end
     if showMinMaxValues == true then
       flags = 0
     end
-    lcd.drawText(10, 106, "AltAsl(m)", SMLSIZE)
+    lcd.drawText(10, 95, "AltAsl(m)", SMLSIZE)
     local stralt = string.format("%d",alt)
-    lcd.drawText(82, 123, stralt, MIDSIZE+flags+RIGHT)
+    lcd.drawText(82, 112, stralt, MIDSIZE+flags+RIGHT)
   end
   -- home distance
-  drawHomeIcon(91,106,7)
-  lcd.drawText(165, 106, "Dist(m)", SMLSIZE+RIGHT)
+  drawHomeIcon(91,95,7)
+  lcd.drawText(165, 95, "Dist(m)", SMLSIZE+RIGHT)
   flags = 0
   if homeAngle == -1 then
     flags = BLINK
   end
-  local dist = getMaxValue(homeDist,27)
+  local dist = getMaxValue(homeDist,16)
   if showMinMaxValues == true then
     flags = 0
   end
   local strdist = string.format("%d",dist)
-  lcd.drawText(165, 123, strdist, MIDSIZE+flags+RIGHT)
+  lcd.drawText(165, 112, strdist, MIDSIZE+flags+RIGHT)
   -- hspeed
-  local speed = getMaxValue(hSpeed,26)
+  local speed = getMaxValue(hSpeed,15)
   lcd.drawText(85, 152, "Spd("..menuItems[18][5][menuItems[18][4]]..")", SMLSIZE+RIGHT)
   lcd.drawNumber(84,170,speed * conf.horSpeedMultiplier,MIDSIZE+RIGHT+PREC1)
   -- power
   local power = cellsumFC*battcurrent*0.1
-  power = getMaxValue(power,22)
+  power = getMaxValue(power,11)
   lcd.drawText(165, 152, "Power(W)", SMLSIZE+RIGHT)
   lcd.drawNumber(165,170,power,MIDSIZE+RIGHT)
   if showMinMaxValues == true then
-    drawVArrow(82-81, 123,6,true,false)
-    drawVArrow(165-78, 123 ,6,true,false)
+    drawVArrow(82-81, 112,6,true,false)
+    drawVArrow(165-78, 112 ,6,true,false)
     drawVArrow(61-60,170,6,true,false)
     drawVArrow(165-78, 170, 5,true,false)
   end
@@ -1554,7 +1565,7 @@ local function drawCompassRibbon()
   -- ribbon centered +/- 90 on yaw
   local centerYaw = (yaw+270)%360
   -- this is the first point left to be drawn on the compass ribbon
-  local nextPoint = roundTo(centerYaw,45)
+  local nextPoint = math.floor(centerYaw/45) * 45
   -- distance in degrees between leftmost ribbon point and first 45° multiple normalized to 120/8
   local yawMinX = (LCD_W - 120)/2
   local yawMaxX = (LCD_W + 120)/2
@@ -1589,6 +1600,16 @@ local function drawCompassRibbon()
       drawHomeIcon(yawMinX + ((centerHome-leftYaw)/180)*120 - 5,homeIconY)
     end
   end
+  -- when abs(home angle) > 90 draw home icon close to left/right border
+  local angle = homeAngle - yaw
+  local cos = math.cos(math.rad(angle - 90))    
+  local sin = math.sin(math.rad(angle - 90))    
+  if cos > 0 and sin > 0 then
+    drawHomeIcon(yawMaxX - 5, homeIconY)
+  elseif cos < 0 and sin > 0 then
+    drawHomeIcon(yawMinX - 5, homeIconY)
+  end
+  --
   lcd.drawLine(yawMinX, yawY + 16, yawMaxX, yawY + 16, SOLID, 0)
   local xx = 0
   if ( yaw < 10) then
@@ -1602,69 +1623,8 @@ local function drawCompassRibbon()
 end
 
 
-local compassPoints = {}
-compassPoints[0] = "N"
-compassPoints[1] = nil
-compassPoints[2] = "E"
-compassPoints[3] = nil
-compassPoints[4] = "S"
-compassPoints[5] = nil
-compassPoints[6] = "W"
-compassPoints[7] = nil
-
-local function drawCompassRose()
-  local hw = math.floor(120/2)
-  local yawRounded = roundTo(yaw,1)
-  local homeRounded = roundTo(homeAngle,1)
-  local minY = 0 + 20 - 1
-  local Hdy = math.sin(math.rad(270+homeRounded-yawRounded))*30
-  local Hdx = math.cos(math.rad(270+homeRounded-yawRounded))*30
-  for ang=0,7
-  do
-    local Rdy = math.sin(math.rad(45*ang+270-yawRounded))*30
-    local Rdx = math.cos(math.rad(45*ang+270-yawRounded))*30
-    local Ldy = math.sin(math.rad(45*ang+270-yawRounded))*(30-5)
-    local Ldx = math.cos(math.rad(45*ang+270-yawRounded))*(30-5)
-    if compassPoints[ang] == nil then
-      lcd.drawLine((LCD_W/2)+Ldx,202+Ldy,(LCD_W/2)+Rdx,202+Rdy,SOLID,2)
-    else
-      lcd.drawText((LCD_W/2)+Rdx-(10/2),202+Rdy-(10/2),compassPoints[ang],0)
-    end
-  end
-  drawHomeIcon((LCD_W/2)+Hdx-(10/2),202+Hdy-(10/2))
-  --
-  local xx = 0
-  if ( yaw < 10) then
-    xx = 1
-  elseif (yaw < 100) then
-    xx = -8
-  else
-    xx = -12
-  end
-  lcd.drawNumber((LCD_W/2) + xx - 5, 202 - 30 - 24, yaw, INVERS)
-end
-
-local function drawYaw()
- drawCompassRibbon()
-end
 
 
-
-local function getStep(step)
-  if step < 3 then
-    return 2
-  end
-  if step < 6 then
-    return 5
-  end
-  if step < 11 then
-    return 10
-  end
-  if step < 21 then
-    return 20
-  end
-  return 2
-end
 
 local function fillTriangle(ox, oy, x1, x2, roll, angle,color)
   local step = 2
@@ -1707,7 +1667,7 @@ end
 
 -------------------------------------------
 
-local function drawHud()
+local function drawHud(myWidget)
 
   local r = -roll
   local cx,cy,dx,dy,ccx,ccy,cccx,cccy
@@ -1858,25 +1818,7 @@ local function drawHud()
         lcd.drawFilledRectangle(minX, minY, maxX - minX, maxY - minY,CUSTOM_COLOR);
       end
   end
-  --[[
-  lcd.drawText(350,30,"R:",INVERS+SMLSIZE)
-  lcd.drawNumber(430,30,roll,INVERS+SMLSIZE)
-  lcd.drawText(350,50,"P:",INVERS+SMLSIZE)  
-  lcd.drawNumber(430,50,pitch,INVERS+SMLSIZE)
-  lcd.drawText(350,70,"angle",INVERS+SMLSIZE)
-  lcd.drawNumber(430,70,angle*100,PREC2+INVERS+SMLSIZE)
-  --]]  --[[
-  lcd.drawText(350,100,"minxY:",INVERS+SMLSIZE)
-  lcd.drawNumber(430,100,minxY,INVERS+SMLSIZE)
-  lcd.drawText(350,120,"maxxY:",INVERS+SMLSIZE)
-  lcd.drawNumber(430,120,maxxY,INVERS+SMLSIZE)
-  --
-  lcd.drawText(350,15,"minyX:",INVERS+SMLSIZE)
-  lcd.drawNumber(430,150,minyX,INVERS+SMLSIZE)
-  lcd.drawText(350,170,"maxyX:",INVERS+SMLSIZE)
-  lcd.drawNumber(430,170,maxyX,INVERS+SMLSIZE)
-  --]]  
-  -- parallel lines above and below horizon of increasing length 5,7,16,16,7,5
+  -- parallel lines above and below horizon
   lcd.setColor(CUSTOM_COLOR,lcd.RGB(255, 255, 255))
   --
   drawCroppedLine(rollX + dx - cccx,dy + 79 + cccy,r,40,DOTTED,(LCD_W-92)/2,(LCD_W-92)/2 + 92,minY,maxY,CUSTOM_COLOR)
@@ -1889,7 +1831,6 @@ local function drawHud()
   -- hud bitmap
   -------------------------------------
   lcd.drawBitmap(getBitmap("hud_90x70a"),(LCD_W-106)/2,34) --106x90
-  --lcd.drawBitmap(getBitmap("hud_80x80a"),(LCD_W-96)/2,29) --96x100
   ------------------------------------
   -- synthetic vSpeed based on 
   -- home altitude when EKF is disabled
@@ -1935,7 +1876,7 @@ local function drawHud()
   -------------------------------------
   lcd.setColor(CUSTOM_COLOR,lcd.RGB(255, 255, 255))
   -- altitude
-  local alt = getMaxValue(homeAlt,23)
+  local alt = getMaxValue(homeAlt,12)
   --
   lcd.drawText(265,LCD_H-37,"alt(m)",SMLSIZE)
   if alt > 0 then
@@ -1966,21 +1907,16 @@ local function drawHud()
   end
 end
 
-local function drawGrid()
-  lcd.drawLine((LCD_W-92)/2 - 1, 7 ,(LCD_W-92)/2 - 1, 57, SOLID, 0)
-  lcd.drawLine((LCD_W-92)/2 + 92, 7, (LCD_W-92)/2 + 92, 57, SOLID, 0)
-end
-
 local function drawHomeDirection()
   local angle = math.floor(homeAngle - yaw)
-  local x1 = (LCD_W/2) + 22 * math.cos(math.rad(angle - 90))
-  local y1 = 202 + 22 * math.sin(math.rad(angle - 90))
-  local x2 = (LCD_W/2) + 22 * math.cos(math.rad(angle - 90 + 150))
-  local y2 = 202 + 22 * math.sin(math.rad(angle - 90 + 150))
-  local x3 = (LCD_W/2) + 22 * math.cos(math.rad(angle - 90 - 150))
-  local y3 = 202 + 22 * math.sin(math.rad(angle - 90 - 150))
-  local x4 = (LCD_W/2) + 22 * 0.5 * math.cos(math.rad(angle - 270))
-  local y4 = 202 + 22 * 0.5 *math.sin(math.rad(angle - 270))
+  local x1 = (LCD_W/2) + 17 * math.cos(math.rad(angle - 90))
+  local y1 = 202 + 17 * math.sin(math.rad(angle - 90))
+  local x2 = (LCD_W/2) + 17 * math.cos(math.rad(angle - 90 + 150))
+  local y2 = 202 + 17 * math.sin(math.rad(angle - 90 + 150))
+  local x3 = (LCD_W/2) + 17 * math.cos(math.rad(angle - 90 - 150))
+  local y3 = 202 + 17 * math.sin(math.rad(angle - 90 - 150))
+  local x4 = (LCD_W/2) + 17 * 0.5 * math.cos(math.rad(angle - 270))
+  local y4 = 202 + 17 * 0.5 *math.sin(math.rad(angle - 270))
   --
   drawLine(x1,y1,x2,y2,SOLID,1)
   drawLine(x1,y1,x3,y3,SOLID,1)
@@ -1993,11 +1929,11 @@ end
 -- a warning sound.
 ---------------------------------
 local function checkAlarm(level,value,idx,sign,sound,delay)
-  -- once landed reset all alarms
+  -- once landed reset all alarms except battery alerts
   if timerRunning == 0 then
     if alarms[idx][4] == 0 then
       alarms[idx] = { false, 0, false, 0, 0} 
-    elseif  alarms[idx][4] == 1 then
+    elseif alarms[idx][4] == 1 then
       alarms[idx] = { false, 0, true, 1, 0}
     elseif  alarms[idx][4] == 2 then
       alarms[idx] = { false, 0, true, 2, 0}
@@ -2009,37 +1945,44 @@ local function checkAlarm(level,value,idx,sign,sound,delay)
   if alarms[idx][3] == false and timerRunning == 1 and level > 0 and -1 * sign*value > -1 * sign*level then
     alarms[idx][3] = true
   end
-  -- if alarm is armed and value is "outside" level
-  if alarms[idx][3] == true and timerRunning == 1 and level > 0 and sign*value > sign*level then
-    -- for timer alarms trigger when flighttime is a multiple of delay
-    if alarms[idx][4] == 2 then
-      if math.floor(flightTime) %  delay == 0 then
-        if alarms[idx][1] == false then 
-          alarms[idx][1] = true
-          playSound(sound)
+  -- for timer alarms trigger when flighttime is a multiple of delay
+  if alarms[idx][3] == true and timerRunning == 1 and alarms[idx][4] == 2 then
+    if flightTime > 0 and math.floor(flightTime) %  delay == 0 then
+      if alarms[idx][1] == false then 
+        alarms[idx][1] = true
+        playSound(sound)
+         -- flightime is a multiple of 1 minute
+        if (flightTime % 60 == 0 ) then
+          -- minutes
+          playNumber(flightTime / 60,25) -- 25=minutes,26=seconds
+        else
+          -- minutes
+          if (flightTime > 60) then playNumber(flightTime / 60,25) end
+          -- seconds
+          playNumber(flightTime % 60,26)
         end
-      else
-          alarms[idx][1] = false
       end
     else
-      -- fire once but only every 5secs max
-      if alarms[idx][2] == 0 then
+        alarms[idx][1] = false
+    end
+  elseif alarms[idx][3] == true and timerRunning == 1 and level > 0 and sign*value > sign*level then
+    -- if alarm is armed and value is "outside" level fire once but only every 5 secs max
+    if alarms[idx][2] == 0 then
+      alarms[idx][1] = true
+      alarms[idx][2] = flightTime
+      if (flightTime - alarms[idx][5]) > 5 then
+        playSound(sound)
+        alarms[idx][5] = flightTime
+      end
+    end
+    -- ...and then fire every conf secs after the first shot
+    if math.floor(flightTime - alarms[idx][2]) %  delay == 0 then
+      if alarms[idx][1] == false then 
         alarms[idx][1] = true
-        alarms[idx][2] = flightTime
-        if (flightTime - alarms[idx][5]) > 5 then
-          playSound(sound)
-          alarms[idx][5] = flightTime
-        end
+        playSound(sound)
       end
-      -- ...and then fire every conf secs after the first shot
-      if math.floor(flightTime - alarms[idx][2]) %  delay == 0 then
-        if alarms[idx][1] == false then 
-          alarms[idx][1] = true
-          playSound(sound)
-        end
-      else
-          alarms[idx][1] = false
-      end
+    else
+        alarms[idx][1] = false
     end
   elseif alarms[idx][3] == true then
     alarms[idx][2] = 0
@@ -2065,15 +2008,14 @@ local function checkEvents()
       capacity = capacity + getBatt2Capacity()
       mah = mah  + batt2mah
   end
-
-  
+  --
   if (capacity > 0) then
     batLevel = (1 - (mah/capacity))*100
   else
     batLevel = 99
   end
 
-  for l=0,12 do
+  for l=1,13 do
     -- trigger alarm as as soon as it falls below level + 1 (i.e 91%,81%,71%,...)
     if batLevel <= batLevels[l] + 1 and l < lastBattLevel then
       lastBattLevel = l
@@ -2102,10 +2044,26 @@ local function checkEvents()
     lastFlightMode = flightMode
     playSoundByFrameTypeAndFlightMode(frameType,flightMode)
   end
+  
+  if simpleMode ~= lastSimpleMode then
+    if simpleMode == 0 then
+      playSound( lastSimpleMode == 1 and "simpleoff" or "ssimpleoff" )
+    else
+      playSound( simpleMode == 1 and "simpleon" or "ssimpleon" )
+    end
+    lastSimpleMode = simpleMode
+  end
 end
 
 local function checkCellVoltage(battsource,cellmin,cellminFC,cellminA2)
-  local celm = getVoltageBySource(battsource,cellmin,cellminFC,cellminA2)*100
+  local celm = 0
+  if battsource == "vs" then
+    celm = cellmin*100
+  elseif battsource == "fc" then
+    celm = cellminFC*100
+  elseif battsource == "a2" then
+    celm = cellminA2*100
+  end
   -- trigger batt1 and batt2
   if celm > conf.battAlertLevel2 and celm < conf.battAlertLevel1 and battLevel1 == false then
     battLevel1 = true
@@ -2114,8 +2072,11 @@ local function checkCellVoltage(battsource,cellmin,cellminFC,cellminA2)
   if celm > 320 and celm < conf.battAlertLevel2 then
     battLevel2 = true
   end
-  --
-  checkAlarm(conf.battAlertLevel2,celm,7,-1,"batalert2",menuItems[14][4])  
+  -- ignore batt alarm if current voltage outside "lipo" proper range
+  -- this helps when cycling battery sources and one or more sources has 0 voltage
+  if celm > 320 then
+    checkAlarm(conf.battAlertLevel2,celm,7,-1,"batalert2",menuItems[14][4])
+  end
 end
 
 local function cycleBatteryInfo()
@@ -2134,36 +2095,25 @@ end
 --------------------------------------------------------------------------------
 -- MAIN LOOP
 --------------------------------------------------------------------------------
-local showMessages = false
-local showConfigMenu = false
+--
 local bgclock = 0
-local hudcounter = 0
-local hudrate = 0
-local hudstart = 0
-local bgtelecounter = 0
-local bgtelerate = 0
-local bgtelestart = 0
 
 -------------------------------
 -- running at 20Hz (every 50ms)
 -------------------------------
-local function background()
+local bgprocessing = false
+local bglockcounter = 0
+--
+local function backgroundTasks(telemetryLoops)
+if bgprocessing == true then
+  bglockcounter = bglockcounter + 1
+  return 0
+end
+bgprocessing = true
   -- FAST: this runs at 60Hz (every 16ms)
-  for i=1,3
+  for i=1,telemetryLoops
   do
     processTelemetry()
-    ------------------------
-    -- CALC BG TELE PROCESSING RATE
-    ------------------------
-    -- skip first iteration
-    local now = getTime()/100
-    if bgtelecounter == 0 then
-      bgtelestart = now
-    else
-      bgtelerate = bgtelecounter / (now - bgtelestart)
-    end
-    --
-    bgtelecounter=bgtelecounter+1
   end
   -- NORMAL: this runs at 20Hz (every 50ms)
   setTelemetryValue(0x0110, 0, 1, vSpeed, 5 , 1 , "VSpd")
@@ -2178,9 +2128,12 @@ local function background()
     calcFlightTime()
     checkEvents()
     checkLandingStatus()
-    checkCellVoltage(battsource,calcCellMin(cell1min,cell2min),calcCellMin(cell1minFC,cell2minFC),cellminA2)
-    minmaxValues[20] = math.max(batt1current,minmaxValues[20])
-    minmaxValues[21] = math.max(batt2current,minmaxValues[21])
+    checkCellVoltage(battsource,getNonZeroMin(cell1min,cell2min),getNonZeroMin(cell1sumFC/calcCellCount(),cell2sumFC/calcCellCount()),cellsumA2/calcCellCount())
+    -- aggregate value
+    minmaxValues[8] = math.max(batt1current+batt2current,minmaxValues[8])
+    -- indipendent values
+    minmaxValues[9] = math.max(batt1current,minmaxValues[9])
+    minmaxValues[10] = math.max(batt2current,minmaxValues[10])
     bgclock = 0
   end
   bgclock = bgclock+1
@@ -2189,13 +2142,23 @@ local function background()
     blinkon = not blinkon
     blinktime = getTime()
   end
+  bgprocessing = false
   return 0
+end
+
+local showSensorPage = false
+local showMessages = false
+local showConfigMenu = false
+
+local function background()
+  backgroundTasks(5)
 end
 --------------------------
 -- RUN
 --------------------------
-  -- EVT_EXIT_BREAK = RTN
-  -- EVT_PAGEDN_FIRST/EVT_PAGEUP_FIRST PGUP/PGDN
+-- EVT_EXIT_BREAK = RTN
+
+
 
 
 
@@ -2209,15 +2172,27 @@ local function run(event)
   ---------------------
   if showConfigMenu == false and (event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT) then
     showMessages = true
+    -- stop event processing chain
+    event = 0
   end
   ---------------------
   -- SHOW CONFIG MENU
   ---------------------
   if showMessages == false and (event == 2053 or event == 2051 ) then
     showConfigMenu = true
-    killEvents(event)
+    -- stop event processing chain
+    event = 0
   end
+  ---------------------
+  -- SHOW SENSORS PAGE
+  ---------------------
   --
+  if showSensorPage == false and showConfigMenu == false and showMessages == false and (event == 1537 or event == 1536) then
+    showSensorPage = true
+    -- stop event processing chain
+    event = 0
+  end
+  
   if showMessages then
     ---------------------
     -- MESSAGES
@@ -2243,53 +2218,86 @@ local function run(event)
     ---------------------
     if event == 518 then
       showMinMaxValues = not showMinMaxValues
+      -- stop event processing chain
+      event = 0
     end
     if showDualBattery == true and event == EVT_EXIT_BREAK then
       showDualBattery = false
-      killEvents(event)
+      -- stop event processing chain
+      event = 0
+    end
+    if showSensorPage == true and event == EVT_EXIT_BREAK or event == 1537 or event == 1536 then
+        showSensorPage = false
+      -- stop event processing chain
+      event = 0
     end
     if event == EVT_ROT_BREAK then
       cycleBatteryInfo()
+      -- stop event processing chain
+      event = 0
     end
-    ------------------------
-    -- CALC HUD REFRESH RATE
-    ------------------------
-    -- skip first iteration
-    local hudnow = getTime()/100
-    if hudcounter == 0 then
-      hudstart = hudnow
-    else
-      hudrate = hudcounter / (hudnow - hudstart)
-    end
-    --
-    hudcounter=hudcounter+1
     drawHomeDirection()
     drawHud()
     drawCompassRibbon()
-    --drawGrid()
+    --
+    -- Note: these can be calculated. not necessary to track them as min/max 
+    -- cell1minFC = cell1sumFC/calcCellCount()
+    -- cell2minFC = cell2sumFC/calcCellCount()
+    -- cell1minA2 = cell1sumA2/calcCellCount()
+    -- 
+    local count = calcCellCount()
+    local cel1m = getMinVoltageBySource(battsource,cell1min,cell1sumFC/count,cellsumA2/count,1,count)*100
+    local cel2m = getMinVoltageBySource(battsource,cell2min,cell2sumFC/count,cellsumA2/count,2,count)*100
+    local batt1 = getMinVoltageBySource(battsource,cell1sum,cell1sumFC,cellsumA2,1,count)*10
+    local batt2 = getMinVoltageBySource(battsource,cell2sum,cell2sumFC,cellsumA2,2,count)*10
+    local curr  = getMaxValue(batt1current+batt2current,8)
+    local curr1 = getMaxValue(batt1current,9)
+    local curr2 = getMaxValue(batt2current,10)
+    local mah1 = batt1mah
+    local mah2 = batt2mah
+    local cap1 = getBatt1Capacity()
+    local cap2 = getBatt2Capacity()
+    --
     -- with dual battery default is to show aggregate view
     if batt2sources.fc or batt2sources.vs then
       if showDualBattery == false then
         -- dual battery: aggregate view
         lcd.drawText(285+67,85,"BATTERY: 1+2",SMLSIZE+INVERS)
-        drawBatteryPane(285,battsource,batt1current+batt2current,getBatt1Capacity()+getBatt2Capacity(),batt1mah+batt2mah,calcCellMin(cell1min,cell2min),calcCellMin(cell1minFC,cell2minFC),cellminA2,calcCellMin(cell1sum,cell2sum),calcCellMin(cell1sumFC,cell2sumFC),cellsumA2,1,10,19)
+        drawBatteryPane(285,getNonZeroMin(batt1,batt2),getNonZeroMin(cel1m,cel2m),curr,mah1+mah2,cap1+cap2)
       else
+        -- dual battery: do I have also dual current monitor?
+        if curr1 > 0 and curr2 == 0 then
+          -- special case: assume 1 power brick is monitoring batt1+batt2 in parallel
+          curr1 = curr1/2
+          curr2 = curr1
+          --
+          mah1 = mah1/2
+          mah2 = mah1
+          --
+          cap1 = cap1/2
+          cap2 = cap1
+        end
         -- dual battery:battery 1 right pane
         lcd.drawText(285+75,85,"BATTERY: 1",SMLSIZE+INVERS)
-        drawBatteryPane(285,battsource,batt1current,getBatt1Capacity(),batt1mah,cell1min,cell1minFC,cellminA2,cell1sum,cell1sumFC,cellsumA2,2,11,20)
+        drawBatteryPane(285,batt1,cel1m,curr1,mah1,cap1)
         -- dual battery:battery 2 left pane
         lcd.drawText(50,85,"BATTERY: 2",SMLSIZE+INVERS)
-        drawBatteryPane(-24,battsource,batt2current,getBatt2Capacity(),batt2mah,cell2min,cell2minFC,0,cell2sum,cell2sumFC,0,3,12,21)
+        drawBatteryPane(-24,batt2,cel2m,curr2,mah2,cap2)
       end
     else
       -- battery 1 right pane in single battery mode
       lcd.drawText(285+75,85,"BATTERY: 1",SMLSIZE+INVERS)
-      drawBatteryPane(285,battsource,batt1current,getBatt1Capacity(),batt1mah,cell1min,cell1minFC,cellminA2,cell1sum,cell1sumFC,cellsumA2,2,11,20)
+      drawBatteryPane(285,batt1,cel1m,curr1,mah1,cap1)
     end
     -- left pane info when not in dual battery mode
     if showDualBattery == false then
       -- power is always based on flight controller values
-      drawLeftPane(batt1current+batt2current,calcCellMin(cell1sumFC,cell2sumFC))
+      drawGPSStatus()
+      if showSensorPage then
+        drawCustomSensors()
+      else
+        drawLeftPane(curr1+curr2,getNonZeroMin(cell1sumFC,cell2sumFC))
+      end
     end
     drawFlightMode()
     drawTopBar()
@@ -2297,11 +2305,7 @@ local function run(event)
     drawFlightTime()
     drawFailsafe()
     drawArmStatus()
-    if showDualBattery == false then
-      local hudrateTxt = string.format("H:%.01fHz",hudrate)
-      lcd.drawText(2,76,hudrateTxt,SMLSIZE)
-      local bgtelerateTxt = string.format("B:%.01fHz",bgtelerate)
-      lcd.drawText(160,76,bgtelerateTxt,SMLSIZE+RIGHT)
+    if showDualBattery == false and showSensorPage == false then
     end
     drawNoTelemetryData()
   end
@@ -2309,13 +2313,16 @@ local function run(event)
 end
 
 local function init()
+  -- initialize flight timer
+  model.setTimer(2,{mode=0})
+  model.setTimer(2,{value=0})
   loadConfig()
-  pushMessage(6,"Yaapu Horus telemetry script 1.6.0-beta1")
   playSound("yaapu")
+  loadSensors()
+  pushMessage(7,"Yaapu Telemetry Script 1.6.2_b1")
 end
 
 --------------------------------------------------------------------------------
 -- SCRIPT END
 --------------------------------------------------------------------------------
 return {run=run, init=init}
-
