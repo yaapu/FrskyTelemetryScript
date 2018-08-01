@@ -1819,9 +1819,13 @@ local function calcBattery()
   if battA2 > 0 then
     cellsumA2 = battA2
     cellmaxA2 = math.max(battA2*10,cellmaxA2)
+    -- don't force a2, only way to display it
+    -- is by user selection from menu
+    --[[
     if battsource == "na" then
       battsource = "a2"
     end
+    --]]
     batt1sources.a2 = true
   else
     batt1sources.a2 = false
