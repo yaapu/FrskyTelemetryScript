@@ -29,7 +29,7 @@ Requires [OpenTX 2.2.1/2.2.2](http://www.open-tx.org/) and a recent release of [
  - [display layout](#display-layout)
  - [features](#features)
  - [advanced features](#advanced-features)
- - [sensor discovery](#sensor-discovery-(optional))
+ - [sensor discovery](#sensor-discovery-optional)
  - [supported flight modes](#supported-flight-modes)
  - [voltage sources](#voltage-sources)
  - [supported battery configurations](#supported-battery-configurations)
@@ -132,8 +132,6 @@ If this does not work sensors can still be created manually in the model telemet
 
 Note: The A2 sensor (analog input port) will only be discovered on X4R and X6R receivers.
  
- ![X10 sensors](https://github.com/yaapu/FrskyTelemetryScript/raw/master/HORUS/IMAGES/x10sensors.png)
- 
 Sensor valus are passed to OpenTX only when the script receives valid telemetry from the rx!
  
 ## Supported Flight Modes
@@ -213,6 +211,9 @@ When a second battery is detected the script also tracks "aggregate" battery val
 In dual battery mode a short press of [ENTER] on the Taranis or [ENCODER] on the Horus switches from single aggregate view to individual dual battery view. Subsequent short presses of [ENTER]/[ENCODER] in this dual view will cycle between voltage sources. In dual view a short press of [MENU] on Taranis or [SYS] on Horus shows individual packs min/max values.
 
 To get back to aggregate view and retain the selected voltage source short press [EXIT] on Taranis or [RTN] on Horus.
+
+**Note:In widget mode voltage source cycling is not available, the voltage source has to be selected from the menu**
+
 
 ## Supported battery configurations
 
@@ -350,13 +351,16 @@ On Taranis QX7 and X-Lite radios the correct folder structure is
 
 ## Installation on Horus
 
+Copy the contents of the SD folder to your radio SD Card.
+Make sure you have the /SOUNDS/yaapu0, SCRIPTS/YAAPU/CFG and SCRIPTS/YAAPU/IMAGES folders.
+
+**Power cycle the radio to clear widget caches!**
+
 The script can be started in 2 ways:
 
 - **Widget** (recommended) see this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12-as-a-Widget)
 
 - **One time script** by using the yaapux.lua or yaapux.luac script, see this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12)
-
-Make sure you have the /SOUNDS/yaapu0, SCRIPTS/YAAPU/CFG and SCRIPTS/YAAPU/IMAGES folders.
 
 The correct folder structure is
 
@@ -373,7 +377,7 @@ The correct folder structure is
 - /WIDGETS/Yaapu/main.lua
 - /WIDGETS/Yaapu/main.luac 
 
-I do provide compiled versions for all radios: X10/X12,X9D and QX7 and X-Lite
+I provide compiled versions for all radios: X10/X12,X9D and QX7 and X-Lite
 
 **Note: On radios without the luac option enabled it is necessary to use the .lua versions**
 
@@ -466,7 +470,7 @@ Taranis and Horus phrase files may differ so make sure to pick the right one.
 
 ## Compilation
 
-To compile your own version you must first preprocess the SOURCES/yaapu0.lua script with the pproc.lua preprocessor.
+To compile your own version you must first preprocess the SOURCES/yaapu0.lua scripts with the pproc.lua preprocessor.
 Details on the preprocessor can be found [here](https://gist.github.com/incinirate/d52e03f453df94a65e1335d9c36d114e)
 
 You need a working lua interpreter for this to work.
