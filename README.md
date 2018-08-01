@@ -72,7 +72,7 @@ mavlink message history
 
 ## Features
 
- - configuration menu, long press [MENU] on Taranis or [MDL] on Horus
+ - configuration menu, long press [MENU] on Taranis or [MDL] on Horus (in Widget mode refer to this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12-as-a-Widget#how-to-access-the-script-configuration-menu-while-in-widget-mode))
  - per model configuration saved in MODELS/yaapu/modelname.cfg on Taranis, SCRIPTS/YAAPU/CFG/modelname.cfg on Horus
  - flight [modes](#supported-flight-modes) based on frame type:copter,plane or rover with vocal sound support
  - artificial horizon with roll,pitch and yaw with numeric compass heading
@@ -94,20 +94,20 @@ mavlink message history
  - gps fix extendend status (2D,3D,DGPS,RTK)
  - gps HDop
  - satellite count (Note: the highest reported count is 15 sats due to telemetry library restrictions)
- - flight time (uses OpenTX timer 3)
+ - flight time (uses OpenTX timer 3) with vocal time alerts and spoken flight time
  - rssi value
  - transmitter voltage
  - home distance
  - horizontal ground speed or airspeed (available if configured in mission planner)
  - home heading as rotating triangle
- - mavlink messages with history accessible with [PLUS]/[MINUS] or by turning the [ENCODER] buttons
- - english, italian and french sound files for selected events: battery levels, failsafe, flightmodes, alerts and landing
+ - mavlink messages with history accessible with [PLUS]/[MINUS] or by turning the [ENCODER] buttons (in Widget mode follow this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12-as-a-Widget#mandatory-steps))
+ - english, italian, french and german sound files for selected events: battery levels, failsafe, flightmodes, alerts and landing
 
 ## Advanced Features 
 
-- dual battery support (dual FLVSS and/or dual battery from ArduPilot) short press [ENTER] on Taranis or [ENCODER] on Horus to display second battery info. If a second battery is detected there will be a "B1+B2" label on screen.
+- dual battery support (dual FLVSS and/or dual battery from ArduPilot) short press [ENTER] on Taranis or [ENCODER] on Horus to display second battery info. If a second battery is detected there will be a "B1+B2" label on screen (in Widget mode follow this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12-as-a-Widget#optional-steps))
  - capacity ovveride for battery 1 and 2
- - tracking of min/max values for battery/cell voltage, current, altitude, ground and vertical speed, short press [MENU] on Taranis or [SYS] on Horus to display them, an up pointing arrow will indicate max values whereas a down pointing arrow will indicate min values
+ - tracking of min/max values for battery/cell voltage, current, altitude, ground and vertical speed, short press [MENU] on Taranis or [SYS] on Horus to display them, an up pointing arrow will indicate max values whereas a down pointing arrow will indicate min values (in Widget mode follow this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12-as-a-Widget#optional-steps))
  
  ![X10 minmax](https://github.com/yaapu/FrskyTelemetryScript/raw/master/HORUS/IMAGES/x10minmax.png)
  
@@ -120,9 +120,13 @@ mavlink message history
  - configurable vocal timer alert every n minutes
  - sensors VFAS,CURR,Alt,VSpd,GAlt,Hdg,GSpd,Fuel,Tmp1,Tmp2 are exposed to OpenTX, see the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki/Telemetry-sensors-exposed-to-OpenTX-by-the-Yaapu-script) for details.
  
- On the Taranis you need to run "discover new sensors" in your model telemetry page to use the sensors in OpenTX, the script has to be running for this to work.
+### Optional Sensor Discovery
+
+**Note: Sensor discovery is optional, the script works fine without this extra step**
+
+On the Taranis you need to run "discover new sensors" in your model telemetry page to use the sensors in OpenTX, the script has to be running for this to work.
  
-On the Horus the procedure is different: you start sensor discovery in the model telemetry page, leave it running and run the Yaapu Script as usual. Close the script and go back to the telemetry page where discovery should still be running and all sensors should have been discovered.
+On the Horus the procedure is different: you start sensor discovery in the model telemetry page, leave it running and run the Yaapu Script as one time script or as a Widget. Go back to the telemetry page where discovery should still be running and all sensors should have been discovered.
 If this does not work sensors can still be created manually in the model telemetry page.
 
 Note: The A2 sensor (analog input port) will only be discovered on X4R and X6R receivers.
