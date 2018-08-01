@@ -29,6 +29,7 @@ Requires [OpenTX 2.2.1/2.2.2](http://www.open-tx.org/) and a recent release of [
  - [display layout](#display-layout)
  - [features](#features)
  - [advanced features](#advanced-features)
+ - [sensor discovery](#sensor-discovery-(optional))
  - [supported flight modes](#supported-flight-modes)
  - [voltage sources](#voltage-sources)
  - [supported battery configurations](#supported-battery-configurations)
@@ -120,7 +121,7 @@ mavlink message history
  - configurable vocal timer alert every n minutes
  - sensors VFAS,CURR,Alt,VSpd,GAlt,Hdg,GSpd,Fuel,Tmp1,Tmp2 are exposed to OpenTX, see the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki/Telemetry-sensors-exposed-to-OpenTX-by-the-Yaapu-script) for details.
  
-### Optional Sensor Discovery
+## Sensor Discovery (Optional)
 
 **Note: Sensor discovery is optional, the script works fine without this extra step**
 
