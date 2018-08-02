@@ -350,6 +350,8 @@ For QX7 and X-Lite radios the correct folder structure is
 
 **Note: On radios without the luac option enabled it is necessary to use the .lua versions**
 
+Please refer to the ardupilot [wiki](http://ardupilot.org/copter/docs/common-frsky-telemetry.html#assigning-a-display-script-to-a-screen) for instructions on how to assign the Yaapu script to a telemetry screen on your Taranis.
+
 ## Installation on Horus
 
 Copy the contents of the SD folder to your radio SD Card.
