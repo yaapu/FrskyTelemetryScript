@@ -62,7 +62,7 @@
 #define X9
 --#define X7
 -- to compile lua in luac files
---#define COMPILE
+#define COMPILE
 -- force loading of .lua files even after compilation
 -- usefull if you rename .luac in .lua
 --#define LOAD_LUA
@@ -102,9 +102,12 @@
 --#define TESTMODE
 --#define BATT2TEST
 --#define FLVSS2TEST
---#define CELLCOUNT 4
+#ifdef TESTMODE
+#define CELLCOUNT 4
+#endif
 --#define DEMO
 --#define DEV
+--#define DEBUGEVT
 
 -- calc and show background function rate
 --#define BGRATE
@@ -723,6 +726,16 @@ local alarms = {
 --------------------------------------------------------------------------------
 -- MENU VALUE,COMBO
 --------------------------------------------------------------------------------
+-- X-Lite Support
+#define XLITE_UP 36
+#define XLITE_UP_RPT 68
+#define XLITE_DOWN 35
+#define XLITE_DOWN_RPT 67
+#define XLITE_RTN 33
+#define XLITE_ENTER 34
+#define XLITE_MENU_LONG 128
+#define XLITE_MENU 32
+
 #define TYPEVALUE 0
 #define TYPECOMBO 1
 #define MENU_Y 7
@@ -963,18 +976,18 @@ end
 
 local function drawConfigMenu(event)
   drawConfigMenuBars()
-  if event == EVT_ENTER_BREAK then
+  if event == EVT_ENTER_BREAK or event == XLITE_ENTER then
 	menu.editSelected = not menu.editSelected
-  elseif menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_LEFT or event == EVT_PLUS_REPT) then
+  elseif menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_LEFT or event == EVT_PLUS_REPT or event == XLITE_UP or event == XLITE_UP_RPT) then
     incMenuItem(menu.selectedItem)
-  elseif menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_RIGHT or event == EVT_MINUS_REPT) then
+  elseif menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_RIGHT or event == EVT_MINUS_REPT or event == XLITE_DOWN or event == XLITE_DOWN_RPT) then
     decMenuItem(menu.selectedItem)
-  elseif not menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_LEFT) then
+  elseif not menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_LEFT or event == XLITE_UP) then
     menu.selectedItem = (menu.selectedItem - 1)
     if menu.offset >=  menu.selectedItem then
       menu.offset = menu.offset - 1
     end
-  elseif not menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_RIGHT) then
+  elseif not menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_RIGHT or event == XLITE_DOWN) then
     menu.selectedItem = (menu.selectedItem + 1)
     if menu.selectedItem - MENU_PAGESIZE > menu.offset then
       menu.offset = menu.offset + 1
@@ -3066,9 +3079,14 @@ end
   end
   bgclock = bgclock+1
 end
---
+
 local function run(event)
   lcd.clear()
+#ifdef DEBUGEVT
+  if (event ~= 0) then
+    pushMessage(7,string.format("Event: %d",event))
+  end
+#endif
 #ifdef FGRATE
   ------------------------
   -- CALC FG LOOP RATE
@@ -3086,7 +3104,7 @@ local function run(event)
   ---------------------
   -- SHOW MESSAGES
   ---------------------
-  if showConfigMenu == false and (event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT) then
+  if showConfigMenu == false and (event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT or event == XLITE_DOWN) then
     showMessages = true
 #ifdef COLLECTGARBAGE  
     collectgarbage()
@@ -3095,7 +3113,7 @@ local function run(event)
   ---------------------
   -- SHOW CONFIG MENU
   ---------------------
-  if showMessages == false and (event == EVT_MENU_LONG) then
+  if showMessages == false and (event == EVT_MENU_LONG or event == XLITE_MENU_LONG) then
     showConfigMenu = true
 #ifdef COLLECTGARBAGE  
     collectgarbage()
@@ -3105,7 +3123,7 @@ local function run(event)
     ---------------------
     -- MESSAGES
     ---------------------
-    if event == EVT_EXIT_BREAK or event == EVT_MINUS_BREAK or event == EVT_ROT_LEFT then
+    if event == EVT_EXIT_BREAK or event == EVT_MINUS_BREAK or event == EVT_ROT_LEFT  or event == XLITE_UP or event == XLITE_RTN then
       showMessages = false
     end
     drawAllMessages()
@@ -3115,7 +3133,7 @@ local function run(event)
     ---------------------
     drawConfigMenu(event)
     --
-    if event == EVT_EXIT_BREAK then
+    if event == EVT_EXIT_BREAK or event == XLITE_RTN then
       menu.editSelected = false
       showConfigMenu = false
       saveConfig()
@@ -3124,13 +3142,13 @@ local function run(event)
     ---------------------
     -- MAIN VIEW
     ---------------------
-    if event == EVT_ENTER_BREAK then
+    if event == EVT_ENTER_BREAK or event == XLITE_ENTER then
       cycleBatteryInfo()
     end
-    if event == EVT_MENU_BREAK then
+    if event == EVT_MENU_BREAK or event == XLITE_MENU then
       showMinMaxValues = not showMinMaxValues
     end
-    if showDualBattery == true and event == EVT_EXIT_BREAK then
+    if showDualBattery == true and event == EVT_EXIT_BREAK or event == XLITE_RTN then
       showDualBattery = false
     end
 #ifdef TESTMODE
