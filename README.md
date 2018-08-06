@@ -496,7 +496,7 @@ For information on how to connect the FrSky equipment together, please refer to
  Thanks go to 
  - Marco Robustini (X9D tester) 
  - Chris Rey (QX7 tester)
- - Alain Chartier (frech sound files)
+ - Alain Chartier (french sound files)
  - [Johnex](https://github.com/Johnex) for TTSAutomate phrase file
  - Franck Perruchoud (X12 main beta tester)
  - Chen Zhengzhong (X10 tester)
