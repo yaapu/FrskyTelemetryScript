@@ -227,7 +227,7 @@ Battery stats can be displayed in aggregate view or separate battery view (batte
 In aggregate battery view Cell voltage is the minimun cell voltage between battery 1 and 2.
 - Single FLVSS sensor + single power module: voltage will be available from 2 sources, user can choose which one to display. Current will always be visible. 
 - Dual FLVSS sensors + dual power module: voltage will be available from 2 sources, user can choose which one to display. Current will always be visible. Voltage and current visible in dual battery view as well as aggregate battery view.
-- Dual FLVSS + single power module: voltage will be available from 2 sources, user can choose which one to display. Current reading is only available for battery 1: the script assumes that the load is equally shared between the two batteries.
+- Dual FLVSS + single power module: voltage will be available from 2 sources, user can choose which one to display.The script assumes that the power module is monitoring the aggregate current from both batteries (in parallel), i.e. load is equally shared between the two batteries and the displayed current in dual battery view will be half on battery 1 and half on battery 2.
 
 ## Cell Count Detection
 
