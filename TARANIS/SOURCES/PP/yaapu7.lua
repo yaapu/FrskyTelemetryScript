@@ -91,9 +91,9 @@
 --#define TESTMODE
 --#define BATT2TEST
 --#define FLVSS2TEST
---#define CELLCOUNT 4
 --#define DEMO
 --#define DEV
+--#define DEBUGEVT
 
 -- calc and show background function rate
 --#define BGRATE
@@ -342,6 +342,8 @@ local messages = {}
 --------------------------------------------------------------------------------
 -- MENU VALUE,COMBO
 --------------------------------------------------------------------------------
+-- X-Lite Support
+
 
   
 -- MULT 1 = m/s, MULT 3.6 = km/h
@@ -480,18 +482,18 @@ end
 
 local function drawConfigMenu(event)
   drawConfigMenuBars()
-  if event == EVT_ENTER_BREAK then
+  if event == EVT_ENTER_BREAK or event == 34 then
 	menu.editSelected = not menu.editSelected
-  elseif menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_LEFT or event == EVT_PLUS_REPT) then
+  elseif menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_LEFT or event == EVT_PLUS_REPT or event == 36 or event == 68) then
     incMenuItem(menu.selectedItem)
-  elseif menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_RIGHT or event == EVT_MINUS_REPT) then
+  elseif menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_RIGHT or event == EVT_MINUS_REPT or event == 35 or event == 67) then
     decMenuItem(menu.selectedItem)
-  elseif not menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_LEFT) then
+  elseif not menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_LEFT or event == 36) then
     menu.selectedItem = (menu.selectedItem - 1)
     if menu.offset >=  menu.selectedItem then
       menu.offset = menu.offset - 1
     end
-  elseif not menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_RIGHT) then
+  elseif not menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_RIGHT or event == 35) then
     menu.selectedItem = (menu.selectedItem + 1)
     if menu.selectedItem - 7 > menu.offset then
       menu.offset = menu.offset + 1
@@ -955,10 +957,13 @@ local function calcBattery()
   if battA2 > 0 then
     cellsumA2 = battA2
     cellmaxA2 = math.max(battA2*10,cellmaxA2)
+    -- don't force a2, only way to display it
+    -- is by user selection from menu
+    --[[
     if battsource == "na" then
       battsource = "a2"
     end
-    batt1sources.a2 = true
+    --]]    batt1sources.a2 = true
   else
     batt1sources.a2 = false
     cellsumA2 = 0
@@ -1805,20 +1810,20 @@ end
   end
   bgclock = bgclock+1
 end
---
+
 local function run(event)
   lcd.clear()
   ---------------------
   -- SHOW MESSAGES
   ---------------------
-  if showConfigMenu == false and (event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT) then
+  if showConfigMenu == false and (event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT or event == 36) then
     showMessages = true
     collectgarbage()
   end
   ---------------------
   -- SHOW CONFIG MENU
   ---------------------
-  if showMessages == false and (event == EVT_MENU_LONG) then
+  if showMessages == false and (event == EVT_MENU_LONG or event == 128) then
     showConfigMenu = true
     collectgarbage()
   end
@@ -1826,7 +1831,7 @@ local function run(event)
     ---------------------
     -- MESSAGES
     ---------------------
-    if event == EVT_EXIT_BREAK or event == EVT_MINUS_BREAK or event == EVT_ROT_LEFT then
+    if event == EVT_EXIT_BREAK or event == EVT_MINUS_BREAK or event == EVT_ROT_LEFT  or event == 35 or event == 33 then
       showMessages = false
     end
     drawAllMessages()
@@ -1836,7 +1841,7 @@ local function run(event)
     ---------------------
     drawConfigMenu(event)
     --
-    if event == EVT_EXIT_BREAK then
+    if event == EVT_EXIT_BREAK or event == 33 then
       menu.editSelected = false
       showConfigMenu = false
       saveConfig()
@@ -1845,13 +1850,13 @@ local function run(event)
     ---------------------
     -- MAIN VIEW
     ---------------------
-    if event == EVT_ENTER_BREAK then
+    if event == EVT_ENTER_BREAK or event == 34 then
       cycleBatteryInfo()
     end
-    if event == EVT_MENU_BREAK then
+    if event == EVT_MENU_BREAK or event == 32 then
       showMinMaxValues = not showMinMaxValues
     end
-    if showDualBattery == true and event == EVT_EXIT_BREAK then
+    if showDualBattery == true and event == EVT_EXIT_BREAK or event == 33 then
       showDualBattery = false
     end
     -- on  the HUD is replaced with 2nd battery details

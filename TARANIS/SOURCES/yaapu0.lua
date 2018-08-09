@@ -3104,7 +3104,7 @@ local function run(event)
   ---------------------
   -- SHOW MESSAGES
   ---------------------
-  if showConfigMenu == false and (event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT or event == XLITE_DOWN) then
+  if showConfigMenu == false and (event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT or event == XLITE_UP) then
     showMessages = true
 #ifdef COLLECTGARBAGE  
     collectgarbage()
@@ -3123,7 +3123,7 @@ local function run(event)
     ---------------------
     -- MESSAGES
     ---------------------
-    if event == EVT_EXIT_BREAK or event == EVT_MINUS_BREAK or event == EVT_ROT_LEFT  or event == XLITE_UP or event == XLITE_RTN then
+    if event == EVT_EXIT_BREAK or event == EVT_MINUS_BREAK or event == EVT_ROT_LEFT  or event == XLITE_DOWN or event == XLITE_RTN then
       showMessages = false
     end
     drawAllMessages()
