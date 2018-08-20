@@ -75,6 +75,8 @@ mavlink message history
 
  - configuration menu, long press [MENU] on Taranis or [MDL] on Horus (in Widget mode refer to this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12-as-a-Widget#how-to-access-the-script-configuration-menu-while-in-widget-mode))
  - per model configuration saved in MODELS/yaapu/modelname.cfg on Taranis, SCRIPTS/YAAPU/CFG/modelname.cfg on Horus
+ - imperial and metric units for altitude and distance inherited from radio settings
+ - horizontal and vertical speed units selectable from script config menu
  - flight [modes](#supported-flight-modes) based on frame type:copter,plane or rover with vocal sound support
  - artificial horizon with roll,pitch and yaw with numeric compass heading
  - vertical variometer gauge on left side of center panel
@@ -87,7 +89,7 @@ mavlink message history
  - battery lowest cell if available or cell average if not
  - battery current
  - battery capacity and battery capacity used in mAh and % with vocal alerts for 90,80,70,60,50,40,30,25,20,15,10,4 levels
- - power as battery voltage * current
+ - efficiency as battery current/speed, value in mAh
  - vertical speed on left side of HUD
  - "synthetic vertical speed" calculated from altitude variations (no vspeed is sent by the autopilot in DCM mode)
  - altitude on right side of HUD 
