@@ -298,7 +298,8 @@ Complete menu options list:
 - cell count override: disable cell count detection and override it manually
 - rangefinder max: enable rangefinder and enter maximum rangefinder distance
 - enable synthetic vspeed: ignore telemetry vertical speed and calculate it from atitude variations
-- ground/airspeed unit: select either m/s or km/h
+- ground/airspeed unit: select either m/s, km/h, mph, kn
+- vertical speed unit: select either m/s, ft/s, ft/min
 
 The language of the vocal alerts is independent from the radio language and can be configured from the menu.
 Right now only english, italian and french are supported but new languages can be added with ease.
