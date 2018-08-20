@@ -55,6 +55,10 @@
 	MAV_TYPE_PARAFOIL=28,             /* Steerable, nonrigid airfoil | */
 	MAV_TYPE_DODECAROTOR=29,          /* Dodecarotor | */
 ]]
+------------------------------------------------------------------------------------
+-- X9D+ OpenTX 2.2.2 memory increase +4Kb https://github.com/opentx/opentx/pull/5579
+------------------------------------------------------------------------------------
+
 ---------------------
 -- radio model
 ---------------------
@@ -72,28 +76,19 @@
 ---------------------
 -- features
 ---------------------
--- metric   version displays: hspeed=m/s,     vspeed=m/s, distance=m
--- imperial version displays: hspeed=miles/h, vspeed=f/s, distance=f
---#define IMPERIAL
-
 --#define FRAMETYPE
---#define BATTMAH3DEC
 ---------------------
 -- dev features
 ---------------------
 --#define LOGTELEMETRY
---#define LOGMESSAGES
---
 --#define MEMDEBUG
 --#define DEBUG
---#define PLAYLOG
---#define DEBUGMENU
 --#define TESTMODE
 --#define BATT2TEST
 --#define FLVSS2TEST
---#define CELLCOUNT 4
 --#define DEMO
 --#define DEV
+--#define DEBUGEVT
 
 -- calc and show background function rate
 --#define BGRATE
@@ -106,7 +101,43 @@
 -- calc and show actual incoming telemetry rate
 --#define TELERATE
 
---
+-------------------------------------
+-- UNITS Scales from Ardupilot OSD code /ardupilot/libraries/AP_OSD/AP_OSD_Screen.cpp
+-------------------------------------
+--[[
+    static const float scale_metric[UNIT_TYPE_LAST] = {
+        1.0,       //ALTITUDE m
+        3.6,       //SPEED km/hr
+        1.0,       //VSPEED m/s
+        1.0,       //DISTANCE m
+        1.0/1000,  //DISTANCE_LONG km
+        1.0,       //TEMPERATURE C
+    };
+    static const float scale_imperial[UNIT_TYPE_LAST] = {
+        3.28084,     //ALTITUDE ft
+        2.23694,     //SPEED mph
+        3.28084,     //VSPEED ft/s
+        3.28084,     //DISTANCE ft
+        1.0/1609.34, //DISTANCE_LONG miles
+        1.8,         //TEMPERATURE F
+    };
+    static const float scale_SI[UNIT_TYPE_LAST] = {
+        1.0,       //ALTITUDE m
+        1.0,       //SPEED m/s
+        1.0,       //VSPEED m/s
+        1.0,       //DISTANCE m
+        1.0/1000,  //DISTANCE_LONG km
+        1.0,       //TEMPERATURE C
+    };
+    static const float scale_aviation[UNIT_TYPE_LAST] = {
+        3.28084,   //ALTITUDE Ft
+        1.94384,   //SPEED Knots
+        196.85,    //VSPEED ft/min
+        3.28084,   //DISTANCE ft
+        0.000539957,  //DISTANCE_LONG Nm
+        1.0,       //TEMPERATURE C
+    };
+--]]--
 
 
 
@@ -185,6 +216,7 @@ local landComplete = 0
 local statusArmed = 0
 local battFailsafe = 0
 local ekfFailsafe = 0
+local imuTemp = 0
 -- GPS
 local numSats = 0
 local gpsStatus = 0
@@ -292,7 +324,6 @@ local messageCount = 0
 local messages = {}
 --
 --
---
 
   
 
@@ -341,9 +372,10 @@ local messages = {}
 --------------------------------------------------------------------------------
 -- MENU VALUE,COMBO
 --------------------------------------------------------------------------------
+-- X-Lite Support
+
 
   
--- MULT 1 = m/s, MULT 3.6 = km/h
 
 
 local menu  = {
@@ -370,13 +402,19 @@ local menuItems = {
   {"cell count override:", 0, "CC", 0, 0,12," cells",0,1 },
   {"rangefinder max:", 0, "RM", 0, 0,10000," cm",0,10 },
   {"enable synthetic vspeed:", 1, "SVS", 1, { "no", "yes" }, { false, true } },
-  {"ground/airspeed unit:", 1, "HS", 1, { "m/s", "km/h" }, { 1, 3.6 } },
+  {"air/groundspeed unit:", 1, "HSPD", 1, { "m/s", "km/h", "mph", "kn" }, { 1, 3.6, 2.23694, 1.94384} },
+  {"vert speed unit:", 1, "VSPD", 1, { "m/s", "ft/s", "ft/min" }, { 1, 3.28084, 196.85} },
 }
 
 
+local modelInfo = model.getInfo()
+local unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
+
+
+local unitLabel = getGeneralSettings().imperial == 0 and "m" or "ft"
+
 local function getConfigFilename()
-  local info = model.getInfo()
-  return "/MODELS/yaapu/" .. string.lower(string.gsub(info.name, "[%c%p%s%z]", "")..".cfg")
+  return "/MODELS/yaapu/" .. string.lower(string.gsub(modelInfo.name, "[%c%p%s%z]", "")..".cfg")
 end
 
 local function applyConfigValues()
@@ -429,7 +467,7 @@ local function drawConfigMenuBars()
   local itemIdx = string.format("%d/%d",menu.selectedItem,#menuItems)
   lcd.drawFilledRectangle(0,0, 212, 7, SOLID)
   lcd.drawRectangle(0, 0, 212, 7, SOLID)
-  lcd.drawText(0,0,"Yaapu X9 telemetry script 1.6.2",SMLSIZE+INVERS)
+  lcd.drawText(0,0,"Yaapu X9 telemetry script 1.7.0",SMLSIZE+INVERS)
   lcd.drawFilledRectangle(0,56, 212, 8, SOLID)
   lcd.drawRectangle(0, 56, 212, 8, SOLID)
   lcd.drawText(0,56+1,getConfigFilename(),SMLSIZE+INVERS)
@@ -479,18 +517,18 @@ end
 
 local function drawConfigMenu(event)
   drawConfigMenuBars()
-  if event == EVT_ENTER_BREAK then
+  if event == EVT_ENTER_BREAK or event == 34 then
 	menu.editSelected = not menu.editSelected
-  elseif menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_LEFT or event == EVT_PLUS_REPT) then
+  elseif menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_LEFT or event == EVT_PLUS_REPT or event == 36 or event == 68) then
     incMenuItem(menu.selectedItem)
-  elseif menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_RIGHT or event == EVT_MINUS_REPT) then
+  elseif menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_RIGHT or event == EVT_MINUS_REPT or event == 35 or event == 67) then
     decMenuItem(menu.selectedItem)
-  elseif not menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_LEFT) then
+  elseif not menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_LEFT or event == 36) then
     menu.selectedItem = (menu.selectedItem - 1)
     if menu.offset >=  menu.selectedItem then
       menu.offset = menu.offset - 1
     end
-  elseif not menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_RIGHT) then
+  elseif not menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_RIGHT or event == 35) then
     menu.selectedItem = (menu.selectedItem + 1)
     if menu.selectedItem - 7 > menu.offset then
       menu.offset = menu.offset + 1
@@ -503,7 +541,7 @@ local function drawConfigMenu(event)
   elseif menu.selectedItem  < 1 then
     menu.selectedItem = #menuItems
     -- 
-    menu.offset = 11
+    menu.offset = 12
   end
   --
   for m=1+menu.offset,math.min(#menuItems,7+menu.offset) do
@@ -574,76 +612,88 @@ local function drawHomeIcon(x,y)
   lcd.drawLine(x-1,y+1,x+2,y-2,SOLID, FORCE)
   lcd.drawLine(x+5,y+1,x+3,y-1,SOLID, FORCE)
 end
--- draws a line centered at ox,oy with given angle and length WITH CROPPING
-local function drawCroppedLine(ox,oy,angle,len,style,minX,maxX,minY,maxY)
+
+
+local function computeOutCode(x,y,xmin,ymin,xmax,ymax)
+    local code = 0; --initialised as being inside of hud
+    --
+    if x < xmin then --to the left of hud
+        code = bit32.bor(code,1);
+    elseif x > xmax then --to the right of hud
+        code = bit32.bor(code,2);
+    end
+    if y < ymin then --below the hud
+        code = bit32.bor(code,4);
+    elseif y > ymax then --above the hud
+        code = bit32.bor(code,8);
+    end
+    --
+    return code;
+end
+
+-- Cohen–Sutherland clipping algorithm
+-- https://en.wikipedia.org/wiki/Cohen%E2%80%93Sutherland_algorithm
+local function drawLineWithClipping(ox,oy,angle,len,style,xmin,xmax,ymin,ymax)
   --
   local xx = math.cos(math.rad(angle)) * len * 0.5
   local yy = math.sin(math.rad(angle)) * len * 0.5
   --
-  local x1 = ox - xx
-  local x2 = ox + xx
-  local y1 = oy - yy
-  local y2 = oy + yy
-  --
-  -- crop right
-  if (x1 >= maxX and x2 >= maxX) then
-    return
-  end
+  local x0 = ox - xx
+  local x1 = ox + xx
+  local y0 = oy - yy
+  local y1 = oy + yy    
+  -- compute outcodes for P0, P1, and whatever point lies outside the clip rectangle
+  local outcode0 = computeOutCode(x0, y0, xmin, ymin, xmax, ymax);
+  local outcode1 = computeOutCode(x1, y1, xmin, ymin, xmax, ymax);
+  local accept = false;
 
-  if (x1 >= maxX) then
-    y1 = y1 - math.tan(math.rad(angle)) * (maxX - x1)
-    x1 = maxX - 1
+  while (true) do
+    if ( bit32.bor(outcode0,outcode1) == 0) then
+      -- bitwise OR is 0: both points inside window; trivially accept and exit loop
+      accept = true;
+      break;
+    elseif (bit32.band(outcode0,outcode1) ~= 0) then
+      -- bitwise AND is not 0: both points share an outside zone (LEFT, RIGHT, TOP, BOTTOM)
+      -- both must be outside window; exit loop (accept is false)
+      break;
+    else
+      -- failed both tests, so calculate the line segment to clip
+      -- from an outside point to an intersection with clip edge
+      local x = 0
+      local y = 0
+      -- At least one endpoint is outside the clip rectangle; pick it.
+      local outcodeOut = outcode0 ~= 0 and outcode0 or outcode1
+      -- No need to worry about divide-by-zero because, in each case, the
+      -- outcode bit being tested guarantees the denominator is non-zero
+      if bit32.band(outcodeOut,8) ~= 0 then --point is above the clip window
+        x = x0 + (x1 - x0) * (ymax - y0) / (y1 - y0)
+        y = ymax
+      elseif bit32.band(outcodeOut,4) ~= 0 then --point is below the clip window
+        x = x0 + (x1 - x0) * (ymin - y0) / (y1 - y0)
+        y = ymin
+      elseif bit32.band(outcodeOut,2) ~= 0 then --point is to the right of clip window
+        y = y0 + (y1 - y0) * (xmax - x0) / (x1 - x0)
+        x = xmax
+      elseif bit32.band(outcodeOut,1) ~= 0 then --point is to the left of clip window
+        y = y0 + (y1 - y0) * (xmin - x0) / (x1 - x0)
+        x = xmin
+      end
+      -- Now we move outside point to intersection point to clip
+      -- and get ready for next pass.
+      if outcodeOut == outcode0 then
+        x0 = x
+        y0 = y
+        outcode0 = computeOutCode(x0, y0, xmin, ymin, xmax, ymax)
+      else
+        x1 = x
+        y1 = y
+        outcode1 = computeOutCode(x1, y1, xmin, ymin, xmax, ymax)
+      end
+    end
   end
-
-  if (x2 >= maxX) then
-    y2 = y2 + math.tan(math.rad(angle)) * (maxX - x2)
-    x2 = maxX - 1
+  if accept then
+    lcd.drawLine(x0,y0,x1,y1, style,0)
   end
-  -- crop left
-  if (x1 <= minX and x2 <= minX) then
-    return
-  end
-
-  if (x1 <= minX) then
-    y1 = y1 - math.tan(math.rad(angle)) * (x1 - minX)
-    x1 = minX + 1
-  end
-
-  if (x2 <= minX) then
-    y2 = y2 + math.tan(math.rad(angle)) * (x2 - minX)
-    x2 = minX + 1
-  end
-  --
-  -- crop right
-  if (y1 >= maxY and y2 >= maxY) then
-    return
-  end
-
-  if (y1 >= maxY) then
-    x1 = x1 - (y1 - maxY)/math.tan(math.rad(angle))
-    y1 = maxY - 1
-  end
-
-  if (y2 >= maxY) then
-    x2 = x2 -  (y2 - maxY)/math.tan(math.rad(angle))
-    y2 = maxY - 1
-  end
-  -- crop left
-  if (y1 <= minY and y2 <= minY) then
-    return
-  end
-
-  if (y1 <= minY) then
-    x1 = x1 + (minY - y1)/math.tan(math.rad(angle))
-    y1 = minY + 1
-  end
-
-  if (y2 <= minY) then
-    x2 = x2 + (minY - y2)/math.tan(math.rad(angle))
-    y2 = minY + 1
-  end
-
-  lcd.drawLine(x1,y1,x2,y2, style,0)
 end
 
 
@@ -705,6 +755,7 @@ local function pushMessage(severity, msg)
   lastMessage = msg
   lastMessageSeverity = severity
   collectgarbage()
+  maxmem = 0
 end
 --
 local function startTimer()
@@ -729,16 +780,13 @@ local function processTelemetry()
     noTelemetryData = 0
     if ( DATA_ID == 0x5006) then -- ROLLPITCH
       -- roll [0,1800] ==> [-180,180]
-      roll = (bit32.extract(VALUE,0,11) - 900) * 0.2
+      roll = (math.min(bit32.extract(VALUE,0,11),1800) - 900) * 0.2
       -- pitch [0,900] ==> [-90,90]
-      pitch = (bit32.extract(VALUE,11,10) - 450) * 0.2
+      pitch = (math.min(bit32.extract(VALUE,11,10),900) - 450) * 0.2
       -- number encoded on 11 bits: 10 bits for digits + 1 for 10^power
       range = bit32.extract(VALUE,22,10) * (10^bit32.extract(VALUE,21,1)) -- cm
     elseif ( DATA_ID == 0x5005) then -- VELANDYAW
-      vSpeed = bit32.extract(VALUE,1,7) * (10^bit32.extract(VALUE,0,1))
-      if (bit32.extract(VALUE,8,1) == 1) then
-        vSpeed = -vSpeed
-      end
+      vSpeed = bit32.extract(VALUE,1,7) * (10^bit32.extract(VALUE,0,1)) * (bit32.extract(VALUE,8,1) == 1 and -1 or 1)
       hSpeed = bit32.extract(VALUE,10,7) * (10^bit32.extract(VALUE,9,1))
       yaw = bit32.extract(VALUE,17,11) * 0.2
     elseif ( DATA_ID == 0x5001) then -- AP STATUS
@@ -748,16 +796,15 @@ local function processTelemetry()
       statusArmed = bit32.extract(VALUE,8,1)
       battFailsafe = bit32.extract(VALUE,9,1)
       ekfFailsafe = bit32.extract(VALUE,10,2)
+      -- IMU temperature: offset -19, 0 means temp =< 19°, 63 means temp => 82°
+      imuTemp = math.floor((100 * bit32.extract(VALUE,26,6)/64) + 0.5) - 19 -- C° Note. math.round = math.floor( n + 0.5)
     elseif ( DATA_ID == 0x5002) then -- GPS STATUS
       numSats = bit32.extract(VALUE,0,4)
       -- offset  4: NO_GPS = 0, NO_FIX = 1, GPS_OK_FIX_2D = 2, GPS_OK_FIX_3D or GPS_OK_FIX_3D_DGPS or GPS_OK_FIX_3D_RTK_FLOAT or GPS_OK_FIX_3D_RTK_FIXED = 3
       -- offset 14: 0: no advanced fix, 1: GPS_OK_FIX_3D_DGPS, 2: GPS_OK_FIX_3D_RTK_FLOAT, 3: GPS_OK_FIX_3D_RTK_FIXED
       gpsStatus = bit32.extract(VALUE,4,2) + bit32.extract(VALUE,14,2)
       gpsHdopC = bit32.extract(VALUE,7,7) * (10^bit32.extract(VALUE,6,1)) -- dm
-      gpsAlt = bit32.extract(VALUE,24,7) * (10^bit32.extract(VALUE,22,2)) -- dm
-      if (bit32.extract(VALUE,31,1) == 1) then
-        gpsAlt = gpsAlt * -1
-      end
+      gpsAlt = bit32.extract(VALUE,24,7) * (10^bit32.extract(VALUE,22,2)) * (bit32.extract(VALUE,31,1) == 1 and -1 or 1) -- dm
     elseif ( DATA_ID == 0x5003) then -- BATT
       batt1volt = bit32.extract(VALUE,0,9)
       batt1current = bit32.extract(VALUE,10,7) * (10^bit32.extract(VALUE,9,1))
@@ -768,10 +815,7 @@ local function processTelemetry()
       batt2mah = bit32.extract(VALUE,17,15)
     elseif ( DATA_ID == 0x5004) then -- HOME
       homeDist = bit32.extract(VALUE,2,10) * (10^bit32.extract(VALUE,0,2))
-      homeAlt = bit32.extract(VALUE,14,10) * (10^bit32.extract(VALUE,12,2)) * 0.1 --m
-      if (bit32.extract(VALUE,24,1) == 1) then
-        homeAlt = homeAlt * -1
-      end
+      homeAlt = bit32.extract(VALUE,14,10) * (10^bit32.extract(VALUE,12,2)) * 0.1 * (bit32.extract(VALUE,24,1) == 1 and -1 or 1) --m
       homeAngle = bit32.extract(VALUE, 25,  7) * 3
     elseif ( DATA_ID == 0x5000) then -- MESSAGES
       if (VALUE ~= lastMsgValue) then
@@ -807,7 +851,6 @@ local function processTelemetry()
         _msg_chunk.chunk |= (_statustext_queue[0]->severity & 0x2)<<14;
         _msg_chunk.chunk |= (_statustext_queue[0]->severity & 0x1)<<7;
         --]]        if (msgEnd) then
-          -- local severity = (bit32.extract(VALUE,15,1) * 4) + (bit32.extract(VALUE,23,1) * 2) + (bit32.extract(VALUE,31,1) * 1)
           local severity = (bit32.extract(VALUE,7,1) * 1) + (bit32.extract(VALUE,15,1) * 2) + (bit32.extract(VALUE,23,1) * 4)
           pushMessage( severity, msgBuffer)
           msgBuffer = ""
@@ -954,10 +997,13 @@ local function calcBattery()
   if battA2 > 0 then
     cellsumA2 = battA2
     cellmaxA2 = math.max(battA2*10,cellmaxA2)
+    -- don't force a2, only way to display it
+    -- is by user selection from menu
+    --[[
     if battsource == "na" then
       battsource = "a2"
     end
-    batt1sources.a2 = true
+    --]]    batt1sources.a2 = true
   else
     batt1sources.a2 = false
     cellsumA2 = 0
@@ -986,7 +1032,7 @@ local function checkLandingStatus()
   timerRunning = landComplete
 end
 
-local function calcFlightTime()
+local function calcFlightTime() 
   -- update local variable with timer 3 value
   flightTime = model.getTimer(2).value
 end
@@ -1000,7 +1046,7 @@ local function getBatt2Capacity()
 end
 
 -- gets the voltage based on source and min value, battId = [1|2]
-local function getMinVoltageBySource(source,cell,cellFC,cellA2,battId)
+local function getMinVoltageBySource(source,cell,cellFC,cellA2,battId,count)
   -- offset 0 for cell voltage, 2 for pack voltage
   local offset = 0
   --
@@ -1012,11 +1058,11 @@ local function getMinVoltageBySource(source,cell,cellFC,cellA2,battId)
     return showMinMaxValues == true and minmaxValues[2+offset+battId] or cell
   elseif source == "fc" then
       -- FC only tracks batt1 and batt2 no cell voltage tracking
-      local minmax = (offset == 2 and minmaxValues[battId] or minmaxValues[battId]/calcCellCount())
+      local minmax = (offset == 2 and minmaxValues[battId] or minmaxValues[battId]/count)
       return showMinMaxValues == true and minmax or cellFC
   elseif source == "a2" then
       -- 12 does not depend on battery id
-      local minmax = (offset == 2 and minmaxValues[7] or minmaxValues[7]/calcCellCount())
+      local minmax = (offset == 2 and minmaxValues[7] or minmaxValues[7]/count)
       return showMinMaxValues == true and minmax or cellA2
   end
   --
@@ -1040,16 +1086,16 @@ local function setSensorValues()
       perc = 99
     end  
   end
-  setTelemetryValue(0x0600, 0, 0, perc, 13 , 0 , "Fuel")
-  setTelemetryValue(0x0210, 0, 2, getNonZeroMin(batt1volt,batt2volt)*10, 1 , 2 , "VFAS")
-  setTelemetryValue(0x0200, 0, 3, batt1current+batt2current, 2 , 1 , "CURR")
-  setTelemetryValue(0x0110, 0, 1, vSpeed, 5 , 1 , "VSpd")
-  setTelemetryValue(0x0830, 0, 4, hSpeed*0.1, 4 , 0 , "GSpd")
-  setTelemetryValue(0x0100, 0, 1, homeAlt*10, 9 , 1 , "Alt")
-  setTelemetryValue(0x0820, 0, 4, math.floor(gpsAlt*0.1), 9 , 0 , "GAlt")
-  setTelemetryValue(0x0840, 0, 4, math.floor(yaw), 20 , 0 , "Hdg")
-  setTelemetryValue(0x0400, 0, 0, flightMode, 11 , 0 , "Tmp1")
-  setTelemetryValue(0x0410, 0, 0, numSats*10+gpsStatus, 11 , 0 , "Tmp2")
+  setTelemetryValue(0x060F, 0, 0, perc, 13 , 0 , "Fuel")
+  setTelemetryValue(0x021F, 0, 0, getNonZeroMin(batt1volt,batt2volt)*10, 1 , 2 , "VFAS")
+  setTelemetryValue(0x020F, 0, 0, batt1current+batt2current, 2 , 1 , "CURR")
+  setTelemetryValue(0x011F, 0, 0, vSpeed, 5 , 1 , "VSpd")
+  setTelemetryValue(0x083F, 0, 0, hSpeed*0.1, 4 , 0 , "GSpd")
+  setTelemetryValue(0x010F, 0, 0, homeAlt*10, 9 , 1 , "Alt")
+  setTelemetryValue(0x082F, 0, 0, math.floor(gpsAlt*0.1), 9 , 0 , "GAlt")
+  setTelemetryValue(0x084F, 0, 0, math.floor(yaw), 20 , 0 , "Hdg")
+  setTelemetryValue(0x041F, 0, 0, imuTemp, 11 , 0 , "IMUt")
+  setTelemetryValue(0x060F, 0, 1, statusArmed*100, 0 , 0 , "ARM")
 end
 --------------------
 -- Single long function much more memory efficient than many little functions
@@ -1196,13 +1242,14 @@ local function drawX9LeftPane(battcurrent,cellsumFC)
     -- rng finder
     flags = 0
     local rng = range
+    -- rng is centimeters, RANGE_MAX is feet
     if rng > menuItems[16][4] then
       flags = BLINK+INVERS
     end
     rng = getMaxValue(rng,17)
     lcd.drawText(4 + 4, 25, "Rng", SMLSIZE)
-    lcd.drawText(65, 26 , "m", SMLSIZE+RIGHT)
-    lcd.drawText(lcd.getLastLeftPos()-1, 26-1 , string.format("%.2f",rng*0.01), RIGHT+flags)
+    lcd.drawText(65, 26 , unitLabel, SMLSIZE+RIGHT)
+    lcd.drawText(lcd.getLastLeftPos()-1, 26-1 , string.format("%.2f",rng*0.01*unitScale), RIGHT+flags)
   else
     -- alt asl, always display gps altitude even without 3d lock
     local alt = gpsAlt/10 -- meters
@@ -1213,8 +1260,8 @@ local function drawX9LeftPane(battcurrent,cellsumFC)
       alt = getMaxValue(alt,13)
     end
     lcd.drawText(4 + 4, 25, "Asl", SMLSIZE)
-    lcd.drawText(65, 26 , "m", SMLSIZE+RIGHT)
-    lcd.drawText(lcd.getLastLeftPos()-1, 26-1 , string.format("%d",alt), RIGHT+flags)
+    lcd.drawText(65, 26, unitLabel, SMLSIZE+RIGHT)
+    lcd.drawText(lcd.getLastLeftPos()-1, 26-1 , string.format("%d",alt*unitScale), RIGHT+flags)
   end
   -- home distance
   drawHomeIcon(2 + 1,36,7)
@@ -1227,15 +1274,13 @@ local function drawX9LeftPane(battcurrent,cellsumFC)
   if showMinMaxValues == true then
     flags = 0
   end
-  lcd.drawText(65, 36-1, "m",SMLSIZE+RIGHT)
-  lcd.drawNumber(lcd.getLastLeftPos()-1, 36-1, dist, RIGHT+flags)
-  -- power
-  local power = cellsumFC*battcurrent*0.1
-  power = getMaxValue(power,11)
-  lcd.drawText(2, 45, "PWR", SMLSIZE)
-  lcd.drawText(65,45,string.format("%d w",power),SMLSIZE+RIGHT)
+  lcd.drawText(65, 36-1, unitLabel,SMLSIZE+RIGHT)
+  lcd.drawNumber(lcd.getLastLeftPos()-1, 36-1, dist*unitScale, RIGHT+flags)
+  -- efficiency
+  local eff = hSpeed*0.1 > 2 and 1000*battcurrent*0.1/(hSpeed*0.1*menuItems[18][6][menuItems[18][4]]) or 0
+  lcd.drawText(2, 45, "Eff", SMLSIZE)
+  lcd.drawText(65,45,string.format("%d mAh",eff),SMLSIZE+RIGHT)
   if showMinMaxValues == true then
-    drawVArrow(2 + 23, 45, 5,true,false)
     drawVArrow(2 + 23, 36 - 2,6,true,false)
     drawVArrow(4 + 21, 26 - 2,6,true,false)
   end
@@ -1308,21 +1353,12 @@ local function drawCompassRibbon()
   local angle = homeAngle - yaw
   local cos = math.cos(math.rad(angle - 90))    
   local sin = math.sin(math.rad(angle - 90))    
-  if cos > 0 and sin > 0 then
-    drawHomeIcon(yawMaxX - 2, yawY + 10)
-  elseif cos < 0 and sin > 0 then
-    drawHomeIcon(yawMinX - 2, yawY + 10)
+  if sin > 0 then
+    drawHomeIcon(( cos > 0 and yawMaxX or yawMinX ) - 2, yawY + 10)
   end
   --
   lcd.drawLine(yawMinX - 2, yawY + 7, yawMaxX + 2, yawY + 7, SOLID, 0)
-  local xx = 0
-  if ( yaw < 10) then
-    xx = 1
-  elseif (yaw < 100) then
-    xx = -2
-  else
-    xx = -5
-  end
+  local xx = yaw < 10 and 1 or ( yaw < 100 and -2 or -5 )
   lcd.drawNumber(LCD_W/2 + xx - 4, yawY, yaw, MIDSIZE+INVERS)
 end
 
@@ -1361,12 +1397,12 @@ local function drawHud()
   end
   local rollX = math.floor(68 + 76/2)
   -- parallel lines above and below horizon of increasing length 5,7,16,16,7,5
-  drawCroppedLine(rollX + dx - cccx,dy + 35 + cccy,r,16,DOTTED,68,68 + 76,yPos,56 - 1)
-  drawCroppedLine(rollX + dx - ccx,dy + 35 + ccy,r,7,DOTTED,68,68 + 76,yPos,56 - 1)
-  drawCroppedLine(rollX + dx - cx,dy + 35 + cy,r,16,DOTTED,68,68 + 76,yPos,56 - 1)
-  drawCroppedLine(rollX + dx + cx,dy + 35 - cy,r,16,DOTTED,68,68 + 76,yPos,56 - 1)
-  drawCroppedLine(rollX + dx + ccx,dy + 35 - ccy,r,7,DOTTED,68,68 + 76,yPos,56 - 1)
-  drawCroppedLine(rollX + dx + cccx,dy + 35 - cccy,r,16,DOTTED,68,68 + 76,yPos,56 - 1)
+  drawLineWithClipping(rollX + dx - cccx,dy + 35 + cccy,r,16,DOTTED,68,68 + 76,yPos,56 - 1)
+  drawLineWithClipping(rollX + dx - ccx,dy + 35 + ccy,r,7,DOTTED,68,68 + 76,yPos,56 - 1)
+  drawLineWithClipping(rollX + dx - cx,dy + 35 + cy,r,16,DOTTED,68,68 + 76,yPos,56 - 1)
+  drawLineWithClipping(rollX + dx + cx,dy + 35 - cy,r,16,DOTTED,68,68 + 76,yPos,56 - 1)
+  drawLineWithClipping(rollX + dx + ccx,dy + 35 - ccy,r,7,DOTTED,68,68 + 76,yPos,56 - 1)
+  drawLineWithClipping(rollX + dx + cccx,dy + 35 - cccy,r,16,DOTTED,68,68 + 76,yPos,56 - 1)
   -----------------------
   -- dark color for "ground"
   -----------------------
@@ -1443,26 +1479,26 @@ local function drawHud()
   -------------------------------------
   -- lets erase to hide the artificial horizon lines
   -- black borders
-  lcd.drawRectangle(68, 35 - 5,   17, 11, FORCE, 0)
+  lcd.drawRectangle(68, 35 - 5,   20, 11, FORCE, 0)
   lcd.drawRectangle(68 + 76 -  17 - 1, 35 - 5,  17+1, 11, FORCE, 0)
   -- erase area
-  lcd.drawFilledRectangle(68, 35 - 4,   17, 9, ERASE, 0)
+  lcd.drawFilledRectangle(68, 35 - 4,   20, 9, ERASE, 0)
   lcd.drawFilledRectangle(68 + 76 -  17 - 1, 35 - 4,  17+2, 9, ERASE, 0)
   -- erase tips
-  lcd.drawLine(68 +   17,35 - 3,68 +   17,35 + 3, SOLID, ERASE)
-  lcd.drawLine(68 +   17+1,35 - 2,68 +   17+1,35 + 2, SOLID, ERASE)
+  lcd.drawLine(68 +   20,35 - 3,68 +   20,35 + 3, SOLID, ERASE)
+  lcd.drawLine(68 +   20+1,35 - 2,68 +   20+1,35 + 2, SOLID, ERASE)
   lcd.drawLine(68 + 76 -  17 - 2,35 - 3,68 + 76 -  17 - 2,35 + 3, SOLID, ERASE)
   lcd.drawLine(68 + 76 -  17 - 3,35 - 2,68 + 76 -  17 - 3,35 + 2, SOLID, ERASE)
   -- left tip
-  lcd.drawLine(68 +   17+2,35 - 2,68 +   17+2,35 + 2, SOLID, FORCE)
-  lcd.drawLine(68 +   17-1,35 - 5,68 +   17+1,35 - 3, SOLID, FORCE)
-  lcd.drawLine(68 +   17-1,35 + 5,68 +   17+1,35 + 3, SOLID, FORCE)
+  lcd.drawLine(68 +   20+2,35 - 2,68 +   20+2,35 + 2, SOLID, FORCE)
+  lcd.drawLine(68 +   20-1,35 - 5,68 +   20+1,35 - 3, SOLID, FORCE)
+  lcd.drawLine(68 +   20-1,35 + 5,68 +   20+1,35 + 3, SOLID, FORCE)
   -- right tip
   lcd.drawLine(68 + 76 -  17 - 4,35 - 2,68 + 76 -  17 - 4,35 + 2, SOLID, FORCE)
   lcd.drawLine(68 + 76 -  17 - 3,35 - 3,68 + 76 -  17 - 1,35 - 5, SOLID, FORCE)
   lcd.drawLine(68 + 76 -  17 - 3,35 + 3,68 + 76 -  17 - 1,35 + 5, SOLID, FORCE)
     -- altitude
-  local alt = getMaxValue(homeAlt,12) -- homeAlt is meters
+  local alt = getMaxValue(homeAlt,12) * unitScale -- homeAlt is meters*3.28 = feet
   --
   if math.abs(alt) < 10 then
       lcd.drawNumber(68 + 76,35 - 3,alt * 10,SMLSIZE+PREC1+RIGHT)
@@ -1470,16 +1506,16 @@ local function drawHud()
       lcd.drawNumber(68 + 76,35 - 3,alt,SMLSIZE+RIGHT)
   end
   -- vertical speed
-  if math.abs(vspd) > 99 then
-    lcd.drawNumber(68+1,35 - 3,vspd*0.1,SMLSIZE)
+  if math.abs(vspd*3.28*60) > 99 then
+    lcd.drawNumber(68+1,35 - 3,vspd*0.1*menuItems[19][6][menuItems[19][4]],SMLSIZE)
   else
-    lcd.drawNumber(68+1,35 - 3,vspd,SMLSIZE+PREC1)
+    lcd.drawNumber(68+1,35 - 3,vspd*menuItems[19][6][menuItems[19][4]],SMLSIZE+PREC1)
   end
   -- center arrow
   local arrowX = math.floor(68 + 76/2)
   lcd.drawLine(arrowX - 4,35 + 4,arrowX ,35 ,SOLID,0)
   lcd.drawLine(arrowX + 1,35 + 1,arrowX + 4, 35 + 4,SOLID,0)
-  lcd.drawLine(68 + 22,35,68 + 30,35 ,SOLID,0)
+  lcd.drawLine(68 + 25,35,68 + 30,35 ,SOLID,0)
   lcd.drawLine(68 + 76 - 24,35,68 + 76 - 31,35 ,SOLID,0)
   -- hspeed
   local speed = getMaxValue(hSpeed,15) * menuItems[18][6][menuItems[18][4]]
@@ -1612,7 +1648,12 @@ local function loadFlightModes()
       frame = dofile("/SCRIPTS/TELEMETRY/yaapu/rover.luac")
     end
     if frame.flightModes then
+      for i,v in pairs(frameTypes) do
+        frameTypes[i] = nil
+      end
       frameTypes = nil
+      collectgarbage()
+      maxmem = 0
     end
   end
 end
@@ -1649,6 +1690,7 @@ local function checkEvents()
     end
   end
 
+  --[[
   if statusArmed == 1 and lastStatusArmed == 0 then
     lastStatusArmed = statusArmed
     playSound("armed")
@@ -1656,6 +1698,11 @@ local function checkEvents()
     lastStatusArmed = statusArmed
     playSound("disarmed")
   end
+  --]]  if statusArmed ~= lastStatusArmed then
+    if statusArmed == 1 then playSound("armed") else playSound("disarmed") end
+    lastStatusArmed = statusArmed
+  end
+
 
   if gpsStatus > 2 and lastGpsStatus <= 2 then
     lastGpsStatus = gpsStatus
@@ -1733,11 +1780,12 @@ local function background()
   do
     processTelemetry()
 end
+  --[[
   -- NORMAL: this runs at 10Hz (every 100ms)
   if telemetryEnabled() and (bgclock % 2 == 0) then
-    setTelemetryValue(0x0110, 0, 1, vSpeed, 5 , 1 , "VSpd")
+    setTelemetryValue(VSpd_ID, VSpd_SUBID, VSpd_INSTANCE, vSpeed, 5 , VSpd_PRECISION , VSpd_NAME)
   end
-  -- SLOW: this runs at 4Hz (every 250ms)
+  --]]  -- SLOW: this runs at 4Hz (every 250ms)
   if (bgclock % 4 == 0) then
     setSensorValues()
   end
@@ -1757,20 +1805,20 @@ end
   end
   bgclock = bgclock+1
 end
---
+
 local function run(event)
   lcd.clear()
   ---------------------
   -- SHOW MESSAGES
   ---------------------
-  if showConfigMenu == false and (event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT) then
+  if showConfigMenu == false and (event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT or event == 36) then
     showMessages = true
     collectgarbage()
   end
   ---------------------
   -- SHOW CONFIG MENU
   ---------------------
-  if showMessages == false and (event == EVT_MENU_LONG) then
+  if showMessages == false and (event == EVT_MENU_LONG or event == 128) then
     showConfigMenu = true
     collectgarbage()
   end
@@ -1778,7 +1826,7 @@ local function run(event)
     ---------------------
     -- MESSAGES
     ---------------------
-    if event == EVT_EXIT_BREAK or event == EVT_MINUS_BREAK or event == EVT_ROT_LEFT then
+    if event == EVT_EXIT_BREAK or event == EVT_MINUS_BREAK or event == EVT_ROT_LEFT  or event == 35 or event == 33 then
       showMessages = false
     end
     drawAllMessages()
@@ -1788,7 +1836,7 @@ local function run(event)
     ---------------------
     drawConfigMenu(event)
     --
-    if event == EVT_EXIT_BREAK then
+    if event == EVT_EXIT_BREAK or event == 33 then
       menu.editSelected = false
       showConfigMenu = false
       saveConfig()
@@ -1797,13 +1845,13 @@ local function run(event)
     ---------------------
     -- MAIN VIEW
     ---------------------
-    if event == EVT_ENTER_BREAK then
+    if event == EVT_ENTER_BREAK or event == 34 then
       cycleBatteryInfo()
     end
-    if event == EVT_MENU_BREAK then
+    if event == EVT_MENU_BREAK or event == 32 then
       showMinMaxValues = not showMinMaxValues
     end
-    if showDualBattery == true and event == EVT_EXIT_BREAK then
+    if showDualBattery == true and event == EVT_EXIT_BREAK or event == 33 then
       showDualBattery = false
     end
     drawHud()
@@ -1814,10 +1862,11 @@ local function run(event)
     -- cell1minFC = cell1sumFC/calcCellCount()
     -- cell2minFC = cell2sumFC/calcCellCount()
     -- cell1minA2 = cell1sumA2/calcCellCount()
-    local cel1m = getMinVoltageBySource(battsource,cell1min,cell1sumFC/calcCellCount(),cellsumA2/calcCellCount(),1)*100
-    local cel2m = getMinVoltageBySource(battsource,cell2min,cell2sumFC/calcCellCount(),cellsumA2/calcCellCount(),2)*100
-    local batt1 = getMinVoltageBySource(battsource,cell1sum,cell1sumFC,cellsumA2,1)*10
-    local batt2 = getMinVoltageBySource(battsource,cell2sum,cell2sumFC,cellsumA2,2)*10
+    local count = calcCellCount()
+    local cel1m = getMinVoltageBySource(battsource,cell1min,cell1sumFC/count,cellsumA2/count,1,count)*100
+    local cel2m = getMinVoltageBySource(battsource,cell2min,cell2sumFC/count,cellsumA2/count,2,count)*100
+    local batt1 = getMinVoltageBySource(battsource,cell1sum,cell1sumFC,cellsumA2,1,count)*10
+    local batt2 = getMinVoltageBySource(battsource,cell2sum,cell2sumFC,cellsumA2,2,count)*10
     local curr  = getMaxValue(batt1current+batt2current,8)
     local curr1 = getMaxValue(batt1current,9)
     local curr2 = getMaxValue(batt2current,10)
@@ -1873,7 +1922,7 @@ local function init()
   model.setTimer(2,{mode=0})
   model.setTimer(2,{value=0})
   loadConfig()
-  pushMessage(6,"Yaapu X9 telemetry script 1.6.2")
+  pushMessage(6,"Yaapu X9 telemetry script 1.7.0")
   playSound("yaapu")
 end
 
