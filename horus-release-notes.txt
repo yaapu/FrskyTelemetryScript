@@ -1,0 +1,23 @@
+Horus version 1.6.0
+
+- rangefinder support with max range from config menu
+- "synthetic vspeed" calculated from altitude changes with menu option to enable/disable
+- air/groundspeed unit selectable from menu (m/s or km/h)
+- larger HUD
+- many small fixes
+
+Horus Widget Version 1.6.2
+
+- no more latency on HUD
+- added support for FlowHold and Follow new copter flight modes
+- added groundspeed/airspeed unit configuration as menu option
+- moved flight timer to OpenTX timer 3
+- added spoken flight time to flight timer alert
+- added support for dual FLVSS + single power monitor with split load in dual battery view
+- fixed mavlink message severity unpacking
+- fixed first timer alert would not play
+- added dedicated sounds for critical/non critical messages
+- added simple/supersimple support with vocal alerts
+- improved cell count detection with new algorythm
+- added german language support
+- added IMU temp support as custom IMUt sensor (experimental)

@@ -1,0 +1,43 @@
+Taranis version 1.5.1
+
+- vertical variometer gauge on left side of hud 
+- cell detection override from menu up to 12s
+
+Taranis version 1.6.0
+
+- rangefinder support with max range from config menu
+- "synthetic vspeed" calculated from altitude changes with menu option to enable/disable (needs testing)
+- new X9 layout with bigger fonts
+- new QX7 layout
+- many small fixes
+
+Taranis version 1.6.2
+
+- moved flight modes to separate files to optimize memory
+- added support for FlowHold and Follow new copter flight modes
+- added groundspeed/airspeed unit configuration as menu option
+- moved flight timer to OpenTX timer 3
+- added spoken flight time to flight timer alert
+- added support for dual FLVSS + single power monitor with split load in dual battery view
+- fixed mavlink message severity unpacking
+- fixed first timer alert would not play
+- added dedicated sounds for critical/non critical messages
+- added simple/supersimple support with vocal alerts
+- improved cell count detection with new algorythm
+- added german language support
+- many memory optimizations
+
+Taranis version 1.7.0
+
+- units settings for distance and altitude inherited from radio settings (imperial/metric)
+- units settings for horizontal and vertical speed selectable from config menu (m/s,km/h,mph,ft/s,ft/min)
+- implemented cohen-sutherland algorythm for hud line clipping
+- added imu temperature support
+- fix for roll and pitch overflow
+- removed Tmp1 and Tmp2 OpenTX sensors
+- moved all sensors to last instance 0xF of the respective frsky sensor ID (requires a new sensor discovery)
+- added ARM sensor to expose to OpenTX arming status
+- fixed home icon position when angle beyond +/- 90
+- some code refactoring
+- X9D: removed power from left panel
+- X9D: added efficiency on left panel as mAh/speed
