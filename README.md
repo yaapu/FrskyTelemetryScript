@@ -8,8 +8,8 @@ The supported radios are:
 - Horus X10(S) and X12 on OpenTX 2.2.1/2.2.2
 
 Here you'll find
-- a **Telemetry** script for the Taranis radios: X9D,QX7 and X-Lite
-- a **Widget** for the Horus radios: X10/S and X12
+- a **Telemetry** script for the Taranis radios: X9D,QX7 and X-Lite (latest version is 1.7.0)
+- a **Widget** for the Horus radios: X10/S and X12  (latest version is 1.6.2)
 
 both support all of the telemetry DIY 0x5000 packets sent by ardupilot’s [frsky passthrough protocol library](https://github.com/ArduPilot/ardupilot/tree/master/libraries/AP_Frsky_Telem)
 
