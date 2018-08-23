@@ -43,6 +43,7 @@ Requires [OpenTX 2.2.1/2.2.2](http://www.open-tx.org/) and a recent release of [
  - [sound files customization](#sound-files-customization)
  - [compilation](#compilation)
  - [hardware requirements](#hardware-requirements)
+ - [troubleshooting](#troubleshooting)
  - [credits](#credits)
  
 ## Screenshots
@@ -493,6 +494,20 @@ Please refer to the arducopter wiki for information on how to configure your fli
 For information on how to connect the FrSky equipment together, please refer to 
  - http://ardupilot.org/copter/docs/common-frsky-telemetry.html#common-frsky-equipment
  - http://ardupilot.org/copter/docs/common-frsky-telemetry.html#diy-cable-for-x-receivers
+ 
+For information about building DIY frsky telemetry cables
+ - https://discuss.ardupilot.org/t/some-soldering-required/27613 
+
+## Support and Troubleshooting
+ 
+ Official Blog Thread on ardupilot.org
+ - https://discuss.ardupilot.org/t/an-open-source-frsky-telemetry-script-for-the-horus-x10-x12-and-taranis-x9d-x9e-and-qx7-radios/26443
+ 
+Official thread on rcgroups.com
+- https://www.rcgroups.com/forums/showthread.php?3020527-An-Ardupilot-frsky-telemetry-LUA-script-for-the-Horus-X10-X12-and-Taranis-X9D-E-QX7
+
+Open an issue on github.com
+- https://github.com/yaapu/FrskyTelemetryScript/issues
  
  ## Credits
  
