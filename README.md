@@ -43,7 +43,7 @@ Requires [OpenTX 2.2.1/2.2.2](http://www.open-tx.org/) and a recent release of [
  - [sound files customization](#sound-files-customization)
  - [compilation](#compilation)
  - [hardware requirements](#hardware-requirements)
- - [troubleshooting](#troubleshooting)
+ - [support and troubleshooting](#support-and-troubleshooting)
  - [credits](#credits)
  
 ## Screenshots
