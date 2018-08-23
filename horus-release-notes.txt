@@ -1,3 +1,7 @@
+Horus version 1.5.1 (first public release)
+
+- features aligned with Taranis version 1.5.1
+
 Horus version 1.6.0
 
 - rangefinder support with max range from config menu

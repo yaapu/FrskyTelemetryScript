@@ -1,7 +1,52 @@
+Taranis 1.2.3 (first public release)
+
+- flight modes based on frame type:copter,plane or rover with vocal sound support
+- artificial horizon with roll,pitch and yaw with numeric compass heading
+- battery voltage from 3 sources
+    frsky FLVSS voltage sensor if available (vs is displayed next to voltage)
+    flight controller via telemetry (fc is displayed next to voltage)
+    frsky analog port if available (a2 is displayed next to voltage)
+- battery lowest cell if available or cell average if not
+- battery current
+- battery capacity and battery capacity used in mAh and % with vocal alerts
+- vertical speed on left side of HUD
+- altitude on right side of HUD
+- gps altitude
+- gps fix extendend status (2D,3D)
+- gps HDop
+- satellite count (Note: the highest reported count is 15 sats due to telemetry library restrictions)
+- flight time 
+- rssi value
+- transmitter voltage
+- home distance
+- horizontal ground speed or airspeed
+- home heading as rotating triangle
+- mavlink messages with history 
+- english vocal sounds
+
+Taranis version 1.4.1
+
+- added configuration menu
+- added per model configuration
+- added gps extended fix status
+- added italian sound files
+- added dual battery support
+- added vocal fence (min/max distance and max altitude alerts)
+- sensors VFAS,CURR,Alt,VSpd,GAlt,Hdg,GSpd,Fuel,Tmp1,Tmp2 exposed to OpenTX
+
+Taranis version 1.5.0
+
+- new hud layout with black ground in artificial horizon
+- telemetry processing moved to background thread
+- added TTS Automate profile file for sound file customization
+- memory optimizations
+
 Taranis version 1.5.1
 
+- optimized compass ribbon
 - vertical variometer gauge on left side of hud 
 - cell detection override from menu up to 12s
+- memory optimizations
 
 Taranis version 1.6.0
 
