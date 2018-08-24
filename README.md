@@ -122,7 +122,7 @@ mavlink message history
  - vocal alerts for battery levels, 
  - vocal fence: max distance and min/max altitude alerts
  - configurable vocal timer alert every n minutes
- - sensors VFAS,CURR,Alt,VSpd,GAlt,Hdg,GSpd,Fuel,Tmp1,Tmp2 are exposed to OpenTX, see the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki/Telemetry-sensors-exposed-to-OpenTX-by-the-Yaapu-script) for details.
+ - sensors VFAS,CURR,Alt,VSpd,GAlt,Hdg,GSpd,Fuel,IMUt,ARM are exposed to OpenTX, see the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki/Telemetry-sensors-exposed-to-OpenTX-by-the-Yaapu-script) for details.
  
 ## Sensor Discovery (Optional)
 
