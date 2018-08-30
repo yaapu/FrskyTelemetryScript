@@ -25,3 +25,24 @@ Horus Widget Version 1.6.2
 - improved cell count detection with new algorythm
 - added german language support
 - added IMU temp support as custom IMUt sensor (experimental)
+
+Horus Widget Version 1.7.0
+
+- flighmodes loaded at runtime based on detected frametype
+- units settings for distance and altitude inherited from radio settings
+- units settings for horizontal and vertical speed selectable from config menu
+- implemented cohen-sutherland algorythm for hud line clipping
+- fix for roll and pitch clipping
+- removed Tmp1 and Tmp2 OpenTX sensors
+- moved all sensors to last instance 0xF of the respective frsky sensor ID (requires a new sensor discovery)
+- added ARM sensor to expose to OpenTX arming status
+- removed power from left panel
+- added efficiency on left panel as mAh/speed
+
+Horus Widget Version 1.7.1
+
+- fix for telemetry reset on model change
+- added script reset on timer 3 reset (motors have to be disarmed)
+- fix for battery levels alerts, now voltage needs to stay below level for 4 seconds before triggering alerts
+- new lcd panel backlight control from script for messages/alerts/events
+- fix for limited battery alert voltage range, now from 0 to 50V
