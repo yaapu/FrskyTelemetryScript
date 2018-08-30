@@ -369,7 +369,7 @@ The script can be started in 2 ways:
 
 - **One time script** by using the yaapux.lua or yaapux.luac script, see this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12)
 
-For the script to control the lcd panel backlight a few extra steps are required, please follow this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-enable-lcd-panel-backlight-support-on-X10-and-X12)
+**Note:** For the script to control the lcd panel backlight a few extra steps are required, please follow this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-enable-lcd-panel-backlight-support-on-X10-and-X12)
 
 The script is quite big and compilation on your radio may fail with a memory error.
 The correct way is to compile it on Companion and then copy the .luac compiled version to the SD card to the /SCRIPTS/YAAPU or /WIDGETS/Yaapu folder.
