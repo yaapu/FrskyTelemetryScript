@@ -107,6 +107,7 @@ mavlink message history
  - mavlink messages with history accessible with [PLUS]/[MINUS] or by turning the [ENCODER] buttons (in Widget mode follow this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12-as-a-Widget#mandatory-steps))
  - english, italian, french and german sound files for selected events: battery levels, failsafe, flightmodes, alerts and landing
  - lcd panel backlight control for the Horus radios, see [this](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-enable-lcd-panel-backlight-support-on-X10-and-X12)
+ - full telemetry reset on timer 3 reset (Horus only) see [this](#telemetry-reset)
 
 
 ## Advanced Features 
@@ -268,6 +269,12 @@ The script also support a "vocal fence" feature by setting a minimun altitude, a
 When the vehicle moves outside of the fence the script will play a vocal alert every n seconds.
 
 **Note: (applies to versions 1.7.1 and above) The battery monitoring engine has been modified to allow the voltage to drop below level for up to 4 seconds before triggering the alert. During this period the voltage background will flash to indicate that the alarm is about to fire, if during this "grace" period the voltage raises above level the alarm is reset.**
+
+## Telemetry reset
+
+On Horus radios it's possible to do a full script reset by resetting timer 3. For the reset to occur 2 conditions must be met
+- the flight timer has to be different from 00:00
+- motors are disarmed
 
 ## Script update rates
 
