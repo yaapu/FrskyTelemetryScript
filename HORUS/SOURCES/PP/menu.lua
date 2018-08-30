@@ -26,51 +26,14 @@
 ---------------------
 -- Script Version 
 ---------------------
-#define VERSION "Yaapu Telemetry Script 1.7.1"
 
 --#define BATTPERC_BY_VOLTAGE
 
-#define TOPBAR_Y 0
-#define TOPBAR_HEIGHT 20
-#define TOPBAR_WIDTH LCD_W
 
-#define BOTTOMBAR_Y LCD_H - 20
-#define BOTTOMBAR_HEIGHT 20
-#define BOTTOMBAR_WIDTH LCD_W
 --------------------------------------------------------------------------------
 -- CONFIGURATION MENU
 --------------------------------------------------------------------------------
-#define TYPEVALUE 0
-#define TYPECOMBO 1
-#define MENU_Y 25
-#define MENU_PAGESIZE 11
-#ifdef BATTPERC_BY_VOLTAGE
-#define MENU_WRAPOFFSET 9
-#else
-#define MENU_WRAPOFFSET 8
-#endif
-#define MENU_ITEM_X 300
 
-#define L1 1
-#define V1 2
-#define V2 3
-#define B1 4
-#define B2 5
-#define S1 6
-#define S2 7
-#define S3 8
-#define VS 9
-#define T1 10
-#define A1 11
-#define A2 12
-#define D1 13
-#define T2 14
-#define CC 15
-#define RM 16
-#define SVS 17
-#define HSPD 18
-#define VSPD 19
-#define BPBV 20
   
 local menu  = {
   selectedItem = 1,
@@ -80,28 +43,25 @@ local menu  = {
 
 local menuItems = {}
  -- label, type, alias, currval, min, max, label, flags, increment 
-menuItems[L1] = {"voice language:", TYPECOMBO, "L1", 1, { "english", "italian", "french", "german" } , {"en","it","fr","de"} }
-menuItems[V1] = {"batt alert level 1:", TYPEVALUE, "V1", 375, 320,420,"V", PREC2 ,5 }
-menuItems[V2] = {"batt alert level 2:", TYPEVALUE, "V2", 350, 320,420,"V", PREC2 ,5 }
-menuItems[B1] = {"batt[1] capacity override:", TYPEVALUE, "B1", 0, 0,5000,"Ah",PREC2 ,10 }
-menuItems[B2] = {"batt[2] capacity override:", TYPEVALUE, "B2", 0, 0,5000,"Ah",PREC2 ,10 }
-menuItems[S1] = {"disable all sounds:", TYPECOMBO, "S1", 1, { "no", "yes" }, { false, true } }
-menuItems[S2] = {"disable msg beep:", TYPECOMBO, "S2", 1, { "no", "yes" }, { false, true } }
-menuItems[S3] = {"disable msg blink:", TYPECOMBO, "S3", 1, { "no", "yes" }, { false, true } }
-menuItems[VS] = {"default voltage source:", TYPECOMBO, "VS", 1, { "auto", "FLVSS", "A2", "fc" }, { nil, "vs", "a2", "fc" } }
-menuItems[T1] = {"timer alert every:", TYPEVALUE, "T1", 0, 0,600,"min",PREC1,5 }
-menuItems[A1] = {"min altitude alert:", TYPEVALUE, "A1", 0, 0,500,"m",PREC1,5 }
-menuItems[A2] = {"max altitude alert:", TYPEVALUE, "A2", 0, 0,10000,"m",0,1 }
-menuItems[D1] = {"max distance alert:", TYPEVALUE, "D1", 0, 0,100000,"m",0,10 }
-menuItems[T2] = {"repeat alerts every:", TYPEVALUE, "T2", 10, 10,600,"sec",0,5 }
-menuItems[CC] = {"cell count override:", TYPEVALUE, "CC", 0, 0,12,"cells",0,1 }
-menuItems[RM] = {"rangefinder max:", TYPEVALUE, "RM", 0, 0,10000," cm",0,10 }
-menuItems[SVS] = {"enable synthetic vspeed:", TYPECOMBO, "SVS", 1, { "no", "yes" }, { false, true } }
-menuItems[HSPD] = {"air/groundspeed unit:", TYPECOMBO, "HSPD", 1, { "m/s", "km/h", "mph", "kn" }, { 1, 3.6, 2.23694, 1.94384} }
-menuItems[VSPD] = {"vertical speed unit:", TYPECOMBO, "VSPD", 1, { "m/s", "ft/s", "ft/min" }, { 1, 3.28084, 196.85} }
-#ifdef BATTPERC_BY_VOLTAGE  
-menuItems[BPBV] = {"enable battery % by voltage:", TYPECOMBO, "BPBV", 1, { "no", "yes" }, { false, true } }
-#endif --BATTPERC_BY_VOLTAGE
+menuItems[1] = {"voice language:", 1, "L1", 1, { "english", "italian", "french", "german" } , {"en","it","fr","de"} }
+menuItems[2] = {"batt alert level 1:", 0, "V1", 375, 320,420,"V", PREC2 ,5 }
+menuItems[3] = {"batt alert level 2:", 0, "V2", 350, 320,420,"V", PREC2 ,5 }
+menuItems[4] = {"batt[1] capacity override:", 0, "B1", 0, 0,5000,"Ah",PREC2 ,10 }
+menuItems[5] = {"batt[2] capacity override:", 0, "B2", 0, 0,5000,"Ah",PREC2 ,10 }
+menuItems[6] = {"disable all sounds:", 1, "S1", 1, { "no", "yes" }, { false, true } }
+menuItems[7] = {"disable msg beep:", 1, "S2", 1, { "no", "yes" }, { false, true } }
+menuItems[8] = {"disable msg blink:", 1, "S3", 1, { "no", "yes" }, { false, true } }
+menuItems[9] = {"default voltage source:", 1, "VS", 1, { "auto", "FLVSS", "A2", "fc" }, { nil, "vs", "a2", "fc" } }
+menuItems[10] = {"timer alert every:", 0, "T1", 0, 0,600,"min",PREC1,5 }
+menuItems[11] = {"min altitude alert:", 0, "A1", 0, 0,500,"m",PREC1,5 }
+menuItems[12] = {"max altitude alert:", 0, "A2", 0, 0,10000,"m",0,1 }
+menuItems[13] = {"max distance alert:", 0, "D1", 0, 0,100000,"m",0,10 }
+menuItems[14] = {"repeat alerts every:", 0, "T2", 10, 10,600,"sec",0,5 }
+menuItems[15] = {"cell count override:", 0, "CC", 0, 0,12,"cells",0,1 }
+menuItems[16] = {"rangefinder max:", 0, "RM", 0, 0,10000," cm",0,10 }
+menuItems[17] = {"enable synthetic vspeed:", 1, "SVS", 1, { "no", "yes" }, { false, true } }
+menuItems[18] = {"air/groundspeed unit:", 1, "HSPD", 1, { "m/s", "km/h", "mph", "kn" }, { 1, 3.6, 2.23694, 1.94384} }
+menuItems[19] = {"vertical speed unit:", 1, "VSPD", 1, { "m/s", "ft/s", "ft/min" }, { 1, 3.28084, 196.85} }
 --
 
 local function getConfigFilename()
@@ -148,17 +108,17 @@ end
 
 local function drawConfigMenuBars()
   local itemIdx = string.format("%d/%d",menu.selectedItem,#menuItems)
-  lcd.drawFilledRectangle(0,TOPBAR_Y, LCD_W, 20, TITLE_BGCOLOR)
-  lcd.drawRectangle(0, TOPBAR_Y, LCD_W, 20, TITLE_BGCOLOR)
-  lcd.drawText(2,0,VERSION,MENU_TITLE_COLOR)
-  lcd.drawFilledRectangle(0,BOTTOMBAR_Y, LCD_W, 20, TITLE_BGCOLOR)
-  lcd.drawRectangle(0, BOTTOMBAR_Y, LCD_W, 20, TITLE_BGCOLOR)
-  lcd.drawText(2,BOTTOMBAR_Y+1,getConfigFilename(),MENU_TITLE_COLOR)
-  lcd.drawText(BOTTOMBAR_WIDTH,BOTTOMBAR_Y+1,itemIdx,MENU_TITLE_COLOR+RIGHT)
+  lcd.drawFilledRectangle(0,0, LCD_W, 20, TITLE_BGCOLOR)
+  lcd.drawRectangle(0, 0, LCD_W, 20, TITLE_BGCOLOR)
+  lcd.drawText(2,0,"Yaapu Telemetry Script 1.7.1",MENU_TITLE_COLOR)
+  lcd.drawFilledRectangle(0,LCD_H - 20, LCD_W, 20, TITLE_BGCOLOR)
+  lcd.drawRectangle(0, LCD_H - 20, LCD_W, 20, TITLE_BGCOLOR)
+  lcd.drawText(2,LCD_H - 20+1,getConfigFilename(),MENU_TITLE_COLOR)
+  lcd.drawText(LCD_W,LCD_H - 20+1,itemIdx,MENU_TITLE_COLOR+RIGHT)
 end
 
 local function incMenuItem(idx)
-  if menuItems[idx][2] == TYPEVALUE then
+  if menuItems[idx][2] == 0 then
     menuItems[idx][4] = menuItems[idx][4] + menuItems[idx][9]
     if menuItems[idx][4] > menuItems[idx][6] then
       menuItems[idx][4] = menuItems[idx][6]
@@ -172,7 +132,7 @@ local function incMenuItem(idx)
 end
 
 local function decMenuItem(idx)
-  if menuItems[idx][2] == TYPEVALUE then
+  if menuItems[idx][2] == 0 then
     menuItems[idx][4] = menuItems[idx][4] - menuItems[idx][9]
     if menuItems[idx][4] < menuItems[idx][5] then
       menuItems[idx][4] = menuItems[idx][5]
@@ -186,15 +146,15 @@ local function decMenuItem(idx)
 end
 
 local function drawItem(idx,flags)
-  if menuItems[idx][2] == TYPEVALUE then
+  if menuItems[idx][2] == 0 then
     if menuItems[idx][4] == 0 then
-      lcd.drawText(MENU_ITEM_X,MENU_Y + (idx-menu.offset-1)*20, "---",flags)
+      lcd.drawText(300,25 + (idx-menu.offset-1)*20, "---",flags)
     else
-      lcd.drawNumber(MENU_ITEM_X,MENU_Y + (idx-menu.offset-1)*20, menuItems[idx][4],flags+menuItems[idx][8])
-      lcd.drawText(MENU_ITEM_X + 50,MENU_Y + (idx-menu.offset-1)*20, menuItems[idx][7],flags)
+      lcd.drawNumber(300,25 + (idx-menu.offset-1)*20, menuItems[idx][4],flags+menuItems[idx][8])
+      lcd.drawText(300 + 50,25 + (idx-menu.offset-1)*20, menuItems[idx][7],flags)
     end
   else
-    lcd.drawText(MENU_ITEM_X,MENU_Y + (idx-menu.offset-1)*20, menuItems[idx][5][menuItems[idx][4]],flags)
+    lcd.drawText(300,25 + (idx-menu.offset-1)*20, menuItems[idx][5][menuItems[idx][4]],flags)
   end
 end
 
@@ -217,7 +177,7 @@ local function drawConfigMenu(event)
     end
   elseif not menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_RIGHT) then
     menu.selectedItem = (menu.selectedItem + 1)
-    if menu.selectedItem - MENU_PAGESIZE > menu.offset then
+    if menu.selectedItem - 11 > menu.offset then
       menu.offset = menu.offset + 1
     end
   end
@@ -227,11 +187,11 @@ local function drawConfigMenu(event)
     menu.offset = 0
   elseif menu.selectedItem  < 1 then
     menu.selectedItem = #menuItems
-    menu.offset = MENU_WRAPOFFSET
+    menu.offset = 8
   end
   --
-  for m=1+menu.offset,math.min(#menuItems,MENU_PAGESIZE+menu.offset) do
-    lcd.drawText(2,MENU_Y + (m-menu.offset-1)*20, menuItems[m][1],0+0)
+  for m=1+menu.offset,math.min(#menuItems,11+menu.offset) do
+    lcd.drawText(2,25 + (m-menu.offset-1)*20, menuItems[m][1],0+0)
     if m == menu.selectedItem then
       if menu.editSelected then
         drawItem(m,INVERS+BLINK)
@@ -255,7 +215,6 @@ local function run(event)
   drawConfigMenu(event)
   return 0
 end
-#endif --WIDGET
 
 local function init()
   loadConfig()
