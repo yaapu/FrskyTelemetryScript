@@ -267,7 +267,7 @@ It's also possible to configure a timer that will trigger a vocal alert every n 
 The script also support a "vocal fence" feature by setting a minimun altitude, a maximum altitude and a maximum distance alert.
 When the vehicle moves outside of the fence the script will play a vocal alert every n seconds.
 
-**Note: for versions 1.7.1 and above the battery monitoring engine has been modified to allow the voltage to drop below level for up to 4 seconds before triggering the alert. During this period the voltage background will flash to indicate that the alarm is about to be fired, if during this "grace" period the voltage raises above level the alarm is reset and not fired.**
+**Note: (applies to versions 1.7.1 and above) The battery monitoring engine has been modified to allow the voltage to drop below level for up to 4 seconds before triggering the alert. During this period the voltage background will flash to indicate that the alarm is about to fire, if during this "grace" period the voltage raises above level the alarm is reset.**
 
 ## Script update rates
 
