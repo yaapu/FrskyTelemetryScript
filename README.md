@@ -36,6 +36,7 @@ Requires [OpenTX 2.2.1/2.2.2](http://www.open-tx.org/) and a recent release of [
  - [cell count detection](#cell-count-detection)
  - [airspeed vs groundspeed](#airspeed-vs-groundspeed)
  - [alerts](#alerts)
+ - [telemetry reset](#telemetry-reset)
  - [script timing and update rates](#script-timing-and-update-rates)
  - [configuration](#configuration)
  - [installation on Taranis](#installation-on-taranis)
