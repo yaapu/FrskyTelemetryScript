@@ -66,7 +66,7 @@ mavlink message history
 
 ## Display layout
 
-![X12](https://github.com/yaapu/FrskyTelemetryScript/raw/master/HORUS/IMAGES/x12displayinfo.png)
+![X12](https://github.com/yaapu/FrskyTelemetryScript/raw/master/HORUS/IMAGES/x10displayinfo.png)
 
 ![X9D](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9displayinfo.png)
 
