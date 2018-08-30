@@ -28,7 +28,7 @@ Horus Widget Version 1.6.2
 
 Horus Widget Version 1.7.0
 
-- flighmodes loaded at runtime based on detected frametype
+- flightmodes loaded at runtime based on detected frametype
 - units settings for distance and altitude inherited from radio settings
 - units settings for horizontal and vertical speed selectable from config menu
 - implemented cohen-sutherland algorythm for hud line clipping
