@@ -83,10 +83,10 @@ mavlink message history
  - vertical variometer gauge on left side of center panel
  - rangefinder with max range support in config menu
  - mini home icon on yaw compass at home angle position
- - battery voltage from 3 sources (in order of priority), short pressing [ENTER]/[ENCODER] cycles between the sources
+ - battery voltage from 3 sources, short pressing [ENTER]/[ENCODER] cycles between the sources
    - frsky FLVSS voltage sensor if available (vs is displayed next to voltage)
-   - frsky analog port if available (a2 is displayed next to voltage)
    - flight controller via telemetry (fc is displayed next to voltage)
+   - frsky analog port if available (a2 is displayed next to voltage)
  - battery lowest cell if available or cell average if not
  - battery current
  - battery capacity and battery capacity used in mAh and % with vocal alerts for 90,80,70,60,50,40,30,25,20,15,10,4 levels
@@ -106,6 +106,8 @@ mavlink message history
  - home heading as rotating triangle
  - mavlink messages with history accessible with [PLUS]/[MINUS] or by turning the [ENCODER] buttons (in Widget mode follow this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12-as-a-Widget#mandatory-steps))
  - english, italian, french and german sound files for selected events: battery levels, failsafe, flightmodes, alerts and landing
+ - lcd panel backlight control for the Horus radios, see [this](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-enable-lcd-panel-backlight-support-on-X10-and-X12)
+
 
 ## Advanced Features 
 
@@ -265,12 +267,13 @@ It's also possible to configure a timer that will trigger a vocal alert every n 
 The script also support a "vocal fence" feature by setting a minimun altitude, a maximum altitude and a maximum distance alert.
 When the vehicle moves outside of the fence the script will play a vocal alert every n seconds.
 
+**Note: for versions 1.7.1 and above the battery monitoring engine has been modified to allow the voltage to drop below level for up to 4 seconds before triggering the alert. During this period the voltage background will flash to indicate that the alarm is about to be fired, if during this "grace" period the voltage raises above level the alarm is reset and not fired.**
+
 ## Script update rates
 
 - The script processes telemetry up to 60Hz
 - Screen is redrawn at 20Hz
-- VSpd sensor is exposed to OpenTX at 8Hz
-- All other frsky sensors are exposed to OpenTX at 4Hz
+- Frsky sensors are exposed to OpenTX at 4Hz
 - Events and alarms are checked at 2Hz
 
 ## Configuration
