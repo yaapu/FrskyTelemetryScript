@@ -370,7 +370,7 @@ Please refer to the ardupilot [wiki](http://ardupilot.org/copter/docs/common-frs
 ## Installation on Horus
 
 Copy the contents of the SD folder to your radio SD Card.
-Make sure you have the /SOUNDS/yaapu0, SCRIPTS/YAAPU/CFG, SCRIPTS/YAAPU/IMAGES and WIDGETS/Yaapu folders.
+Make sure you have the /SOUNDS/yaapu0, SCRIPTS/YAAPU/CFG, SCRIPTS/YAAPU/LIB, SCRIPTS/YAAPU/IMAGES and WIDGETS/Yaapu folders.
 
 **Power cycle the radio to clear widget caches!**
 
