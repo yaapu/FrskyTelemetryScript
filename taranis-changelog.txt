@@ -86,3 +86,10 @@ Taranis version 1.7.0
 - some code refactoring
 - X9D: removed power from left panel
 - X9D: added efficiency on left panel as mAh/speed
+
+Taranis version 1.7.1
+
+- fix for battery levels alerts, now voltage needs to stay below level for 4 seconds before triggering alerts
+- fix for limited battery alert voltage range, now from 0 to 50V
+- fix for IMU temp decoding
+- fix for landing complete alert, now played only if motors are armed

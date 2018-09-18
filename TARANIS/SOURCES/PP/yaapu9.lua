@@ -324,6 +324,7 @@ local messageCount = 0
 local messages = {}
 --
 --
+--
 
   
 
@@ -354,21 +355,36 @@ local messages = {}
 --------------------------------------------------------------------------------
 -- ALARMS
 --------------------------------------------------------------------------------
-
 --[[
-  min alarms need to be armed, i.e since values start at 0 in order to avoid
-  immediate triggering upon start, the value must first reach the treshold
-  only then will it trigger the alarm
-]]local alarms = {
-  --{ triggered, time, armed, type(0=min,1=max,2=timer,3=batt), last_trigger }  
-    { false, 0 , false, 0, 0},
-    { false, 0 , true, 1, 0 },
-    { false, 0 , true, 1, 0 },
-    { false, 0 , true, 1, 0 },
-    { false, 0 , true, 1, 0 },
-    { false, 0 , true, 2, 0 },
-    { false, 0 , false, 3, 0 }
+ ALARM_TYPE_MIN needs arming (min has to be reached first), value below level for grace, once armed is periodic, reset on landing
+ ALARM_TYPE_MAX no arming, value above level for grace, once armed is periodic, reset on landing
+ ALARM_TYPE_TIMER no arming, fired periodically, spoken time, reset on landing
+ ALARM_TYPE_BATT needs arming (min has to be reached first), value below level for grace, no reset on landing
+{ 
+  1 = notified, 
+  2 = alarm start, 
+  3 = armed, 
+  4 = type(0=min,1=max,2=timer,3=batt), 
+  5 = grace duration
+  6 = ready
+  7 = last alarm
+}  
+--]]--
+--
+--
+--
+local alarms = {
+  --{ notified, alarm_start, armed, type(0=min,1=max,2=timer,3=batt), grace, ready, last_alarm}  
+    { false, 0 , false, 0, 0, false, 0}, --MIN_ALT
+    { false, 0 , true, 1 , 0, false, 0 }, --MAX_ALT
+    { false, 0 , true, 1 , 0, false, 0 }, --16
+    { false, 0 , true, 1 , 0, false, 0 }, --FS_EKF
+    { false, 0 , true, 1 , 0, false, 0 }, --FS_BAT
+    { false, 0 , true, 2, 0, false, 0 }, --FLIGTH_TIME
+    { false, 0 , false, 3, 4, false, 0 }, --BATT L1
+    { false, 0 , false, 3, 4, false, 0 } --BATT L2
 }
+
 --------------------------------------------------------------------------------
 -- MENU VALUE,COMBO
 --------------------------------------------------------------------------------
@@ -386,8 +402,8 @@ local menu  = {
 
 local menuItems = {
   {"voice language:", 1, "L1", 1, { "english", "italian", "french", "german" } , {"en","it","fr","de"} },
-  {"batt alert level 1:", 0, "V1", 375, 320,420,"V",PREC2,5 },
-  {"batt alert level 2:", 0, "V2", 350, 320,420,"V",PREC2,5 },
+  {"batt alert level 1:", 0, "V1", 375, 0,5000,"V",PREC2,5 },
+  {"batt alert level 2:", 0, "V2", 350, 0,5000,"V",PREC2,5 },
   {"batt[1] capacity override:", 0, "B1", 0, 0,5000,"Ah",PREC2,10 },
   {"batt[2] capacity override:", 0, "B2", 0, 0,5000,"Ah",PREC2,10 },
   {"disable all sounds:", 1, "S1", 1, { "no", "yes" }, { false, true } },
@@ -398,7 +414,7 @@ local menuItems = {
   {"min altitude alert:", 0, "A1", 0, 0,500,"m",PREC1,5 },
   {"max altitude alert:", 0, "A2", 0, 0,10000,"m",0,1 },
   {"max distance alert:", 0, "D1", 0, 0,100000,"m",0,10 },
-  {"repeat alerts every:", 0, "T2", 10, 10,600,"sec",0,5 },
+  {"repeat alerts every:", 0, "T2", 10, 5,600,"sec",0,5 },
   {"cell count override:", 0, "CC", 0, 0,12," cells",0,1 },
   {"rangefinder max:", 0, "RM", 0, 0,10000," cm",0,10 },
   {"enable synthetic vspeed:", 1, "SVS", 1, { "no", "yes" }, { false, true } },
@@ -467,7 +483,7 @@ local function drawConfigMenuBars()
   local itemIdx = string.format("%d/%d",menu.selectedItem,#menuItems)
   lcd.drawFilledRectangle(0,0, 212, 7, SOLID)
   lcd.drawRectangle(0, 0, 212, 7, SOLID)
-  lcd.drawText(0,0,"Yaapu X9 telemetry script 1.7.0",SMLSIZE+INVERS)
+  lcd.drawText(0,0,"Yaapu X9 telemetry script 1.7.1",SMLSIZE+INVERS)
   lcd.drawFilledRectangle(0,56, 212, 8, SOLID)
   lcd.drawRectangle(0, 56, 212, 8, SOLID)
   lcd.drawText(0,56+1,getConfigFilename(),SMLSIZE+INVERS)
@@ -796,8 +812,8 @@ local function processTelemetry()
       statusArmed = bit32.extract(VALUE,8,1)
       battFailsafe = bit32.extract(VALUE,9,1)
       ekfFailsafe = bit32.extract(VALUE,10,2)
-      -- IMU temperature: offset -19, 0 means temp =< 19°, 63 means temp => 82°
-      imuTemp = math.floor((100 * bit32.extract(VALUE,26,6)/64) + 0.5) - 19 -- C° Note. math.round = math.floor( n + 0.5)
+      -- IMU temperature: 0 means temp =< 19°, 63 means temp => 82°
+      imuTemp = bit32.extract(VALUE,26,6) + 19 -- C°
     elseif ( DATA_ID == 0x5002) then -- GPS STATUS
       numSats = bit32.extract(VALUE,0,4)
       -- offset  4: NO_GPS = 0, NO_FIX = 1, GPS_OK_FIX_2D = 2, GPS_OK_FIX_3D or GPS_OK_FIX_3D_DGPS or GPS_OK_FIX_3D_RTK_FLOAT or GPS_OK_FIX_3D_RTK_FIXED = 3
@@ -1027,7 +1043,10 @@ local function checkLandingStatus()
   end
   if (timerRunning == 1 and landComplete == 0 and lastTimerStart ~= 0) then
     stopTimer()
-    playSound("landing")
+    -- play landing complete only if motorts are armed
+    if statusArmed == 1 then
+      playSound("landing")
+    end
   end
   timerRunning = landComplete
 end
@@ -1572,26 +1591,27 @@ end
 -- This function checks alarm condition and as long as the condition persists it plays
 -- a warning sound.
 ---------------------------------
---{ triggered, time, armed, type(0=min,1=max,2=timer,3=batt), last_trigger }  
 local function checkAlarm(level,value,idx,sign,sound,delay)
   -- once landed reset all alarms except battery alerts
   if timerRunning == 0 then
     if alarms[idx][4] == 0 then
-      alarms[idx] = { false, 0, false, 0, 0} 
-    elseif alarms[idx][4] == 1 then
-      alarms[idx] = { false, 0, true, 1, 0}
+      alarms[idx] = { false, 0, false, 0, 0, false, 0} 
+    elseif alarms[idx][4] == 1  then
+      alarms[idx] = { false, 0, true, 1 , 0, false, 0}
     elseif  alarms[idx][4] == 2 then
-      alarms[idx] = { false, 0, true, 2, 0}
+      alarms[idx] = { false, 0, true, 2, 0, false, 0}
     elseif  alarms[idx][4] == 3 then
-      alarms[idx] = { false, 0 , false, 3, 0}
+      alarms[idx] = { false, 0 , false, 3, 4, false, 0}
     end
+    -- reset done
+    return
   end
-  -- for minimum type alarms, arm the alarm only after value has reached level  
-  if alarms[idx][3] == false and timerRunning == 1 and level > 0 and -1 * sign*value > -1 * sign*level then
+  -- if needed arm the alarm only after value has reached level  
+  if alarms[idx][3] == false and level > 0 and -1 * sign*value > -1 * sign*level then
     alarms[idx][3] = true
   end
-  -- for timer alarms trigger when flighttime is a multiple of delay
-  if alarms[idx][3] == true and timerRunning == 1 and alarms[idx][4] == 2 then
+  --
+  if alarms[idx][4] == 2 then
     if flightTime > 0 and math.floor(flightTime) %  delay == 0 then
       if alarms[idx][1] == false then 
         alarms[idx][1] = true
@@ -1599,7 +1619,7 @@ local function checkAlarm(level,value,idx,sign,sound,delay)
          -- flightime is a multiple of 1 minute
         if (flightTime % 60 == 0 ) then
           -- minutes
-          playNumber(flightTime / 60,25) -- 25=minutes,26=seconds
+          playNumber(flightTime / 60,25) --25=minutes,26=seconds
         else
           -- minutes
           if (flightTime > 60) then playNumber(flightTime / 60,25) end
@@ -1610,30 +1630,44 @@ local function checkAlarm(level,value,idx,sign,sound,delay)
     else
         alarms[idx][1] = false
     end
-  elseif alarms[idx][3] == true and timerRunning == 1 and level > 0 and sign*value > sign*level then
-    -- if alarm is armed and value is "outside" level fire once but only every 2secs max
-    if alarms[idx][2] == 0 then
-      alarms[idx][1] = true
-      alarms[idx][2] = flightTime
-      if (flightTime - alarms[idx][5]) > 5 then
-        playSound(sound)
-        alarms[idx][5] = flightTime
-      end
-    end
-    -- ...and then fire every conf secs after the first shot
-    if math.floor(flightTime - alarms[idx][2]) %  delay == 0 then
-      if alarms[idx][1] == false then 
-        alarms[idx][1] = true
-        playSound(sound)
-      end
-    else
+  else
+    if alarms[idx][3] == true then
+      if level > 0 and sign*value > sign*level then
+        -- value is outside level 
+        if alarms[idx][2] == 0 then
+          -- first time outside level after last reset
+          alarms[idx][2] = flightTime
+          -- status: START
+        end
+      else
+        -- value back to normal ==> reset
+        alarms[idx][2] = 0
         alarms[idx][1] = false
+        alarms[idx][6] = false
+        -- status: RESET
+      end
+      if alarms[idx][2] > 0 and (flightTime ~= alarms[idx][2]) and (flightTime - alarms[idx][2]) >= alarms[idx][5] then
+        -- enough time has passed after START
+        alarms[idx][6] = true
+        -- status: READY
+      end
+      --
+      if alarms[idx][6] == true and alarms[idx][1] == false then 
+        playSound(sound)
+        alarms[idx][1] = true
+        alarms[idx][7] = flightTime
+        -- status: BEEP
+      end
+      -- all but battery alarms
+      if alarms[idx][4] ~= 3 then
+        if alarms[idx][6] == true and flightTime ~= alarms[idx][7] and (flightTime - alarms[idx][7]) %  delay == 0 then
+          alarms[idx][1] = false
+          -- status: REPEAT
+        end
+      end
     end
-  elseif alarms[idx][3] == true then
-    alarms[idx][2] = 0
   end
 end
-
 
 local function loadFlightModes()
   if frame.flightModes then
@@ -1652,9 +1686,9 @@ local function loadFlightModes()
         frameTypes[i] = nil
       end
       frameTypes = nil
-      collectgarbage()
-      maxmem = 0
     end
+    collectgarbage()
+    maxmem=0
   end
 end
 
@@ -1689,21 +1723,12 @@ local function checkEvents()
       break
     end
   end
-
-  --[[
-  if statusArmed == 1 and lastStatusArmed == 0 then
-    lastStatusArmed = statusArmed
-    playSound("armed")
-  elseif statusArmed == 0 and lastStatusArmed == 1 then
-    lastStatusArmed = statusArmed
-    playSound("disarmed")
-  end
-  --]]  if statusArmed ~= lastStatusArmed then
+  --
+  if statusArmed ~= lastStatusArmed then
     if statusArmed == 1 then playSound("armed") else playSound("disarmed") end
     lastStatusArmed = statusArmed
   end
-
-
+  --
   if gpsStatus > 2 and lastGpsStatus <= 2 then
     lastGpsStatus = gpsStatus
     playSound("gpsfix")
@@ -1711,12 +1736,12 @@ local function checkEvents()
     lastGpsStatus = gpsStatus
     playSound("gpsnofix")
   end
-
+  --
   if frame.flightModes ~= nil and flightMode ~= lastFlightMode then
     lastFlightMode = flightMode
     playSoundByFrameTypeAndFlightMode(frameType,flightMode)
   end
-  
+  --
   if simpleMode ~= lastSimpleMode then
     if simpleMode == 0 then
       playSound( lastSimpleMode == 1 and "simpleoff" or "ssimpleoff" )
@@ -1727,28 +1752,13 @@ local function checkEvents()
   end
 end
 
-local function checkCellVoltage(battsource,cellmin,cellminFC,cellminA2)
-  local celm = 0
-  if battsource == "vs" then
-    celm = cellmin*100
-  elseif battsource == "fc" then
-    celm = cellminFC*100
-  elseif battsource == "a2" then
-    celm = cellminA2*100
-  end
-  -- trigger batt1 and batt2
-  if celm > menuItems[3][4] and celm < menuItems[2][4] and battLevel1 == false then
-    battLevel1 = true
-    playSound("batalert1")
-  end
-  if celm > 320 and celm < menuItems[3][4] then
-    battLevel2 = true
-  end
-  -- ignore batt alarm if current voltage outside "lipo" proper range
-  -- this helps when cycling battery sources and one or more sources has 0 voltage
-  if celm > 320 then
-    checkAlarm(menuItems[3][4],celm,7,-1,"batalert2",menuItems[14][4])
-  end
+local function checkCellVoltage(celm)
+  -- check alarms
+  checkAlarm(menuItems[2][4],celm,7,-1,"batalert1",menuItems[14][4])
+  checkAlarm(menuItems[3][4],celm,8,-1,"batalert2",menuItems[14][4])
+  -- cell bgcolor is sticky but gets triggered with alarms
+  if battLevel1 == false then battLevel1 = alarms[7][1] end
+  if battLevel2 == false then battLevel2 = alarms[8][1] end
 end
 
 local function cycleBatteryInfo()
@@ -1793,9 +1803,24 @@ end
   if (bgclock % 8 == 0) then
     calcBattery()
     calcFlightTime()
+    -- prepare celm based on battsource
+    local count = calcCellCount()
+    local cellVoltage = 0
+    --
+    if battsource == "vs" then
+      cellVoltage = getNonZeroMin(cell1min,cell2min)*100 --FLVSS
+    elseif battsource == "fc" then
+      cellVoltage = getNonZeroMin(cell1sumFC/count,cell2sumFC/count)*100 --FC
+    elseif battsource == "a2" then
+      cellVoltage = (cellsumA2/count)*100 --12
+    end
+    --
     checkEvents()
     checkLandingStatus()
-    checkCellVoltage(battsource,getNonZeroMin(cell1min,cell2min),getNonZeroMin(cell1sumFC/calcCellCount(),cell2sumFC/calcCellCount()),cellsumA2/calcCellCount())
+    -- no need for alarms if reported voltage is 0
+    if cellVoltage > 0 then
+      checkCellVoltage(cellVoltage)
+    end
     -- aggregate value
     minmaxValues[8] = math.max(batt1current+batt2current,minmaxValues[8])
     -- indipendent values
@@ -1922,7 +1947,7 @@ local function init()
   model.setTimer(2,{mode=0})
   model.setTimer(2,{value=0})
   loadConfig()
-  pushMessage(6,"Yaapu X9 telemetry script 1.7.0")
+  pushMessage(6,"Yaapu X9 telemetry script 1.7.1")
   playSound("yaapu")
 end
 

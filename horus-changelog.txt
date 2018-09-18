@@ -45,4 +45,11 @@ Horus Widget Version 1.7.1
 - added script reset on timer 3 reset (motors have to be disarmed)
 - fix for battery levels alerts, now voltage needs to stay below level for 4 seconds before triggering alerts
 - new lcd panel backlight control from script for messages/alerts/events
+- fix for limited battery alert voltage range, now from 0 to 50V (broken)
+
+Horus Widget Version 1.7.2
+
+- fix for IMU temp decoding
+- fix for landing complete alert, now played only if motors are armed
 - fix for limited battery alert voltage range, now from 0 to 50V
+- changed min alert interval from 10s to 5s

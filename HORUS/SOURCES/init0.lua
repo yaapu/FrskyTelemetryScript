@@ -1,5 +1,5 @@
 
-#define VERSION "Yaapu Telemetry Script 1.7.1"
+#define VERSION "Yaapu Telemetry Script 1.7.2"
 
 #define ALARM_NOTIFIED 1
 #define ALARM_START 2

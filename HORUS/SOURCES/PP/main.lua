@@ -506,8 +506,8 @@ local customSensors = {
 local menuItems = {}
  -- label, type, alias, currval, min, max, label, flags, increment 
 menuItems[1] = {"voice language:", 1, "L1", 1, { "english", "italian", "french", "german" } , {"en","it","fr","de"} }
-menuItems[2] = {"batt alert level 1:", 0, "V1", 375, 320,420,"V", PREC2 ,5 }
-menuItems[3] = {"batt alert level 2:", 0, "V2", 350, 320,420,"V", PREC2 ,5 }
+menuItems[2] = {"batt alert level 1:", 0, "V1", 375, 0,5000,"V", PREC2 ,5 }
+menuItems[3] = {"batt alert level 2:", 0, "V2", 350, 0,5000,"V", PREC2 ,5 }
 menuItems[4] = {"batt[1] capacity override:", 0, "B1", 0, 0,5000,"Ah",PREC2 ,10 }
 menuItems[5] = {"batt[2] capacity override:", 0, "B2", 0, 0,5000,"Ah",PREC2 ,10 }
 menuItems[6] = {"disable all sounds:", 1, "S1", 1, { "no", "yes" }, { false, true } }
@@ -518,7 +518,7 @@ menuItems[10] = {"timer alert every:", 0, "T1", 0, 0,600,"min",PREC1,5 }
 menuItems[11] = {"min altitude alert:", 0, "A1", 0, 0,500,"m",PREC1,5 }
 menuItems[12] = {"max altitude alert:", 0, "A2", 0, 0,10000,"m",0,1 }
 menuItems[13] = {"max distance alert:", 0, "D1", 0, 0,100000,"m",0,10 }
-menuItems[14] = {"repeat alerts every:", 0, "T2", 10, 10,600,"sec",0,5 }
+menuItems[14] = {"repeat alerts every:", 0, "T2", 10, 5,600,"sec",0,5 }
 menuItems[15] = {"cell count override:", 0, "CC", 0, 0,12,"cells",0,1 }
 menuItems[16] = {"rangefinder max:", 0, "RM", 0, 0,10000," cm",0,10 }
 menuItems[17] = {"enable synthetic vspeed:", 1, "SVS", 1, { "no", "yes" }, { false, true } }
@@ -854,8 +854,8 @@ local function processTelemetry()
       status.statusArmed = bit32.extract(VALUE,8,1)
       status.battFailsafe = bit32.extract(VALUE,9,1)
       status.ekfFailsafe = bit32.extract(VALUE,10,2)
-      -- IMU temperature: offset -19, 0 means temp =< 19°, 63 means temp => 82°
-      status.imuTemp = math.floor((100 * bit32.extract(VALUE,26,6)/64) + 0.5) - 19 -- C° Note. math.round = math.floor( n + 0.5)
+      -- IMU temperature: 0 means temp =< 19°, 63 means temp => 82°
+      status.imuTemp = bit32.extract(VALUE,26,6) + 19 -- C° 
     elseif ( DATA_ID == 0x5002) then -- GPS STATUS
       status.numSats = bit32.extract(VALUE,0,4)
       -- offset  4: NO_GPS = 0, NO_FIX = 1, GPS_OK_FIX_2D = 2, GPS_OK_FIX_3D or GPS_OK_FIX_3D_DGPS or GPS_OK_FIX_3D_RTK_FLOAT or GPS_OK_FIX_3D_RTK_FIXED = 3
@@ -1081,7 +1081,9 @@ local function checkLandingStatus()
   end
   if (status.timerRunning == 1 and status.landComplete == 0 and status.lastTimerStart ~= 0) then
     stopTimer()
-    playSound("landing")
+    if status.statusArmed == 1 then
+      playSound("landing")
+    end
   end
   status.timerRunning = status.landComplete
 end
@@ -1269,7 +1271,7 @@ local function drawNoTelemetryData()
   if (not telemetryEnabled()) then
     lcd.drawFilledRectangle(75,90, 330, 100, TITLE_BGCOLOR)
     lcd.drawText(140, 120, "no telemetry data", MIDSIZE+INVERS)
-    lcd.drawText(130, 160, "Yaapu Telemetry Script 1.7.1", SMLSIZE+INVERS)
+    lcd.drawText(130, 160, "Yaapu Telemetry Script 1.7.2", SMLSIZE+INVERS)
   end
 end
 
@@ -2118,7 +2120,7 @@ local function init()
   currentModel = model.getInfo().name
   loadConfig()
   playSound("yaapu")
-  pushMessage(7,"Yaapu Telemetry Script 1.7.1")
+  pushMessage(7,"Yaapu Telemetry Script 1.7.2")
 end
 
 --------------------------------------------------------------------------------

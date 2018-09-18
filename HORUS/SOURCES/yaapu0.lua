@@ -26,7 +26,7 @@
 ---------------------
 -- script version 
 ---------------------
-#define VERSION "Yaapu Telemetry Script 1.7.1"
+#define VERSION "Yaapu Telemetry Script 1.7.2"
 
 -- 480x272 LCD_WxLCD_H
 #define WIDGET
@@ -814,8 +814,8 @@ local customSensors = {
 local menuItems = {}
  -- label, type, alias, currval, min, max, label, flags, increment 
 menuItems[L1] = {"voice language:", TYPECOMBO, "L1", 1, { "english", "italian", "french", "german" } , {"en","it","fr","de"} }
-menuItems[V1] = {"batt alert level 1:", TYPEVALUE, "V1", 375, 320,420,"V", PREC2 ,5 }
-menuItems[V2] = {"batt alert level 2:", TYPEVALUE, "V2", 350, 320,420,"V", PREC2 ,5 }
+menuItems[V1] = {"batt alert level 1:", TYPEVALUE, "V1", 375, 0,5000,"V", PREC2 ,5 }
+menuItems[V2] = {"batt alert level 2:", TYPEVALUE, "V2", 350, 0,5000,"V", PREC2 ,5 }
 menuItems[B1] = {"batt[1] capacity override:", TYPEVALUE, "B1", 0, 0,5000,"Ah",PREC2 ,10 }
 menuItems[B2] = {"batt[2] capacity override:", TYPEVALUE, "B2", 0, 0,5000,"Ah",PREC2 ,10 }
 menuItems[S1] = {"disable all sounds:", TYPECOMBO, "S1", 1, { "no", "yes" }, { false, true } }
@@ -826,7 +826,7 @@ menuItems[T1] = {"timer alert every:", TYPEVALUE, "T1", 0, 0,600,"min",PREC1,5 }
 menuItems[A1] = {"min altitude alert:", TYPEVALUE, "A1", 0, 0,500,"m",PREC1,5 }
 menuItems[A2] = {"max altitude alert:", TYPEVALUE, "A2", 0, 0,10000,"m",0,1 }
 menuItems[D1] = {"max distance alert:", TYPEVALUE, "D1", 0, 0,100000,"m",0,10 }
-menuItems[T2] = {"repeat alerts every:", TYPEVALUE, "T2", 10, 10,600,"sec",0,5 }
+menuItems[T2] = {"repeat alerts every:", TYPEVALUE, "T2", 10, 5,600,"sec",0,5 }
 menuItems[CC] = {"cell count override:", TYPEVALUE, "CC", 0, 0,12,"cells",0,1 }
 menuItems[RM] = {"rangefinder max:", TYPEVALUE, "RM", 0, 0,10000," cm",0,10 }
 menuItems[SVS] = {"enable synthetic vspeed:", TYPECOMBO, "SVS", 1, { "no", "yes" }, { false, true } }
@@ -1650,8 +1650,8 @@ local function processTelemetry()
       status.statusArmed = bit32.extract(VALUE,8,1)
       status.battFailsafe = bit32.extract(VALUE,9,1)
       status.ekfFailsafe = bit32.extract(VALUE,10,2)
-      -- IMU temperature: offset -19, 0 means temp =< 19°, 63 means temp => 82°
-      status.imuTemp = math.floor((100 * bit32.extract(VALUE,26,6)/64) + 0.5) - 19 -- C° Note. math.round = math.floor( n + 0.5)
+      -- IMU temperature: 0 means temp =< 19°, 63 means temp => 82°
+      status.imuTemp = bit32.extract(VALUE,26,6) + 19 -- C° 
     elseif ( DATA_ID == 0x5002) then -- GPS STATUS
       status.numSats = bit32.extract(VALUE,0,4)
       -- offset  4: NO_GPS = 0, NO_FIX = 1, GPS_OK_FIX_2D = 2, GPS_OK_FIX_3D or GPS_OK_FIX_3D_DGPS or GPS_OK_FIX_3D_RTK_FLOAT or GPS_OK_FIX_3D_RTK_FIXED = 3
@@ -1920,7 +1920,9 @@ local function checkLandingStatus()
   end
   if (status.timerRunning == 1 and status.landComplete == 0 and status.lastTimerStart ~= 0) then
     stopTimer()
-    playSound("landing")
+    if status.statusArmed == 1 then
+      playSound("landing")
+    end
   end
   status.timerRunning = status.landComplete
 end
