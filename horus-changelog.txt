@@ -51,5 +51,5 @@ Horus Widget Version 1.7.2
 
 - fix for IMU temp decoding
 - fix for landing complete alert, now played only if motors are armed
-- fix for limited battery alert voltage range, now from 0 to 50V
+- fix for limited battery alert voltage range, now from 0 to 50V (was missing from 1.7.1)
 - changed min alert interval from 10s to 5s
