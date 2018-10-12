@@ -16,7 +16,6 @@ SOUNDS/yaapu0/en|bat40|Battery at 40 percent
 SOUNDS/yaapu0/en|bat50|Battery at 50 percent
 SOUNDS/yaapu0/en|bat60|Battery at 60 percent
 SOUNDS/yaapu0/en|bat70|Battery at 70 percent
-SOUNDS/yaapu0/en|bat75|Battery at 75 percent
 SOUNDS/yaapu0/en|bat80|Battery at 80 percent
 SOUNDS/yaapu0/en|bat90|Battery at 90 percent
 SOUNDS/yaapu0/en|batalert|Battery alert
@@ -29,10 +28,10 @@ SOUNDS/yaapu0/en|disarmed|Motors disarmed
 SOUNDS/yaapu0/en|drift|Drift flight mode
 SOUNDS/yaapu0/en|ekf|E K F failsafe
 SOUNDS/yaapu0/en|flip|Flip flight mode
-SOUNDS/yaapu0/en|flowhold|flow hold flight mode
-SOUNDS/yaapu0/en|follow|follow flight mode
+SOUNDS/yaapu0/en|flowhold|flow position hold flight mode
 SOUNDS/yaapu0/en|flybywirea|Fly by wire a flight mode
 SOUNDS/yaapu0/en|flybywireb|Fly by wire b flight mode
+SOUNDS/yaapu0/en|follow|follow flight mode
 SOUNDS/yaapu0/en|gpsfix|GPS 3D fix lock
 SOUNDS/yaapu0/en|gpsnofix|No gps
 SOUNDS/yaapu0/en|guided|Guided flight mode
@@ -57,18 +56,17 @@ SOUNDS/yaapu0/en|qrtl|Q return to home flight mode
 SOUNDS/yaapu0/en|qstabilize|Q stabilize flight mode
 SOUNDS/yaapu0/en|rtl|Return to home
 SOUNDS/yaapu0/en|rtl_r|Return to home mode
+SOUNDS/yaapu0/en|simpleoff|simple mode disabled
+SOUNDS/yaapu0/en|simpleon|simple mode enabled
 SOUNDS/yaapu0/en|smartrtl|Smart return to home flight mode
 SOUNDS/yaapu0/en|smartrtl_r|Smart return to home mode
-SOUNDS/yaapu0/en|simpleon|simple mode enabled
-SOUNDS/yaapu0/en|simpleoff|simple mode disabled
-SOUNDS/yaapu0/en|ssimpleon|super simple mode enabled
-SOUNDS/yaapu0/en|ssimpleoff|super simple mode disabled
 SOUNDS/yaapu0/en|sport|Sport flight mode
+SOUNDS/yaapu0/en|ssimpleoff|super simple mode disabled
+SOUNDS/yaapu0/en|ssimpleon|super simple mode enabled
 SOUNDS/yaapu0/en|stabilize|Stabilize flight mode
 SOUNDS/yaapu0/en|steering_r|Steering mode
 SOUNDS/yaapu0/en|throw|Throw flight mode
 SOUNDS/yaapu0/en|timealert|Timer alert
 SOUNDS/yaapu0/en|training|Training flight mode
 SOUNDS/yaapu0/en|yaapu|Yaapu telemetry ready
-
 
