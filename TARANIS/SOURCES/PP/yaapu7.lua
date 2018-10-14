@@ -84,8 +84,6 @@
 --#define MEMDEBUG
 --#define DEBUG
 --#define TESTMODE
---#define BATT2TEST
---#define FLVSS2TEST
 --#define DEMO
 --#define DEV
 --#define DEBUGEVT
@@ -383,7 +381,7 @@ local alarms = {
     { false, 0 , true, 1 , 0, false, 0 }, --FS_BAT
     { false, 0 , true, 2, 0, false, 0 }, --FLIGTH_TIME
     { false, 0 , false, 3, 4, false, 0 }, --BATT L1
-    { false, 0 , false, 3, 4, false, 0 } --BATT L2
+    { false, 0 , false, 4, 4, false, 0 } --BATT L2
 }
 
 --------------------------------------------------------------------------------
@@ -484,7 +482,7 @@ local function drawConfigMenuBars()
   local itemIdx = string.format("%d/%d",menu.selectedItem,#menuItems)
   lcd.drawFilledRectangle(0,0, 128, 7, SOLID)
   lcd.drawRectangle(0, 0, 128, 7, SOLID)
-  lcd.drawText(0,0,"Yaapu X7 1.7.1",SMLSIZE+INVERS)
+  lcd.drawText(0,0,"Yaapu X7 1.7.2",SMLSIZE+INVERS)
   lcd.drawFilledRectangle(0,57-1, 128, 9, SOLID)
   lcd.drawRectangle(0, 57-1, 128, 9, SOLID)
   lcd.drawText(0,57,string.sub(getConfigFilename(),8),SMLSIZE+INVERS)
@@ -1104,13 +1102,15 @@ local function setSensorValues()
     perc = (1 - (battmah/battcapacity))*100
     if perc > 99 then
       perc = 99
+    elseif perc < 0 then
+      perc = 0
     end  
   end
   setTelemetryValue(0x060F, 0, 0, perc, 13 , 0 , "Fuel")
   setTelemetryValue(0x021F, 0, 0, getNonZeroMin(batt1volt,batt2volt)*10, 1 , 2 , "VFAS")
   setTelemetryValue(0x020F, 0, 0, batt1current+batt2current, 2 , 1 , "CURR")
   setTelemetryValue(0x011F, 0, 0, vSpeed, 5 , 1 , "VSpd")
-  setTelemetryValue(0x083F, 0, 0, hSpeed*0.1, 4 , 0 , "GSpd")
+  setTelemetryValue(0x083F, 0, 0, hSpeed*0.1, 5 , 0 , "GSpd")
   setTelemetryValue(0x010F, 0, 0, homeAlt*10, 9 , 1 , "Alt")
   setTelemetryValue(0x082F, 0, 0, math.floor(gpsAlt*0.1), 9 , 0 , "GAlt")
   setTelemetryValue(0x084F, 0, 0, math.floor(yaw), 20 , 0 , "Hdg")
@@ -1127,6 +1127,8 @@ local function drawX7RightPane(x,battVolt,cellVolt,current,battmah,battcapacity)
     perc = (1 - (battmah/battcapacity))*100
     if perc > 99 then
       perc = 99
+    elseif perc < 0 then
+      perc = 0
     end
   end
   --  battery min cell
@@ -1254,6 +1256,8 @@ local function drawX7LeftPane(battVolt,cellVolt,current,battmah,battcapacity)
   end
   if perc > 99 then
     perc = 99
+  elseif perc < 0 then
+    perc = 0
   end
   --  battery min cell
   local flags = 0
@@ -1648,6 +1652,8 @@ local function checkAlarm(level,value,idx,sign,sound,delay)
       alarms[idx] = { false, 0, true, 2, 0, false, 0}
     elseif  alarms[idx][4] == 3 then
       alarms[idx] = { false, 0 , false, 3, 4, false, 0}
+    elseif  alarms[idx][4] == 4 then
+      alarms[idx] = { false, 0 , false, 4, 4, false, 0}
     end
     -- reset done
     return
@@ -1993,7 +1999,7 @@ local function init()
   model.setTimer(2,{mode=0})
   model.setTimer(2,{value=0})
   loadConfig()
-  pushMessage(6,"Yaapu X7 1.7.1")
+  pushMessage(6,"Yaapu X7 1.7.2")
   playSound("yaapu")
 end
 

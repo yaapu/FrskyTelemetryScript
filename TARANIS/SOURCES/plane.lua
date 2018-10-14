@@ -25,4 +25,3 @@ flightModes[21]="Qland"
 flightModes[22]="QRTL"
 --
 return {flightModes=flightModes}
-

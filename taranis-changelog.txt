@@ -93,3 +93,9 @@ Taranis version 1.7.1
 - fix for limited battery alert voltage range, now from 0 to 50V
 - fix for IMU temp decoding
 - fix for landing complete alert, now played only if motors are armed
+
+Taranis version 1.7.2
+
+- fix for battery level2 alerts not repeating after being triggered
+- fix for OpenTX GSpd sensor unit, now m/s
+- fix for consumed battery mAh greater than battery capacity

@@ -24,4 +24,3 @@ flightModes[21]=""
 flightModes[22]=""
 --
 return {flightModes=flightModes}
-
