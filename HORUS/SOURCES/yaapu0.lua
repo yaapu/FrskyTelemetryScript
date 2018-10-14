@@ -26,7 +26,7 @@
 ---------------------
 -- script version 
 ---------------------
-#define VERSION "Yaapu Telemetry Script 1.7.2"
+#define VERSION "Yaapu Telemetry Script 1.7.3"
 
 -- 480x272 LCD_WxLCD_H
 #define WIDGET
@@ -463,6 +463,7 @@ local backlightLastTime = 0
 #define ALARM_TYPE_MAX 1 
 #define ALARM_TYPE_TIMER 2
 #define ALARM_TYPE_BATT 3
+#define ALARM_TYPE_BATT_CRT 4
 --
 #define ALARM_TYPE_BATT_GRACE 4
 --
@@ -475,7 +476,7 @@ local alarms = {
     { false, 0 , true, ALARM_TYPE_MAX, 0, false, 0 }, --FS_BAT
     { false, 0 , true, ALARM_TYPE_TIMER, 0, false, 0 }, --FLIGTH_TIME
     { false, 0 , false, ALARM_TYPE_BATT, ALARM_TYPE_BATT_GRACE, false, 0 }, --BATT L1
-    { false, 0 , false, ALARM_TYPE_BATT, ALARM_TYPE_BATT_GRACE, false, 0 } --BATT L2
+    { false, 0 , false, ALARM_TYPE_BATT_CRT, ALARM_TYPE_BATT_GRACE, false, 0 } --BATT L2
 }
 
 --
@@ -2008,7 +2009,7 @@ local sensors = {
   {VFAS_ID, VFAS_SUBID, VFAS_INSTANCE,0, 1 , VFAS_PRECISION , VFAS_NAME},
   {CURR_ID, CURR_SUBID, CURR_INSTANCE,0, 2 , CURR_PRECISION , CURR_NAME},
   {VSpd_ID, VSpd_SUBID, VSpd_INSTANCE,0, 5 , VSpd_PRECISION , VSpd_NAME},
-  {GSpd_ID, GSpd_SUBID, GSpd_INSTANCE,0, 4 , GSpd_PRECISION , GSpd_NAME},
+  {GSpd_ID, GSpd_SUBID, GSpd_INSTANCE,0, 5 , GSpd_PRECISION , GSpd_NAME},
   {Alt_ID, Alt_SUBID, Alt_INSTANCE,0, 9 , Alt_PRECISION , Alt_NAME},
   {GAlt_ID, GAlt_SUBID, GAlt_INSTANCE,0, 9 , GAlt_PRECISION , GAlt_NAME},
   {Hdg_ID, Hdg_SUBID, Hdg_INSTANCE,0, 20 , Hdg_PRECISION , Hdg_NAME},
@@ -2031,6 +2032,8 @@ local function setSensorValues()
     perc = (1 - (battmah/battcapacity))*100
     if perc > 99 then
       perc = 99
+    elseif perc < 0 then
+      perc = 0
     end  
   end
   --
@@ -2089,6 +2092,8 @@ local function drawBatteryPane(x,battVolt,cellVolt,current,battmah,battcapacity)
     perc = (1 - (battmah/battcapacity))*100
     if perc > 99 then
       perc = 99
+    elseif perc < 0 then
+      perc = 0
     end
   end
   #ifdef BATTPERC_BY_VOLTAGE
@@ -2923,6 +2928,8 @@ local function checkAlarm(level,value,idx,sign,sound,delay)
       alarms[idx] = { false, 0, true, ALARM_TYPE_TIMER, 0, false, 0}
     elseif  alarms[idx][ALARM_TYPE] == ALARM_TYPE_BATT then
       alarms[idx] = { false, 0 , false, ALARM_TYPE_BATT, ALARM_TYPE_BATT_GRACE, false, 0}
+    elseif  alarms[idx][ALARM_TYPE] == ALARM_TYPE_BATT_CRT then
+      alarms[idx] = { false, 0 , false, ALARM_TYPE_BATT_CRT, ALARM_TYPE_BATT_GRACE, false, 0}
     end
     -- reset done
     return

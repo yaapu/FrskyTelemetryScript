@@ -53,3 +53,9 @@ Horus Widget Version 1.7.2
 - fix for landing complete alert, now played only if motors are armed
 - fix for limited battery alert voltage range, now from 0 to 50V (was missing from 1.7.1)
 - changed min alert interval from 10s to 5s
+
+Horus version 1.7.3
+
+- fix for battery level2 alerts not repeating after being triggered
+- fix for OpenTX GSpd sensor unit, now m/s
+- fix for consumed battery mAh greater than battery capacity

@@ -369,7 +369,7 @@ local alarms = {
     { false, 0 , true, 1 , 0, false, 0 }, --FS_BAT
     { false, 0 , true, 2, 0, false, 0 }, --FLIGTH_TIME
     { false, 0 , false, 3, 4, false, 0 }, --BATT L1
-    { false, 0 , false, 3, 4, false, 0 } --BATT L2
+    { false, 0 , false, 4, 4, false, 0 } --BATT L2
 }
 
 --
@@ -614,7 +614,7 @@ local function drawConfigMenuBars()
   local itemIdx = string.format("%d/%d",menu.selectedItem,#menuItems)
   lcd.drawFilledRectangle(0,0, LCD_W, 20, TITLE_BGCOLOR)
   lcd.drawRectangle(0, 0, LCD_W, 20, TITLE_BGCOLOR)
-  lcd.drawText(2,0,"Yaapu Telemetry Script 1.7.2",MENU_TITLE_COLOR)
+  lcd.drawText(2,0,"Yaapu Telemetry Script 1.7.3",MENU_TITLE_COLOR)
   lcd.drawFilledRectangle(0,LCD_H - 20, LCD_W, 20, TITLE_BGCOLOR)
   lcd.drawRectangle(0, LCD_H - 20, LCD_W, 20, TITLE_BGCOLOR)
   lcd.drawText(2,LCD_H - 20+1,getConfigFilename(),MENU_TITLE_COLOR)
@@ -1279,7 +1279,7 @@ local sensors = {
   {0x021F, 0, 0,0, 1 , 2 , "VFAS"},
   {0x020F, 0, 0,0, 2 , 1 , "CURR"},
   {0x011F, 0, 0,0, 5 , 1 , "VSpd"},
-  {0x083F, 0, 0,0, 4 , 0 , "GSpd"},
+  {0x083F, 0, 0,0, 5 , 0 , "GSpd"},
   {0x010F, 0, 0,0, 9 , 1 , "Alt"},
   {0x082F, 0, 0,0, 9 , 0 , "GAlt"},
   {0x084F, 0, 0,0, 20 , 0 , "Hdg"},
@@ -1302,6 +1302,8 @@ local function setSensorValues()
     perc = (1 - (battmah/battcapacity))*100
     if perc > 99 then
       perc = 99
+    elseif perc < 0 then
+      perc = 0
     end  
   end
   --
@@ -1343,6 +1345,8 @@ local function drawBatteryPane(x,battVolt,cellVolt,current,battmah,battcapacity)
     perc = (1 - (battmah/battcapacity))*100
     if perc > 99 then
       perc = 99
+    elseif perc < 0 then
+      perc = 0
     end
   end
   --  battery min cell
@@ -1399,7 +1403,7 @@ local function drawNoTelemetryData()
   if (not telemetryEnabled()) then
     lcd.drawFilledRectangle(75,90, 330, 100, TITLE_BGCOLOR)
     lcd.drawText(140, 120, "no telemetry data", MIDSIZE+INVERS)
-    lcd.drawText(130, 160, "Yaapu Telemetry Script 1.7.2", SMLSIZE+INVERS)
+    lcd.drawText(130, 160, "Yaapu Telemetry Script 1.7.3", SMLSIZE+INVERS)
   end
 end
 
@@ -1990,6 +1994,8 @@ local function checkAlarm(level,value,idx,sign,sound,delay)
       alarms[idx] = { false, 0, true, 2, 0, false, 0}
     elseif  alarms[idx][4] == 3 then
       alarms[idx] = { false, 0 , false, 3, 4, false, 0}
+    elseif  alarms[idx][4] == 4 then
+      alarms[idx] = { false, 0 , false, 4, 4, false, 0}
     end
     -- reset done
     return
@@ -2406,7 +2412,7 @@ local function init()
   loadConfig()
   playSound("yaapu")
   loadSensors()
-  pushMessage(7,"Yaapu Telemetry Script 1.7.2")
+  pushMessage(7,"Yaapu Telemetry Script 1.7.3")
 end
 
 --------------------------------------------------------------------------------
