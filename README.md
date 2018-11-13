@@ -39,6 +39,7 @@ Requires [OpenTX 2.2.1/2.2.2](http://www.open-tx.org/) and a recent release of [
  - [telemetry reset](#telemetry-reset)
  - [script timing and update rates](#script-timing-and-update-rates)
  - [configuration](#configuration)
+ - [ardupilot configuration](#ardupilot-configuration)
  - [installation on Taranis](#installation-on-taranis)
  - [installation on Horus](#installation-on-horus)
  - [sound files customization](#sound-files-customization)
@@ -317,6 +318,24 @@ The language of the vocal alerts is independent from the radio language and can 
 Right now only english, italian and french are supported but new languages can be added with ease.
 
 Battery capacity for battery 1 and battery 2 is automatically read from the values configured in mission planner but can both be overidden from the menu. When a new capacity is defined from the menu it will immediately be used in all calculations and it's value will be displayed on screen.
+
+## ArduPilot Configuration
+
+The two main wiring configurations are
+
+#### ArduPilot sends native frsky passthrough telemetry data
+
+The flight controller is configured to send native frsky passthrough telemetry data either with an inverting cable or without (pixracer). To enable this feature the SERIALn_PROTOCOL of the uart connected to the receiver has to be set to 10, check the ardupilot wiki for [details](http://ardupilot.org/copter/docs/common-frsky-telemetry.html#frsky-telemetry-configuration-in-mission-planner).
+
+This configuration requires a "special" cable that acts as logic level converter and inverter, an example of such a cable is [here](https://discuss.ardupilot.org/t/some-soldering-required/27613)
+
+For the pixracer an inverting cable is not needed but the wiring requires that the TX and RX pin of the frs port be connected togheter, check this [image](https://docs.px4.io/assets/flight_controller/pixracer/grau_b_pixracer_frskys.port_connection.jpg) for further details.
+
+#### ArduPilot sends mavlink telemetry data
+
+The flight controller is configured to send mavlink messages and an external board (Teensy, Blue Pill,etc) is used to convert mavlink to frsky using Eric Stockenstrom [MavlinkToPassthru](https://github.com/zs6buj/MavlinkToPassthru) firmware. 
+
+This is the default configuration for long range systems (Dragonlink, TBS Crossfire, ULRS to name a few) unable to carry native frsky telemetry but compatible with mavlink.
 
 ## Installation on Taranis
 
