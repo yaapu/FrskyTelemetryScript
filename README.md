@@ -329,7 +329,7 @@ The flight controller is configured to send native frsky passthrough telemetry d
 
 This configuration requires a "special" cable that acts as logic level converter and inverter, an example of such a cable is [here](https://discuss.ardupilot.org/t/some-soldering-required/27613)
 
-For the pixracer an inverting cable is not needed but the wiring requires that the TX and RX pin of the frs port be connected togheter, check this [image](https://docs.px4.io/assets/flight_controller/pixracer/grau_b_pixracer_frskys.port_connection.jpg) for further details.
+For the pixracer an inverting cable is not needed but the wiring requires that the TX and RX pin of the frs port be connected together, check this [image](https://docs.px4.io/assets/flight_controller/pixracer/grau_b_pixracer_frskys.port_connection.jpg) for further details.
 
 #### ArduPilot sends mavlink telemetry data
 
