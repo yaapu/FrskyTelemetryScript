@@ -34,7 +34,6 @@
 --#define SPLASH
 --#define MEMDEBUG
 -- fix for issue OpenTX 2.2.1 on X10/X10S - https://github.com/opentx/opentx/issues/5764
---#define LOAD_LUA
 ---------------------
 -- features
 ---------------------
@@ -528,8 +527,7 @@ menuItems[19] = {"vertical speed unit:", 1, "VSPD", 1, { "m/s", "ft/s", "ft/min"
 --
 
 
-local unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
-local unitLabel = getGeneralSettings().imperial == 0 and "m" or "ft"
+local unitScale, unitlabel
 
 
 
@@ -614,7 +612,7 @@ local function drawConfigMenuBars()
   local itemIdx = string.format("%d/%d",menu.selectedItem,#menuItems)
   lcd.drawFilledRectangle(0,0, LCD_W, 20, TITLE_BGCOLOR)
   lcd.drawRectangle(0, 0, LCD_W, 20, TITLE_BGCOLOR)
-  lcd.drawText(2,0,"Yaapu Telemetry Script 1.7.3",MENU_TITLE_COLOR)
+  lcd.drawText(2,0,"Yaapu Telemetry Script 1.7.4",MENU_TITLE_COLOR)
   lcd.drawFilledRectangle(0,LCD_H - 20, LCD_W, 20, TITLE_BGCOLOR)
   lcd.drawRectangle(0, LCD_H - 20, LCD_W, 20, TITLE_BGCOLOR)
   lcd.drawText(2,LCD_H - 20+1,getConfigFilename(),MENU_TITLE_COLOR)
@@ -1403,7 +1401,7 @@ local function drawNoTelemetryData()
   if (not telemetryEnabled()) then
     lcd.drawFilledRectangle(75,90, 330, 100, TITLE_BGCOLOR)
     lcd.drawText(140, 120, "no telemetry data", MIDSIZE+INVERS)
-    lcd.drawText(130, 160, "Yaapu Telemetry Script 1.7.3", SMLSIZE+INVERS)
+    lcd.drawText(130, 160, "Yaapu Telemetry Script 1.7.4", SMLSIZE+INVERS)
   end
 end
 
@@ -2070,11 +2068,11 @@ local function loadFlightModes()
   --
   if status.frameType ~= -1 then
     if frameTypes[status.frameType] == "c" then
-      frame = dofile("/SCRIPTS/YAAPU/LIB/copter.luac")
+      frame = dofile("/SCRIPTS/YAAPU/LIB/copter.lua")
     elseif frameTypes[status.frameType] == "p" then
-      frame = dofile("/SCRIPTS/YAAPU/LIB/plane.luac")
+      frame = dofile("/SCRIPTS/YAAPU/LIB/plane.lua")
     elseif frameTypes[status.frameType] == "r" then
-      frame = dofile("/SCRIPTS/YAAPU/LIB/rover.luac")
+      frame = dofile("/SCRIPTS/YAAPU/LIB/rover.lua")
     end
   end
 end
@@ -2412,7 +2410,10 @@ local function init()
   loadConfig()
   playSound("yaapu")
   loadSensors()
-  pushMessage(7,"Yaapu Telemetry Script 1.7.3")
+  pushMessage(7,"Yaapu Telemetry Script 1.7.4")
+  -- load unit definitions
+  unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
+  unitLabel = getGeneralSettings().imperial == 0 and "m" or "ft"
 end
 
 --------------------------------------------------------------------------------

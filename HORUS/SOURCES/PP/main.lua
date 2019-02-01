@@ -527,8 +527,7 @@ menuItems[19] = {"vertical speed unit:", 1, "VSPD", 1, { "m/s", "ft/s", "ft/min"
 --
 
 
-local unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
-local unitLabel = getGeneralSettings().imperial == 0 and "m" or "ft"
+local unitScale, unitlabel
 
 
 
@@ -1275,7 +1274,7 @@ local function drawNoTelemetryData()
   if (not telemetryEnabled()) then
     lcd.drawFilledRectangle(75,90, 330, 100, TITLE_BGCOLOR)
     lcd.drawText(140, 120, "no telemetry data", MIDSIZE+INVERS)
-    lcd.drawText(130, 160, "Yaapu Telemetry Script 1.7.3", SMLSIZE+INVERS)
+    lcd.drawText(130, 160, "Yaapu Telemetry Script 1.7.4", SMLSIZE+INVERS)
   end
 end
 
@@ -2126,7 +2125,10 @@ local function init()
   currentModel = model.getInfo().name
   loadConfig()
   playSound("yaapu")
-  pushMessage(7,"Yaapu Telemetry Script 1.7.3")
+  pushMessage(7,"Yaapu Telemetry Script 1.7.4")
+  -- load unit definitions
+  unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
+  unitLabel = getGeneralSettings().imperial == 0 and "m" or "ft"
 end
 
 --------------------------------------------------------------------------------

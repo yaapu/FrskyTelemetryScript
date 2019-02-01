@@ -26,7 +26,7 @@
 ---------------------
 -- Script Version 
 ---------------------
-#define VERSION "Yaapu Telemetry Script 1.7.2"
+#define VERSION "Yaapu Telemetry Script 1.7.4"
 
 --#define BATTPERC_BY_VOLTAGE
 

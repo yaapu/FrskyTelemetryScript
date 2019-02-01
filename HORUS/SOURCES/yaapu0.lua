@@ -26,7 +26,7 @@
 ---------------------
 -- script version 
 ---------------------
-#define VERSION "Yaapu Telemetry Script 1.7.3"
+#define VERSION "Yaapu Telemetry Script 1.7.4"
 
 -- 480x272 LCD_WxLCD_H
 #define WIDGET
@@ -840,12 +840,11 @@ menuItems[BPBV] = {"enable battery % by voltage:", TYPECOMBO, "BPBV", 1, { "no",
 
 #ifdef UNIT_SCALE
 
-local unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
-local unitLabel = getGeneralSettings().imperial == 0 and "m" or "ft"
+local unitScale, unitlabel
 
 #define UNIT_ALT_SCALE unitScale
 #define UNIT_DIST_SCALE unitScale
-#define UNIT_DIST_LONG_SCALE (settings.imperial==0 and 1/1000 or 1/1609.34)
+#define UNIT_DIST_LONG_SCALE (getGeneralSettings().imperial==0 and 1/1000 or 1/1609.34)
 #define UNIT_HSPEED_SCALE menuItems[HSPD][6][menuItems[HSPD][4]]
 #define UNIT_VSPEED_SCALE menuItems[VSPD][6][menuItems[VSPD][4]]
 #define UNIT_ALT_LABEL unitLabel
@@ -3561,6 +3560,9 @@ local function init()
 #ifndef DEMO
   pushMessage(7,VERSION)
 #endif
+  -- load unit definitions
+  unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
+  unitLabel = getGeneralSettings().imperial == 0 and "m" or "ft"
 end
 
 --------------------------------------------------------------------------------
