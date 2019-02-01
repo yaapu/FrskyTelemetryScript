@@ -59,3 +59,7 @@ Horus version 1.7.3
 - fix for battery level2 alerts not repeating after being triggered
 - fix for OpenTX GSpd sensor unit, now m/s
 - fix for consumed battery mAh greater than battery capacity
+
+Horus version 1.7.4
+
+- fix for imperial settings not being picked up at widget start (OpenTX 2.2.3)
