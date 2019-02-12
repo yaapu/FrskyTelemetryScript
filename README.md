@@ -347,8 +347,7 @@ Make sure to have the /SOUNDS/yaapu0, MODELS/yaapu and /SCRIPTS/TELEMETRY/yaapu 
 - For QX7 radios use the yaapu7.luac script (use yaapu7.lua if the radio doesn't start it, see the note below).
 - For X-Lite radios use the yaapu7.luac script (use yaapu7.lua if the radio doesn't start it, see the note below).
 
-The script is quite big and compilation on your radio will fail with a memory error.
-The correct way is to compile it on Companion and then copy the .luac compiled version to the SD card in the /SCRIPTS/TELEMETRY folder on Taranis 
+The script is already compiled and only needs to be copied to your radio SD card. 
 
 The correct folder structure for X9 series is
 
@@ -401,8 +400,7 @@ The script can be started in 2 ways:
 
 **Note:** For the script to control the lcd panel backlight a few extra steps are required, please follow this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-enable-lcd-panel-backlight-support-on-X10-and-X12)
 
-The script is quite big and compilation on your radio may fail with a memory error.
-The correct way is to compile it on Companion and then copy the .luac compiled version to the SD card to the /SCRIPTS/YAAPU or /WIDGETS/Yaapu folder.
+The script is already compiled and only needs to be copied to the radio SD card. 
 
 The correct folder structure is
 
