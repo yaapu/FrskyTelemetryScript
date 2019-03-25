@@ -563,4 +563,5 @@ Open an issue on github.com
  - [athertop](https://github.com/athertop) (X9D tester)
  - [zs6buj](https://github.com/zs6buj) (X9D tester)
  - [BFD Systems](https://www.bfdsystems.com/) (Horus version sponsor)
+ - [Harris Aerial](https://www.harrisaerial.com/) (Horus version sponsor)
  - Craft&Theory for the passthrough protocol
