@@ -35,7 +35,7 @@ Requires [OpenTX 2.2.x](http://www.open-tx.org/) and a recent release of [ArduPi
  - [sensor discovery](#sensor-discovery-optional)
  - [supported flight modes](#supported-flight-modes)
  - [voltage sources](#voltage-sources)
- - [supported battery configurations](#supported-battery-configurations)
+ - [supported battery configurations](https://github.com/yaapu/FrskyTelemetryScript/wiki/Supported-battery-configurations)
  - [cell count detection](#cell-count-detection)
  - [airspeed vs groundspeed](#airspeed-vs-groundspeed)
  - [alerts](#alerts)
@@ -224,27 +224,6 @@ In dual battery mode a short press of [ENTER] on the Taranis or [ENCODER] on the
 To get back to aggregate view and retain the selected voltage source short press [EXIT] on Taranis or [RTN] on Horus.
 
 **Note:In widget mode voltage source cycling is not available, the voltage source has to be selected from the menu**
-
-
-## Supported battery configurations
-
-- A2 analog port only: In this configuration only 1 battery will be detected,a2 will be displayed next to the cell voltage, Cell voltage is calculated as A2 battery voltage divided by cell count. No current or battery consumption will be availbale. If the user overrides battery capacity from the config menu battery % will be stuck at 99%.
-- Single power module: In this configuration only 1 battery will be detected, fc will be displayed next to the cell voltage, Cell voltage is calculated as battery pack voltage divided by cell count. Current and consumed mAh will be reported. Battery percentage depends on battery capacity either received from ArduPilot or overriden from the menu.
-- Dual power module: In this configuration 2 batteries will be detected, fc will be displayed next to the cell voltage, Cell voltage is calculated as battery pack voltage divided by cell count. Current and consumed mAh will be reported. Battery percentage depends on battery capacity either received from ArduPilot or overriden from the menu. Battery stats can be displayed in aggregate view or separate battery view (battery 1 in right pane and battery 2 in left pane).
-In aggregate battery view Cell voltage is the minimun cell voltage between battery 1 and 2, current is the sum of current 1 and current 2, consumed mAh is the sum of mAh 1 and mAh 2 and battery percentage is the weighted average of percentage 1 and percentage 2
-- Single FLVSS sensor:  In this configuration only 1 battery will be detected,vs will be displayed next to the cell voltage, Cell voltage is the minimum cell voltage of the pack. No current or battery consumption will be availbale. If the user overrides battery capacity from the config menu battery % will be stuck at 99%.
-- Dual FLVSS sensor:  In this configuration only 2 batteries will be detected,vs will be displayed next to the cell voltage, Cell voltage is the minimum cell voltage of the pack. No current or battery consumption will be availbale. If the user overrides battery capacity from the config menu battery % will be stuck at 99%.
-Battery stats can be displayed in aggregate view or separate battery view (battery 1 in right pane and battery 2 in left pane)
-In aggregate battery view Cell voltage is the minimun cell voltage between battery 1 and 2.
-- Single FLVSS sensor + single power module: voltage will be available from 2 sources, user can choose which one to display. Current will always be visible. 
-- Dual FLVSS sensors + dual power module: voltage will be available from 2 sources, user can choose which one to display. Current will always be visible. Voltage and current visible in dual battery view as well as aggregate battery view.
-- Dual FLVSS + single power module: voltage will be available from 2 sources, user can choose which one to display.The script assumes that the power module is monitoring the aggregate current from both batteries (in parallel), i.e. load is equally shared between the two batteries and the displayed current in dual battery view will be half on battery 1 and half on battery 2.
-
-## Cell Count Detection
-
-The script tries to autodetect the cell count by monitoring the maximum pack voltage.
-
-If autodetection fails it's possible to override cell count in the configuration menu up to 12s.
 
 ## Airspeed vs Groundspeed
 
