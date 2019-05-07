@@ -32,7 +32,7 @@ Requires [OpenTX 2.2.x](http://www.open-tx.org/) and a recent release of [ArduPi
  - [display layout](#display-layout)
  - [features](#features)
  - [advanced features](#advanced-features)
- - [sensor discovery](#sensor-discovery-optional)
+ - [sensor discovery](https://github.com/yaapu/FrskyTelemetryScript/wiki/Telemetry-sensors-discovery)
  - [supported flight modes](#supported-flight-modes)
  - [voltage sources](#voltage-sources)
  - [supported battery configurations](https://github.com/yaapu/FrskyTelemetryScript/wiki/Supported-battery-configurations)
