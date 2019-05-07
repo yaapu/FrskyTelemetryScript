@@ -132,19 +132,6 @@ mavlink message history
  - configurable vocal timer alert every n minutes
  - sensors VFAS,CURR,Alt,VSpd,GAlt,Hdg,GSpd,Fuel,IMUt,ARM are exposed to OpenTX, see the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki/Telemetry-sensors-exposed-to-OpenTX-by-the-Yaapu-script) for details.
  
-## Sensor Discovery (Optional)
-
-**Note: Sensor discovery is optional, the script works fine without this extra step**
-
-On the Taranis you need to run "discover new sensors" in your model telemetry page to use the sensors in OpenTX, the script has to be running for this to work.
- 
-On the Horus the procedure is different: you start sensor discovery in the model telemetry page, leave it running and run the Yaapu Script as one time script or as a Widget. Go back to the telemetry page where discovery should still be running and all sensors should have been discovered.
-If this does not work sensors can still be created manually in the model telemetry page.
-
-Note: The A2 sensor (analog input port) will only be discovered on X4R and X6R receivers.
- 
-Sensor valus are passed to OpenTX only when the script receives valid telemetry from the rx!
- 
 ## Supported Flight Modes
 
 ### Copter
