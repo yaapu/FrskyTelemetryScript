@@ -138,6 +138,16 @@ mavlink message history
  
 ## MAvlinkToPassthru firmware support
 
+Version 1.8.0 and above natively support Eric Stockenstrom's excellent [MavlinkToPassthru](https://github.com/zs6buj/MavlinkToPassthru) converter firmware **Plus** version.
+By using Eric's Plus version the script can display
+- waypoint number, bearing and distance
+- airspeed info
+- throttle %
+
+![X9Dm2f](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9dm2f.png)
+
+![X7m2f](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7m2f.png)
+
 ## Supported Flight Modes
 
 ### Copter
