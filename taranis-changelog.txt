@@ -99,3 +99,19 @@ Taranis version 1.7.2
 - fix for battery level2 alerts not repeating after being triggered
 - fix for OpenTX GSpd sensor unit, now m/s
 - fix for consumed battery mAh greater than battery capacity
+
+Taranis version 1.8.0
+
+- new hud layout, speed on left, alt on right VSI on bottom
+- added support for up to 6 frsky sensors on dedicated second screen
+- added script reset support (no need to power cycle the radio between packs)
+- added haptic feedback support
+- added total flown distance (calculated from speed)
+- added PX4 flight modes support
+- added support for mavlinkToPassthru firmware
+- added vocal playback of selected mavlink messages
+- added support fot serial and independent battery configurations with individual cell count override
+- added support for battery voltage > 51.1V
+- added new message alert silencing options
+- fix for quick flight mode switch
+- fix for rover modes vocal playback
