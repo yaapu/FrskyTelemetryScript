@@ -135,6 +135,10 @@ mavlink message history
  
 ## Extra screen with external frsky sensors support
 
+![X9Dsensors](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9dsensors.png)
+
+![X7sensors](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7sensors.png)
+
 Version 1.8.0 and above introduce an extra screen reachable by pressing [ENTER] from the status message history.
 This screen adds support for up to 6 user selected frsky sensors to be displayed on screen.
 
@@ -197,25 +201,22 @@ local lookups = {
 ...  
 `````
 
-![X9Dsensors](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9dsensors.png)
-
-![X7sensors](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7sensors.png)
-
 Chris Olson briefly explains this new feature in his [video](https://www.youtube.com/watch?v=sQmjwRXYWkc) 
 
 ## MavlinkToPassthru firmware support
 
+![X9Dm2f](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9dm2f.png)
+
+![X7m2f](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7m2f.png)
+
 Version 1.8.0 and above natively support Eric Stockenstrom's [MavlinkToPassthru](https://github.com/zs6buj/MavlinkToPassthru) converter firmware **Plus** version.
+
 By using Eric's Plus version the script can display
 - waypoint number, bearing and distance
 - airspeed info
 - throttle %
 
-To enable support for the script please select it from the config menu by choosing "m2f" as left panel option.
-
-![X9Dm2f](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9dm2f.png)
-
-![X7m2f](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7m2f.png)
+To enable this feature please select it from the script config menu by choosing "m2f" as left panel option.
 
 ## Supported Flight Modes
 
