@@ -26,10 +26,6 @@ Requires [OpenTX 2.2.x](http://www.open-tx.org/) and a recent release of [ArduPi
 
 ![X7](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7.png)
 
-![X9Dalt](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9dsensors.png)
-
-![X7alt](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7sensors.png)
-
 ## Index
 
  - [display layout](#display-layout)
@@ -145,7 +141,61 @@ This screen adds support for up to 6 user selected frsky sensors to be displayed
 Sensors are defined in a lua file in the \MODELS\yaapu\ folder.
 
 The script looks for a file with the same name of the configuration file but ending in _sensors.lua.
-If the config file is modelname.cfg the lua file has to named modelanme_sensors.lua.
+If the config file is modelname.cfg the lua file has to named modelname_sensors.lua.
+
+File syntax is quite easy
+
+`````
+----------------------------------------
+-- custom sensors configuration file
+----------------------------------------
+local sensors = {
+  -- Sensor 1
+[1]=  {
+    "Celm",   -- label
+    "Celm",     -- OpenTX sensor name
+    2,          -- precision: number of decimals 0,1,2
+    "Vmin",         -- label for unit of measure
+    1,          -- multiplier if < 1 than divides
+    "-",        -- "+" track max values, "-" track min values with
+    1,          -- font size 1=small, 2=big
+    3.65,        -- warning level (nil is do not use feature)
+    3.30,        -- critical level (nil is do not use feature)
+  },
+
+  -- Sensor 2
+[2]=  {
+    "Celd",   -- label
+    "Celd",     -- OpenTX sensor name
+    2,          -- precision: number of decimals 0,1,2
+    "Vdelta",         -- label for unit of measure
+    1,          -- multiplier if < 1 than divides
+    "+",        -- "+" track max values, "-" track min values with
+    1,          -- font size 1=small, 2=big
+    0.2,        -- warning level (nil is do not use feature)
+    0.4,        -- critical level (nil is do not use feature)
+  }
+}
+...
+------------------------------------------------------
+-- the script can optionally look up values here
+-- for each sensor and display the corresponding text instead
+-- as an example to associate a lookup table to sensor 3 declare it like
+--
+--local lookups = {
+-- [3] = {
+--     [-10] = "ERR",
+--     [0] = "OK",
+--     [10] = "CRIT",
+--   }
+-- }
+-- this would display the sensor value except when the value corresponds to one
+-- of entered above
+-- 
+local lookups = {
+}
+...  
+`````
 
 ![X9Dsensors](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9dsensors.png)
 
