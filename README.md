@@ -147,6 +147,9 @@ Sensors are defined in a lua file in the \MODELS\yaapu\ folder.
 The script looks for a file with the same name of the configuration file but ending in _sensors.lua.
 If the config file is modelname.cfg the lua file has to named modelname_sensors.lua.
 
+**Note** For this feature to work it's necessary to enable the luac (lua compiler) on your OpenTX firmware settings
+
+
 File syntax is quite easy
 
 `````
