@@ -136,13 +136,15 @@ mavlink message history
  - configurable vocal timer alert every n minutes
  - sensors VFAS,CURR,Alt,VSpd,GAlt,Hdg,GSpd,Fuel,IMUt,ARM are exposed to OpenTX, see the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki/Telemetry-sensors-exposed-to-OpenTX-by-the-Yaapu-script) for details.
  
-## MAvlinkToPassthru firmware support
+## MavlinkToPassthru firmware support
 
-Version 1.8.0 and above natively support Eric Stockenstrom's excellent [MavlinkToPassthru](https://github.com/zs6buj/MavlinkToPassthru) converter firmware **Plus** version.
+Version 1.8.0 and above natively support Eric Stockenstrom's [MavlinkToPassthru](https://github.com/zs6buj/MavlinkToPassthru) converter firmware **Plus** version.
 By using Eric's Plus version the script can display
 - waypoint number, bearing and distance
 - airspeed info
 - throttle %
+
+To enable support for the script please select it from the config menu by choosing "m2f" as left panel option.
 
 ![X9Dm2f](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9dm2f.png)
 
