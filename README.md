@@ -35,6 +35,7 @@ Requires [OpenTX 2.2.x](http://www.open-tx.org/) and a recent release of [ArduPi
  - [display layout](#display-layout)
  - [features](#features)
  - [advanced features](#advanced-features)
+ - [mavlinkToPassthru firmware support](#mavlinktopassthru-firmware-support)
  - [sensor discovery](https://github.com/yaapu/FrskyTelemetryScript/wiki/Telemetry-sensors-discovery)
  - [supported flight modes](#supported-flight-modes)
  - [voltage sources](#voltage-sources)
@@ -135,6 +136,8 @@ mavlink message history
  - configurable vocal timer alert every n minutes
  - sensors VFAS,CURR,Alt,VSpd,GAlt,Hdg,GSpd,Fuel,IMUt,ARM are exposed to OpenTX, see the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki/Telemetry-sensors-exposed-to-OpenTX-by-the-Yaapu-script) for details.
  
+## MAvlinkToPassthru firmware support
+
 ## Supported Flight Modes
 
 ### Copter
