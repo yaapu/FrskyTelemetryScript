@@ -139,9 +139,19 @@ mavlink message history
  
 ## Extra screen with external frsky sensors support
 
+Version 1.8.0 and above introduce an extra screen reachable by pressing [ENTER] from the status message history.
+This screen adds support for up to 6 user selected frsky sensors to be displayed on screen.
+
+Sensors are defined in a lua file in the \MODELS\yaapu\ folder.
+
+The script looks for a file with the same name of the configuration file but ending in _sensors.lua.
+If the config file is modelname.cfg the lua file has to named modelanme_sensors.lua.
+
 ![X9Dsensors](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9dsensors.png)
 
 ![X7sensors](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7sensors.png)
+
+Chris Olson briefly explains this new feature in his [video](https://www.youtube.com/watch?v=sQmjwRXYWkc) 
 
 ## MavlinkToPassthru firmware support
 
