@@ -35,6 +35,7 @@ Requires [OpenTX 2.2.x](http://www.open-tx.org/) and a recent release of [ArduPi
  - [display layout](#display-layout)
  - [features](#features)
  - [advanced features](#advanced-features)
+ - [extra screen with up to 6 frsky sensors](#extra-screen-with-external-frsky-sensors-support)
  - [mavlinkToPassthru firmware support](#mavlinktopassthru-firmware-support)
  - [sensor discovery](https://github.com/yaapu/FrskyTelemetryScript/wiki/Telemetry-sensors-discovery)
  - [supported flight modes](#supported-flight-modes)
@@ -136,6 +137,12 @@ mavlink message history
  - configurable vocal timer alert every n minutes
  - sensors VFAS,CURR,Alt,VSpd,GAlt,Hdg,GSpd,Fuel,IMUt,ARM are exposed to OpenTX, see the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki/Telemetry-sensors-exposed-to-OpenTX-by-the-Yaapu-script) for details.
  
+## Extra screen with external frsky sensors support
+
+![X9Dsensors](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9dsensors.png)
+
+![X7sensors](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7sensors.png)
+
 ## MavlinkToPassthru firmware support
 
 Version 1.8.0 and above natively support Eric Stockenstrom's [MavlinkToPassthru](https://github.com/zs6buj/MavlinkToPassthru) converter firmware **Plus** version.
