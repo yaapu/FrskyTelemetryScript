@@ -26,6 +26,9 @@ Requires [OpenTX 2.2.x](http://www.open-tx.org/) and a recent release of [ArduPi
 
 ![X7](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7.png)
 
+![X9Dalt](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9dsensors.png)
+
+![X7alt](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7sensors.png)
 
 ## Index
 
