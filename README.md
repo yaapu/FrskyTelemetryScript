@@ -148,7 +148,7 @@ The script looks for a file with the same name of the configuration file but end
 If the config file is modelname.cfg the lua file has to named modelname_sensors.lua.
 
 **Note** For this feature to work it's necessary to enable the luac (lua compiler) on your OpenTX firmware settings
-
+![X7dual](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/luac.png)
 
 File syntax is quite easy
 
