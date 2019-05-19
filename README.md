@@ -211,7 +211,7 @@ Chris Olson briefly explains this new feature in his [video](https://www.youtube
 
 ## MavlinkToPassthru firmware support
 
-![X9Dm2f](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9dm2f.png)
+![X9Dm2f](https://github.com/yaapu/FrskyTelemetryScript/blob/master/TARANIS/IMAGES/x9_m2f_displayinfo.png)
 
 ![X7m2f](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7m2f.png)
 
