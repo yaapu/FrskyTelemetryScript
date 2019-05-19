@@ -213,7 +213,7 @@ Chris Olson briefly explains this new feature in his [video](https://www.youtube
 
 ![X9Dm2f](https://github.com/yaapu/FrskyTelemetryScript/blob/master/TARANIS/IMAGES/x9_m2f_displayinfo.png)
 
-![X7m2f](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7m2f.png)
+![X7m2f](https://github.com/yaapu/FrskyTelemetryScript/blob/master/TARANIS/IMAGES/x7_m2f_displayinfo.png)
 
 Version 1.8.0 and above natively support Eric Stockenstrom's [MavlinkToPassthru](https://github.com/zs6buj/MavlinkToPassthru) converter firmware **Plus** version.
 
