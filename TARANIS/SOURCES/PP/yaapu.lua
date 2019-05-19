@@ -1275,7 +1275,7 @@ local function calcBattery()
   battery[BATT_MAH+1] = telemetry.batt1mah --mah1
   battery[BATT_MAH+2] = telemetry.batt2mah --mah2
   
-  battery[BATT_CAP] = (conf.battConf ==  BATTCONF_OTHER and getBatt1Capacity() or getBatt1Capacity() + getBatt2Capacity())
+  battery[BATT_CAP] = (conf.battConf ==  BATTCONF_PARALLEL and getBatt1Capacity() + getBatt2Capacity() or getBatt1Capacity())
   battery[BATT_CAP+1] = getBatt1Capacity() --cap1
   battery[BATT_CAP+2] = getBatt2Capacity() --cap2
         
