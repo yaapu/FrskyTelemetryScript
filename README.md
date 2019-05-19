@@ -113,8 +113,10 @@ mavlink message history
  - mavlink messages with history accessible with [PLUS]/[MINUS] or by turning the [ENCODER] buttons (in Widget mode follow this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12-as-a-Widget#mandatory-steps))
  - english, italian, french and german sound files for selected events: battery levels, failsafe, flightmodes, alerts and landing
  - lcd panel backlight control for the Horus radios, see [this](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-enable-lcd-panel-backlight-support-on-X10-and-X12)
- - full telemetry reset on timer 3 reset (Horus only) see [this](#telemetry-reset)
-
+ - full telemetry reset on timer 3 reset, see [this](#telemetry-reset)
+ - PX4 flight modes support when used with a Teensy running the mavlinkToPassthru firmware
+ - vocal playback for a subset of mavlink status messages
+ - up to 6 frsky sensors can be displayed on screen
 
 ## Advanced Features 
 
@@ -249,6 +251,7 @@ To enable this feature please select it from the script config menu by choosing 
 |22|SmartRTL|YES|
 |23|FlowHold|YES|
 |24|Follow|YES|
+|25|ZigZag|YES|
 
 ### Plane
 | #  | flight mode | sound support |
@@ -273,6 +276,7 @@ To enable this feature please select it from the script config menu by choosing 
 |20|QLoiter|YES|
 |21|Qland|YES|
 |22|QRTL|YES|
+|23|QAutotune|YES|
 
 ### Rover
 
@@ -282,6 +286,9 @@ To enable this feature please select it from the script config menu by choosing 
 |2|Acro|YES|
 |4|Steering|YES|
 |5|Hold|YES|
+|6|Loiter|YES|
+|7|Follow|YES|
+|8|Simple|YES|
 |11|Auto|YES|
 |12|RTL|YES|
 |13|SmartRTL|YES|
