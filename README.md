@@ -137,9 +137,9 @@ mavlink message history
  
 ## Extra screen with external frsky sensors support
 
-![X9Dsensors](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9dsensors.png)
+![X9Dsensors_display](https://github.com/yaapu/FrskyTelemetryScript/blob/master/TARANIS/IMAGES/x9_alt_displayinfo.png)
 
-![X7sensors](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7sensors.png)
+![X7sensors_display](https://github.com/yaapu/FrskyTelemetryScript/blob/master/TARANIS/IMAGES/x7_alt_displayinfo.PNG)
 
 Version 1.8.0 and above introduce an extra screen reachable by pressing [ENTER] from the status message history.
 This screen adds support for up to 6 user selected frsky sensors to be displayed on screen.
