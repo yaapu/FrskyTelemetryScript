@@ -8,7 +8,7 @@ The supported radios are:
 - Taranis X9D(+) and QX7 on OpenTX 2.2.1/2.2.2/2.2.3
 - X-Lite on OpenTX 2.2.2/2.2.3 (by using the QX7 version)
 - Horus X10(S) and X12 on OpenTX 2.2.1/2.2.2/2.2.3
-- Jumper T16 on JumperTX 2.2.3
+- Jumper T16 on JumperTX 2.2.3 (by using the Horus version)
 
 Here you'll find
 - a **Telemetry** script for the Taranis radios: X9D,QX7 and X-Lite ([changelog](https://github.com/yaapu/FrskyTelemetryScript/raw/master/taranis-changelog.txt))
