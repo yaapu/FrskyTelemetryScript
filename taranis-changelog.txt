@@ -110,7 +110,7 @@ Taranis version 1.8.0
 - added PX4 flight modes support
 - added support for mavlinkToPassthru firmware
 - added vocal playback of selected mavlink messages
-- added support fot serial and independent battery configurations with individual cell count override
+- added support fot series and independent battery configurations with individual cell count override
 - added support for battery voltage > 51.1V
 - added new message alert silencing options
 - fix for quick flight mode switch
