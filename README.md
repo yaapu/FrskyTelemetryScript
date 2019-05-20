@@ -42,7 +42,6 @@ Requires [OpenTX 2.2.x](http://www.open-tx.org/) and a recent release of [ArduPi
  - [airspeed vs groundspeed](#airspeed-vs-groundspeed)
  - [alerts](#alerts)
  - [telemetry reset](#telemetry-reset)
- - [script timing and update rates](#script-timing-and-update-rates)
  - [configuration](#configuration)
  - [ardupilot configuration](#ardupilot-configuration)
  - [installation on Taranis](#installation-on-taranis)
@@ -279,16 +278,11 @@ When the vehicle moves outside of the fence the script will play a vocal alert e
 
 ## Telemetry reset
 
-On Horus radios it's possible to do a full script reset by resetting timer 3. For the reset to occur 2 conditions must be met
-- the flight timer has to be different from 00:00
-- motors are disarmed
+It's possible to do a full script reset by resetting timer 3.
 
-## Script update rates
-
-- The script processes telemetry up to 60Hz
-- Screen is redrawn at 20Hz
-- Frsky sensors are exposed to OpenTX at 4Hz
-- Events and alarms are checked at 2Hz
+For the reset to occur 2 conditions must be met
+- flight time is greater than 00:00
+- vehicle is not armed
 
 ## Configuration
 
@@ -357,13 +351,20 @@ The script is already compiled and only needs to be copied to your radio SD card
 The correct folder structure for X9 series is
 
 - /MODELS/yaapu/<modelname>.cfg
+- /MODELS/yaapu/<modelname>_sensors.lua (optional)
 - /SCRIPTS/TELEMETRY/yaapu9.lua
 - /SCRIPTS/TELEMETRY/yaapu9.luac
-- /SCRIPTS/TELEMETRY/yaapu/copter.lua
+- /SCRIPTS/TELEMETRY/yaapu/alt9_view.luac
+- /SCRIPTS/TELEMETRY/yaapu/draw9.luac
+- /SCRIPTS/TELEMETRY/yaapu/hud9.luac
+- /SCRIPTS/TELEMETRY/yaapu/left9.luac
+- /SCRIPTS/TELEMETRY/yaapu/left9_m2f.luac
+- /SCRIPTS/TELEMETRY/yaapu/menu9.luac 
+- /SCRIPTS/TELEMETRY/yaapu/right9.luac 
 - /SCRIPTS/TELEMETRY/yaapu/copter.luac
-- /SCRIPTS/TELEMETRY/yaapu/plane.lua
+- /SCRIPTS/TELEMETRY/yaapu/copter_px4.luac
 - /SCRIPTS/TELEMETRY/yaapu/plane.luac
-- /SCRIPTS/TELEMETRY/yaapu/rover.lua
+- /SCRIPTS/TELEMETRY/yaapu/plane_px4.luac
 - /SCRIPTS/TELEMETRY/yaapu/rover.luac
 - /SOUNDS/yaapu0/en
 - /SOUNDS/yaapu0/it
@@ -373,13 +374,20 @@ The correct folder structure for X9 series is
 For QX7 and X-Lite radios the correct folder structure is
 
 - /MODELS/yaapu/<modelname>.cfg
+- /MODELS/yaapu/<modelname>_sensors.lua (optional)
 - /SCRIPTS/TELEMETRY/yaapu7.lua
 - /SCRIPTS/TELEMETRY/yaapu7.luac
-- /SCRIPTS/TELEMETRY/yaapu/copter.lua
+- /SCRIPTS/TELEMETRY/yaapu/alt7_view.luac
+- /SCRIPTS/TELEMETRY/yaapu/draw7.luac
+- /SCRIPTS/TELEMETRY/yaapu/hud7.luac
+- /SCRIPTS/TELEMETRY/yaapu/left7.luac
+- /SCRIPTS/TELEMETRY/yaapu/left7_m2f.luac
+- /SCRIPTS/TELEMETRY/yaapu/menu7.luac 
+- /SCRIPTS/TELEMETRY/yaapu/right7.luac 
 - /SCRIPTS/TELEMETRY/yaapu/copter.luac
-- /SCRIPTS/TELEMETRY/yaapu/plane.lua
+- /SCRIPTS/TELEMETRY/yaapu/copter_px4.luac
 - /SCRIPTS/TELEMETRY/yaapu/plane.luac
-- /SCRIPTS/TELEMETRY/yaapu/rover.lua
+- /SCRIPTS/TELEMETRY/yaapu/plane_px4.luac
 - /SCRIPTS/TELEMETRY/yaapu/rover.luac
 - /SOUNDS/yaapu0/en
 - /SOUNDS/yaapu0/it
