@@ -137,78 +137,14 @@ mavlink message history
  
 ## Extra screen with external frsky sensors support
 
-![X9Dsensors_display](https://github.com/yaapu/FrskyTelemetryScript/blob/master/TARANIS/IMAGES/x9_alt_displayinfo.png)
-
-![X7sensors_display](https://github.com/yaapu/FrskyTelemetryScript/blob/master/TARANIS/IMAGES/x7_alt_displayinfo.PNG)
-
 Version 1.8.0 and above introduce an extra screen reachable by pressing [ENTER] from the status message history.
 This screen adds support for up to 6 user selected frsky sensors to be displayed on screen.
 
-Sensors are defined in a lua file in the \MODELS\yaapu\ folder.
+![X9Dsensors_display](https://github.com/yaapu/FrskyTelemetryScript/blob/master/TARANIS/IMAGES/x9dsensors.png)
 
-The script looks for a file with the same name of the configuration file but ending in _sensors.lua.
-If the config file is modelname.cfg the lua file has to named modelname_sensors.lua.
+![X7sensors_display](https://github.com/yaapu/FrskyTelemetryScript/blob/master/TARANIS/IMAGES/x7sensors.png)
 
-File syntax is quite easy
-
-`````
-----------------------------------------
--- custom sensors configuration file
-----------------------------------------
-local sensors = {
-  -- Sensor 1
-[1]=  {
-    "Celm",   -- label
-    "Celm",     -- OpenTX sensor name
-    2,          -- precision: number of decimals 0,1,2
-    "Vmin",         -- label for unit of measure
-    1,          -- multiplier if < 1 than divides
-    "-",        -- "+" track max values, "-" track min values with
-    1,          -- font size 1=small, 2=big
-    3.65,        -- warning level (nil is do not use feature)
-    3.30,        -- critical level (nil is do not use feature)
-  },
-
-  -- Sensor 2
-[2]=  {
-    "Celd",   -- label
-    "Celd",     -- OpenTX sensor name
-    2,          -- precision: number of decimals 0,1,2
-    "Vdelta",         -- label for unit of measure
-    1,          -- multiplier if < 1 than divides
-    "+",        -- "+" track max values, "-" track min values with
-    1,          -- font size 1=small, 2=big
-    0.2,        -- warning level (nil is do not use feature)
-    0.4,        -- critical level (nil is do not use feature)
-  }
-}
-...
-------------------------------------------------------
--- the script can optionally look up values here
--- for each sensor and display the corresponding text instead
--- as an example to associate a lookup table to sensor 3 declare it like
---
---local lookups = {
--- [3] = {
---     [-10] = "ERR",
---     [0] = "OK",
---     [10] = "CRIT",
---   }
--- }
--- this would display the sensor value except when the value corresponds to one
--- of entered above
--- 
-local lookups = {
-}
-...  
-`````
-
-Chris Olson briefly explains this new feature in his [video](https://www.youtube.com/watch?v=sQmjwRXYWkc) 
-
-**Note** For this feature to work it's necessary to enable the luac (lua compiler) on your OpenTX firmware settings
-
-![X7dual](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/luac.png)
-
+More info on setting them up is in the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki/Support-for-user-selected-Frsky-sensors-on-Taranis-radios)
 ## MavlinkToPassthru firmware support
 
 ![X9Dm2f](https://github.com/yaapu/FrskyTelemetryScript/blob/master/TARANIS/IMAGES/x9_m2f_displayinfo.png)
