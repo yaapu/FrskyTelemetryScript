@@ -144,7 +144,9 @@ This screen adds support for up to 6 user selected frsky sensors to be displayed
 
 ![X7sensors_display](https://github.com/yaapu/FrskyTelemetryScript/blob/master/TARANIS/IMAGES/x7sensors.png)
 
-More info on setting them up is in the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki/Support-for-user-selected-Frsky-sensors-on-Taranis-radios)
+More info on setting them up is in the wiki.
+- guide for [taranis radios](https://github.com/yaapu/FrskyTelemetryScript/wiki/Support-for-user-selected-Frsky-sensors-on-Taranis-radios)
+
 ## MavlinkToPassthru firmware support
 
 ![X9Dm2f](https://github.com/yaapu/FrskyTelemetryScript/blob/master/TARANIS/IMAGES/x9_m2f_displayinfo.png)
