@@ -350,8 +350,8 @@ The script is already compiled and only needs to be copied to your radio SD card
 
 The correct folder structure for X9 series is
 
-- /MODELS/yaapu/<modelname>.cfg
-- /MODELS/yaapu/<modelname>_sensors.lua (optional)
+- /MODELS/yaapu/modelname.cfg
+- /MODELS/yaapu/modelname_sensors.lua (optional)
 - /SCRIPTS/TELEMETRY/yaapu9.lua
 - /SCRIPTS/TELEMETRY/yaapu9.luac
 - /SCRIPTS/TELEMETRY/yaapu/alt9_view.luac
@@ -373,8 +373,8 @@ The correct folder structure for X9 series is
  
 For QX7 and X-Lite radios the correct folder structure is
 
-- /MODELS/yaapu/<modelname>.cfg
-- /MODELS/yaapu/<modelname>_sensors.lua (optional)
+- /MODELS/yaapu/modelname.cfg
+- /MODELS/yaapu/modelname_sensors.lua (optional)
 - /SCRIPTS/TELEMETRY/yaapu7.lua
 - /SCRIPTS/TELEMETRY/yaapu7.luac
 - /SCRIPTS/TELEMETRY/yaapu/alt7_view.luac
