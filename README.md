@@ -12,7 +12,7 @@ The supported radios are:
 
 Here you'll find
 - a **Telemetry** script for the Taranis radios: X9D,QX7 and X-Lite ([changelog](https://github.com/yaapu/FrskyTelemetryScript/raw/master/taranis-changelog.txt))
-- a **Widget** for the Horus radios: X10/S and X12  ([changelog](https://github.com/yaapu/FrskyTelemetryScript/raw/master/horus-changelog.txt))
+- a **Widget** for the Frsky Horus radios: X10/S and X12 and for Jumper T16 ([changelog](https://github.com/yaapu/FrskyTelemetryScript/raw/master/horus-changelog.txt))
 
 
 both support all of the telemetry DIY 0x5000 packets sent by ardupilot’s [frsky passthrough protocol library](https://github.com/ArduPilot/ardupilot/tree/master/libraries/AP_Frsky_Telem)
