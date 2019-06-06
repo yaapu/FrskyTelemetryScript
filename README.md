@@ -46,7 +46,7 @@ Requires [OpenTX 2.2.x](http://www.open-tx.org/) and a recent release of [ArduPi
  - [ardupilot configuration](#ardupilot-configuration)
  - [installation on Taranis](#installation-on-taranis)
  - [installation on Horus](#installation-on-horus)
- - [sound files customization](#sound-files-customization)
+ - [sound files customization](https://github.com/yaapu/FrskyTelemetryScript/wiki/Sound-files-customization)
  - [compilation](#compilation)
  - [hardware requirements](#hardware-requirements)
  - [support and troubleshooting](#support-and-troubleshooting)
@@ -439,10 +439,6 @@ The correct folder structure is
 - /WIDGETS/Yaapu/main.luac 
 
 **Note: On radios without the luac option enabled it is necessary to use the .lua versions**
-
-## Sound files customization
-
-Please check the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki/Sound-files-customization) for more info on custom sound files
 
 ## Compilation
 
