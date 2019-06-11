@@ -44,7 +44,7 @@ Requires [OpenTX 2.2.x](http://www.open-tx.org/) and a recent release of [ArduPi
  - [telemetry reset](#telemetry-reset)
  - [configuration](#configuration)
  - [ardupilot configuration](#ardupilot-configuration)
- - [installation on Taranis](#installation-on-taranis)
+ - [installation on Taranis](https://github.com/yaapu/FrskyTelemetryScript/wiki/Installation-on-Taranis-radios)
  - [installation on Horus](#installation-on-horus)
  - [sound files customization](https://github.com/yaapu/FrskyTelemetryScript/wiki/Sound-files-customization)
  - [compilation](#compilation)
@@ -335,68 +335,6 @@ For the pixracer an inverting cable is not needed but the wiring requires that t
 The flight controller is configured to send mavlink messages and an external board (Teensy, Blue Pill,etc) is used to convert mavlink to frsky using Eric Stockenstrom [MavlinkToPassthru](https://github.com/zs6buj/MavlinkToPassthru) firmware. 
 
 This is the default configuration for long range systems (Dragonlink, TBS Crossfire, ULRS to name a few) unable to carry native frsky telemetry but compatible with mavlink.
-
-## Installation on Taranis
-
-Copy the contents of the SD folder to your radio SD Card.
-
-Make sure to have the /SOUNDS/yaapu0, MODELS/yaapu and /SCRIPTS/TELEMETRY/yaapu folders.
-
-- For X9D/X9D+ and X9E radios use the yaapu9.luac script (use the yaapu9.lua if the radio doesn't start it, see the note below).
-- For QX7 radios use the yaapu7.luac script (use yaapu7.lua if the radio doesn't start it, see the note below).
-- For X-Lite radios use the yaapu7.luac script (use yaapu7.lua if the radio doesn't start it, see the note below).
-
-The script is already compiled and only needs to be copied to your radio SD card. 
-
-The correct folder structure for X9 series is
-
-- /MODELS/yaapu/modelname.cfg
-- /MODELS/yaapu/modelname_sensors.lua (optional)
-- /SCRIPTS/TELEMETRY/yaapu9.lua
-- /SCRIPTS/TELEMETRY/yaapu9.luac
-- /SCRIPTS/TELEMETRY/yaapu/alt9_view.luac
-- /SCRIPTS/TELEMETRY/yaapu/draw9.luac
-- /SCRIPTS/TELEMETRY/yaapu/hud9.luac
-- /SCRIPTS/TELEMETRY/yaapu/left9.luac
-- /SCRIPTS/TELEMETRY/yaapu/left9_m2f.luac
-- /SCRIPTS/TELEMETRY/yaapu/menu9.luac 
-- /SCRIPTS/TELEMETRY/yaapu/right9.luac 
-- /SCRIPTS/TELEMETRY/yaapu/copter.luac
-- /SCRIPTS/TELEMETRY/yaapu/copter_px4.luac
-- /SCRIPTS/TELEMETRY/yaapu/plane.luac
-- /SCRIPTS/TELEMETRY/yaapu/plane_px4.luac
-- /SCRIPTS/TELEMETRY/yaapu/rover.luac
-- /SOUNDS/yaapu0/en
-- /SOUNDS/yaapu0/it
-- /SOUNDS/yaapu0/fr
-- /SOUNDS/yaapu0/de
- 
-For QX7 and X-Lite radios the correct folder structure is
-
-- /MODELS/yaapu/modelname.cfg
-- /MODELS/yaapu/modelname_sensors.lua (optional)
-- /SCRIPTS/TELEMETRY/yaapu7.lua
-- /SCRIPTS/TELEMETRY/yaapu7.luac
-- /SCRIPTS/TELEMETRY/yaapu/alt7_view.luac
-- /SCRIPTS/TELEMETRY/yaapu/draw7.luac
-- /SCRIPTS/TELEMETRY/yaapu/hud7.luac
-- /SCRIPTS/TELEMETRY/yaapu/left7.luac
-- /SCRIPTS/TELEMETRY/yaapu/left7_m2f.luac
-- /SCRIPTS/TELEMETRY/yaapu/menu7.luac 
-- /SCRIPTS/TELEMETRY/yaapu/right7.luac 
-- /SCRIPTS/TELEMETRY/yaapu/copter.luac
-- /SCRIPTS/TELEMETRY/yaapu/copter_px4.luac
-- /SCRIPTS/TELEMETRY/yaapu/plane.luac
-- /SCRIPTS/TELEMETRY/yaapu/plane_px4.luac
-- /SCRIPTS/TELEMETRY/yaapu/rover.luac
-- /SOUNDS/yaapu0/en
-- /SOUNDS/yaapu0/it
-- /SOUNDS/yaapu0/fr
-- /SOUNDS/yaapu0/de
-
-**Note: On radios without the luac option enabled it is necessary to use the .lua versions**
-
-Please refer to the ardupilot [wiki](http://ardupilot.org/copter/docs/common-frsky-telemetry.html#assigning-a-display-script-to-a-screen) for instructions on how to assign the Yaapu script to a telemetry screen on your Taranis.
 
 ## Installation on Horus
 
