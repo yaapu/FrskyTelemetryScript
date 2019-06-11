@@ -336,6 +336,10 @@ The flight controller is configured to send mavlink messages and an external boa
 
 This is the default configuration for long range systems (Dragonlink, TBS Crossfire, ULRS to name a few) unable to carry native frsky telemetry but compatible with mavlink.
 
+## Installation on Taranis
+
+Please check the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki/Installation-on-Taranis-radios) for more info
+
 ## Installation on Horus
 
 Copy the contents of the SD folder to your radio SD Card.
