@@ -434,3 +434,11 @@ Open an issue on github.com
  - [Harris Aerial](https://www.harrisaerial.com/) (Horus version sponsor)
  - [Jumper](https://www.jumper.xyz) (Jumper T16 version sponsor)
  - Craft&Theory for the passthrough protocol
+
+## Donation
+
+This project is free and will always be.
+
+If you like it you can support it by making a donation!
+
+[paypal.me/yaapu](https://paypal.me/yaapu)
