@@ -51,6 +51,7 @@ Requires [OpenTX 2.2.x](http://www.open-tx.org/) and a recent release of [ArduPi
  - [hardware requirements](#hardware-requirements)
  - [support and troubleshooting](#support-and-troubleshooting)
  - [credits](#credits)
+ - [donate!](#donation)
  
 ## Screenshots
 
