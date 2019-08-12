@@ -38,7 +38,6 @@ Requires [OpenTX 2.2.x](http://www.open-tx.org/) and a recent release of [ArduPi
  - [supported flight modes](#supported-flight-modes)
  - [voltage sources](#voltage-sources)
  - [supported battery configurations](https://github.com/yaapu/FrskyTelemetryScript/wiki/Supported-battery-configurations)
- - [cell count detection](#cell-count-detection)
  - [airspeed vs groundspeed](#airspeed-vs-groundspeed)
  - [alerts](#alerts)
  - [telemetry reset](#telemetry-reset)
