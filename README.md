@@ -35,7 +35,7 @@ Requires [OpenTX 2.2.x](http://www.open-tx.org/) and a recent release of [ArduPi
  - [extra screen with up to 6 frsky sensors](#extra-screen-with-external-frsky-sensors-support)
  - [mavlinkToPassthru firmware support](#mavlinktopassthru-firmware-support)
  - [sensor discovery](https://github.com/yaapu/FrskyTelemetryScript/wiki/Telemetry-sensors-discovery)
- - [supported flight modes](#supported-flight-modes)
+ - [supported flight modes](https://github.com/yaapu/FrskyTelemetryScript/wiki/Supported-Flight-Modes)
  - [voltage sources](#voltage-sources)
  - [supported battery configurations](https://github.com/yaapu/FrskyTelemetryScript/wiki/Supported-battery-configurations)
  - [airspeed vs groundspeed](#airspeed-vs-groundspeed)
