@@ -273,57 +273,7 @@ Please check the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki/Insta
 
 ## Installation on Horus
 
-Copy the contents of the [SD folder](https://github.com/yaapu/FrskyTelemetryScript/tree/master/HORUS/SD) to your radio SD Card.
-Make sure you have the /SOUNDS/yaapu0, SCRIPTS/YAAPU/CFG, SCRIPTS/YAAPU/LIB, SCRIPTS/YAAPU/IMAGES and WIDGETS/Yaapu folders.
-
-**Power cycle the radio to clear widget caches!**
-
-Follow this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12-as-a-Widget) to setup the script as an OpenTX full screen widget.
-
-**Note:** For the script to control the lcd panel backlight a few extra steps are required, please follow this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-enable-lcd-panel-backlight-support-on-X10-and-X12)
-
-The script is already compiled and only needs to be copied to the radio SD card. 
-
-The correct folder structure is
-
-- /SCRIPTS/YAAPU/CFG
-- /SCRIPTS/YAAPU/IMAGES
-- /SCRIPTS/YAAPU/menu.lua
-- /SCRIPTS/YAAPU/menu.luac
-- /SCRIPTS/YAAPU/LIB/draw.lua
-- /SCRIPTS/YAAPU/LIB/reset.lua
-- /SCRIPTS/YAAPU/LIB/layout_1.lua
-- /SCRIPTS/YAAPU/LIB/hud_1.lua
-- /SCRIPTS/YAAPU/LIB/right_1.lua
-- /SCRIPTS/YAAPU/LIB/left_1.lua
-- /SCRIPTS/YAAPU/LIB/left_m2f_1.lua
-- /SCRIPTS/YAAPU/LIB/layout_2.lua
-- /SCRIPTS/YAAPU/LIB/hud_2.lua
-- /SCRIPTS/YAAPU/LIB/hud_small_2.lua
-- /SCRIPTS/YAAPU/LIB/hud_russian_2.lua
-- /SCRIPTS/YAAPU/LIB/right_2.lua
-- /SCRIPTS/YAAPU/LIB/right_custom_2.lua
-- /SCRIPTS/YAAPU/LIB/left_2.lua
-- /SCRIPTS/YAAPU/LIB/left_m2f_2.lua
-- /SCRIPTS/YAAPU/LIB/copter.lua
-- /SCRIPTS/YAAPU/LIB/plane.lua
-- /SCRIPTS/YAAPU/LIB/rover.lua
-- /SCRIPTS/YAAPU/LIB/copter_px4.lua
-- /SCRIPTS/YAAPU/LIB/plane_px4.lua
-- /SCRIPTS/YAAPU/LIB/copter.lua
-- /SCRIPTS/YAAPU/LIB/copter.luac
-- /SCRIPTS/YAAPU/LIB/plane.lua
-- /SCRIPTS/YAAPU/LIB/plane.luac
-- /SCRIPTS/YAAPU/LIB/rover.lua
-- /SCRIPTS/YAAPU/LIB/rover.luac
-- /SCRIPTS/YAAPU/LIB/init.lua
-- /SCRIPTS/YAAPU/LIB/init.luac
-- /SOUNDS/yaapu0/en
-- /SOUNDS/yaapu0/it
-- /SOUNDS/yaapu0/fr
-- /SOUNDS/yaapu0/de
-- /WIDGETS/Yaapu/main.lua
-- /WIDGETS/Yaapu/main.luac 
+Please check the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki/Installation-on-Horus-radios) for more info
 
 ## Compilation
 
