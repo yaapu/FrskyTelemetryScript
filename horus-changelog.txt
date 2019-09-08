@@ -63,3 +63,22 @@ Horus version 1.7.3
 Horus version 1.7.4
 
 - fix for imperial settings not being picked up at widget start (OpenTX 2.2.3)
+
+Horus version 1.8.0
+
+- removed dependency from blue theme
+- added new hud layout, speed on left, alt on right VSI on bottom
+- new message history screen with telemetry info
+- added support for up to 6 user selectable frsky sensors
+- added haptic feedback support
+- added total flown distance (calculated from speed)
+- added PX4 flight modes support
+- added support for mavlinkToPassthru firmware
+- added vocal playback of selected mavlink messages
+- added support fot series and independent battery configurations with individual cell count override
+- added support for battery voltage > 51.1V
+- added new message alert silencing options
+- added menu option to define a channel to toggle between main screen and message history
+- added support for boat frametype
+- fix for quick flight mode switch
+- fix for rover modes vocal playback
