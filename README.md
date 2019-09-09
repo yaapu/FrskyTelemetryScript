@@ -80,25 +80,24 @@ mavlink message history
 
 ## Features
 
- - configuration menu, long press [MENU] on Taranis or [MDL] on Horus (in Widget mode refer to this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12-as-a-Widget#how-to-access-the-script-configuration-menu-while-in-widget-mode))
+ - configuration menu, long press [MENU] on Taranis or long press [SYS] on Horus (refer to this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12-as-a-Widget#how-to-access-the-script-configuration-menu-while-in-widget-mode))
  - per model configuration saved in MODELS/yaapu/modelname.cfg on Taranis, SCRIPTS/YAAPU/CFG/modelname.cfg on Horus
  - imperial and metric units for altitude and distance inherited from radio settings
  - horizontal and vertical speed units selectable from script config menu
  - flight [modes](#supported-flight-modes) based on frame type:copter,plane or rover with vocal sound support
  - artificial horizon with roll,pitch and yaw with numeric compass heading
- - vertical variometer gauge on left side of center panel
+ - vertical variometer gauge on right side of center panel
  - rangefinder with max range support in config menu
  - mini home icon on yaw compass at home angle position
- - battery voltage from 3 sources, short pressing [ENTER]/[ENCODER] cycles between the sources
+ - battery voltage from 2 sources, ( on taranis short pressing [ENTER]/[ENCODER] cycles between the sources)
    - frsky FLVSS voltage sensor if available (vs is displayed next to voltage)
    - flight controller via telemetry (fc is displayed next to voltage)
-   - frsky analog port if available (a2 is displayed next to voltage)
+ - parallel, series and independent battery wiring
  - battery lowest cell if available or cell average if not
  - battery current
  - battery capacity and battery capacity used in mAh and % with vocal alerts for 90,80,70,60,50,40,30,25,20,15,10,4 levels
  - efficiency as battery current/speed, value in mAh
- - vertical speed on left side of HUD
- - "synthetic vertical speed" calculated from altitude variations (no vspeed is sent by the autopilot in DCM mode)
+ - vertical speed (VSI) on bottom of HUD
  - altitude on right side of HUD 
  - gps altitude
  - gps fix extendend status (2D,3D,DGPS,RTK)
@@ -108,9 +107,10 @@ mavlink message history
  - rssi value
  - transmitter voltage
  - home distance
- - horizontal ground speed or airspeed (available if configured in mission planner)
+ - total travel distance calculated from speed
+ - horizontal ground speed or airspeed (available if configured in mission planner, see [here](https://github.com/yaapu/FrskyTelemetryScript#airspeed-vs-groundspeed))
  - home heading as rotating triangle
- - mavlink messages with history accessible with [PLUS]/[MINUS] or by turning the [ENCODER] buttons (in Widget mode follow this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12-as-a-Widget#mandatory-steps))
+ - mavlink messages with history accessible with [PLUS]/[MINUS] on Taranis or by accessing the dedicated page on Horus (on Horus check  this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12-as-a-Widget#mandatory-steps))
  - english, italian, french and german sound files for selected events: battery levels, failsafe, flightmodes, alerts and landing
  - lcd panel backlight control for the Horus radios, see [this](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-enable-lcd-panel-backlight-support-on-X10-and-X12)
  - full telemetry reset on timer 3 reset, see [this](#telemetry-reset)
