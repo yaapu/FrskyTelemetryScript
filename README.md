@@ -32,7 +32,7 @@ Requires [OpenTX 2.2.x](http://www.open-tx.org/) and a recent release of [ArduPi
  - [display layout](#display-layout)
  - [features](#features)
  - [advanced features](#advanced-features)
- - [extra screen with up to 6 frsky sensors](#extra-screen-with-external-frsky-sensors-support)
+ - [extra screen with up to 6 frsky sensors](https://github.com/yaapu/FrskyTelemetryScript/wiki/Support-for-user-selected-Frsky-sensors)
  - [mavlinkToPassthru firmware support](#mavlinktopassthru-firmware-support)
  - [sensor discovery](https://github.com/yaapu/FrskyTelemetryScript/wiki/Telemetry-sensors-discovery)
  - [supported flight modes](https://github.com/yaapu/FrskyTelemetryScript/wiki/Supported-Flight-Modes)
@@ -146,8 +146,7 @@ This screen adds support for up to 6 user selected frsky sensors to be displayed
 
 ![X7sensors_display](https://github.com/yaapu/FrskyTelemetryScript/blob/master/TARANIS/IMAGES/x7sensors.png)
 
-More info on setting them up is in the wiki.
-- guide for [taranis radios](https://github.com/yaapu/FrskyTelemetryScript/wiki/Support-for-user-selected-Frsky-sensors-on-Taranis-radios)
+Setup info in the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki/Support-for-user-selected-Frsky-sensors)
 
 ## MavlinkToPassthru firmware support
 
