@@ -27,7 +27,6 @@
 -- VERSION
 ---------------------
 -- load and compile of lua files
---#define LOADSCRIPT
 -- uncomment to force compile of all chunks, comment for release
 --#define COMPILE
 -- fix for issue OpenTX 2.2.1 on X10/X10S - https://github.com/opentx/opentx/issues/5764

@@ -27,7 +27,6 @@
 -- VERSION
 ---------------------
 -- load and compile of lua files
---#define LOADSCRIPT
 -- uncomment to force compile of all chunks, comment for release
 --#define COMPILE
 -- fix for issue OpenTX 2.2.1 on X10/X10S - https://github.com/opentx/opentx/issues/5764
@@ -565,7 +564,7 @@ local hash = 2166136261
 local loadCycle = 0
 
 utils.doLibrary = function(filename)
-  local f = assert(loadfile(libBasePath..filename..".luac"))
+  local f = assert(loadScript(libBasePath..filename..".lua"))
   collectgarbage()
   collectgarbage()
   return f()
@@ -591,7 +590,7 @@ end
   
 local function loadConfig()
   -- load menu library
-  menuLib = dofile(basePath..menuLibFile..".luac")
+  menuLib = dofile(basePath..menuLibFile..".lua")
   menuLib.loadConfig(conf)
   -- ok configuration loaded
   status.battsource = conf.defaultBattSource
@@ -1186,7 +1185,7 @@ local function checkLandingStatus()
 end
 
 local resetLib = {}
-local resetFile = libBasePath.."reset.luac"
+local resetFile = libBasePath.."reset.lua"
 
 local function reset()
   -- ERRORE reset da kill CPU limit!!!!!!!!
