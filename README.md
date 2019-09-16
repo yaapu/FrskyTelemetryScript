@@ -165,17 +165,19 @@ To enable this feature please select it from the script config menu by choosing 
 
 ## Voltage Sources
 
-Battery voltage is tracked independentely for 3 battery sources: FLVSS, analog port A2 and flight controller. (The script can use the A2 analog voltage source from X4R and X6R receivers, a2 would be displayed next to cell voltage). In single battery mode a short press of [ENTER] on Taranis or [ENCODER] on Horus cycles between all the sources. Min value is also tracked for the 3 sources and can be shown with a [MENU] short press on Taranis or [SYS] on the Horus.
+Battery voltage is tracked independentely for 2 battery sources: FLVSS and flight controller battery monitor. In single battery mode a short press of [ENTER] on Taranis cycles between all the sources. Min value is also tracked for the 2 sources and can be shown with a [MENU] short press on Taranis.
 
 Note:If you use a second FLVSS voltage sensor the OpenTX variable has to be renamed to "Cel2"
 
 When a second battery is detected the script also tracks "aggregate" battery values and shows a "B1+B2" label in the right panel. Cell value and battery voltage is the "minimum" between the two batteries, current is summed and capacity percent is averaged. A short press of [MENU] on Taranis or [ENCODER] on the Horus will show min/max values for this aggregate view.
 
-In dual battery mode a short press of [ENTER] on the Taranis or [ENCODER] on the Horus switches from single aggregate view to individual dual battery view. Subsequent short presses of [ENTER]/[ENCODER] in this dual view will cycle between voltage sources. In dual view a short press of [MENU] on Taranis or [SYS] on Horus shows individual packs min/max values.
+In dual battery mode a short press of [ENTER] on the Taranis switches from single aggregate view to individual dual battery view. Subsequent short presses of [ENTER] in this dual view will cycle between voltage sources. In dual view a short press of [MENU] on Taranis shows individual packs min/max values.
 
-To get back to aggregate view and retain the selected voltage source short press [EXIT] on Taranis or [RTN] on Horus.
+To get back to aggregate view and retain the selected voltage source short press [EXIT] on Taranis.
 
-**Note:In widget mode voltage source cycling is not available, the voltage source has to be selected from the menu**
+For detailed info on supported battery configuration please check the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki/Supported-battery-configurations)
+
+**Note:On the Horus voltage source has to be selected from the menu and Min/Max values are accessible by switching to the dedicated screen**
 
 ## Airspeed vs Groundspeed
 
