@@ -4,6 +4,12 @@ This is the home of the Yaapu Telemetry Script project, a [LUA](https://www.lua.
 
 **Note: the latest pre-release versions are downloadable from the [releases](https://github.com/yaapu/FrskyTelemetryScript/releases) section** 
 
+![X10](https://github.com/yaapu/FrskyTelemetryScript/raw/master/HORUS/IMAGES/x10.png)
+
+![X9D](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9d.png)
+
+![X7](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7.png)
+
 The supported radios are:
 - Taranis X9D(+) and QX7 on OpenTX 2.2.2 or greater
 - X-Lite on OpenTX 2.2.2 or greater (by using the QX7 version)
@@ -20,12 +26,6 @@ both support all of the telemetry DIY 0x5000 packets sent by ardupilot’s [frsk
 The script is also compatible with the excellent [MavlinkToPassthru](https://github.com/zs6buj/MavlinkToPassthru) converter firmware by Eric Stockenstrom
 
 Requires [OpenTX 2.2.x](http://www.open-tx.org/) and a recent release of [ArduPilot](http://ardupilot.org/ardupilot/index.html).
-
-![X10](https://github.com/yaapu/FrskyTelemetryScript/raw/master/HORUS/IMAGES/x10.png)
-
-![X9D](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9d.png)
-
-![X7](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7.png)
 
 ## Index
 
