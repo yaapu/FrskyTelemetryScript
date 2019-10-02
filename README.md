@@ -54,6 +54,10 @@ Requires [OpenTX 2.2.x](http://www.open-tx.org/) and a recent release of [ArduPi
  
 ## Screenshots
 
+horus GPS maps view
+
+![X10maps](https://user-images.githubusercontent.com/30294218/65993331-4a553600-e491-11e9-94c5-acd237ef4455.png)
+
 dual battery view
 
 ![X10dual](https://github.com/yaapu/FrskyTelemetryScript/raw/master/HORUS/IMAGES/x10dualbattery.png)
@@ -120,6 +124,7 @@ mavlink message history
 
 ## Advanced Features 
 
+- offline GPS cartography on Frsky Horus radios and Jumper T16 radios
 - dual battery support (dual FLVSS and/or dual battery from ArduPilot) short press [ENTER] on Taranis or [ENCODER] on Horus to display second battery info. If a second battery is detected there will be a "B1+B2" label on screen (in Widget mode follow this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12-as-a-Widget#optional-steps))
  - capacity ovveride for battery 1 and 2
  - tracking of min/max values for battery/cell voltage, current, altitude, ground and vertical speed, short press [MENU] on Taranis or [SYS] on Horus to display them, an up pointing arrow will indicate max values whereas a down pointing arrow will indicate min values (in Widget mode follow this [guide](https://github.com/yaapu/FrskyTelemetryScript/wiki/How-to-run-the-Yaapu-script-on-X10-and-X12-as-a-Widget#optional-steps))
