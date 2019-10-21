@@ -12,6 +12,7 @@ enum FlightMode {
     AUTO          = 10,
     RTL           = 11,
     LOITER        = 12,
+    TAKEOFF       = 13,
     AVOID_ADSB    = 14,
     GUIDED        = 15,
     INITIALISING  = 16,
@@ -20,7 +21,8 @@ enum FlightMode {
     QLOITER       = 19,
     QLAND         = 20,
     QRTL          = 21,
-    QAUTOTUNE	  = 22
+    QAUTOTUNE	    = 22,
+    QACRO 	      = 23
 };
 --]]
 
@@ -40,7 +42,7 @@ flightModes[10]=""
 flightModes[11]="Auto"
 flightModes[12]="RTL"
 flightModes[13]="Loiter"
-flightModes[14]=""
+flightModes[14]="Takeoff"
 flightModes[15]="AvoidADSB"
 flightModes[16]="Guided"
 flightModes[17]="Initializing"
@@ -50,5 +52,6 @@ flightModes[20]="QLoiter"
 flightModes[21]="Qland"
 flightModes[22]="QRTL"
 flightModes[23]="QAutotune"
+flightModes[24]="QAcro"
 --
 return {flightModes=flightModes}
