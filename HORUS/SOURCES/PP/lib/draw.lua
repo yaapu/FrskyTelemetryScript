@@ -92,14 +92,12 @@ local function drawHomeIcon(x,y,utils)
 end
 
 #ifdef X10_OPENTX_221
-local function drawLine(x1,y1,x2,y2,flags1,flags2)
-    -- if lines are hor or ver do not fix
---if string.find(radio, "x10") and rev < 2 and x1 ~= x2 and y1 ~= y2 then
-    if string.find(radio, "x10") and rev < 2 then
-      lcd.drawLine(LCD_W-x1,LCD_H-y1,LCD_W-x2,LCD_H-y2,flags1,flags2)
-    else
-      lcd.drawLine(x1,y1,x2,y2,flags1,flags2)
-    end
+local drawLine = nil
+
+if string.find(radio, "x10") and tonumber(maj..minor..rev) < 222 then
+  drawLine = function(x1,y1,x2,y2,flags1,flags2) lcd.drawLine(LCD_W-x1,LCD_H-y1,LCD_W-x2,LCD_H-y2,flags1,flags2) end
+else
+  drawLine = function(x1,y1,x2,y2,flags1,flags2) lcd.drawLine(x1,y1,x2,y2,flags1,flags2) end
 end
 #endif --X10_OPENTX_221
 

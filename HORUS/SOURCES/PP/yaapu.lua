@@ -1340,7 +1340,7 @@ local function reset()
   if resetPending == false then
     -- initialize status
     if resetLib.resetWidget == nil then
-      resetLib = dofile(resetFile)
+      resetLib = utils.doLibrary("reset")
       collectgarbage()
       collectgarbage()
     end
