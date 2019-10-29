@@ -336,6 +336,7 @@ Open an issue on github.com
  - [BFD Systems](https://www.bfdsystems.com/) (Horus version sponsor)
  - [Harris Aerial](https://www.harrisaerial.com/) (Horus version sponsor)
  - [Jumper](https://www.jumper.xyz) (Jumper T16 version sponsor)
+ - [Frsky](https://www.frsky-rc.com/) (Taranis X9D 2019 sponsor)
  - Craft&Theory for the passthrough protocol
 
 ## Donation
