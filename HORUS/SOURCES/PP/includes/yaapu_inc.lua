@@ -26,10 +26,10 @@
 ---------------------
 -- VERSION
 ---------------------
-#define VERSION "Yaapu Telemetry Widget 1.8.0"
-#define VERSION_CONFIG 180
+#define VERSION "Yaapu Telemetry Widget 1.8.1"
+#define VERSION_CONFIG 181
 -- load and compile of lua files
---#define LOADSCRIPT
+#define LOADSCRIPT
 #ifdef LOADSCRIPT
 #define LOAD_LUA
 #endif
@@ -46,12 +46,8 @@
 ---------------------
 -- enable splash screen for no telemetry data
 --#define SPLASH
--- enable battery percentage based on voltage
---#define BATTPERC_BY_VOLTAGE
 -- enable code to draw a compass rose vs a compass ribbon
 --#define COMPASS_ROSE
--- enable support for FNV hash based sound files
-#define FNV_HASH
 
 ---------------------
 -- DEV FEATURE CONFIG
@@ -76,6 +72,8 @@
   --#define FLVSS2TEST
   --pushes some test messages
   --#define TESTMESSAGES
+  --simulate voltage only battery monitor
+  #define NOCURRENT
 #endif
 -- enable debug of generated hash or short hash string
 --#define HASHDEBUG
@@ -337,6 +335,7 @@ local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 #define BATT_CURR 7
 #define BATT_MAH 10
 #define BATT_CAP 13
+#define BATT_PERC 16
 -- 
 #define BATT_IDALL 0
 #define BATT_ID1 1

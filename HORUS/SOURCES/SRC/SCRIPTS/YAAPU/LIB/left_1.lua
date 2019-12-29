@@ -36,11 +36,8 @@
 ---------------------
 -- enable splash screen for no telemetry data
 --#define SPLASH
--- enable battery percentage based on voltage
---#define BATTPERC_BY_VOLTAGE
 -- enable code to draw a compass rose vs a compass ribbon
 --#define COMPASS_ROSE
--- enable support for FNV hash based sound files
 
 ---------------------
 -- DEV FEATURE CONFIG
@@ -205,20 +202,18 @@ local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 
 local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gpsStatuses,utils)
   lcd.setColor(CUSTOM_COLOR,0xFFFF)   
-  if conf.rangeMax > 0 then
+  if conf.rangeFinderMax > 0 then
     flags = 0
     local rng = telemetry.range
-    if rng > conf.rangeMax then
-      flags = BLINK+INVERS
-    end
     rng = utils.getMaxValue(rng,16)
-    if status.showMinMaxValues == true then
-      flags = 0
-    end
     lcd.setColor(CUSTOM_COLOR,0x0000)   
     lcd.drawText(90, 25, "Range("..unitLabel..")", SMLSIZE+CUSTOM_COLOR+RIGHT)
+    lcd.setColor(CUSTOM_COLOR,0xF800)       
+    if rng > conf.rangeFinderMax and status.showMinMaxValues == false then
+      lcd.drawFilledRectangle(90-65, 37+4,65,21,CUSTOM_COLOR)
+    end
     lcd.setColor(CUSTOM_COLOR,0xFFFF)       
-    lcd.drawText(90, 37, string.format("%.1f",rng*0.01*unitScale), MIDSIZE+flags+RIGHT+CUSTOM_COLOR)
+    lcd.drawText(90, 37, string.format("%.1f",rng*0.01*unitScale), MIDSIZE+RIGHT+CUSTOM_COLOR)
   else
     flags = BLINK
     -- always display gps altitude even without 3d lock

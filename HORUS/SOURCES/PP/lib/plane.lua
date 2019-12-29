@@ -22,7 +22,7 @@ enum FlightMode {
     QLAND         = 20,
     QRTL          = 21,
     QAUTOTUNE	    = 22,
-    QACRO 	      = 23
+    QACRO         = 23
 };
 --]]
 

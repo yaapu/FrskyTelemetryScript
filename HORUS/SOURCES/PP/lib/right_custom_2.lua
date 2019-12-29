@@ -43,34 +43,34 @@
 #define BATTEFF_FLAGSW 0
 
 #define SENSOR1_X 110
-#define SENSOR1_Y 101
+#define SENSOR1_Y 102
 #define SENSOR1_XLABEL 110
-#define SENSOR1_YLABEL 90
+#define SENSOR1_YLABEL 91
 
 #define SENSOR2_X 196
-#define SENSOR2_Y 101
+#define SENSOR2_Y 102
 #define SENSOR2_XLABEL 196
-#define SENSOR2_YLABEL 90
+#define SENSOR2_YLABEL 91
 
 #define SENSOR3_X 110
-#define SENSOR3_Y 132
+#define SENSOR3_Y 133
 #define SENSOR3_XLABEL 110
-#define SENSOR3_YLABEL 123
+#define SENSOR3_YLABEL 124
 
 #define SENSOR4_X 196
-#define SENSOR4_Y 132
+#define SENSOR4_Y 133
 #define SENSOR4_XLABEL 196
-#define SENSOR4_YLABEL 123
+#define SENSOR4_YLABEL 124
 
 #define SENSOR5_X 110
-#define SENSOR5_Y 173
+#define SENSOR5_Y 174
 #define SENSOR5_XLABEL 110
-#define SENSOR5_YLABEL 163
+#define SENSOR5_YLABEL 164
 
 #define SENSOR6_X 196
-#define SENSOR6_Y 173
+#define SENSOR6_Y 174
 #define SENSOR6_XLABEL 196
-#define SENSOR6_YLABEL 163
+#define SENSOR6_YLABEL 164
 
 
 --------------------------
@@ -85,55 +85,6 @@
 #define SENSOR_FONT 7
 #define SENSOR_WARN 8
 #define SENSOR_CRIT 9
-
-#ifdef BATTPERC_BY_VOLTAGE
-#define VOLTAGE_DROP 0.15
---[[
-  Example data based on a 18 minutes flight for quad, battery:5200mAh LiPO 10C, hover @15A
-  Notes:
-  - when motors are armed VOLTAGE_DROP offset is applied!
-  - number of samples is fixed at 11 but percentage values can be anything and are not restricted to multiples of 10
-  - voltage between samples is assumed to be linear
---]]
-
-local battPercByVoltage = { 
-  {3.40,  0}, 
-  {3.46, 10}, 
-  {3.51, 20}, 
-  {3.53, 30}, 
-  {3.56, 40},
-  {3.60, 50},
-  {3.63, 60},
-  {3.70, 70},
-  {3.73, 80},
-  {3.86, 90},
-  {4.00, 99}
-}
-
-function getBattPercByCell(cellVoltage)
-  if cellVoltage == 0 then
-    return 99
-  end
-  if cellVoltage >= battPercByVoltage[11][1] then
-    return 99
-  end
-  if cellVoltage <= battPercByVoltage[1][1] then
-    return 0
-  end
-  for i=2,11 do                                  
-    if cellVoltage <= battPercByVoltage[i][1] then
-      --
-      local v0 = battPercByVoltage[i-1][1]
-      local fv0 = battPercByVoltage[i-1][2]
-      --
-      local v1 = battPercByVoltage[i][1]
-      local fv1 = battPercByVoltage[i][2]
-      -- interpolation polinomial
-      return fv0 + ((fv1 - fv0)/(v1-v0))*(cellVoltage - v0)
-    end
-  end --for
-end
-#endif --BATTPERC_BY_VOLTAGE
 
 local customSensorXY = {
   { SENSOR1_XLABEL, SENSOR1_YLABEL, SENSOR1_X, SENSOR1_Y},
@@ -161,7 +112,7 @@ local function drawCustomSensors(x,customSensors,utils,status)
           label = string.format("%s(%s)",sensorConfig[SENSOR_LABEL],sensorConfig[SENSOR_UNIT])
         end
         -- draw sensor label
-        lcd.setColor(CUSTOM_COLOR,COLOR_BLACK)
+        lcd.setColor(CUSTOM_COLOR,COLOR_LABEL)
         lcd.drawText(x+customSensorXY[i][1], customSensorXY[i][2],label, SMLSIZE+RIGHT+CUSTOM_COLOR)
         
         mult =  sensorConfig[SENSOR_PREC] == 0 and 1 or ( sensorConfig[SENSOR_PREC] == 1 and 10 or 100 )
@@ -214,31 +165,7 @@ BATT_ID2 2
 --]]
 local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gpsStatuses,utils,customSensors)
   lcd.setColor(CUSTOM_COLOR,COLOR_TEXT)  
-  local perc = 0
-  #ifdef BATTPERC_BY_VOLTAGE
-  if conf.enableBattPercByVoltage == true then
-    --[[
-      discharge curve is based on battery under load, when motors are disarmed
-      cellvoltage needs to be corrected by subtracting the "under load" voltage drop
-    --]]
-    if telemetry.statusArmed then
-      perc = getBattPercByCell(0.01*battery[BATT_CELL+battId])
-    else
-      perc = getBattPercByCell((0.01*battery[BATT_CELL+battId])-VOLTAGE_DROP)
-    end
-  else
-  #endif --BATTPERC_BY_VOLTAGE
-  if (battery[BATT_CAP+battId] > 0) then
-    perc = (1 - (battery[BATT_MAH+battId]/battery[BATT_CAP+battId]))*100
-    if perc > 99 then
-      perc = 99
-    elseif perc < 0 then
-      perc = 0
-    end
-  end
-  #ifdef BATTPERC_BY_VOLTAGE
-  end --conf.enableBattPercByVoltage
-  #endif --BATTPERC_BY_VOLTAGE
+  local perc = battery[BATT_PERC+battId]  
   --  battery min cell
   local flags = 0
   --

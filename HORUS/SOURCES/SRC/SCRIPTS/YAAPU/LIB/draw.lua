@@ -36,11 +36,8 @@
 ---------------------
 -- enable splash screen for no telemetry data
 --#define SPLASH
--- enable battery percentage based on voltage
---#define BATTPERC_BY_VOLTAGE
 -- enable code to draw a compass rose vs a compass ribbon
 --#define COMPASS_ROSE
--- enable support for FNV hash based sound files
 
 ---------------------
 -- DEV FEATURE CONFIG
@@ -190,6 +187,14 @@ local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 local ver, radio, maj, minor, rev = getVersion()
 
 
+local drawLine = nil
+
+if string.find(radio, "x10") and tonumber(maj..minor..rev) < 222 then
+  drawLine = function(x1,y1,x2,y2,flags1,flags2) lcd.drawLine(LCD_W-x1,LCD_H-y1,LCD_W-x2,LCD_H-y2,flags1,flags2) end
+else
+  drawLine = function(x1,y1,x2,y2,flags1,flags2) lcd.drawLine(x1,y1,x2,y2,flags1,flags2) end
+end
+
 local function drawHArrow(x,y,width,left,right,drawBlinkBitmap)
   lcd.drawLine(x, y, x + width,y, SOLID, 0)
   if left == true then
@@ -212,14 +217,6 @@ end
 
 local function drawHomeIcon(x,y,utils)
   lcd.drawBitmap(utils.getBitmap("minihomeorange"),x,y)
-end
-
-local drawLine = nil
-
-if string.find(radio, "x10") and tonumber(maj..minor..rev) < 222 then
-  drawLine = function(x1,y1,x2,y2,flags1,flags2) lcd.drawLine(LCD_W-x1,LCD_H-y1,LCD_W-x2,LCD_H-y2,flags1,flags2) end
-else
-  drawLine = function(x1,y1,x2,y2,flags1,flags2) lcd.drawLine(x1,y1,x2,y2,flags1,flags2) end
 end
 
 local function computeOutCode(x,y,xmin,ymin,xmax,ymax)
@@ -364,7 +361,7 @@ local function drawNoTelemetryData(status,telemetry,utils,telemetryEnabled)
     lcd.drawFilledRectangle(90,76, 300, 80, CUSTOM_COLOR)
     lcd.setColor(CUSTOM_COLOR,0xFFFF)
     lcd.drawText(110, 85, "no telemetry data", DBLSIZE+CUSTOM_COLOR)
-    lcd.drawText(130, 120, "Yaapu Telemetry Widget 1.8.0", SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(130, 120, "Yaapu Telemetry Widget 1.8.1", SMLSIZE+CUSTOM_COLOR)
   end
 end
 

@@ -22,10 +22,9 @@ enum FlightMode {
     QLAND         = 20,
     QRTL          = 21,
     QAUTOTUNE	    = 22,
-    QACRO 	      = 23
+    QACRO         = 23
 };
 --]]
-
 local flightModes = {}
 -- plane flight modes
 flightModes[0]=""
@@ -55,3 +54,4 @@ flightModes[23]="QAutotune"
 flightModes[24]="QAcro"
 --
 return {flightModes=flightModes}
+

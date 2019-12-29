@@ -70,23 +70,16 @@ local menuItems = {
   {"rangefinder max:", TYPEVALUE, "RM", 0, 0,10000," cm",0,10 },
   {"air/groundspeed unit:", TYPECOMBO, "HSPD", 1, { "m/s", "km/h", "mph", "kn" }, { 1, 3.6, 2.23694, 1.94384} },
   {"vertical speed unit:", TYPECOMBO, "VSPD", 1, { "m/s", "ft/s", "ft/min" }, { 1, 3.28084, 196.85} },
-#ifdef HDOP_ALERT
-  {"max hdop alert:", TYPEVALUE, "HDOP", 20, 0,50,"hdop",PREC1,2 },
-#endif
   {"widget layout:", TYPECOMBO, "WL", 1, { "default","legacy"}, { 1, 2 } },
   {"center panel:", TYPECOMBO, "CPANE", 1, { "option 1","option 2","option 3","option 4" }, { 1, 2, 3, 4 } },
   {"right panel:", TYPECOMBO, "RPANE", 1, {  "option 1","option 2","option 3","option 4" }, { 1, 2, 3, 4 } },
   {"left panel:", TYPECOMBO, "LPANE", 1, {  "option 1","option 2","option 3","option 4" }, { 1 , 2, 3, 4 } },
-#ifdef DEV  
-  {"[gas] rpm label:", TYPECOMBO, "GAS_RPM", 1, { "eng","head" }, { 1, 2 },"RPANE",2 },
-  {"[gas] pinion gear:", TYPEVALUE, "GAS_PG", 14, 0,100,"",0,1,"RPANE",2 },
-  {"[gas] main gear:", TYPEVALUE, "GAS_MG", 105, 0,200,"",0,1,"RPANE",2 },
-#endif
-#ifdef BATTPERC_BY_VOLTAGE  
-  {"enable battery % by voltage:", TYPECOMBO, "BPBV", 1, { "no", "yes" }, { false, true } },
-#endif --BATTPERC_BY_VOLTAGE
   {"enable px4 flightmodes:", TYPECOMBO, "PX4", 1, { "no", "yes" }, { false, true } },
   {"screen toggle channel:", TYPEVALUE, "STC", 0, 0, 32,nil,0,1 },
+  {"map zoom level:", TYPEVALUE, "MAPZ", -2, -2, 17,nil,0,1 },
+  {"map type:", TYPECOMBO, "MAPT", 1, { "satellite", "map", "terrain" }, { "sat_tiles", "tiles", "ter_tiles" } },
+  {"map grid lines:", TYPECOMBO, "MAPG", 1, { "yes", "no" }, { true, false } },
+  {"map zoom channel:", TYPEVALUE, "ZTC", 0, 0, 32,nil,0,1 },
 }
 
 local menu  = {
@@ -133,8 +126,6 @@ local function updateMenuItems()
       ---------------------
       -- large hud layout
       ---------------------
-      
-      --{"center panel layout:", TYPECOMBO, "CPANE", 1, { "def","small","russian","dev" }, { 1, 2, 3, 4 } },
       value, name, idx = getMenuItemByName(menuItems,"CPANE")
       menuItems[idx][5] = { "default"};
       menuItems[idx][6] = { 1 };
@@ -143,52 +134,46 @@ local function updateMenuItems()
         menuItems[idx][4] = 1
       end
       
-      --{"right panel layout:", TYPECOMBO, "RPANE", 1, { "def", "custom", "empty","dev"}, { 1, 2, 3, 4 } },
       value, name, idx = getMenuItemByName(menuItems,"RPANE")
-      menuItems[idx][5] = { "default"};
+      menuItems[idx][5] = { "default" };
       menuItems[idx][6] = { 1 };
       
       if menuItems[idx][4] > #menuItems[idx][5] then
         menuItems[idx][4] = 1
       end
       
-      --{"left panel layout:", TYPECOMBO, "LPANE", 1, { "def","mav2frsky", "empty", "dev" }, { 1 , 2, 3, 4 } },
       value, name, idx = getMenuItemByName(menuItems,"LPANE")
-      menuItems[idx][5] = { "default","mav2passthru"};
+      menuItems[idx][5] = { "default","mav2passthru" };
       menuItems[idx][6] = { 1, 2 };
       
       if menuItems[idx][4] > #menuItems[idx][5] then
         menuItems[idx][4] = 1
       end
       
-      centerPanelFiles = {"hud_1"}
-      rightPanelFiles = {"right_1"}
-      leftPanelFiles = {"left_1", "left_m2f_1"}
+      centerPanelFiles = {"hud_1", "hud_nav_1" }
+      rightPanelFiles = {"right_1" }
+      leftPanelFiles = {"left_1", "left_m2f_1" }
     
     elseif value == 2 then
       ---------------------
       -- legacy layout
       ---------------------
-      
-      --{"center panel layout:", TYPECOMBO, "CPANE", 1, { "def","small","russian","dev" }, { 1, 2, 3, 4 } },
       value, name, idx = getMenuItemByName(menuItems,"CPANE")
-      menuItems[idx][5] = { "default", "russian hud", "compact hud "};
+      menuItems[idx][5] = { "default", "russian hud", "compact hud" };
       menuItems[idx][6] = { 1, 2, 3 };
       
       if menuItems[idx][4] > #menuItems[idx][5] then
         menuItems[idx][4] = 1
       end
       
-      --{"right panel layout:", TYPECOMBO, "RPANE", 1, { "def", "custom", "empty","dev"}, { 1, 2, 3, 4 } },
       value, name, idx = getMenuItemByName(menuItems,"RPANE")
-      menuItems[idx][5] = { "default", "custom sensors"};
+      menuItems[idx][5] = { "default", "custom sensors" };
       menuItems[idx][6] = { 1, 2 };
       
       if menuItems[idx][4] > #menuItems[idx][5] then
         menuItems[idx][4] = 1
       end
       
-      --{"left panel layout:", TYPECOMBO, "LPANE", 1, { "def","mav2frsky", "empty", "dev" }, { 1 , 2, 3, 4 } },
       value, name, idx = getMenuItemByName(menuItems,"LPANE")
       menuItems[idx][5] = { "default","mav2passthru" };
       menuItems[idx][6] = { 1, 2 };
@@ -251,14 +236,19 @@ local function applyConfigValues(conf)
   conf.leftPanel = getMenuItemByName(menuItems,"LPANE")
   conf.leftPanelFilename = leftPanelFiles[conf.leftPanel]
   
-#ifdef HDOP_ALERT
-  conf.maxHdopAlert = getMenuItemByName(menuItems,"HDOP")
-#endif
   conf.enablePX4Modes = getMenuItemByName(menuItems,"PX4")
+  
+  conf.mapZoomLevel = getMenuItemByName(menuItems,"MAPZ")
+  conf.mapType = getMenuItemByName(menuItems,"MAPT")
   
   local chInfo = getFieldInfo("ch"..getMenuItemByName(menuItems,"STC"))
   conf.screenToggleChannelId = (chInfo == nil and -1 or chInfo['id'])
- 
+  
+  chInfo = getFieldInfo("ch"..getMenuItemByName(menuItems,"ZTC"))
+  conf.mapToggleChannelId = (chInfo == nil and -1 or chInfo['id'])
+  
+  conf.enableMapGrid = getMenuItemByName(menuItems,"MAPG")
+  
   -- set default voltage source
   if getMenuItemByName(menuItems,"VS") ~= nil then
     conf.defaultBattSource = getMenuItemByName(menuItems,"VS")
@@ -431,9 +421,9 @@ end
 #ifdef COMPILE
 local function compileLayouts()
   local files = {
-    "layout_1", "layout_2",
+    "layout_1", "layout_2", "layout_map",
     
-    "hud_1", "hud_nav_1",
+    "hud_1",
     "right_1",
     "left_1", "left_m2f_1",
     

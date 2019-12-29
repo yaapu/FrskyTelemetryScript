@@ -36,11 +36,8 @@
 ---------------------
 -- enable splash screen for no telemetry data
 --#define SPLASH
--- enable battery percentage based on voltage
---#define BATTPERC_BY_VOLTAGE
 -- enable code to draw a compass rose vs a compass ribbon
 --#define COMPASS_ROSE
--- enable support for FNV hash based sound files
 
 ---------------------
 -- DEV FEATURE CONFIG
@@ -194,7 +191,6 @@ local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 
 
 
-
 -- offsets are: 1 celm, 4 batt, 7 curr, 10 mah, 13 cap, indexing starts at 1
 --[[
 BATT_CELL 1
@@ -208,15 +204,7 @@ BATT_ID1 1
 BATT_ID2 2
 --]]local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gpsStatuses,utils)
   lcd.setColor(CUSTOM_COLOR,0xFFFF)  
-  local perc = 0
-  if (battery[13+battId] > 0) then
-    perc = (1 - (battery[10+battId]/battery[13+battId]))*100
-    if perc > 99 then
-      perc = 99
-    elseif perc < 0 then
-      perc = 0
-    end
-  end
+  local perc = battery[16+battId] 
   --  battery min cell
   local flags = 0
   --

@@ -54,8 +54,11 @@ local customSensorXY = {
 }
 
 local function drawCustomSensors(x,customSensors,utils,status)
+    --lcd.setColor(CUSTOM_COLOR,lcd.RGB(0,75,128))
     lcd.setColor(CUSTOM_COLOR,COLOR_SENSORS)
     lcd.drawFilledRectangle(0,194,LCD_W,35,CUSTOM_COLOR)
+    lcd.setColor(CUSTOM_COLOR,COLOR_GREY)
+    lcd.drawLine(1,228,LCD_W-2,228,SOLID,CUSTOM_COLOR)
     
     local label,data,prec,mult,flags,sensorConfig
     for i=1,6
@@ -134,7 +137,6 @@ local function draw(myWidget,drawLib,conf,telemetry,status,battery,alarms,frame,
   utils.drawTopBar()
   local msgRows = 4
   if customSensors ~= nil then
-    --utils.drawBottomBar()
     msgRows = 1
     -- draw custom sensors
     drawCustomSensors(0,customSensors,utils,status)

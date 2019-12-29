@@ -21,8 +21,8 @@ local sensors = {
     1,          -- multiplier if < 1 than divides
     "+",        -- "+" track max values, "-" track min values with
     2,          -- font size 1=small, 2=big
-    nil,          -- warning level (nil is do not use feature)
-    nil,          -- critical level (nil is do not use feature)
+    nil,        -- warning level (nil is do not use feature)
+    nil,        -- critical level (nil is do not use feature)
   },
   -- Sensor 2
 [2]=  {
@@ -83,7 +83,7 @@ local sensors = {
     0,          -- precision: number of decimals 0,1,2
     "%",        -- label for unit of measure
     1,          -- multiplier if < 1 than divides
-    "+",        -- "+" track max values, "-" track min values with
+    "-",        -- "+" track max values, "-" track min values with
     2,          -- font size 1=small, 2=big
     nil,        -- warning level (nil is do not use feature)
     nil,        -- critical level (nil is do not use feature)

@@ -36,11 +36,8 @@
 ---------------------
 -- enable splash screen for no telemetry data
 --#define SPLASH
--- enable battery percentage based on voltage
---#define BATTPERC_BY_VOLTAGE
 -- enable code to draw a compass rose vs a compass ribbon
 --#define COMPASS_ROSE
--- enable support for FNV hash based sound files
 
 ---------------------
 -- DEV FEATURE CONFIG

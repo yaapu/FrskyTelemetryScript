@@ -19,20 +19,18 @@
 
 local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gpsStatuses,utils)
   lcd.setColor(CUSTOM_COLOR,COLOR_TEXT)   
-  if conf.rangeMax > 0 then
+  if conf.rangeFinderMax > 0 then
     flags = 0
     local rng = telemetry.range
-    if rng > conf.rangeMax then
-      flags = BLINK+INVERS
-    end
     rng = utils.getMaxValue(rng,MAX_RANGE)
-    if status.showMinMaxValues == true then
-      flags = 0
-    end
     lcd.setColor(CUSTOM_COLOR,COLOR_LABEL)   
     lcd.drawText(ALTASL_XLABEL, ALTASL_YLABEL, "Range("..UNIT_ALT_LABEL..")", SMLSIZE+CUSTOM_COLOR+RIGHT)
+    lcd.setColor(CUSTOM_COLOR,COLOR_RED)       
+    if rng > conf.rangeFinderMax and status.showMinMaxValues == false then
+      lcd.drawFilledRectangle(ALTASL_X-65, ALTASL_Y+4,65,21,CUSTOM_COLOR)
+    end
     lcd.setColor(CUSTOM_COLOR,COLOR_TEXT)       
-    lcd.drawText(ALTASL_X, ALTASL_Y, string.format("%.1f",rng*0.01*UNIT_ALT_SCALE), MIDSIZE+flags+RIGHT+CUSTOM_COLOR)
+    lcd.drawText(ALTASL_X, ALTASL_Y, string.format("%.1f",rng*0.01*UNIT_ALT_SCALE), MIDSIZE+RIGHT+CUSTOM_COLOR)
   else
     flags = BLINK
     -- always display gps altitude even without 3d lock

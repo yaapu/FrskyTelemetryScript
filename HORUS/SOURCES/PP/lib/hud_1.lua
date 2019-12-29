@@ -89,6 +89,9 @@ local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)
   local oy = HUD_Y_MID + dy
   local yy = 0
   
+  --lcd.setColor(CUSTOM_COLOR,lcd.RGB(0x7b, 0x9d, 0xff)) -- default blue 7B9DFF
+  --lcd.drawFilledRectangle(minX,minY,maxX-minX,maxY - minY,CUSTOM_COLOR)
+  lcd.drawBitmap(utils.getBitmap("hud_bg_280x134"),(LCD_W-HUD_WIDTH)/2,HUD_Y) --160x90  
   -- HUD
   #include "includes/hud_algo_inc.lua"
   

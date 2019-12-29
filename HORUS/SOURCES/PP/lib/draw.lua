@@ -67,6 +67,16 @@ local function drawScreenTitle(title,page, pages)
 end
 #endif --DEV
 
+#ifdef X10_OPENTX_221
+local drawLine = nil
+
+if string.find(radio, "x10") and tonumber(maj..minor..rev) < 222 then
+  drawLine = function(x1,y1,x2,y2,flags1,flags2) lcd.drawLine(LCD_W-x1,LCD_H-y1,LCD_W-x2,LCD_H-y2,flags1,flags2) end
+else
+  drawLine = function(x1,y1,x2,y2,flags1,flags2) lcd.drawLine(x1,y1,x2,y2,flags1,flags2) end
+end
+#endif --X10_OPENTX_221
+
 local function drawHArrow(x,y,width,left,right,drawBlinkBitmap)
   lcd.drawLine(x, y, x + width,y, SOLID, 0)
   if left == true then
@@ -90,16 +100,6 @@ end
 local function drawHomeIcon(x,y,utils)
   lcd.drawBitmap(utils.getBitmap("minihomeorange"),x,y)
 end
-
-#ifdef X10_OPENTX_221
-local drawLine = nil
-
-if string.find(radio, "x10") and tonumber(maj..minor..rev) < 222 then
-  drawLine = function(x1,y1,x2,y2,flags1,flags2) lcd.drawLine(LCD_W-x1,LCD_H-y1,LCD_W-x2,LCD_H-y2,flags1,flags2) end
-else
-  drawLine = function(x1,y1,x2,y2,flags1,flags2) lcd.drawLine(x1,y1,x2,y2,flags1,flags2) end
-end
-#endif --X10_OPENTX_221
 
 local function computeOutCode(x,y,xmin,ymin,xmax,ymax)
     local code = CS_INSIDE; --initialised as being inside of hud

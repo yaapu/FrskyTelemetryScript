@@ -82,3 +82,17 @@ Horus version 1.8.0
 - added support for boat frametype
 - fix for quick flight mode switch
 - fix for rover modes vocal playback
+
+Horus version 1.8.1
+
+- added widget page with offline GPS mapping
+- added support for map zoom toggle via radio channel
+- added qacro and takeoff flight modes
+- moved all battery calculations to background
+- fix for OpenTX 2.3.1 on Horus X10
+- fix for reset on model change
+- fix for broken rangefinder menu option
+- fix for custom sensor min/max nil support
+
+
+

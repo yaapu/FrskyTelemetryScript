@@ -36,11 +36,8 @@
 ---------------------
 -- enable splash screen for no telemetry data
 --#define SPLASH
--- enable battery percentage based on voltage
---#define BATTPERC_BY_VOLTAGE
 -- enable code to draw a compass rose vs a compass ribbon
 --#define COMPASS_ROSE
--- enable support for FNV hash based sound files
 
 ---------------------
 -- DEV FEATURE CONFIG
@@ -211,18 +208,15 @@ local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gpsStatuses,utils)--,getMaxValue,getBitmap,drawBlinkBitmap,lcdBacklightOn)
   --lcd.setColor(CUSTOM_COLOR,lcd.RGB(0,33,56))
   --lcd.drawFilledRectangle(x + 3,21,93,203,CUSTOM_COLOR)  
-  if conf.rangeMax > 0 then
-    flags = 0
+  if conf.rangeFinderMax > 0 then
     local rng = telemetry.range
-    if rng > conf.rangeMax then
-      flags = BLINK+INVERS
-    end
     rng = utils.getMaxValue(rng,16)
-    if status.showMinMaxValues == true then
-      flags = 0
-    end
     lcd.setColor(CUSTOM_COLOR,0x0000)     
     lcd.drawText(25, 21, "Range("..unitLabel..")", SMLSIZE+CUSTOM_COLOR)
+    if rng > conf.rangeFinderMax and status.showMinMaxValues == false then
+      lcd.setColor(CUSTOM_COLOR,0xF800)       
+      lcd.drawFilledRectangle(88-65, 33+4,65,21,CUSTOM_COLOR)
+    end
     lcd.setColor(CUSTOM_COLOR,0xFFFF)     
     lcd.drawText(88, 33, string.format("%.1f",rng*0.01*unitScale), MIDSIZE+flags+RIGHT+CUSTOM_COLOR)
   else

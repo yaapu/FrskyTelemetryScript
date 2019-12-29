@@ -226,10 +226,6 @@ status.batt2sources = {
   vs = false,
   fc = false
 }
--- SYNTH VSPEED SUPPORT
-status.vspd = 0
-status.synthVSpeedTime = 0
-status.prevHomeAlt = 0
 -- FLIGHT TIME
 status.lastTimerStart = 0
 status.timerRunning = 0
@@ -258,13 +254,16 @@ status.noTelemetryData = 1
 status.hideNoTelemetry = false
 status.showDualBattery = false
 status.showMinMaxValues = false
+-- MAP
+status.screenTogglePage = 1
+status.mapZoomLevel = 1
 -- FLIGHTMODE
 status.strFlightMode = nil
 status.modelString = nil
 ---------------------------
 -- BATTERY TABLE
 ---------------------------
-local battery = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+local battery = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
 ---------------------------
 -- LIBRARY LOADING
 ---------------------------
@@ -286,6 +285,10 @@ local layout = nil
 local centerPanel = nil
 local rightPanel = nil
 local leftPanel = nil
+-------------------------------
+-- MP SCREEN LAYOUT
+-------------------------------
+local mapLayout = nil
 
 local customSensors = nil
 
@@ -337,6 +340,8 @@ local thrOut = 0
 #endif --TESTMODE
 -- model and opentx version
 local ver, radio, maj, minor, rev = getVersion()
+
+local opentx = tonumber(maj..minor..rev)
 -- widget selected page
 local currentPage = 0
 --------------------------------------------------------------------------------
@@ -360,9 +365,7 @@ local conf = {
   battConf = BATTCONF_PARALLEL, -- 1=parallel,2=other
   cell1Count = 0,
   cell2Count = 0,
-  enableBattPercByVoltage = false,
   rangeMax=0,
-  enableSynthVSpeed=false,
   horSpeedMultiplier=1,
   vertSpeedMultiplier=1,
   horSpeedLabel = "m/s",
@@ -377,10 +380,13 @@ local conf = {
   centerPanelFilename = nil,
   rightPanelFilename = nil,
   leftPanelFilename = nil,
+  mapType = "sat_tiles",
+  mapZoomLevel = -2,
+  enableMapGrid = true,
   screenToggleChannelId = nil,
+  mapToggleChannelId = nil,
 }
 
-#ifdef FNV_HASH
 -------------------------
 -- message hash support
 -------------------------
@@ -399,7 +405,6 @@ local shortHash = nil
 local parseShortHash = false
 local hashByteIndex = 0
 local hash = 2166136261
-#endif --FNV_HASH
 
 local loadCycle = 0
 
@@ -455,6 +460,8 @@ local function loadConfig()
   rightPanel = nil
   utils.clearTable(leftPanel)
   leftPanel = nil
+  utils.clearTable(mapLayout)
+  mapLayout = nil
   collectgarbage()
   collectgarbage()
 end
@@ -708,7 +715,7 @@ end
 -----------------------------------------------------
 local function symTimer()
   thrOut = getValue("thr")
-  if (thrOut > 200 ) then
+  if (thrOut > 0 ) then
     telemetry.landComplete = 1
   else
     telemetry.landComplete = 0
@@ -730,7 +737,7 @@ local function symGPS()
     telemetry.gpsStatus = 3
     telemetry.gpsHdopC = 25
     telemetry.ekfFailsafe = 0
-    telemetry.battFailsafe = 0
+    telemetry.battFailsafe = 1
     status.noTelemetryData = 0
     telemetry.statusArmed = 1
   elseif thrOut < 200 and thrOut > 0  then
@@ -746,7 +753,7 @@ local function symGPS()
     telemetry.gpsStatus = 1
     telemetry.gpsHdopC = 120
     telemetry.ekfFailsafe = 0
-    telemetry.battFailsafe = 1
+    telemetry.battFailsafe = 0
     status.noTelemetryData = 0
     telemetry.statusArmed = 0
   else
@@ -840,6 +847,21 @@ local function symBatt()
   else
     telemetry.batt1mah = 0
   end
+#ifdef NOCURRENT
+      minmaxValues[MAX_CURR] = 0
+      minmaxValues[MAX_CURR1] = 0
+      minmaxValues[MAX_CURR2] = 0
+      minmaxValues[MAX_POWER] = 0
+      -- battery voltage
+      telemetry.batt1current = 0
+      telemetry.batt1Capacity = 5200
+      telemetry.batt1mah = 0
+#ifdef BATT2TEST
+      telemetry.batt2current = 0
+      telemetry.batt2Capacity = 5200
+      telemetry.batt2mah = 0
+#endif --BATT2TEST
+#endif --NOCURRENT
 end
 
 -- simulates attitude by using channel 1 for roll, channel 2 for pitch and channel 4 for yaw
@@ -1007,7 +1029,6 @@ local function processTelemetry(DATA_ID,VALUE)
           status.msgBuffer = status.msgBuffer .. string.char(c)
           collectgarbage()
           collectgarbage()
-#ifdef FNV_HASH
           hash = bit32.bxor(hash, c)
           hash = (hash * 16777619) % 2^32
           hashByteIndex = hashByteIndex+1
@@ -1023,7 +1044,6 @@ local function processTelemetry(DATA_ID,VALUE)
               end
             end
           end
-#endif --FNV_HASH          
         else
           msgEnd = true;
           break;
@@ -1036,7 +1056,6 @@ local function processTelemetry(DATA_ID,VALUE)
 #else
         utils.pushMessage( severity, status.msgBuffer)
 #endif
-#ifdef FNV_HASH
         -- try to play the hash sound file without checking
         -- for existence, OpenTX will gracefully ignore it :-)
         utils.playSound(tostring(shortHash == nil and hash or shortHash),true)
@@ -1054,7 +1073,6 @@ local function processTelemetry(DATA_ID,VALUE)
         shortHash = nil
         hash = 2166136261
         hashByteIndex = 0
-#endif --FNV_HASH
         status.msgBuffer = nil
         -- recover memory
         collectgarbage()
@@ -1297,6 +1315,20 @@ local function calcBattery()
   battery[BATT_CAP+1] = getBatt1Capacity() --cap1
   battery[BATT_CAP+2] = getBatt2Capacity() --cap2
   
+  for battId=0,2
+  do
+    if (battery[BATT_CAP+battId] > 0) then
+      battery[BATT_PERC+battId] = (1 - (battery[BATT_MAH+battId]/battery[BATT_CAP+battId]))*100
+      if battery[BATT_PERC+battId] > 99 then
+        battery[BATT_PERC+battId] = 99
+      elseif battery[BATT_PERC+battId] < 0 then
+        battery[BATT_PERC+battId] = 0
+      end
+    else
+      battery[BATT_PERC+battId] = 99
+    end
+  end
+
   if status.showDualBattery == true and conf.battConf ==  BATTCONF_PARALLEL then
     -- dual parallel battery: do I have also dual current monitor?
     if battery[BATT_CURR+1] > 0 and battery[BATT_CURR+2] == 0  then
@@ -1309,6 +1341,9 @@ local function calcBattery()
       --
       battery[BATT_CAP+1] = battery[BATT_CAP+1]/2   --cap1
       battery[BATT_CAP+2] = battery[BATT_CAP+1]     --cap2
+      --
+      battery[BATT_PERC+1] = battery[BATT_PERC+1]/2   --perc1
+      battery[BATT_PERC+2] = battery[BATT_PERC+1]     --perc2
     end
   end
 end
@@ -1328,11 +1363,6 @@ local function checkLandingStatus()
 end
 
 local resetLib = {}
-#ifdef LOAD_LUA
-local resetFile = libBasePath.."reset.lua"
-#else --LOAD_LUA
-local resetFile = libBasePath.."reset.luac"
-#endif --LOAD_LUA
 
 local function reset()
   -- ERRORE reset da kill CPU limit!!!!!!!!
@@ -1650,35 +1680,6 @@ local function loadFlightModes()
     maxmem = 0
   end
 end
---[[
-local function loadFlightModes()
-  if frame.flightModes then
-    return
-  end
-
-  if telemetry.frameType ~= -1 then
-#ifdef LOAD_LUA
-    if frameTypes[telemetry.frameType] == "c" then
-      frame = dofile(libBasePath..(conf.enablePX4Modes and "copter_px4.lua" or "copter.lua"))
-    elseif frameTypes[telemetry.frameType] == "p" then
-      frame = dofile(libBasePath..(conf.enablePX4Modes and "plane_px4.lua" or "plane.lua"))
-    elseif frameTypes[telemetry.frameType] == "r" then
-      frame = dofile(libBasePath.."rover.lua")
-    end
-#else
-    if frameTypes[telemetry.frameType] == "c" then
-      frame = dofile(libBasePath..(conf.enablePX4Modes and "copter_px4.luac" or "copter.luac"))
-    elseif frameTypes[telemetry.frameType] == "p" then
-      frame = dofile(libBasePath..(conf.enablePX4Modes and "plane_px4.luac" or "plane.luac"))
-    elseif frameTypes[telemetry.frameType] == "r" then
-      frame = dofile(libBasePath.."rover.luac")
-    end
-#endif
-    collectgarbage()
-    maxmem = 0
-  end
-end
---]]
 
 ---------------------------------
 -- This function checks state transitions and only returns true if a specific delay has passed
@@ -1712,11 +1713,6 @@ local function checkEvents(celm)
     utils.checkAlarm(1,2*telemetry.ekfFailsafe,ALARMS_FS_EKF,1,"ekf",conf.repeatAlertsPeriod)  
     utils.checkAlarm(1,2*telemetry.battFailsafe,ALARMS_FS_BATT,1,"lowbat",conf.repeatAlertsPeriod)  
     utils.checkAlarm(conf.timerAlert,status.flightTime,ALARMS_TIMER,1,"timealert",conf.timerAlert)
-#ifdef HDOP_ALERT    
-    if telemetry.gpsStatus  > 2 then
-      utils.checkAlarm(conf.maxHdopAlert,telemetry.gpsHdopC,ALARMS_MAX_HDOP,1,"badgps",conf.repeatAlertsPeriod)  
-    end
-#endif
   end
   
   -- default is use battery 1
@@ -1727,26 +1723,13 @@ local function checkEvents(celm)
       capacity = capacity + getBatt2Capacity()
       mah = mah  + telemetry.batt2mah
   end
-  --
-#ifdef BATTPERC_BY_VOLTAGE
-  if conf.enableBattPercByVoltage == true then
-  -- discharge curve is based on battery under load, when motors are disarmed
-  -- cellvoltage needs to be corrected by subtracting the "under load" voltage drop
-    if telemetry.statusArmed then
-      status.batLevel = getBattPercByCell(celm*0.01)
-    else
-      status.batLevel = getBattPercByCell((celm*0.01)-VOLTAGE_DROP)
-    end
+  
+  if (capacity > 0) then
+    status.batLevel = (1 - (mah/capacity))*100
   else
-#endif
-    if (capacity > 0) then
-      status.batLevel = (1 - (mah/capacity))*100
-    else
-      status.batLevel = 99
-    end
-#ifdef BATTPERC_BY_VOLTAGE
+    status.batLevel = 99
   end
-#endif
+  
   for l=1,13 do
     -- trigger alarm as as soon as it falls below level + 1 (i.e 91%,81%,71%,...)
     if status.batLevel <= batLevels[l] + 1 and l < status.lastBattLevel then
@@ -1890,6 +1873,7 @@ local function backgroundTasks(myWidget,telemetryLoops)
     
     if getTime() - timer2Hz > 50 then
       status.screenTogglePage = utils.getScreenTogglePage(myWidget,conf,status)
+      status.mapZoomLevel = utils.getMapZoomLevel(myWidget,conf,status)
       timer2Hz = getTime()
     end
     
@@ -2058,6 +2042,7 @@ end
 -- page 2 message history
 -- page 3 min max
 -- page 4 dual battery view
+-- page 5 map view
 local options = {
   { "page", VALUE, 1, 1, 5},
 }
@@ -2100,16 +2085,36 @@ utils.getScreenTogglePage = function(myWidget,conf,status)
 #ifdef TESTMODE
   local screenChValue = getValue(conf.screenToggleChannelId)
 #else
-  local screenChValue = status.hideNoTelemetry == false and -1000 or getValue(conf.screenToggleChannelId)
+  local screenChValue = status.hideNoTelemetry == false and 0 or getValue(conf.screenToggleChannelId)
 #endif --TESTMODE
   
   if conf.screenToggleChannelId > -1 then
-    if screenChValue > -600 then
+    if screenChValue < -600 then
       -- message history
       return 2
     end
+    
+    if screenChValue > 600 then
+      -- map view
+      return 5
+    end
   end
   return myWidget.options.page
+end
+
+utils.getMapZoomLevel = function(myWidget,conf,status)
+  local chValue = getValue(conf.mapToggleChannelId)
+  
+  if conf.mapToggleChannelId > -1 then
+    if chValue >= 600 then
+      return conf.mapZoomLevel + 2
+    end
+    
+    if chValue > - 600 and chValue < 600 then
+      return conf.mapZoomLevel + 1
+    end
+  end
+  return conf.mapZoomLevel
 end
 
 -- called when widget instance page changes
@@ -2220,6 +2225,20 @@ local function drawFullScreen(myWidget)
     lcd.clear(CUSTOM_COLOR)
     
     drawMessageScreen()
+  elseif myWidget.options.page == 5 or status.screenTogglePage == 5 then
+    ------------------------------------
+    -- Widget Page 5 is map
+    ------------------------------------
+    lcd.clear(CUSTOM_COLOR)
+    
+    if mapLayout ~= nil then
+      mapLayout.draw(myWidget,drawLib,conf,telemetry,status,battery,alarms,frame,utils,customSensors,gpsStatuses,leftPanel,centerPanel,rightPanel)
+    else
+    -- Layout start
+      if loadCycle == 3 then
+        mapLayout = utils.doLibrary("layout_map")
+      end
+    end
   else
     lcd.clear(CUSTOM_COLOR)
     
@@ -2264,6 +2283,7 @@ local function drawFullScreen(myWidget)
       utils.drawBlinkBitmap("minmax",0,0)  
     end
   end
+  drawLib.drawFailsafe(telemetry,utils)
   
   loadCycle=(loadCycle+1)%8
 #ifdef HUDRATE    
