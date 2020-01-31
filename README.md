@@ -2,7 +2,8 @@
 
 This is the home of the Yaapu Telemetry Script project, a [LUA](https://www.lua.org/about.html) telemetry script for the Frsky Horus and Taranis radios using the ArduPilot frsky passthru telemetry protocol.
 
-**Note:** 
+**Note:**
+- **OpenTX 2.3.5 on X9D/X9D+ has a bug in handling the exit key press events: it will always quit the telemetry script!
 - **the latest release versions are downloadable from the [clone/download](https://github.com/yaapu/FrskyTelemetryScript/archive/master.zip) button**
 - **the latest pre-release versions are downloadable from the [releases](https://github.com/yaapu/FrskyTelemetryScript/releases) section** 
 
