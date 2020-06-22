@@ -17,8 +17,7 @@ This is the home of the Yaapu Telemetry Script project, a [LUA](https://www.lua.
 The supported radios are:
 - Taranis X9D(+) and QX7 on OpenTX 2.2.2 or greater
 - X-Lite on OpenTX 2.2.2 or greater (by using the QX7 version)
-- Horus X10 and X12 on OpenTX 2.2.2 or greater
-- Jumper T16 on JumperTX 2.2.3 or greater (by using the Horus version)
+- Horus X10 and X12, Jumper T16 and Radiomaster TX16S on OpenTX 2.3.x
 
 Here you'll find
 - a **Telemetry** script for the Taranis radios: X9D,QX7 and X-Lite ([changelog](https://github.com/yaapu/FrskyTelemetryScript/raw/master/taranis-changelog.txt))
