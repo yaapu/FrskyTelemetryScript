@@ -171,6 +171,8 @@ By using Eric's Plus version the script can display
 
 To enable this feature please select it from the script config menu by choosing "m2f" as left panel option.
 
+If you wish to use the RSSI source provided by MavlinkToPassthru, ensure that you have the correct sensor selected in the "RSSI Source" option in the OpenTX Telemetry tab. 
+
 ## Voltage Sources
 
 Battery voltage is tracked independentely for 2 battery sources: FLVSS and flight controller battery monitor. In single battery mode a short press of [ENTER] on Taranis cycles between all the sources. Min value is also tracked for the 2 sources and can be shown with a [MENU] short press on Taranis.
