@@ -343,6 +343,7 @@ Open an issue on github.com
  - [Jumper](https://www.jumper.xyz) (Jumper T16 version sponsor)
  - [Frsky](https://www.frsky-rc.com/) (Taranis X9D 2019 sponsor)
  - [Radiomaster](https://www.radiomasterrc.com/) (TX16S sponsor)
+ - [TBS](https://www.team-blacksheep.com) (Crossfire version sponsor)
  - Craft&Theory for the passthrough protocol
 
 ## Donation
