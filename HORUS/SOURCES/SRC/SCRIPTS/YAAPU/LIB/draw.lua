@@ -36,6 +36,7 @@
 ---------------------
 -- enable splash screen for no telemetry data
 --#define SPLASH
+-- enable battery percentage based on voltage
 -- enable code to draw a compass rose vs a compass ribbon
 --#define COMPASS_ROSE
 
@@ -61,7 +62,7 @@
 -- calc and show hud refresh rate
 --#define HUDRATE
 -- calc and show telemetry process rate
---#define BGTELERATE
+-- #define BGTELERATE
 
 ---------------------
 -- SENSOR IDS
@@ -95,24 +96,7 @@
 -- CONF REFRESH GV
 ---------------------------------
 
----------------------------------
--- ALARMS
----------------------------------
---[[
- ALARM_TYPE_MIN needs arming (min has to be reached first), value below level for grace, once armed is periodic, reset on landing
- ALARM_TYPE_MAX no arming, value above level for grace, once armed is periodic, reset on landing
- ALARM_TYPE_TIMER no arming, fired periodically, spoken time, reset on landing
- ALARM_TYPE_BATT needs arming (min has to be reached first), value below level for grace, no reset on landing
-{ 
-  1 = notified, 
-  2 = alarm start, 
-  3 = armed, 
-  4 = type(0=min,1=max,2=timer,3=batt), 
-  5 = grace duration
-  6 = ready
-  7 = last alarm
-}  
---]]--
+--
 --
 --
 
@@ -174,13 +158,6 @@ local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 --------------------------
 -- CLIPPING ALGO DEFINES
 --------------------------
-
-
-
-
-
-
-
 
 
 -- model and opentx version
@@ -332,6 +309,43 @@ local function drawRArrow(x,y,r,angle,color)
   drawLine(x3,y3,x4,y4,SOLID,color)
 end
 
+--[[
+ bgimage = background image
+ x,y = top,left
+ x1,y1 = gauge center point 
+ r1 = gauge radius
+ r2 = gauge distance from center
+ perc = value % normalized between min, max
+ max = angle max
+--]]
+local function drawGauge(x, y, image, gx, gy, r1, r2, perc, max, color, utils)
+  local ang = (360-(max/2))+((perc*0.01)*max)
+  
+  if ang > 360 then
+    ang = ang - 360
+  end
+  
+  local ra = math.rad(ang-90)
+  local ra_left = math.rad(ang-90-20)
+  local ra_right = math.rad(ang-90+20)
+  
+  -- tip of the triangle
+  local x1 = gx + r1 * math.cos(ra)
+  local y1 = gy + r1 * math.sin(ra)
+  -- bottom left
+  local x2 = gx + r2 * math.cos(ra_left)
+  local y2 = gy + r2 * math.sin(ra_left)
+  -- bottom right
+  local x3 = gx + r2 * math.cos(ra_right)
+  local y3 = gy + r2 * math.sin(ra_right)
+  
+  lcd.drawBitmap(utils.getBitmap(image), x, y)
+
+  drawLine(x1,y1,x2,y2,SOLID,color)
+  drawLine(x1,y1,x3,y3,SOLID,color)
+  drawLine(x2,y2,x3,y3,SOLID,color)
+end
+
 local function drawFailsafe(telemetry,utils)
   if telemetry.ekfFailsafe > 0 then
     utils.drawBlinkBitmap("ekffailsafe",LCD_W/2 - 90,154)
@@ -361,7 +375,7 @@ local function drawNoTelemetryData(status,telemetry,utils,telemetryEnabled)
     lcd.drawFilledRectangle(90,76, 300, 80, CUSTOM_COLOR)
     lcd.setColor(CUSTOM_COLOR,0xFFFF)
     lcd.drawText(110, 85, "no telemetry data", DBLSIZE+CUSTOM_COLOR)
-    lcd.drawText(130, 120, "Yaapu Telemetry Widget 1.8.1", SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(130, 120, "Yaapu Telemetry Widget 1.9.1-beta1", SMLSIZE+CUSTOM_COLOR)
   end
 end
 
@@ -466,8 +480,12 @@ local function drawStatusBar(maxRows,conf,telemetry,status,battery,alarms,frame,
   end
   -- gps status, draw coordinatyes if good at least once
   if telemetry.lon ~= nil and telemetry.lat ~= nil then
+    --[[
     lcd.drawText(370,227-yDelta,utils.decToDMSFull(telemetry.lat),SMLSIZE+CUSTOM_COLOR+RIGHT)
     lcd.drawText(370,241-yDelta,utils.decToDMSFull(telemetry.lon,telemetry.lat),SMLSIZE+CUSTOM_COLOR+RIGHT)
+    --]]
+    lcd.drawText(370, 227-yDelta, telemetry.strLat, SMLSIZE+CUSTOM_COLOR+RIGHT)
+    lcd.drawText(370, 241-yDelta, telemetry.strLon, SMLSIZE+CUSTOM_COLOR+RIGHT)
   end
   -- gps status
   local hdop = telemetry.gpsHdopC
@@ -507,7 +525,6 @@ local function drawStatusBar(maxRows,conf,telemetry,status,battery,alarms,frame,
   end
   
   local offset = math.min(maxRows,#status.messages+1)
-  
   for i=0,offset-1 do
     if status.messages[(status.messageCount + i - offset) % (#status.messages+1)][2] < 4 then
       lcd.setColor(CUSTOM_COLOR,lcd.RGB(255,70,0))
@@ -526,6 +543,7 @@ return {
   drawHArrow=drawHArrow,
   drawVArrow=drawVArrow,
   drawRArrow=drawRArrow,
+  drawGauge=drawGauge,
   computeOutCode=computeOutCode,
   drawLineWithClippingXY=drawLineWithClippingXY,
   drawLineWithClipping=drawLineWithClipping,

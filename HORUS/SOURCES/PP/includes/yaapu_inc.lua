@@ -26,8 +26,8 @@
 ---------------------
 -- VERSION
 ---------------------
-#define VERSION "Yaapu Telemetry Widget 1.8.1"
-#define VERSION_CONFIG 181
+#define VERSION "Yaapu Telemetry Widget 1.9.1-beta1"
+#define VERSION_CONFIG 191
 -- load and compile of lua files
 #define LOADSCRIPT
 #ifdef LOADSCRIPT
@@ -46,6 +46,8 @@
 ---------------------
 -- enable splash screen for no telemetry data
 --#define SPLASH
+-- enable battery percentage based on voltage
+#define BATTPERC_BY_VOLTAGE
 -- enable code to draw a compass rose vs a compass ribbon
 --#define COMPASS_ROSE
 
@@ -73,7 +75,7 @@
   --pushes some test messages
   --#define TESTMESSAGES
   --simulate voltage only battery monitor
-  #define NOCURRENT
+  --#define NOCURRENT
 #endif
 -- enable debug of generated hash or short hash string
 --#define HASHDEBUG
@@ -84,7 +86,7 @@
 -- calc and show hud refresh rate
 --#define HUDRATE
 -- calc and show telemetry process rate
---#define BGTELERATE
+-- #define BGTELERATE
 
 ---------------------
 -- SENSOR IDS
@@ -209,24 +211,6 @@
 #define CONF_GV 8
 #define CONF_FM_GV 8
 
----------------------------------
--- ALARMS
----------------------------------
---[[
- ALARM_TYPE_MIN needs arming (min has to be reached first), value below level for grace, once armed is periodic, reset on landing
- ALARM_TYPE_MAX no arming, value above level for grace, once armed is periodic, reset on landing
- ALARM_TYPE_TIMER no arming, fired periodically, spoken time, reset on landing
- ALARM_TYPE_BATT needs arming (min has to be reached first), value below level for grace, no reset on landing
-{ 
-  1 = notified, 
-  2 = alarm start, 
-  3 = armed, 
-  4 = type(0=min,1=max,2=timer,3=batt), 
-  5 = grace duration
-  6 = ready
-  7 = last alarm
-}  
---]]
 #define ALARM_NOTIFIED 1
 #define ALARM_START 2
 #define ALARM_ARMED 3
@@ -289,11 +273,11 @@
 #define BOTTOMBAR_HEIGHT 20
 #define BOTTOMBAR_WIDTH LCD_W
 
-#define RSSI_X 285
+#define RSSI_X 323
 #define RSSI_Y 0
 #define RSSI_FLAGS 0 
 
-#define TXVOLTAGE_X 350
+#define TXVOLTAGE_X 391
 #define TXVOLTAGE_Y 0
 #define TXVOLTAGE_FLAGS 0
 
@@ -342,8 +326,11 @@ local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 #define BATT_ID2 2
 
 #define BATTCONF_PARALLEL 1
-#define BATTCONF_SERIAL 2
+#define BATTCONF_SERIES 2
 #define BATTCONF_OTHER 3
+#define BATTCONF_OTHER2 4
+#define BATTCONF_OTHER3 5
+#define BATTCONF_OTHER4 6
 -----------------------
 -- LIBRARY LOADING
 -----------------------
@@ -411,10 +398,3 @@ local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 #define CS_RIGHT 2
 #define CS_BOTTOM 4
 #define CS_TOP 8
-
-
-
-
-
-
-

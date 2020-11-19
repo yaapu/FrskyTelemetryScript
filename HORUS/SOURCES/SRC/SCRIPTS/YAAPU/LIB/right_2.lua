@@ -36,6 +36,7 @@
 ---------------------
 -- enable splash screen for no telemetry data
 --#define SPLASH
+-- enable battery percentage based on voltage
 -- enable code to draw a compass rose vs a compass ribbon
 --#define COMPASS_ROSE
 
@@ -61,7 +62,7 @@
 -- calc and show hud refresh rate
 --#define HUDRATE
 -- calc and show telemetry process rate
---#define BGTELERATE
+-- #define BGTELERATE
 
 ---------------------
 -- SENSOR IDS
@@ -95,24 +96,7 @@
 -- CONF REFRESH GV
 ---------------------------------
 
----------------------------------
--- ALARMS
----------------------------------
---[[
- ALARM_TYPE_MIN needs arming (min has to be reached first), value below level for grace, once armed is periodic, reset on landing
- ALARM_TYPE_MAX no arming, value above level for grace, once armed is periodic, reset on landing
- ALARM_TYPE_TIMER no arming, fired periodically, spoken time, reset on landing
- ALARM_TYPE_BATT needs arming (min has to be reached first), value below level for grace, no reset on landing
-{ 
-  1 = notified, 
-  2 = alarm start, 
-  3 = armed, 
-  4 = type(0=min,1=max,2=timer,3=batt), 
-  5 = grace duration
-  6 = ready
-  7 = last alarm
-}  
---]]--
+--
 --
 --
 
@@ -184,13 +168,6 @@ local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 
 
 
-
-
-
-
-
-
-
 -- offsets are: 1 celm, 4 batt, 7 curr, 10 mah, 13 cap, indexing starts at 1
 --[[
 BATT_CELL 1
@@ -202,7 +179,8 @@ BATT_CAP 13
 BATT_IDALL 0
 BATT_ID1 1
 BATT_ID2 2
---]]local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gpsStatuses,utils)
+--]]
+local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gpsStatuses,utils)
   lcd.setColor(CUSTOM_COLOR,0xFFFF)  
   local perc = battery[16+battId] 
   --  battery min cell
@@ -265,7 +243,20 @@ BATT_ID2 2
   lcd.drawText(x+183 - 22, 140, strmah, MIDSIZE+RIGHT+CUSTOM_COLOR)
     
   lcd.setColor(CUSTOM_COLOR,0x5AEB)
-  lcd.drawText(x+190,124,battId == 0 and "B1+B2" or (battId == 1 and "B1" or "B2"),SMLSIZE+CUSTOM_COLOR+RIGHT)
+  local battLabel = "B1+B2"
+  if battId == 0 then
+    if conf.battConf ==  3 then
+      -- alarms are based on battery 1
+      battLabel = "B1"
+    elseif conf.battConf ==  4 then
+      -- alarms are based on battery 2
+      battLabel = "B2"
+    end
+  else
+    battLabel = (battId == 1 and "B1(Ah)" or "B2(Ah)")
+  end
+  
+  lcd.drawText(x+190, 124, battLabel, SMLSIZE+CUSTOM_COLOR+RIGHT)
   
   if battId < 2 then
     -- RIGHT labels

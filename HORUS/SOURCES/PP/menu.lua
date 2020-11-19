@@ -37,49 +37,48 @@
         1.0,       //TEMPERATURE C
     };
 --]]
---[[
-
-TYPEVALUE - menu option to select a numeric value
-{description, type,name,default value,min,max,uit of measure,precision,increment step, <master name>, <master value>}
-example {"batt alert level 1:", TYPEVALUE, "V1", 375, 0,5000,"V",PREC2,5,"L2",350 },
-
-TYPECOMBO - menu option to select a value from a list
-{description, type, name, default, label list, value list, <master name>, <master value>}
-example {"center pane layout:", TYPECOMBO, "CPANE", 1, { "hud","radar" }, { 1, 2 },"CPANE",1 },
-
---]]
 --
 local menuItems = {
-  {"voice language:", TYPECOMBO, "L1", 1, { "english", "italian", "french", "german" } , {"en","it","fr","de"} },
-  {"batt alert level 1:", TYPEVALUE, "V1", 375, 0,5000,"V",PREC2,5 },
-  {"batt alert level 2:", TYPEVALUE, "V2", 350, 0,5000,"V",PREC2,5 },
-  {"batt[1] capacity override:", TYPEVALUE, "B1", 0, 0,5000,"Ah",PREC2,10 },
-  {"batt[2] capacity override:", TYPEVALUE, "B2", 0, 0,5000,"Ah",PREC2,10 },
-  {"disable all sounds:", TYPECOMBO, "S1", 1, { "no", "yes" }, { false, true } },
-  {"disable msg beep:", TYPECOMBO, "S2", 1, { "no", "info", "all" }, { 1, 2, 3 } },
-  {"enable haptic:", TYPECOMBO, "VIBR", 1, { "no", "yes" }, { false, true } },
-  {"default voltage source:", TYPECOMBO, "VS", 1, { "auto", "FLVSS", "fc" }, { nil, "vs", "fc" } },
-  {"timer alert every:", TYPEVALUE, "T1", 0, 0,600,"min",PREC1,5 },
-  {"min altitude alert:", TYPEVALUE, "A1", 0, 0,500,"m",PREC1,5 },
-  {"max altitude alert:", TYPEVALUE, "A2", 0, 0,10000,"m",0,1 },
-  {"max distance alert:", TYPEVALUE, "D1", 0, 0,100000,"m",0,10 },
-  {"repeat alerts every:", TYPEVALUE, "T2", 10, 5,600,"sec",0,5 },
-  {"dual battery config:", TYPECOMBO, "BC", 1, { "par", "ser", "other" }, { 1, 2, 3 } },
-  {"batt[1] cell count override:", TYPEVALUE, "CC", 0, 0,12," cells",0,1 },
-  {"batt[2] cell count override:", TYPEVALUE, "CC2", 0, 0,12," cells",0,1 },
-  {"rangefinder max:", TYPEVALUE, "RM", 0, 0,10000," cm",0,10 },
-  {"air/groundspeed unit:", TYPECOMBO, "HSPD", 1, { "m/s", "km/h", "mph", "kn" }, { 1, 3.6, 2.23694, 1.94384} },
-  {"vertical speed unit:", TYPECOMBO, "VSPD", 1, { "m/s", "ft/s", "ft/min" }, { 1, 3.28084, 196.85} },
-  {"widget layout:", TYPECOMBO, "WL", 1, { "default","legacy"}, { 1, 2 } },
-  {"center panel:", TYPECOMBO, "CPANE", 1, { "option 1","option 2","option 3","option 4" }, { 1, 2, 3, 4 } },
-  {"right panel:", TYPECOMBO, "RPANE", 1, {  "option 1","option 2","option 3","option 4" }, { 1, 2, 3, 4 } },
-  {"left panel:", TYPECOMBO, "LPANE", 1, {  "option 1","option 2","option 3","option 4" }, { 1 , 2, 3, 4 } },
-  {"enable px4 flightmodes:", TYPECOMBO, "PX4", 1, { "no", "yes" }, { false, true } },
-  {"screen toggle channel:", TYPEVALUE, "STC", 0, 0, 32,nil,0,1 },
-  {"map zoom level:", TYPEVALUE, "MAPZ", -2, -2, 17,nil,0,1 },
-  {"map type:", TYPECOMBO, "MAPT", 1, { "satellite", "map", "terrain" }, { "sat_tiles", "tiles", "ter_tiles" } },
-  {"map grid lines:", TYPECOMBO, "MAPG", 1, { "yes", "no" }, { true, false } },
-  {"map zoom channel:", TYPEVALUE, "ZTC", 0, 0, 32,nil,0,1 },
+  {"voice language:", "L1", 1, { "english", "italian", "french", "german" } , {"en","it","fr","de"} },
+  {"batt alert level 1:", "V1", 375, 0,5000,"V",PREC2,5 },
+  {"batt alert level 2:", "V2", 350, 0,5000,"V",PREC2,5 },
+  {"batt[1] capacity override:", "B1", 0, 0,5000,"Ah",PREC2,10 },
+  {"batt[2] capacity override:", "B2", 0, 0,5000,"Ah",PREC2,10 },
+  {"batt[1] cell count override:", "CC", 0, 0,12," cells",0,1 },
+  {"batt[2] cell count override:", "CC2", 0, 0,12," cells",0,1 },
+  {"dual battery config:", "BC", 1, { "parallel", "series", "V1C1", "V2C2", "V1C2", "V2C1" }, { 1, 2, 3, 4, 5, 6 } },
+#ifdef BATTPERC_BY_VOLTAGE  
+  {"enable battery % by voltage:", "BPBV", 1, { "no", "yes" }, { false, true } },
+#endif --BATTPERC_BY_VOLTAGE
+  {"default voltage source:", "VS", 1, { "auto", "FLVSS", "fc" }, { nil, "vs", "fc" } },
+  {"disable all sounds:", "S1", 1, { "no", "yes" }, { false, true } },
+  {"disable msg beep:", "S2", 1, { "no", "info", "all" }, { 1, 2, 3 } },
+  {"enable haptic:", "VIBR", 1, { "no", "yes" }, { false, true } },
+  {"timer alert every:", "T1", 0, 0,600,"min",PREC1,5 },
+  {"min altitude alert:", "A1", 0, 0,500,"m",PREC1,5 },
+  {"max altitude alert:", "A2", 0, 0,10000,"m",0,1 },
+  {"max distance alert:", "D1", 0, 0,100000,"m",0,10 },
+  {"repeat alerts every:", "T2", 10, 5,600,"sec",0,5 },
+  {"rangefinder max:", "RM", 0, 0,10000," cm",0,10 },
+  {"air/groundspeed unit:", "HSPD", 1, { "m/s", "km/h", "mph", "kn" }, { 1, 3.6, 2.23694, 1.94384} },
+  {"vertical speed unit:", "VSPD", 1, { "m/s", "ft/s", "ft/min" }, { 1, 3.28084, 196.85} },
+  {"widget layout:", "WL", 1, { "default","legacy"}, { 1, 2 } },
+  {"center panel:", "CPANE", 1, { "option 1","option 2","option 3","option 4" }, { 1, 2, 3, 4 } },
+  {"right panel:", "RPANE", 1, {  "option 1","option 2","option 3","option 4","option 5","option 6" }, { 1, 2, 3, 4, 5, 6 } },
+  {"left panel:", "LPANE", 1, {  "option 1","option 2","option 3","option 4" }, { 1 , 2, 3, 4 } },
+#ifdef DEV  
+  {"[gas] rpm label:", "GAS_RPM", 1, { "eng","head" }, { 1, 2 },"RPANE",2 },
+  {"[gas] pinion gear:", "GAS_PG", 14, 0,100,"",0,1,"RPANE",2 },
+  {"[gas] main gear:", "GAS_MG", 105, 0,200,"",0,1,"RPANE",2 },
+#endif
+  {"enable px4 flightmodes:", "PX4", 1, { "no", "yes" }, { false, true } },
+  {"enable CRSF:", "CRSF", 1, { "no", "yes" }, { false, true } },
+  {"screen toggle channel:", "STC", 0, 0, 32,nil,0,1 },
+  {"GPS coordinates format:", "GPS", 1, { "DMS", "decimal" }, { 1, 2 } },
+  {"map zoom level:", "MAPZ", -2, -2, 17,nil,0,1 },
+  {"map type:", "MAPT", 1, { "satellite", "map", "terrain" }, { "sat_tiles", "tiles", "ter_tiles" } },
+  {"map grid lines:", "MAPG", 1, { "yes", "no" }, { true, false } },
+  {"map zoom channel:", "ZTC", 0, 0, 32,nil,0,1 },
 }
 
 local menu  = {
@@ -105,14 +104,14 @@ local leftPanelFiles = {}
 local function getMenuItemByName(items,name)
   for idx=1,#items
   do
-    -- items[idx][3] is the menu item's name as it appears in the config file
-    if items[idx][3] == name then
-      if items[idx][2] ==  TYPECOMBO then
+    -- items[idx][2] is the menu item's name as it appears in the config file
+    if items[idx][2] == name then
+      if type(items[idx][4]) == "table" then
         -- return item's value, label, index
-        return items[idx][6][items[idx][4]], items[idx][5][items[idx][4]], idx
+        return items[idx][5][items[idx][3]], items[idx][4][items[idx][3]], idx
       else
         -- return item's value, label, index
-        return items[idx][4], name, idx
+        return items[idx][3], name, idx
       end
     end
   end
@@ -126,70 +125,76 @@ local function updateMenuItems()
       ---------------------
       -- large hud layout
       ---------------------
+      
+      --{"center panel layout:", "CPANE", 1, { "def","small","russian","dev" }, { 1, 2, 3, 4 } },
       value, name, idx = getMenuItemByName(menuItems,"CPANE")
-      menuItems[idx][5] = { "default"};
-      menuItems[idx][6] = { 1 };
+      menuItems[idx][4] = { "default"};
+      menuItems[idx][5] = { 1 };
       
-      if menuItems[idx][4] > #menuItems[idx][5] then
-        menuItems[idx][4] = 1
+      if menuItems[idx][3] > #menuItems[idx][4] then
+        menuItems[idx][3] = 1
       end
       
+      --{"right panel layout:", "RPANE", 1, { "def", "custom", "empty","dev"}, { 1, 2, 3, 4 } },
       value, name, idx = getMenuItemByName(menuItems,"RPANE")
-      menuItems[idx][5] = { "default" };
-      menuItems[idx][6] = { 1 };
+      menuItems[idx][4] = { "default", "batt% by voltage"};
+      menuItems[idx][5] = { 1, 2 };
       
-      if menuItems[idx][4] > #menuItems[idx][5] then
-        menuItems[idx][4] = 1
+      if menuItems[idx][3] > #menuItems[idx][4] then
+        menuItems[idx][3] = 1
       end
       
+      --{"left panel layout:", "LPANE", 1, { "def","mav2frsky", "empty", "dev" }, { 1 , 2, 3, 4 } },
       value, name, idx = getMenuItemByName(menuItems,"LPANE")
-      menuItems[idx][5] = { "default","mav2passthru" };
-      menuItems[idx][6] = { 1, 2 };
+      menuItems[idx][4] = { "default","mav2passthru", "empty"};
+      menuItems[idx][5] = { 1, 2, 3 };
       
-      if menuItems[idx][4] > #menuItems[idx][5] then
-        menuItems[idx][4] = 1
+      if menuItems[idx][3] > #menuItems[idx][4] then
+        menuItems[idx][3] = 1
       end
       
-      centerPanelFiles = {"hud_1", "hud_nav_1" }
-      rightPanelFiles = {"right_1" }
-      leftPanelFiles = {"left_1", "left_m2f_1" }
+      centerPanelFiles = {"hud_1" }
+      rightPanelFiles = {"right_1", "right_battperc_1" }
+      leftPanelFiles = {"left_1", "left_m2f_1", "left_empty"}
     
     elseif value == 2 then
       ---------------------
       -- legacy layout
       ---------------------
+      
+      --{"center panel layout:", "CPANE", 1, { "def","small","russian","dev" }, { 1, 2, 3, 4 } },
       value, name, idx = getMenuItemByName(menuItems,"CPANE")
-      menuItems[idx][5] = { "default", "russian hud", "compact hud" };
-      menuItems[idx][6] = { 1, 2, 3 };
+      menuItems[idx][4] = { "default", "russian hud", "compact hud ", "empty"};
+      menuItems[idx][5] = { 1, 2, 3, 4 };
       
-      if menuItems[idx][4] > #menuItems[idx][5] then
-        menuItems[idx][4] = 1
+      if menuItems[idx][3] > #menuItems[idx][4] then
+        menuItems[idx][3] = 1
       end
       
+      --{"right panel layout:", "RPANE", 1, { "def", "custom", "empty","dev"}, { 1, 2, 3, 4 } },
       value, name, idx = getMenuItemByName(menuItems,"RPANE")
-      menuItems[idx][5] = { "default", "custom sensors" };
-      menuItems[idx][6] = { 1, 2 };
+      menuItems[idx][4] = { "default", "custom sensors", "empty"};
+      menuItems[idx][5] = { 1, 2, 3 };
       
-      if menuItems[idx][4] > #menuItems[idx][5] then
-        menuItems[idx][4] = 1
+      if menuItems[idx][3] > #menuItems[idx][4] then
+        menuItems[idx][3] = 1
       end
       
+      --{"left panel layout:", "LPANE", 1, { "def","mav2frsky", "empty", "dev" }, { 1 , 2, 3, 4 } },
       value, name, idx = getMenuItemByName(menuItems,"LPANE")
-      menuItems[idx][5] = { "default","mav2passthru" };
-      menuItems[idx][6] = { 1, 2 };
+      menuItems[idx][4] = { "default","mav2passthru", "empty"};
+      menuItems[idx][5] = { 1, 2, 3 };
       
-      if menuItems[idx][4] > #menuItems[idx][5] then
-        menuItems[idx][4] = 1
+      if menuItems[idx][3] > #menuItems[idx][4] then
+        menuItems[idx][3] = 1
       end
       
-      centerPanelFiles = {"hud_2", "hud_russian_2", "hud_small_2" }
-      rightPanelFiles = {"right_2", "right_custom_2" }
-      leftPanelFiles = {"left_2", "left_m2f_2" }
+      centerPanelFiles = {"hud_2", "hud_russian_2", "hud_small_2", "hud_empty"}
+      rightPanelFiles = {"right_2", "right_custom_2", "right_empty"}
+      leftPanelFiles = {"left_2", "left_m2f_2", "left_empty"}
     end
     
     menu.updated = false
-    collectgarbage()
-    collectgarbage()
   end
 end
 
@@ -235,8 +240,8 @@ local function applyConfigValues(conf)
   
   conf.leftPanel = getMenuItemByName(menuItems,"LPANE")
   conf.leftPanelFilename = leftPanelFiles[conf.leftPanel]
-  
   conf.enablePX4Modes = getMenuItemByName(menuItems,"PX4")
+  conf.enableCRSF = getMenuItemByName(menuItems,"CRSF")
   
   conf.mapZoomLevel = getMenuItemByName(menuItems,"MAPZ")
   conf.mapType = getMenuItemByName(menuItems,"MAPT")
@@ -253,10 +258,14 @@ local function applyConfigValues(conf)
   if getMenuItemByName(menuItems,"VS") ~= nil then
     conf.defaultBattSource = getMenuItemByName(menuItems,"VS")
   end
+#ifdef BATTPERC_BY_VOLTAGE
   
+  conf.enableBattPercByVoltage = getMenuItemByName(menuItems,"BPBV")
+#endif
+  
+  conf.gpsFormat = getMenuItemByName(menuItems,"GPS")
+
   menu.editSelected = false
-  collectgarbage()
-  collectgarbage()
 end
 
 local function loadConfig(conf)
@@ -267,14 +276,13 @@ local function loadConfig(conf)
     if string.len(str) > 0 then
       for i=1,#menuItems
       do
-        local value = string.match(str, menuItems[i][3]..":([-%d]+)")
-        collectgarbage()
+        local value = string.match(str, menuItems[i][2]..":([-%d]+)")
         if value ~= nil then
-          menuItems[i][4] = tonumber(value)
+          menuItems[i][3] = tonumber(value)
           -- check if the value read from file is compatible with available options
-          if menuItems[i][2] == TYPECOMBO and tonumber(value) > #menuItems[i][5] then
+          if type(menuItems[i][4]) == "table" and tonumber(value) > #menuItems[i][4] then
             --if not force default
-            menuItems[i][4] = 1
+            menuItems[i][3] = 1
           end
         end
       end
@@ -292,7 +300,7 @@ local function saveConfig(conf)
   local myConfig = ""
   for i=1,#menuItems
   do
-    myConfig = myConfig..menuItems[i][3]..":"..menuItems[i][4]
+    myConfig = myConfig..menuItems[i][2]..":"..menuItems[i][3]
     if i < #menuItems then
       myConfig = myConfig..","
     end
@@ -303,8 +311,6 @@ local function saveConfig(conf)
     io.close(cfg)
   end
   myConfig = nil
-  collectgarbage()
-  collectgarbage()
   -- when run standalone there's nothing to update :-)
   if conf ~= nil then
     applyConfigValues(conf)
@@ -326,46 +332,46 @@ local function drawConfigMenuBars()
 end
 
 local function incMenuItem(idx)
-  if menuItems[idx][2] == TYPEVALUE then
-    menuItems[idx][4] = menuItems[idx][4] + menuItems[idx][9]
-    if menuItems[idx][4] > menuItems[idx][6] then
-      menuItems[idx][4] = menuItems[idx][6]
+  if type(menuItems[idx][4]) == "table" then
+    menuItems[idx][3] = menuItems[idx][3] + 1
+    if menuItems[idx][3] > #menuItems[idx][4] then
+      menuItems[idx][3] = 1
     end
   else
-    menuItems[idx][4] = menuItems[idx][4] + 1
-    if menuItems[idx][4] > #menuItems[idx][5] then
-      menuItems[idx][4] = 1
+    menuItems[idx][3] = menuItems[idx][3] + menuItems[idx][8]
+    if menuItems[idx][3] > menuItems[idx][5] then
+      menuItems[idx][3] = menuItems[idx][5]
     end
   end
 end
 
 local function decMenuItem(idx)
-  if menuItems[idx][2] == TYPEVALUE then
-    menuItems[idx][4] = menuItems[idx][4] - menuItems[idx][9]
-    if menuItems[idx][4] < menuItems[idx][5] then
-      menuItems[idx][4] = menuItems[idx][5]
+  if type(menuItems[idx][4]) == "table" then
+    menuItems[idx][3] = menuItems[idx][3] - 1
+    if menuItems[idx][3] < 1 then
+      menuItems[idx][3] = #menuItems[idx][4]
     end
   else
-    menuItems[idx][4] = menuItems[idx][4] - 1
-    if menuItems[idx][4] < 1 then
-      menuItems[idx][4] = #menuItems[idx][5]
+    menuItems[idx][3] = menuItems[idx][3] - menuItems[idx][8]
+    if menuItems[idx][3] < menuItems[idx][4] then
+      menuItems[idx][3] = menuItems[idx][4]
     end
   end
 end
 
 local function drawItem(idx,flags)
   lcd.setColor(CUSTOM_COLOR,COLOR_TEXT)    
-  if menuItems[idx][2] == TYPEVALUE then
-    if menuItems[idx][4] == 0 and menuItems[idx][5] >= 0 then
+  if type(menuItems[idx][4]) == "table" then
+    lcd.drawText(MENU_ITEM_X,MENU_Y + (idx-menu.offset-1)*20, menuItems[idx][4][menuItems[idx][3]],flags+CUSTOM_COLOR)
+  else
+    if menuItems[idx][3] == 0 and menuItems[idx][4] >= 0 then
       lcd.drawText(MENU_ITEM_X,MENU_Y + (idx-menu.offset-1)*20, "---",flags+CUSTOM_COLOR)
     else
-      lcd.drawNumber(MENU_ITEM_X,MENU_Y + (idx-menu.offset-1)*20, menuItems[idx][4],flags+menuItems[idx][8]+CUSTOM_COLOR)
-      if menuItems[idx][7] ~= nil then
-        lcd.drawText(MENU_ITEM_X + 50,MENU_Y + (idx-menu.offset-1)*20, menuItems[idx][7],flags+CUSTOM_COLOR)
+      lcd.drawNumber(MENU_ITEM_X,MENU_Y + (idx-menu.offset-1)*20, menuItems[idx][3],flags+menuItems[idx][7]+CUSTOM_COLOR)
+      if menuItems[idx][6] ~= nil then
+        lcd.drawText(MENU_ITEM_X + 50,MENU_Y + (idx-menu.offset-1)*20, menuItems[idx][6],flags+CUSTOM_COLOR)
       end
     end
-  else
-    lcd.drawText(MENU_ITEM_X,MENU_Y + (idx-menu.offset-1)*20, menuItems[idx][5][menuItems[idx][4]],flags+CUSTOM_COLOR)
   end
 end
 
@@ -423,13 +429,16 @@ local function compileLayouts()
   local files = {
     "layout_1", "layout_2", "layout_map",
     
-    "hud_1",
-    "right_1",
+    "hud_1", 
+    "right_1", "right_battperc_1",
     "left_1", "left_m2f_1",
     
     "hud_2", "hud_russian_2", "hud_small_2",
     "right_2", "right_custom_2",
     "left_2", "left_m2f_2",
+    
+    "hud_empty",
+    "right_empty", "left_empty",
   }
   
   -- compile all layouts for all panes

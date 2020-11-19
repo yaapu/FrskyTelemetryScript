@@ -165,7 +165,7 @@ BATT_ID2 2
 --]]
 local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gpsStatuses,utils,customSensors)
   lcd.setColor(CUSTOM_COLOR,COLOR_TEXT)  
-  local perc = battery[BATT_PERC+battId]  
+  local perc = battery[BATT_PERC+battId]
   --  battery min cell
   local flags = 0
   --

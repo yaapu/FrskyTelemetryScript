@@ -71,9 +71,12 @@ SOUNDS/yaapu0/en|ssimpleoff|super simple mode disabled
 SOUNDS/yaapu0/en|ssimpleon|super simple mode enabled
 SOUNDS/yaapu0/en|stabilize|Stabilize flight mode
 SOUNDS/yaapu0/en|steering_r|Steering mode
+SOUNDS/yaapu0/en|thermal|Thermal flight mode
 SOUNDS/yaapu0/en|throw|Throw flight mode
 SOUNDS/yaapu0/en|timealert|Timer alert
 SOUNDS/yaapu0/en|training|Training flight mode
 SOUNDS/yaapu0/en|zigzag|Zigzag flight mode
 SOUNDS/yaapu0/en|takeoff|takeoff flight mode
+SOUNDS/yaapu0/en|systemid|System I D flight mode
+SOUNDS/yaapu0/en|autorotate|autorotate flight mode
 SOUNDS/yaapu0/en|yaapu|Yaa-pu telemetry ready

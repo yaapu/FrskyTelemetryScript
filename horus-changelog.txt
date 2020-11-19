@@ -95,4 +95,11 @@ Horus version 1.8.1
 - fix for custom sensor min/max nil support
 
 
+Horus version 1.9.1
 
+- added support for crossfire
+- added new dual battery modes
+- added new right pane layouts
+- added support for THERMAL flight mode
+- fixed boat flight modes
+- fixed PX4 flight modes

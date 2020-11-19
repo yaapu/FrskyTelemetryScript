@@ -36,6 +36,7 @@
 ---------------------
 -- enable splash screen for no telemetry data
 --#define SPLASH
+-- enable battery percentage based on voltage
 -- enable code to draw a compass rose vs a compass ribbon
 --#define COMPASS_ROSE
 
@@ -61,7 +62,7 @@
 -- calc and show hud refresh rate
 --#define HUDRATE
 -- calc and show telemetry process rate
---#define BGTELERATE
+-- #define BGTELERATE
 
 ---------------------
 -- SENSOR IDS
@@ -95,24 +96,7 @@
 -- CONF REFRESH GV
 ---------------------------------
 
----------------------------------
--- ALARMS
----------------------------------
---[[
- ALARM_TYPE_MIN needs arming (min has to be reached first), value below level for grace, once armed is periodic, reset on landing
- ALARM_TYPE_MAX no arming, value above level for grace, once armed is periodic, reset on landing
- ALARM_TYPE_TIMER no arming, fired periodically, spoken time, reset on landing
- ALARM_TYPE_BATT needs arming (min has to be reached first), value below level for grace, no reset on landing
-{ 
-  1 = notified, 
-  2 = alarm start, 
-  3 = armed, 
-  4 = type(0=min,1=max,2=timer,3=batt), 
-  5 = grace duration
-  6 = ready
-  7 = last alarm
-}  
---]]--
+--
 --
 --
 
@@ -185,13 +169,6 @@ local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 
 
 
-
-
-
-
-
-
-
 -- offsets are: 1 celm, 4 batt, 7 curr, 10 mah, 13 cap, indexing starts at 1
 --[[
 BATT_CELL 1
@@ -203,7 +180,8 @@ BATT_CAP 13
 BATT_IDALL 0
 BATT_ID1 1
 BATT_ID2 2
---]]local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gpsStatuses,utils)
+--]]
+local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gpsStatuses,utils)
   lcd.setColor(CUSTOM_COLOR,0xFFFF)  
   local perc = battery[16+battId]
   --  battery min cell
@@ -239,7 +217,7 @@ BATT_ID2 2
   
   lcd.setColor(CUSTOM_COLOR,0xFFFF) -- white  
   -- battery voltage
-  drawLib.drawNumberWithDim(x+75,48,x+75, 58, battery[4+battId],"V",RIGHT+MIDSIZE+PREC1+CUSTOM_COLOR,SMLSIZE+CUSTOM_COLOR)
+  drawLib.drawNumberWithDim(x+77,48,x+77, 58, battery[4+battId],"V",RIGHT+MIDSIZE+PREC1+CUSTOM_COLOR,SMLSIZE+CUSTOM_COLOR)
   -- battery current
   local lowAmp = battery[7+battId]*0.1 < 10
   drawLib.drawNumberWithDim(x+75,68,x+76,83,battery[7+battId]*(lowAmp and 1 or 0.1),"A",DBLSIZE+RIGHT+CUSTOM_COLOR+(lowAmp and PREC1 or 0),0+CUSTOM_COLOR)
@@ -265,9 +243,21 @@ BATT_ID2 2
   local strmah = string.format("%.02f/%.01f",battery[10+battId]/1000,battery[13+battId]/1000)
   --lcd.drawText(x+90, 138+2, "Ah", SMLSIZE+RIGHT+CUSTOM_COLOR)
   lcd.drawText(x+90, 138, strmah, 0+RIGHT+CUSTOM_COLOR)
-    
+
   lcd.setColor(CUSTOM_COLOR,0x0000)
-  lcd.drawText(x+90,126,battId == 0 and "B1+B2(Ah)" or (battId == 1 and "B1(Ah)" or "B2(Ah)"),SMLSIZE+RIGHT+CUSTOM_COLOR)
+  local battLabel = "B1+B2(Ah)"
+  if battId == 0 then
+    if conf.battConf ==  3 then
+      -- alarms are based on battery 1
+      battLabel = "B1(Ah)"
+    elseif conf.battConf ==  4 then
+      -- alarms are based on battery 2
+      battLabel = "B2(Ah)"
+    end
+  else
+    battLabel = (battId == 1 and "B1(Ah)" or "B2(Ah)")
+  end
+  lcd.drawText(x+90, 126, battLabel, SMLSIZE+RIGHT+CUSTOM_COLOR)
   if battId < 2 then
     -- labels
     lcd.drawText(x+12, 154, "Eff(mAh)", SMLSIZE+CUSTOM_COLOR+RIGHT)
@@ -286,7 +276,7 @@ BATT_ID2 2
   end
   if status.showMinMaxValues == true then
     drawLib.drawVArrow(x+75+11, 16 + 8,false,true,utils)
-    drawLib.drawVArrow(x+75+11,48 + 3, false,true,utils)
+    drawLib.drawVArrow(x+77+11,48 + 3, false,true,utils)
     drawLib.drawVArrow(x+75+11,68 + 10,true,false,utils)
   end
 end

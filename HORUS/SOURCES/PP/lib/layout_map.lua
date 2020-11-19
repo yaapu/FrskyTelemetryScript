@@ -28,7 +28,7 @@
 
 #define HOME_R 10
 #define VEHICLE_R 17
-#define SAMPLES 10
+#define SAMPLES 20
 #define DIST_SAMPLES 10
 
 
@@ -104,8 +104,6 @@ end
 
 local function tiles_to_path(tile_x, tile_y, level)
   local path = string.format("/%d/%d/%d/%d/s_%d.png", level, tile_x/1024, tile_x%1024, tile_y/1024, tile_y%1024)
-  collectgarbage()
-  collectgarbage()
   return path
 end
 
@@ -148,9 +146,6 @@ local function loadAndCenterTiles(conf,tile_x,tile_y,offset_x,offset_y,width,lev
         tiles[idx] = tile_path
       else
         if tiles[idx] ~= tile_path then
-          tiles[idx] = nil
-          collectgarbage()
-          collectgarbage()
           tiles[idx] = tile_path
         end
       end
@@ -349,8 +344,6 @@ local function drawMap(myWidget,drawLib,conf,telemetry,status,battery,utils,leve
           estimatedHomeScreenX,estimatedHomeScreenY = getScreenCoordinates(minX,minY,t_x,t_y,o_x,o_y,level)        
         end
       end
-      collectgarbage()
-      collectgarbage()
     end
     
     -- position history sampling
@@ -360,8 +353,6 @@ local function drawMap(myWidget,drawLib,conf,telemetry,status,battery,utils,leve
         -- points history
         local path = tiles_to_path(tile_x, tile_y, level)
         posHistory[sample] = { path, offset_x, offset_y }
-        collectgarbage()
-        collectgarbage()
         sampleCount = sampleCount+1
         sample = sampleCount%SAMPLES
     end
@@ -376,6 +367,18 @@ local function drawMap(myWidget,drawLib,conf,telemetry,status,battery,utils,leve
         lcd.drawBitmap(utils.getBitmap("homeorange"),homeScreenX-11,homeScreenY-10)
       end
     end
+    
+    --[[
+    -- draw estimated home (debug info)
+    if estimatedHomeGps.lat ~= nil and estimatedHomeGps.lon ~= nil and estimatedHomeScreenX ~= nil then
+      local homeCode = drawLib.computeOutCode(estimatedHomeScreenX, estimatedHomeScreenY, minX+11, minY+10, maxX-11, maxY-10);
+      if homeCode == 0 then
+        lcd.setColor(CUSTOM_COLOR,COLOR_RED)
+        lcd.drawRectangle(estimatedHomeScreenX-11,estimatedHomeScreenY-11,20,20,CUSTOM_COLOR)
+      end
+    end
+    --]]
+    
     -- draw vehicle
     if myScreenX ~= nil then
       lcd.setColor(CUSTOM_COLOR,COLOR_WHITE)
@@ -439,8 +442,7 @@ local function drawMap(myWidget,drawLib,conf,telemetry,status,battery,utils,leve
     lcd.drawText(TXT_X_RIGHT+50, TXT_Y_RIGHT+6, status.battsource, SMLSIZE+CUSTOM_COLOR)
     lcd.drawText(TXT_X_RIGHT+50, TXT_Y_RIGHT+16, "V", SMLSIZE+CUSTOM_COLOR)
     -- aggregate batt %
-    local perc = battery[BATT_PERC]
-    local strperc = string.format("%2d%%",perc)
+    local strperc = string.format("%2d%%",battery[BATT_PERC])
     lcd.drawText(TXT_X_RIGHT+65, TXT_Y_RIGHT+30, strperc, MIDSIZE+CUSTOM_COLOR+RIGHT)
     -- Tracker
     lcd.setColor(CUSTOM_COLOR,COLOR_LABEL)

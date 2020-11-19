@@ -22,7 +22,8 @@ enum FlightMode {
     QLAND         = 20,
     QRTL          = 21,
     QAUTOTUNE	    = 22,
-    QACRO         = 23
+    QACRO         = 23,
+    THERMAL       = 24,
 };
 --]]
 
@@ -53,5 +54,6 @@ flightModes[21]="Qland"
 flightModes[22]="QRTL"
 flightModes[23]="QAutotune"
 flightModes[24]="QAcro"
+flightModes[25]="Thermal"
 --
 return {flightModes=flightModes}

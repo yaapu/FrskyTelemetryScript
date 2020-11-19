@@ -36,6 +36,7 @@
 ---------------------
 -- enable splash screen for no telemetry data
 --#define SPLASH
+-- enable battery percentage based on voltage
 -- enable code to draw a compass rose vs a compass ribbon
 --#define COMPASS_ROSE
 
@@ -61,7 +62,7 @@
 -- calc and show hud refresh rate
 --#define HUDRATE
 -- calc and show telemetry process rate
---#define BGTELERATE
+-- #define BGTELERATE
 
 ---------------------
 -- SENSOR IDS
@@ -95,24 +96,7 @@
 -- CONF REFRESH GV
 ---------------------------------
 
----------------------------------
--- ALARMS
----------------------------------
---[[
- ALARM_TYPE_MIN needs arming (min has to be reached first), value below level for grace, once armed is periodic, reset on landing
- ALARM_TYPE_MAX no arming, value above level for grace, once armed is periodic, reset on landing
- ALARM_TYPE_TIMER no arming, fired periodically, spoken time, reset on landing
- ALARM_TYPE_BATT needs arming (min has to be reached first), value below level for grace, no reset on landing
-{ 
-  1 = notified, 
-  2 = alarm start, 
-  3 = armed, 
-  4 = type(0=min,1=max,2=timer,3=batt), 
-  5 = grace duration
-  6 = ready
-  7 = last alarm
-}  
---]]--
+--
 --
 --
 
@@ -174,13 +158,6 @@ local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 --------------------------
 -- CLIPPING ALGO DEFINES
 --------------------------
-
-
-
-
-
-
-
 
 
 
@@ -277,9 +254,10 @@ BATT_CAP 13
 BATT_IDALL 0
 BATT_ID1 1
 BATT_ID2 2
---]]local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gpsStatuses,utils,customSensors)
+--]]
+local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gpsStatuses,utils,customSensors)
   lcd.setColor(CUSTOM_COLOR,0xFFFF)  
-  local perc = battery[16+battId]  
+  local perc = battery[16+battId]
   --  battery min cell
   local flags = 0
   --

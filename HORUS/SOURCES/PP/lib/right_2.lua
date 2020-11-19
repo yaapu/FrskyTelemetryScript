@@ -124,7 +124,20 @@ local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gp
   lcd.drawText(x+BATTMAH_X - 22, BATTMAH_Y, strmah, BATTMAH_FLAGS+RIGHT+CUSTOM_COLOR)
     
   lcd.setColor(CUSTOM_COLOR,COLOR_DARK_GREY)
-  lcd.drawText(x+190,124,battId == 0 and "B1+B2" or (battId == 1 and "B1" or "B2"),SMLSIZE+CUSTOM_COLOR+RIGHT)
+  local battLabel = "B1+B2"
+  if battId == 0 then
+    if conf.battConf ==  BATTCONF_OTHER then
+      -- alarms are based on battery 1
+      battLabel = "B1"
+    elseif conf.battConf ==  BATTCONF_OTHER2 then
+      -- alarms are based on battery 2
+      battLabel = "B2"
+    end
+  else
+    battLabel = (battId == 1 and "B1(Ah)" or "B2(Ah)")
+  end
+  
+  lcd.drawText(x+190, 124, battLabel, SMLSIZE+CUSTOM_COLOR+RIGHT)
   
   if battId < 2 then
     -- RIGHT labels

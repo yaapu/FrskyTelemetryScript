@@ -9,9 +9,9 @@
 #define BATTCELL_XI 7
 #define BATTCELL_YI 20
 
-#define BATTVOLT_X 75
+#define BATTVOLT_X 77
 #define BATTVOLT_Y 48
-#define BATTVOLT_XV 75
+#define BATTVOLT_XV 77
 #define BATTVOLT_YV 58
 #define BATTVOLT_FLAGS RIGHT+MIDSIZE+PREC1
 #define BATTVOLT_FLAGSV SMLSIZE
@@ -127,9 +127,21 @@ local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gp
   local strmah = string.format("%.02f/%.01f",battery[BATT_MAH+battId]/1000,battery[BATT_CAP+battId]/1000)
   --lcd.drawText(x+BATTMAH_X, BATTMAH_Y+2, "Ah", SMLSIZE+RIGHT+CUSTOM_COLOR)
   lcd.drawText(x+BATTMAH_X, BATTMAH_Y, strmah, BATTMAH_FLAGS+RIGHT+CUSTOM_COLOR)
-    
+
   lcd.setColor(CUSTOM_COLOR,COLOR_LABEL)
-  lcd.drawText(x+BATTLABEL_X,BATTLABEL_Y,battId == 0 and "B1+B2(Ah)" or (battId == 1 and "B1(Ah)" or "B2(Ah)"),BATTLABEL_FLAGS+CUSTOM_COLOR)
+  local battLabel = "B1+B2(Ah)"
+  if battId == 0 then
+    if conf.battConf ==  BATTCONF_OTHER then
+      -- alarms are based on battery 1
+      battLabel = "B1(Ah)"
+    elseif conf.battConf ==  BATTCONF_OTHER2 then
+      -- alarms are based on battery 2
+      battLabel = "B2(Ah)"
+    end
+  else
+    battLabel = (battId == 1 and "B1(Ah)" or "B2(Ah)")
+  end
+  lcd.drawText(x+BATTLABEL_X, BATTLABEL_Y, battLabel, BATTLABEL_FLAGS+CUSTOM_COLOR)
   if battId < 2 then
     -- labels
     lcd.drawText(x+BATTEFF_XLABEL, BATTEFF_YLABEL, "Eff(mAh)", SMLSIZE+CUSTOM_COLOR+RIGHT)
