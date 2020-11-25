@@ -115,3 +115,10 @@ Taranis version 1.8.0
 - added new message alert silencing options
 - fix for quick flight mode switch
 - fix for rover modes vocal playback
+
+Taranis version 1.9.1
+
+- added support for crossfire
+- added support for THERMAL flight mode
+- fixed boat flight modes
+- fixed PX4 flight modes
