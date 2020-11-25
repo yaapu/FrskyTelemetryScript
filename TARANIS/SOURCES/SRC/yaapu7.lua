@@ -34,32 +34,17 @@
 ---------------------
 -- FEATURES
 ---------------------
---#define BATTMAH3DEC
--- enable altitude/distance monitor and vocal alert (experimental)
---#define MONITOR
--- show incoming DIY packet rates
---#define TELEMETRY_STATS
--- enable synthetic vspeed when ekf is disabled
---#define SYNTHVSPEED
--- enable telemetry reset on timer 3 reset
--- always calculate FNV hash and play sound msg_<hash>.wav
--- enable telemetry logging menu option
---#define LOGTELEMETRY
--- enable max HDOP alert 
---#define HDOP_ALARM
 -- enable support for custom background functions
 --#define CUSTOM_BG_CALL
--- enable alert window for no telemetry
---#define NOTELEM_ALERT
--- enable popups for no telemetry data
---#define NOTELEM_POPUP
--- enable blinking rectangle on no telemetry
+-- enable battery % by voltage (x9d 2019 only)
+--#define BATTPERC_BY_VOLTAGE
+
 ---------------------
 -- DEBUG
 ---------------------
---#define DEBUG
+-- show button event code on message screen
 --#define DEBUGEVT
---#define DEV
+-- display memory info
 --#define MEMDEBUG
 -- calc and show background function rate
 --#define BGRATE
@@ -69,6 +54,7 @@
 --#define HUDRATE
 -- calc and show telemetry process rate
 --#define BGTELERATE
+
 ---------------------
 -- TESTMODE
 ---------------------
@@ -146,6 +132,7 @@
 --]]
 
 
+
 -----------------------
 -- UNIT SCALING
 -----------------------
@@ -174,7 +161,6 @@ local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 -----------------------------------
 -- STATE TRANSITION ENGINE SUPPORT
 -----------------------------------
-
 
 
 
@@ -251,7 +237,7 @@ local cell2maxFC = 0
 local cell2sumFC = 0
 --------------------------------
 -- BATT
-local battery = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+local battery = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
 local cell1count = 0
 local cell2count = 0
 
@@ -346,7 +332,8 @@ local status = {}
 -- BLINK SUPPORT
 local blinktime = getTime()
 local blinkon = false
-
+-- CRSF rssi support
+local rssiCRSF = 0
 
 status.showDualBattery = false
 status.battAlertLevel1 = false
@@ -404,6 +391,7 @@ local conf = {
   defaultBattSource = "na",
   enablePX4Modes = false,
   enableHaptic = false,
+  enableCRSF = false,
 }
 --[[
  ALARM_TYPE_MIN needs arming (min has to be reached first), value below level for grace, once armed is periodic, reset on landing
@@ -419,7 +407,8 @@ local conf = {
   6 = ready
   7 = last alarm
 }  
---]]-------------------------
+--]]
+-------------------------
 -- alarms
 -------------------------
 local alarms = {
@@ -442,31 +431,31 @@ local transitions = {
     { 0, 0, false, 30 }, -- flightmode
 }
 
-
 -------------------------
--- message hash support, uses 312 bytes
+-- message hash support
 -------------------------
-local shortHashes = { 
-  -- 16 bytes hashes, requires 88 bytes
-  {554623408},      -- "554623408.wav", "Takeoff complete"
-  {3025044912},     -- "3025044912.wav", "SmartRTL deactiv"
-  {3956583920},     -- "3956583920.wav", "EKF2 IMU0 is usi"
-  {1309405592},     -- "1309405592.wav", "EKF3 IMU0 is usi"
-  {4091124880,true}, -- "4091124880.wav", "Reached command "
-  {3311875476,true}, -- "3311875476.wav", "Reached waypoint"
-  {1997782032,true}, -- "1997782032.wav", "Passed waypoint "
-}
+local shortHashes = {}
+-- 16 bytes hashes
+shortHashes[554623408]  = false  -- "554623408.wav", "Takeoff complete"
+shortHashes[3025044912] = false -- "3025044912.wav", "SmartRTL deactiv"
+shortHashes[3956583920] = false -- "3956583920.wav", "EKF2 IMU0 is usi"
+shortHashes[1309405592] = false -- "1309405592.wav", "EKF3 IMU0 is usi"
+shortHashes[4091124880] = true  -- "4091124880.wav", "Reached command "
+shortHashes[3311875476] = true  -- "3311875476.wav", "Reached waypoint"
+shortHashes[1997782032] = true  -- "1997782032.wav", "Passed waypoint "
 
 local shortHash = nil
 local parseShortHash = false
 local hashByteIndex = 0
 local hash = 2166136261
 
-
 local showMessages = false
 local showConfigMenu = false
 local showAltView = false
 local loadCycle = 0
+
+-- telemetry pop function, either SPort or CRSF
+local telemetryPop = nil
 
 -----------------------------
 -- clears the loaded table 
@@ -565,7 +554,7 @@ local function playFlightMode(flightMode)
   end
   if frame.flightModes then
     if frame.flightModes[flightMode] ~= nil then
-      playFile(soundFileBasePath.."/"..conf.language.."/".. string.lower(frame.flightModes[flightMode]) .. (frameType=="r" and "_r.wav" or ".wav"))
+      playFile(soundFileBasePath.."/"..conf.language.."/".. string.lower(frame.flightModes[flightMode]) .. ((frameType=="r" or frameType=="b") and "_r.wav" or ".wav"))
     end
   end
 end
@@ -606,6 +595,7 @@ function fnv(str)
 	return hash
 end
 --]]
+
 
 local function pushMessage(severity, msg)
   if conf.enableHaptic then
@@ -719,7 +709,39 @@ local function reset()
 end
 
 
-local function processTelemetry(telemetry,DATA_ID,VALUE)
+local function updateHash(c)
+  hash = bit32.bxor(hash, c)
+  hash = (hash * 16777619) % 2^32
+  hashByteIndex = hashByteIndex+1
+  -- check if this hash matches any 16bytes prefix hash
+  if hashByteIndex == 16 then
+     parseShortHash = shortHashes[hash]
+     shortHash = hash
+  end
+end
+
+local function playHash()
+  -- try to play the hash sound file without checking for existence
+  -- OpenTX will gracefully ignore it :-)
+  playSound(tostring(shortHash == nil and hash or shortHash),true)
+  -- if required parse parameter and play it!
+  if parseShortHash == true then
+    local param = string.match(status.msgBuffer, ".*#(%d+).*")
+    if param ~= nil then
+      playNumber(tonumber(param),0)
+    end
+  end
+end
+
+local function resetHash()
+  -- reset hash for next string
+  parseShortHash = false
+  shortHash = nil
+  hash = 2166136261
+  hashByteIndex = 0
+end
+
+local function processTelemetry(DATA_ID, VALUE)
   if DATA_ID == 0x5006 then -- ROLLPITCH
     -- roll [0,1800] ==> [-180,180]
     telemetry.roll = (math.min(bit32.extract(VALUE,0,11),1800) - 900) * 0.2
@@ -782,52 +804,20 @@ local function processTelemetry(telemetry,DATA_ID,VALUE)
         c = bit32.extract(VALUE,i*8,7)
         if c ~= 0 then
           msgBuffer = msgBuffer .. string.char(c)
-          collectgarbage()
-          collectgarbage()
-          hash = bit32.bxor(hash, c)
-          hash = (hash * 16777619) % 2^32
-          hashByteIndex = hashByteIndex+1
-          -- check if this hash matches any 16bytes prefix hash
-          if hashByteIndex == 16 then
-            for i=1,#shortHashes
-            do
-              if hash == shortHashes[i][1] then
-                -- ok found
-                shortHash = hash
-                -- check if needs parsing
-                parseShortHash = shortHashes[i][2] == nil and false or true
-                break;
-              end
-            end
-          end
+          updateHash(c)
         else
           msgEnd = true;
           break;
         end
       end
+      collectgarbage()
+      collectgarbage()
       if msgEnd then
         -- push and display message
         local severity = (bit32.extract(VALUE,7,1) * 1) + (bit32.extract(VALUE,15,1) * 2) + (bit32.extract(VALUE,23,1) * 4)
         pushMessage( severity, msgBuffer)
-        -- play shortHash if found otherwise "try" the full hash
-        -- if it does not exist OpenTX will gracefully ignore it
-        playSound(tostring(shortHash == nil and hash or shortHash),true)
-        -- if required parse parameter and play it!
-        if parseShortHash then
-          local param = string.match(msgBuffer, ".*#(%d+).*")
-          collectgarbage()
-          collectgarbage()
-          if param ~= nil then
-            playNumber(tonumber(param),0)
-            collectgarbage()
-            collectgarbage()
-          end
-        end
-        -- reset hash for next string
-        parseShortHash = false
-        shortHash = nil
-        hash = 2166136261
-        hashByteIndex = 0
+        playHash()
+        resetHash()
         msgBuffer = nil
         -- recover memory
         collectgarbage()
@@ -858,11 +848,58 @@ local function processTelemetry(telemetry,DATA_ID,VALUE)
     rcchannels[2 + offset] = 100 * (bit32.extract(VALUE,11,6)/63) * (bit32.extract(VALUE,17,1) == 1 and -1 or 1)
     rcchannels[3 + offset] = 100 * (bit32.extract(VALUE,18,6)/63) * (bit32.extract(VALUE,24,1) == 1 and -1 or 1)
     rcchannels[4 + offset] = 100 * (bit32.extract(VALUE,25,6)/63) * (bit32.extract(VALUE,31,1) == 1 and -1 or 1)
---]]  elseif DATA_ID == 0x50F2 then -- VFR
+--]]
+  elseif DATA_ID == 0x50F2 then -- VFR
     telemetry.airspeed = bit32.extract(VALUE,1,7) * (10^bit32.extract(VALUE,0,1)) -- dm/s
     telemetry.throttle = bit32.extract(VALUE,8,7)
     telemetry.baroAlt = bit32.extract(VALUE,17,10) * (10^bit32.extract(VALUE,15,2)) * 0.1 * (bit32.extract(VALUE,27,1) == 1 and -1 or 1)
   end
+end
+
+
+local function crossfirePop()
+    local command, data = crossfireTelemetryPop()
+    -- command is 0x80 CRSF_FRAMETYPE_ARDUPILOT
+    if (command == 0x80 or command == 0x7F)  and data ~= nil then
+      -- actual payload starts at data[2]
+      if #data >= 7 and data[1] == 0xF0 then
+        local app_id = bit32.lshift(data[3],8) + data[2]
+        local value =  bit32.lshift(data[7],24) + bit32.lshift(data[6],16) + bit32.lshift(data[5],8) + data[4]
+        return 0x00, 0x10, app_id, value
+      elseif #data > 4 and data[1] == 0xF1 then
+        -- minimum text messages of 1 char
+        local severity = data[2]
+        -- copy the terminator as well
+        for i=3,#data
+        do
+          msgBuffer = msgBuffer .. string.char(data[i])
+          -- hash support
+          updateHash(data[i])
+        end
+        pushMessage(severity, msgBuffer)
+        -- hash audio support
+        playHash()
+        -- hash reset
+        resetHash()
+        msgBuffer = nil
+        collectgarbage()
+        collectgarbage()
+        msgBuffer = ""
+      elseif #data > 48 and data[1] == 0xF2 then
+        -- passthrough array
+        local app_id, value
+        for i=0,data[2]-1
+        do
+          app_id = bit32.lshift(data[4+(6*i)],8) + data[3+(6*i)]
+          value =  bit32.lshift(data[8+(6*i)],24) + bit32.lshift(data[7+(6*i)],16) + bit32.lshift(data[6+(6*i)],8) + data[5+(6*i)]
+          --pushMessage(7,string.format("CRSF:%d - %04X:%08X",i, app_id, value))
+          processTelemetry(app_id, value)
+        end
+        noTelemetryData = 0
+        hideNoTelemetry = true
+      end
+    end
+    return nil, nil ,nil ,nil
 end
 
 local function telemetryEnabled()
@@ -909,6 +946,7 @@ local function calcCellCount()
   
   return c1,c2
 end
+
 
 -- gets the voltage based on source and min value, battId = [1|2]
 local function getMinVoltageBySource(source, cell, cellFC, battId)
@@ -1030,31 +1068,69 @@ local function calcBattery()
   -- cell1minA2 = cell1sumA2/calcCellCount()
   
   local count1,count2 = calcCellCount()
-  -- 3 cases here
-  -- 1) parallel => all values depend on both batteries
-  -- 2) other => all values depend on battery 1
-  -- 3) serial => celm(vs) and vbatt(vs) depend on both batteries, all other values on PM battery 1 (this is not supported: 1 PM + 2xFLVSS)
   
   battery[1+1] = getMinVoltageBySource(status.battsource, cell1min, cell1sumFC/count1, 1)*100 --cel1m
   battery[1+2] = getMinVoltageBySource(status.battsource, cell2min, cell2sumFC/count2, 2)*100 --cel2m
-  battery[1] = (conf.battConf ==  3 and battery[2] or getNonZeroMin(battery[2],battery[3]) )
   
   battery[4+1] = getMinVoltageBySource(status.battsource, cell1sum, cell1sumFC, 1)*10 --batt1
   battery[4+2] = getMinVoltageBySource(status.battsource, cell2sum, cell2sumFC, 2)*10 --batt2
-  battery[4] = (conf.battConf ==  3 and battery[5] or (conf.battConf == 2 and battery[5]+battery[6] or getNonZeroMin(battery[5],battery[6]))) 
   
-  battery[7] = getMaxValue((conf.battConf ==  3 and telemetry.batt1current or telemetry.batt1current + telemetry.batt2current),7)
   battery[7+1] = getMaxValue(telemetry.batt1current,8) --curr1
   battery[7+2] = getMaxValue(telemetry.batt2current,9) --curr2
   
-  battery[10] = (conf.battConf ==  3 and telemetry.batt1mah or telemetry.batt1mah + telemetry.batt2mah)
   battery[10+1] = telemetry.batt1mah --mah1
   battery[10+2] = telemetry.batt2mah --mah2
   
-  battery[13] = (conf.battConf ==  1 and getBatt1Capacity() + getBatt2Capacity() or getBatt1Capacity())
   battery[13+1] = getBatt1Capacity() --cap1
   battery[13+2] = getBatt2Capacity() --cap2
         
+  --[[
+   4 cases here
+   1) parallel => all values depend on both batteries
+   2) other1 => all values depend on battery 1
+   3) other2 => all values depend on battery 2
+   4) series => celm(vs) and vbatt(vs) depend on both batteries, all other values on PM battery 1 (this is not supported: 1 PM + 2xFLVSS)
+  --]]
+  if (conf.battConf == 1) then
+    battery[1] = getNonZeroMin(battery[2], battery[3])
+    battery[4] = getNonZeroMin(battery[5],battery[6])
+    battery[7] = getMaxValue(telemetry.batt1current + telemetry.batt2current, 7)    
+    battery[10] = telemetry.batt1mah + telemetry.batt2mah
+    battery[13] = getBatt2Capacity() + getBatt1Capacity()
+  elseif (conf.battConf == 2) then
+    battery[1] = getNonZeroMin(battery[2], battery[3])
+    battery[4] = battery[5] + battery[6]
+    battery[7] = getMaxValue(telemetry.batt1current,7)
+    battery[10] = telemetry.batt1mah
+    battery[13] = getBatt1Capacity()
+  elseif (conf.battConf == 3) then
+    battery[1] = battery[2]
+    battery[4] = battery[5]
+    battery[7] = getMaxValue(telemetry.batt1current,7)    
+    battery[10] = telemetry.batt1mah
+    battery[13] = getBatt1Capacity()
+  else
+    battery[1] = battery[3]
+    battery[4] = battery[6]
+    battery[7] = getMaxValue(telemetry.batt2current,7)    
+    battery[10] = telemetry.batt2mah
+    battery[13] = getBatt2Capacity()
+  end
+  
+    for battId=0,2
+    do
+      if (battery[13+battId] > 0) then
+        battery[16+battId] = (1 - (battery[10+battId]/battery[13+battId]))*100
+        if battery[16+battId] > 99 then
+          battery[16+battId] = 99
+        elseif battery[16+battId] < 0 then
+          battery[16+battId] = 0
+        end
+      else
+        battery[16+battId] = 99
+      end
+    end
+  
   if status.showDualBattery == true and conf.battConf ==  1 then
     -- dual parallel battery: do I have also dual current monitor?
     if battery[7+1] > 0 and battery[7+2] == 0  then
@@ -1112,15 +1188,17 @@ local function setSensorValues()
   if (battcapacity > 0) then
     perc = math.min(math.max((1 - (battmah/battcapacity))*100,0),99)
   end
-  
-  setTelemetryValue(0x060F, 0, 0, perc, 13 , 0 , "Fuel")
+  -- CRSF
+  if not conf.enableCRSF then
+    setTelemetryValue(0x060F, 0, 0, perc, 13 , 0 , "Fuel")
+    setTelemetryValue(0x020F, 0, 0, telemetry.batt1current+telemetry.batt2current, 2 , 1 , "CURR")
+    setTelemetryValue(0x084F, 0, 0, math.floor(telemetry.yaw), 20 , 0 , "Hdg")
+    setTelemetryValue(0x010F, 0, 0, telemetry.homeAlt*10, 9 , 1 , "Alt")
+    setTelemetryValue(0x083F, 0, 0, telemetry.hSpeed*0.1, 4 , 0 , "GSpd")
+  end
   setTelemetryValue(0x021F, 0, 0, getNonZeroMin(telemetry.batt1volt,telemetry.batt2volt)*10, 1 , 2 , "VFAS")
-  setTelemetryValue(0x020F, 0, 0, telemetry.batt1current+telemetry.batt2current, 2 , 1 , "CURR")
   setTelemetryValue(0x011F, 0, 0, telemetry.vSpeed, 5 , 1 , "VSpd")
-  setTelemetryValue(0x083F, 0, 0, telemetry.hSpeed*0.1, 4 , 0 , "GSpd")
-  setTelemetryValue(0x010F, 0, 0, telemetry.homeAlt*10, 9 , 1 , "Alt")
   setTelemetryValue(0x082F, 0, 0, math.floor(telemetry.gpsAlt*0.1), 9 , 0 , "GAlt")
-  setTelemetryValue(0x084F, 0, 0, math.floor(telemetry.yaw), 20 , 0 , "Hdg")
   setTelemetryValue(0x041F, 0, 0, telemetry.imuTemp, 11 , 0 , "IMUt")
   setTelemetryValue(0x060F, 0, 1, telemetry.statusArmed*100, 0 , 0 , "ARM")
 end
@@ -1180,7 +1258,7 @@ local function checkAlarm(level,value,idx,sign,sound,delay)
         alarms[idx][2] = 0
         alarms[idx][1] = false
         alarms[idx][6] = false
-        -- status: 
+        -- status: RESET
       end
       if alarms[idx][2] > 0 and (status.flightTime ~= alarms[idx][2]) and (status.flightTime - alarms[idx][2]) >= alarms[idx][5] then
         -- enough time has passed after START
@@ -1211,11 +1289,11 @@ local function loadFlightModes()
   end
   if telemetry.frameType ~= -1 then
     if frameTypes[telemetry.frameType] == "c" then
-      frame = dofile(libBasePath..(conf.enablePX4Modes and "copter_px4.luac" or "copter.luac"))
+      frame = doLibrary(conf.enablePX4Modes and "copter_px4" or "copter")
     elseif frameTypes[telemetry.frameType] == "p" then
-      frame = dofile(libBasePath..(conf.enablePX4Modes and "plane_px4.luac" or "plane.luac"))
-    elseif frameTypes[telemetry.frameType] == "r" then
-      frame = dofile(libBasePath.."rover.luac")
+      frame = doLibrary(conf.enablePX4Modes and "plane_px4" or "plane")
+    elseif frameTypes[telemetry.frameType] == "r" or frameTypes[telemetry.frameType] == "b" then
+      frame = doLibrary("rover")
     end
     if frame.flightModes then
       frameType = frameTypes[telemetry.frameType]
@@ -1224,6 +1302,7 @@ local function loadFlightModes()
     end
   end
 end
+
 
 local function getFlightMode()
   if frame.flightModes then
@@ -1243,19 +1322,18 @@ local function checkTransition(idx,value)
     transitions[idx][1] = value
     transitions[idx][2] = getTime()
     transitions[idx][3] = false
-    -- status: 
+    -- status: RESET
     return false
   end
   if transitions[idx][3] == false and (getTime() - transitions[idx][2]) >= transitions[idx][4] then
-    -- enough time has passed after 
+    -- enough time has passed after RESET
     transitions[idx][3] = true
     -- status: FIRE
     return true;
   end
 end
 
-
-local function checkEvents()
+local function checkEvents(cellVoltage)
   loadFlightModes()
   
   checkAlarm(conf.minAltitudeAlert,telemetry.homeAlt,1,-1,"minalt",conf.repeatAlertsPeriod)
@@ -1265,21 +1343,23 @@ local function checkEvents()
   checkAlarm(1,2*telemetry.battFailsafe,5,1,"lowbat",conf.repeatAlertsPeriod)  
   checkAlarm(math.floor(conf.timerAlert),status.flightTime,6,1,"timealert",math.floor(conf.timerAlert))
 
+  --[[
   local capacity = getBatt1Capacity()
   local mah = telemetry.batt1mah
   
   -- only if dual battery has been detected
-  if (batt2sources.fc or batt2sources.vs) and conf.battConf == 1 then
+  if (batt2sources.fc or batt2sources.vs) and conf.battConf == BATTCONF_PARALLEL then
+  if (batt2sources.fc or batt2sources.vs) and conf.battConf == BATTCONF_PARALLEL then
       capacity = capacity + getBatt2Capacity()
       mah = mah  + telemetry.batt2mah
   end
+  --]]
+    if (battery[13] > 0) then
+      batLevel = (1 - (battery[10]/battery[13]))*100
+    else
+      batLevel = 99
+    end
   
-  if (capacity > 0) then
-    batLevel = (1 - (mah/capacity))*100
-  else
-    batLevel = 99
-  end
-
   for l=0,12 do
     -- trigger alarm as as soon as it falls below level + 1 (i.e 91%,81%,71%,...)
     local level = tonumber(string.sub("00051015202530405060708090",l*2+1,l*2+2))
@@ -1359,13 +1439,12 @@ local bgclock = 0
 -------------------------------
 local function background()
   -- FAST: this runs at 60Hz (every 16ms)
-  for i=1,3
+  for i=1,7
   do
-    local sensor_id,frame_id,data_id,value = sportTelemetryPop()
+    local sensor_id,frame_id,data_id,value = telemetryPop()
     
     if frame_id == 0x10 then
-      processTelemetry(telemetry,data_id,value)
-      -- update telemetry status
+      processTelemetry(data_id,value)
       noTelemetryData = 0
       hideNoTelemetry = true
     end
@@ -1383,22 +1462,25 @@ local function background()
     local count1,count2 = calcCellCount()
     local cellVoltage = 0
     
-    if conf.battConf ==  3 then
+    if conf.battConf == 3 then
       -- alarms are based on battery 1
       cellVoltage = 100*(status.battsource == "vs" and cell1min or cell1sumFC/count1)
+    elseif conf.battConf == 4 then
+      -- alarms are based on battery 1
+      cellVoltage = 100*(status.battsource == "vs" and cell2min or cell2sumFC/count2)
     else
       -- alarms are based on battery 1 and battery 2
       cellVoltage = 100*(status.battsource == "vs" and getNonZeroMin(cell1min,cell2min) or getNonZeroMin(cell1sumFC/count1,cell2sumFC/count2))
     end
     --
-    checkEvents()
+    checkEvents(cellVoltage)
     checkLandingStatus()
     -- no need for alarms if reported voltage is 0
     if cellVoltage > 0 then
       checkCellVoltage(cellVoltage)
     end
     -- aggregate value
-    minmaxValues[7] = math.max((conf.battConf ==  3 and telemetry.batt1current or telemetry.batt1current+telemetry.batt2current), minmaxValues[7])
+    minmaxValues[7] = math.max((conf.battConf ==  3 and telemetry.batt1current or (conf.battConf ==  4 and telemetry.batt2current or telemetry.batt1current+telemetry.batt2current)), minmaxValues[7])
 
     -- indipendent values
     minmaxValues[8] = math.max(telemetry.batt1current,minmaxValues[8])
@@ -1414,6 +1496,10 @@ local function background()
       collectgarbage()
       collectgarbage()
     end 
+    
+    -- CRSF: take the best signal and apply same algo used by ardupilot to estimate a 0-100 rssi value
+    -- rssi = roundf((1.0f - (rssi_dbm - 50.0f) / 70.0f) * 255.0f);
+    rssiCRSF = string.format("%d/%d", math.min(100, math.floor(0.5 + ((1-(math.min(getValue("1RSS"), getValue("2RSS")) - 50)/70)*100))), getValue("RFMD"))
     
     bgclock=0
   end
@@ -1574,9 +1660,9 @@ local function run(event)
     lcd.drawFilledRectangle(0,57, 128, 8, FORCE)
     
     if drawLib ~= nil then
-      drawLib.drawTopBar(getFlightMode(),telemetry.simpleMode,status.flightTime,telemetryEnabled)
+      drawLib.drawTopBar(getFlightMode(), telemetry.simpleMode, status.flightTime, telemetryEnabled, conf.enableCRSF and rssiCRSF or getRSSI())
       drawLib.drawBottomBar(messages[(messageCount + #messages) % (#messages+1)],lastMsgTime)
-      drawLib.drawNoTelemetry(telemetryEnabled,hideNoTelemetry)
+      drawLib.drawNoTelemetry(telemetryEnabled, hideNoTelemetry)
     end
   -- event handler
     if event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT or event == 36 then
@@ -1617,10 +1703,16 @@ local function init()
   collectgarbage()
   -- ok configuration loaded
   status.battsource = conf.defaultBattSource
+  -- CRSF or SPORT?
+  telemetryPop = sportTelemetryPop
+  if conf.enableCRSF == true then
+    telemetryPop = crossfirePop
+  end
   -- configuration loaded, releasing menu library memory
   clearTable(menuLib)
   menuLib = nil
-  pushMessage(7,"Yaapu X7 1.8.0")
+
+  pushMessage(7,"Yaapu X7 1.9.1 beta1")
   collectgarbage()
   collectgarbage()
   playSound("yaapu")

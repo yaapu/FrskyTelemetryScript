@@ -34,32 +34,17 @@
 ---------------------
 -- FEATURES
 ---------------------
---#define BATTMAH3DEC
--- enable altitude/distance monitor and vocal alert (experimental)
---#define MONITOR
--- show incoming DIY packet rates
---#define TELEMETRY_STATS
--- enable synthetic vspeed when ekf is disabled
---#define SYNTHVSPEED
--- enable telemetry reset on timer 3 reset
--- always calculate FNV hash and play sound msg_<hash>.wav
--- enable telemetry logging menu option
---#define LOGTELEMETRY
--- enable max HDOP alert 
---#define HDOP_ALARM
 -- enable support for custom background functions
 --#define CUSTOM_BG_CALL
--- enable alert window for no telemetry
---#define NOTELEM_ALERT
--- enable popups for no telemetry data
---#define NOTELEM_POPUP
--- enable blinking rectangle on no telemetry
+-- enable battery % by voltage (x9d 2019 only)
+--#define BATTPERC_BY_VOLTAGE
+
 ---------------------
 -- DEBUG
 ---------------------
---#define DEBUG
+-- show button event code on message screen
 --#define DEBUGEVT
---#define DEV
+-- display memory info
 --#define MEMDEBUG
 -- calc and show background function rate
 --#define BGRATE
@@ -69,6 +54,7 @@
 --#define HUDRATE
 -- calc and show telemetry process rate
 --#define BGTELERATE
+
 ---------------------
 -- TESTMODE
 ---------------------
@@ -145,6 +131,7 @@
 --]]
 
 
+
 -----------------------
 -- UNIT SCALING
 -----------------------
@@ -173,7 +160,6 @@ local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 -----------------------------------
 -- STATE TRANSITION ENGINE SUPPORT
 -----------------------------------
-
 
 
 
@@ -305,7 +291,7 @@ local function drawGrid()
   lcd.drawLine(62 + 88, 7, 62 + 88, 55, SOLID, FORCE)
 end
 
-local function drawTopBar(strMode,simpleMode,flightTime,telemetryEnabled)
+local function drawTopBar(strMode,simpleMode,flightTime,telemetryEnabled,rssi)
   -- flight mode
   -- simplemode
   if strMode ~= nil then
@@ -316,16 +302,16 @@ local function drawTopBar(strMode,simpleMode,flightTime,telemetryEnabled)
     end
   end  
   lcd.drawTimer(212-1, 0, flightTime, SMLSIZE+INVERS+TIMEHOUR+RIGHT)
-  -- RSSI
-  if (not telemetryEnabled()) then
-    lcd.drawText(69, 0, "no telem!", SMLSIZE+BLINK+INVERS)
-  else
-    lcd.drawText(69, 0, "RS:", SMLSIZE+INVERS )
-    lcd.drawText(lcd.getLastRightPos(), 0, getRSSI(), SMLSIZE+INVERS )  
-  end
   -- tx voltage
   local vTx = string.format("Tx%.1fv",getValue(getFieldInfo("tx-voltage").id))
   lcd.drawText(115, 0, vTx, SMLSIZE+INVERS)
+  -- RSSI
+  if (not telemetryEnabled()) then
+    lcd.drawText(105, 0, "no telem!", SMLSIZE+BLINK+INVERS)
+  else
+    lcd.drawText(105, 0, rssi, SMLSIZE+INVERS+RIGHT)  
+    lcd.drawText(lcd.getLastLeftPos(), 0, "R:", SMLSIZE+INVERS+RIGHT)
+  end
 end
 
 local function drawFailSafe(showDualBattery,ekfFailsafe,battFailsafe)

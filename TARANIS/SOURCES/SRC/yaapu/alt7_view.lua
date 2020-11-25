@@ -34,32 +34,17 @@
 ---------------------
 -- FEATURES
 ---------------------
---#define BATTMAH3DEC
--- enable altitude/distance monitor and vocal alert (experimental)
---#define MONITOR
--- show incoming DIY packet rates
---#define TELEMETRY_STATS
--- enable synthetic vspeed when ekf is disabled
---#define SYNTHVSPEED
--- enable telemetry reset on timer 3 reset
--- always calculate FNV hash and play sound msg_<hash>.wav
--- enable telemetry logging menu option
---#define LOGTELEMETRY
--- enable max HDOP alert 
---#define HDOP_ALARM
 -- enable support for custom background functions
 --#define CUSTOM_BG_CALL
--- enable alert window for no telemetry
---#define NOTELEM_ALERT
--- enable popups for no telemetry data
---#define NOTELEM_POPUP
--- enable blinking rectangle on no telemetry
+-- enable battery % by voltage (x9d 2019 only)
+--#define BATTPERC_BY_VOLTAGE
+
 ---------------------
 -- DEBUG
 ---------------------
---#define DEBUG
+-- show button event code on message screen
 --#define DEBUGEVT
---#define DEV
+-- display memory info
 --#define MEMDEBUG
 -- calc and show background function rate
 --#define BGRATE
@@ -69,6 +54,7 @@
 --#define HUDRATE
 -- calc and show telemetry process rate
 --#define BGTELERATE
+
 ---------------------
 -- TESTMODE
 ---------------------
@@ -146,6 +132,7 @@
 --]]
 
 
+
 -----------------------
 -- UNIT SCALING
 -----------------------
@@ -174,7 +161,6 @@ local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 -----------------------------------
 -- STATE TRANSITION ENGINE SUPPORT
 -----------------------------------
-
 
 
 
@@ -255,24 +241,7 @@ local function drawLeftPane(x,drawLib,conf,telemetry,status,battery,battId,getMa
   else
     drawLib.drawHomeIcon(x+1, 25)
   end
-  --[[
-  -- altitude on right side
-  local alt = getMaxValue(telemetry.homeAlt,MINMAX_ALT) * UNIT_ALT_SCALE -- homeAlt is meters*3.28 = feet
-
-  if math.abs(alt) < 10 then
-      lcd.drawNumber(ALT_ALT_X+1,ALT_ALT_Y,alt * 10,PREC1+RIGHT+MIDSIZE)
-  else
-      lcd.drawNumber(ALT_ALT_X+1,ALT_ALT_Y,alt,RIGHT+MIDSIZE)
-  end
-  -- hspeed
-  local speed = getMaxValue(telemetry.hSpeed,MAX_HSPEED) * UNIT_HSPEED_SCALE
-  
-  if math.abs(speed) > 99 then
-    lcd.drawNumber(ALT_HSPEED_X+1,ALT_HSPEED_Y,speed*0.1,RIGHT+MIDSIZE)
-  else
-    lcd.drawNumber(ALT_HSPEED_X+1,ALT_HSPEED_Y,speed,PREC1+RIGHT+MIDSIZE)
-  end
-  --]]  -- needs to be called ofter for strings created by decToDMSFull() fragment memory
+  -- needs to be called ofter for strings created by decToDMSFull() fragment memory
   collectgarbage()
 end
 
@@ -296,6 +265,19 @@ local function loadSensors()
   collectgarbage()
   customSensors = sensorScript()
   sensorScript = nil
+  -- handle nil values for warning and critical levels
+  for i=1,6
+  do
+    if customSensors.sensors[i] ~= nil then 
+      local sign = customSensors.sensors[i][6] == "+" and 1 or -1
+      if customSensors.sensors[i][9] == nil then
+        customSensors.sensors[i][9] = math.huge*sign
+      end
+      if customSensors.sensors[i][8] == nil then
+        customSensors.sensors[i][8] = math.huge*sign
+      end
+    end
+  end  
   collectgarbage()
   collectgarbage()
 end
@@ -456,7 +438,8 @@ local function drawMiniHud(drawLib,conf,telemetry,status,battery,getMaxValue)
     lcd.drawLine(ALT_HUD_X + ALT_HUD_WIDTH - 3, 8+i*3, ALT_HUD_X + ALT_HUD_WIDTH -1, 8+i*3, SOLID, ERASE)
     lcd.drawLine(ALT_HUD_X + ALT_HUD_WIDTH - 2, arrowY+8+i*3, ALT_HUD_X + ALT_HUD_WIDTH-2, arrowY+8+i*3, SOLID, ERASE)
   end
-  --]]  lcd.drawLine(31 + 64 - 5, 19, 31 + 64, 19, SOLID, FORCE)
+  --]]
+  lcd.drawLine(31 + 64 - 5, 19, 31 + 64, 19, SOLID, FORCE)
   -------------------------------------
   -- left and right indicators on HUD
   -------------------------------------
@@ -504,10 +487,7 @@ local function drawMiniHud(drawLib,conf,telemetry,status,battery,getMaxValue)
 end
 
 local function drawRightPane(x,drawLib,conf,telemetry,status,battery,battId,getMaxValue,gpsStatuses)
-  local perc = 0
-  if (battery[13+battId] > 0) then
-    perc = math.min(math.max((1 - (battery[10+battId]/battery[13+battId]))*100,0),99)
-  end
+  local perc = battery[16+battId]
   --  battery min cell
   local flags = 0
   local dimFlags = 0

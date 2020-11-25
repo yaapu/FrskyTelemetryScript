@@ -23,8 +23,11 @@
         FLOWHOLD  =    22,  // FLOWHOLD holds position with optical flow without rangefinder
         FOLLOW    =    23,  // follow attempts to follow another vehicle or ground station
         ZIGZAG    =    24,  // ZIGZAG mode is able to fly in a zigzag manner with predefined point A and point B
+        SYSTEMID  =    25,  // System ID mode produces automated system identification signals in the controllers
+        AUTOROTATE =   26,  // Autonomous autorotation
     };
-  --]]  local flightModes = {}
+  --]]
+  local flightModes = {}
   
   -- copter flight modes
   flightModes[0]=""
@@ -53,6 +56,7 @@
   flightModes[23]="FlowHold"
   flightModes[24]="Follow"
   flightModes[25]="ZigZag"
-  flightModes[26]="Initializing"
+  flightModes[26]="SystemID"
+  flightModes[27]="Autorotate"
 
 return {flightModes=flightModes}
