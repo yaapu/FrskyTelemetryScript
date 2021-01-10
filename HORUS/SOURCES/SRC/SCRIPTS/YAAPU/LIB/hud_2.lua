@@ -55,7 +55,8 @@
 --#define TESTMODE
 -- enable debug of generated hash or short hash string
 --#define HASHDEBUG
-
+-- enable MESSAGES DEBUG
+--#define DEBUG_MESSAGES
 ---------------------
 -- DEBUG REFRESH RATES
 ---------------------
@@ -109,7 +110,9 @@
 --#define HUD_ALGO1
 -- enable optimized hor bars HUD drawing
 --#define HUD_ALGO2
--- enable hor bars HUD drawing
+-- enable hor bars HUD drawing, 2 px resolution
+-- enable hor bars HUD drawing, 1 px resolution
+--#define HUD_ALGO4
 
 
 
@@ -135,9 +138,6 @@ local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 -- offsets are: 1 celm, 4 batt, 7 curr, 10 mah, 13 cap, indexing starts at 1
 -- 
 
------------------------
--- LIBRARY LOADING
------------------------
 
 ----------------------
 --- COLORS
@@ -187,7 +187,7 @@ local ver, radio, maj, minor, rev = getVersion()
 local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)
 
   local r = -telemetry.roll
-  local cx,cy,dx,dy,ccx,ccy,cccx,cccy
+  local cx,cy,dx,dy--,ccx,ccy,cccx,cccy
   local yPos = 0 + 20 + 8
   -----------------------
   -- artificial horizon
@@ -198,10 +198,10 @@ local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)
     dy=telemetry.pitch
     cx=0
     cy=12
-    ccx=0
-    ccy=2*12
-    cccx=0
-    cccy=3*12
+    --ccx=0
+    --ccy=2*12
+    --cccx=0
+    --cccy=3*12
   else
     -- center line offsets
     dx = math.cos(math.rad(90 - r)) * -telemetry.pitch
@@ -210,11 +210,11 @@ local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)
     cx = math.cos(math.rad(90 - r)) * 12
     cy = math.sin(math.rad(90 - r)) * 12
     -- 2nd line offsets
-    ccx = math.cos(math.rad(90 - r)) * 2 * 12
-    ccy = math.sin(math.rad(90 - r)) * 2 * 12
+    --ccx = math.cos(math.rad(90 - r)) * 2 * 12
+    --ccy = math.sin(math.rad(90 - r)) * 2 * 12
     -- 3rd line offsets
-    cccx = math.cos(math.rad(90 - r)) * 3 * 12
-    cccy = math.sin(math.rad(90 - r)) * 3 * 12
+    --cccx = math.cos(math.rad(90 - r)) * 3 * 12
+    --cccy = math.sin(math.rad(90 - r)) * 3 * 12
   end
   local rollX = math.floor((LCD_W-160)/2 + 160/2)
   -----------------------

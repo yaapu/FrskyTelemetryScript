@@ -55,7 +55,8 @@
 --#define TESTMODE
 -- enable debug of generated hash or short hash string
 --#define HASHDEBUG
-
+-- enable MESSAGES DEBUG
+--#define DEBUG_MESSAGES
 ---------------------
 -- DEBUG REFRESH RATES
 ---------------------
@@ -109,7 +110,9 @@
 --#define HUD_ALGO1
 -- enable optimized hor bars HUD drawing
 --#define HUD_ALGO2
--- enable hor bars HUD drawing
+-- enable hor bars HUD drawing, 2 px resolution
+-- enable hor bars HUD drawing, 1 px resolution
+--#define HUD_ALGO4
 
 
 
@@ -135,9 +138,6 @@ local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 -- offsets are: 1 celm, 4 batt, 7 curr, 10 mah, 13 cap, indexing starts at 1
 -- 
 
------------------------
--- LIBRARY LOADING
------------------------
 
 ----------------------
 --- COLORS
@@ -220,24 +220,92 @@ local avgDistSampleCount = 0;
 local avgDistLastSampleTime = getTime();
 avgDistSamples[0] = 0
 
+local coord_to_tiles = nil
+local tiles_to_path = nil
+local MinLatitude = -85.05112878;
+local MaxLatitude = 85.05112878;
+local MinLongitude = -180;
+local MaxLongitude = 180;
 
 
 
 
-local function tiles_on_level(level)
- return bit32.lshift(1,17 - level)
+
+local function clip(n, min, max)
+  return math.min(math.max(n, min), max)
 end
 
-local function coord_to_tiles(lat,lon)
+local function tiles_on_level(conf,level)
+  if conf.mapProvider == 1 then
+    return bit32.lshift(1,17 - level)
+  else
+    return 2^level
+  end
+end
+
+--[[
+  total tiles on the web mercator projection = 2^zoom*2^zoom
+--]]
+local function get_tile_matrix_size_pixel(level)
+    local size = 2^level * 100
+    return size, size
+end
+
+--[[
+  https://developers.google.com/maps/documentation/javascript/coordinates
+  https://github.com/judero01col/GMap.NET
+  
+  Questa funzione ritorna il pixel (assoluto) associato alle coordinate.
+  La proiezione di mercatore è una matrice di pixel, tanto più grande quanto è elevato il valore dello zoom.
+  zoom 1 = 1x1 tiles
+  zoom 2 = 2x2 tiles
+  zoom 3 = 4x4 tiles
+  ...
+  in cui ogni tile è di 256x256 px.
+  in generale la matrice ha dimensioni 2^(zoom-1)*2^(zoom-1)
+  Per risalire al singolo tile si divide per 256 (largezza del tile):
+  
+  tile_x = math.floor(x_coord/256)
+  tile_y = math.floor(y_coord/256)
+  
+  Le coordinate relative all'interno del tile si calcolano con l'operatore modulo a partire dall'angolo in alto a sx
+  
+  x_offset = x_coord%256
+  y_offset = y_coord%256
+  
+  Su filesystem il percorso è /tile_y/tile_x.png
+--]]
+local function google_coord_to_tiles(conf, lat, lng, level)
+  lat = clip(lat, MinLatitude, MaxLatitude)
+  lng = clip(lng, MinLongitude, MaxLongitude)
+
+  local x = (lng + 180) / 360
+  local sinLatitude = math.sin(lat * math.pi / 180)
+  local y = 0.5 - math.log((1 + sinLatitude) / (1 - sinLatitude)) / (4 * math.pi)
+
+  local mapSizeX, mapSizeY = get_tile_matrix_size_pixel(level)
+
+  -- absolute pixel coordinates on the mercator projection at this zoom level
+  local rx = clip(x * mapSizeX + 0.5, 0, mapSizeX - 1)
+  local ry = clip(y * mapSizeY + 0.5, 0, mapSizeY - 1)
+  -- return tile_x, tile_y, offset_x, offset_y
+  return math.floor(rx/100), math.floor(ry/100), math.floor(rx%100), math.floor(ry%100)
+end
+
+local function gmapcacther_coord_to_tiles(conf, lat, lon, level)
   local x = world_tiles / 360 * (lon + 180)
   local e = math.sin(lat * (1/180 * math.pi))
   local y = world_tiles / 2 + 0.5 * math.log((1+e)/(1-e)) * -1 * tiles_per_radian
+  -- return tile_x, tile_y, offset_x, offset_y
   return math.floor(x % world_tiles), math.floor(y % world_tiles), math.floor((x - math.floor(x)) * 100), math.floor((y - math.floor(y)) * 100)
 end
 
-local function tiles_to_path(tile_x, tile_y, level)
-  local path = string.format("/%d/%d/%d/%d/s_%d.png", level, tile_x/1024, tile_x%1024, tile_y/1024, tile_y%1024)
-  return path
+local function google_tiles_to_path(conf, tile_x, tile_y, level)
+  return string.format("/%d/%d/s_%d.jpg", level, tile_y, tile_x)
+end
+
+local function gmapcatcher_tiles_to_path(conf, tile_x, tile_y, level)
+  return string.format("/%d/%d/%d/%d/s_%d.png", level, tile_x/1024, tile_x%1024, tile_y/1024, tile_y%1024)
 end
 
 local function getTileBitmap(conf,tilePath)
@@ -272,7 +340,7 @@ local function loadAndCenterTiles(conf,tile_x,tile_y,offset_x,offset_y,width,lev
   do
     for y=1,2
     do
-      local tile_path = tiles_to_path(tile_x+x-2, tile_y+y-yy, level)
+      local tile_path = tiles_to_path(conf, tile_x+x-2, tile_y+y-yy, level)
       local idx = width*(y-1)+x
       
       if tiles[idx] == nil then
@@ -331,9 +399,9 @@ local function drawTiles(conf,drawLib,width,xmin,xmax,ymin,ymax,color,level)
   lcd.drawText(xmin+5,ymin+2*100-27,scaleLabel,SMLSIZE+CUSTOM_COLOR)
 end
 
-local function getScreenCoordinates(minX,minY,tile_x,tile_y,offset_x,offset_y,level)
+local function getScreenCoordinates(conf,minX,minY,tile_x,tile_y,offset_x,offset_y,level)
   -- is this tile on screen ?
-  local tile_path = tiles_to_path(tile_x,tile_y,level)
+  local tile_path = tiles_to_path(conf, tile_x, tile_y, level)
   local onScreen = false
   
   for x=1,3
@@ -353,42 +421,39 @@ end
 
 local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)--getMaxValue,getBitmap,drawBlinkBitmap)
   local r = -telemetry.roll
-  local cx,cy,dx,dy,ccx,ccy,cccx,cccy
+  local cx,cy,dx,dy
   local yPos = 0 + 20 + 8
+  local scale = 0.6
   -----------------------
   -- artificial horizon
   -----------------------
-  -- no roll ==> segments are vertical, offsets are multiples of 10
+  -- no roll ==> segments are vertical, offsets are multiples of 6.5
   if ( telemetry.roll == 0) then
     dx=0
-    dy=telemetry.pitch * 0.75
+    dy=telemetry.pitch * scale
     cx=0
-    cy=10
-    ccx=0
-    ccy=2*10
-    cccx=0
-    cccy=3*10
+    cy=6.5
   else
     -- center line offsets
-    dx = math.cos(math.rad(90 - r)) * -telemetry.pitch * 0.75
-    dy = math.sin(math.rad(90 - r)) * telemetry.pitch * 0.75
+    dx = math.cos(math.rad(90 - r)) * -telemetry.pitch * scale
+    dy = math.sin(math.rad(90 - r)) * telemetry.pitch * scale
     -- 1st line offsets
-    cx = math.cos(math.rad(90 - r)) * 10
-    cy = math.sin(math.rad(90 - r)) * 10
+    cx = math.cos(math.rad(90 - r)) * 6.5
+    cy = math.sin(math.rad(90 - r)) * 6.5
   end
   -----------------------
   -- dark color for "ground"
   -----------------------
   -- 90x70
-  local minY = 24
-  local maxY = 24+48
+  local minY = 22
+  local maxY = 22+42
   --
-  local minX = 21
-  local maxX = 21 + 48
+  local minX = 7
+  local maxX = 7 + 76
   --
-  local ox = 21 + 48/2 + dx
+  local ox = 7 + 76/2 + dx
   --
-  local oy = 48 + dy
+  local oy = 43 + dy
   local yy = 0
   
  --lcd.setColor(CUSTOM_COLOR,lcd.RGB(0x0d, 0x68, 0xb1)) -- bighud blue
@@ -455,21 +520,25 @@ local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)--ge
   -- parallel lines above and below horizon
   local linesMaxY = maxY-1
   local linesMinY = minY+1
-  local rollX = math.floor(21 + 48/2)
+  local rollX = math.floor(7 + 76/2)
   lcd.setColor(CUSTOM_COLOR,0xFFFF)
   -- +/- 90 deg
-  for dist=1,8
+  for dist=1,6
   do
-    drawLib.drawLineWithClipping(rollX + dx - dist*cx,dy + 48 + dist*cy,r,(dist%2==0 and 40 or 20),DOTTED,21+2,21+48-2,linesMinY,linesMaxY,CUSTOM_COLOR,radio,rev)
-    drawLib.drawLineWithClipping(rollX + dx + dist*cx,dy + 48 - dist*cy,r,(dist%2==0 and 40 or 20),DOTTED,21+2,21+48-2,linesMinY,linesMaxY,CUSTOM_COLOR,radio,rev)
+    drawLib.drawLineWithClipping(rollX + dx - dist*cx,dy + 43 + dist*cy,r,(dist%2==0 and 40 or 20),DOTTED,7+2,7+76-2,linesMinY,linesMaxY,CUSTOM_COLOR,radio,rev)
+    drawLib.drawLineWithClipping(rollX + dx + dist*cx,dy + 43 - dist*cy,r,(dist%2==0 and 40 or 20),DOTTED,7+2,7+76-2,linesMinY,linesMaxY,CUSTOM_COLOR,radio,rev)
   end
   -------------------------------------
   -- hud bitmap
   -------------------------------------
-  lcd.drawBitmap(utils.getBitmap("hud_48x48a"),21-2,24-3)
+  lcd.drawBitmap(utils.getBitmap("hud_48x48a"),7-2+13,22-3-4)
 end
 
 local function drawMap(myWidget,drawLib,conf,telemetry,status,battery,utils,level)
+  if tiles_to_path == nil or coord_to_tiles == nil then
+    return
+  end
+  
   local minY = 18
   local maxY = minY+2*100
   
@@ -482,9 +551,9 @@ local function drawMap(myWidget,drawLib,conf,telemetry,status,battery,utils,leve
       posUpdated = true
       lastPosUpdate = getTime()
       -- current vehicle tile coordinates
-      tile_x,tile_y,offset_x,offset_y = coord_to_tiles(telemetry.lat,telemetry.lon)
+      tile_x,tile_y,offset_x,offset_y = coord_to_tiles(conf,telemetry.lat,telemetry.lon,level)
       -- viewport relative coordinates
-      myScreenX,myScreenY = getScreenCoordinates(minX,minY,tile_x,tile_y,offset_x,offset_y,level)
+      myScreenX,myScreenY = getScreenCoordinates(conf,minX,minY,tile_x,tile_y,offset_x,offset_y,level)
       -- check if offscreen
       local myCode = drawLib.computeOutCode(myScreenX, myScreenY, minX+17, minY+17, maxX-17, maxY-17);
       
@@ -492,8 +561,8 @@ local function drawMap(myWidget,drawLib,conf,telemetry,status,battery,utils,leve
       if myCode > 0 then
         loadAndCenterTiles(conf, tile_x, tile_y, offset_x, offset_y, 3, level)
         -- after centering screen position needs to be computed again
-        tile_x,tile_y,offset_x,offset_y = coord_to_tiles(telemetry.lat,telemetry.lon)
-        myScreenX,myScreenY = getScreenCoordinates(minX,minY,tile_x,tile_y,offset_x,offset_y,level)
+        tile_x,tile_y,offset_x,offset_y = coord_to_tiles(conf,telemetry.lat,telemetry.lon,level)
+        myScreenX,myScreenY = getScreenCoordinates(conf,minX,minY,tile_x,tile_y,offset_x,offset_y,level)
       end
     end
     
@@ -505,18 +574,18 @@ local function drawMap(myWidget,drawLib,conf,telemetry,status,battery,utils,leve
         homeNeedsRefresh = false
         if telemetry.homeLat ~= nil then
           -- current vehicle tile coordinates
-          tile_x,tile_y,offset_x,offset_y = coord_to_tiles(telemetry.homeLat,telemetry.homeLon)
+          tile_x,tile_y,offset_x,offset_y = coord_to_tiles(conf,telemetry.homeLat,telemetry.homeLon,level)
           -- viewport relative coordinates
-          homeScreenX,homeScreenY = getScreenCoordinates(minX,minY,tile_x,tile_y,offset_x,offset_y,level)
+          homeScreenX,homeScreenY = getScreenCoordinates(conf,minX,minY,tile_x,tile_y,offset_x,offset_y,level)
         end
       else
         -- update estimated home, schedule home update
         homeNeedsRefresh = true
         estimatedHomeGps.lat,estimatedHomeGps.lon = utils.getHomeFromAngleAndDistance(telemetry)
         if estimatedHomeGps.lat ~= nil then
-          local t_x,t_y,o_x,o_y = coord_to_tiles(estimatedHomeGps.lat,estimatedHomeGps.lon)
+          local t_x,t_y,o_x,o_y = coord_to_tiles(conf,estimatedHomeGps.lat,estimatedHomeGps.lon,level)
           -- viewport relative coordinates
-          estimatedHomeScreenX,estimatedHomeScreenY = getScreenCoordinates(minX,minY,t_x,t_y,o_x,o_y,level)        
+          estimatedHomeScreenX,estimatedHomeScreenY = getScreenCoordinates(conf,minX,minY,t_x,t_y,o_x,o_y,level)
         end
       end
     end
@@ -526,7 +595,7 @@ local function drawMap(myWidget,drawLib,conf,telemetry,status,battery,utils,leve
         lastPosSample = getTime()
         posUpdated = false
         -- points history
-        local path = tiles_to_path(tile_x, tile_y, level)
+        local path = tiles_to_path(conf,tile_x, tile_y, level)
         posHistory[sample] = { path, offset_x, offset_y }
         sampleCount = sampleCount+1
         sample = sampleCount%20
@@ -588,24 +657,24 @@ local function drawMap(myWidget,drawLib,conf,telemetry,status,battery,utils,leve
     
     -- ALT
     lcd.setColor(CUSTOM_COLOR,0x0000)
-    lcd.drawText(10, 50+25, "Alt("..unitLabel..")", SMLSIZE+0+CUSTOM_COLOR)
+    lcd.drawText(10, 50+16, "Alt("..unitLabel..")", SMLSIZE+0+CUSTOM_COLOR)
     lcd.setColor(CUSTOM_COLOR,0xFFFF)
-    lcd.drawNumber(10,50+37,telemetry.homeAlt*unitScale,MIDSIZE+CUSTOM_COLOR+0)
+    lcd.drawNumber(10,50+27,telemetry.homeAlt*unitScale,MIDSIZE+CUSTOM_COLOR+0)
     -- SPEED
     lcd.setColor(CUSTOM_COLOR,0x0000)
-    lcd.drawText(10, 50+60, "Spd("..conf.horSpeedLabel..")", SMLSIZE+0+CUSTOM_COLOR)
+    lcd.drawText(10, 50+54, "Spd("..conf.horSpeedLabel..")", SMLSIZE+0+CUSTOM_COLOR)
     lcd.setColor(CUSTOM_COLOR,0xFFFF)
-    lcd.drawNumber(10,50+72,telemetry.hSpeed*0.1* conf.horSpeedMultiplier,MIDSIZE+CUSTOM_COLOR+0)
+    lcd.drawNumber(10,50+65,telemetry.hSpeed*0.1* conf.horSpeedMultiplier,MIDSIZE+CUSTOM_COLOR+0)
     -- VSPEED
     lcd.setColor(CUSTOM_COLOR,0x0000)
-    lcd.drawText(10, 50+95, "VSI("..conf.vertSpeedLabel..")", SMLSIZE+0+CUSTOM_COLOR)
+    lcd.drawText(10, 50+92, "VSI("..conf.vertSpeedLabel..")", SMLSIZE+0+CUSTOM_COLOR)
     lcd.setColor(CUSTOM_COLOR,0xFFFF)
-    lcd.drawNumber(10,50+107, telemetry.vSpeed*0.1*conf.vertSpeedMultiplier, MIDSIZE+CUSTOM_COLOR+0)
+    lcd.drawNumber(10,50+103, telemetry.vSpeed*0.1*conf.vertSpeedMultiplier, MIDSIZE+CUSTOM_COLOR+0)
     -- DIST
     lcd.setColor(CUSTOM_COLOR,0x0000)
     lcd.drawText(10, 50+130, "Dist("..unitLabel..")", SMLSIZE+0+CUSTOM_COLOR)
     lcd.setColor(CUSTOM_COLOR,0xFFFF)
-    lcd.drawNumber(10, 50+142, telemetry.homeDist*unitScale, MIDSIZE+0+CUSTOM_COLOR)
+    lcd.drawNumber(10, 50+141, telemetry.homeDist*unitScale, MIDSIZE+0+CUSTOM_COLOR)
     
     -- RIGHT
     -- CELL
@@ -638,34 +707,42 @@ end
 
 local initDone = false
 
-local function init(utils,level)
+local function init(conf,utils,level)
   if level ~= lastZoomLevel then
     utils.clearTable(tiles)
-    
     utils.clearTable(mapBitmapByPath)
-    
     utils.clearTable(posHistory)
+    
     sample = 0
     sampleCount = 0    
     
-    world_tiles = tiles_on_level(level)
+    world_tiles = tiles_on_level(conf,level)
     tiles_per_radian = world_tiles / (2 * math.pi)
-    tile_dim = (40075017/world_tiles) * unitScale -- m or ft
-  
-    scaleLen = ((unitScale==1 and 1 or 3)*50*(level+3)/tile_dim)*100
-    scaleLabel = tostring((unitScale==1 and 1 or 3)*50*(level+3))..unitLabel
     
+    if conf.mapProvider == 1 then
+      coord_to_tiles = gmapcacther_coord_to_tiles
+      tiles_to_path = gmapcatcher_tiles_to_path
+      tile_dim = (40075017/world_tiles) * unitScale -- m or ft
+      scaleLabel = tostring((unitScale==1 and 1 or 3)*50*2^(level+2))..unitLabel
+      scaleLen = ((unitScale==1 and 1 or 3)*50*2^(level+2)/tile_dim)*100
+    elseif conf.mapProvider == 2 then
+      coord_to_tiles = google_coord_to_tiles
+      tiles_to_path = google_tiles_to_path
+      tile_dim = (40075017/world_tiles) * unitScale -- m or ft
+      scaleLabel = tostring((unitScale==1 and 1 or 3)*50*2^(20-level))..unitLabel
+      scaleLen = ((unitScale==1 and 1 or 3)*50*2^(20-level)/tile_dim)*100
+    end
+
     lastZoomLevel = level
   end
 end
 
 local function changeZoomLevel(level)
-
 end
 
 local function draw(myWidget,drawLib,conf,telemetry,status,battery,alarms,frame,utils,customSensors,gpsStatuses,leftPanel,centerPanel,rightPanel)
   -- initialize maps
-  init(utils,status.mapZoomLevel)
+  init(conf,utils,status.mapZoomLevel)
   drawMap(myWidget,drawLib,conf,telemetry,status,battery,utils,status.mapZoomLevel)
   drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)
   utils.drawTopBar()

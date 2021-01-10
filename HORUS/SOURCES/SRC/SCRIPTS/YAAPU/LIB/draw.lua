@@ -55,7 +55,8 @@
 --#define TESTMODE
 -- enable debug of generated hash or short hash string
 --#define HASHDEBUG
-
+-- enable MESSAGES DEBUG
+--#define DEBUG_MESSAGES
 ---------------------
 -- DEBUG REFRESH RATES
 ---------------------
@@ -109,7 +110,9 @@
 --#define HUD_ALGO1
 -- enable optimized hor bars HUD drawing
 --#define HUD_ALGO2
--- enable hor bars HUD drawing
+-- enable hor bars HUD drawing, 2 px resolution
+-- enable hor bars HUD drawing, 1 px resolution
+--#define HUD_ALGO4
 
 
 
@@ -135,9 +138,6 @@ local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 -- offsets are: 1 celm, 4 batt, 7 curr, 10 mah, 13 cap, indexing starts at 1
 -- 
 
------------------------
--- LIBRARY LOADING
------------------------
 
 ----------------------
 --- COLORS
@@ -162,6 +162,7 @@ local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 
 -- model and opentx version
 local ver, radio, maj, minor, rev = getVersion()
+local yawRibbonPoints = {"N",nil,"NE",nil,"E",nil,"SE",nil,"S",nil,"SW",nil,"W",nil,"NW",nil}
 
 
 local drawLine = nil
@@ -310,9 +311,9 @@ local function drawRArrow(x,y,r,angle,color)
 end
 
 --[[
- bgimage = background image
  x,y = top,left
- x1,y1 = gauge center point 
+ image = background image
+ gx,gy = gauge center point 
  r1 = gauge radius
  r2 = gauge distance from center
  perc = value % normalized between min, max
@@ -375,7 +376,7 @@ local function drawNoTelemetryData(status,telemetry,utils,telemetryEnabled)
     lcd.drawFilledRectangle(90,76, 300, 80, CUSTOM_COLOR)
     lcd.setColor(CUSTOM_COLOR,0xFFFF)
     lcd.drawText(110, 85, "no telemetry data", DBLSIZE+CUSTOM_COLOR)
-    lcd.drawText(130, 120, "Yaapu Telemetry Widget 1.9.1-beta1", SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(130, 120, "Yaapu Telemetry Widget 1.9.3-beta", SMLSIZE+CUSTOM_COLOR)
   end
 end
 
@@ -386,27 +387,64 @@ local function drawFilledRectangle(x,y,w,h,flags)
 end
 
 
-local yawRibbonPoints = {}
---
-yawRibbonPoints[0]="N"
-yawRibbonPoints[1]=nil
-yawRibbonPoints[2]="NE"
-yawRibbonPoints[3]=nil
-yawRibbonPoints[4]="E"
-yawRibbonPoints[5]=nil
-yawRibbonPoints[6]="SE"
-yawRibbonPoints[7]=nil
-yawRibbonPoints[8]="S"
-yawRibbonPoints[9]=nil
-yawRibbonPoints[10]="SW"
-yawRibbonPoints[11]=nil
-yawRibbonPoints[12]="W"
-yawRibbonPoints[13]=nil
-yawRibbonPoints[14]="NW"
-yawRibbonPoints[15]=nil
+--[[
+  based on olliw's improved version over mine :-)
+  https://github.com/olliw42/otxtelemetry
+--]]
+local function drawCompassRibbon(y,myWidget,conf,telemetry,status,battery,utils,width,xMin,xMax,stepWidth,bigFont)
+  local minY = y+1
+  local heading = telemetry.yaw
+  local minX = xMin
+  local maxX = xMax
+  local midX = (xMax + xMin)/2
+  local tickNo = 4 --number of ticks on one side
+  local stepCount = (maxX - minX -24)/(2*tickNo)
+  local closestHeading = math.floor(heading/22.5) * 22.5
+  local closestHeadingX = midX + (closestHeading - heading)/22.5 * stepCount
+  local tickIdx = (closestHeading/22.5 - tickNo) % 16
+  local tickX = closestHeadingX - tickNo*stepCount   
+  for i = 1,10 do
+      if tickX >= minX and tickX < maxX then
+          if yawRibbonPoints[tickIdx+1] == nil then
+              lcd.setColor(CUSTOM_COLOR, 0xFFFF)
+              lcd.drawLine(tickX, minY, tickX, y+5, SOLID, CUSTOM_COLOR)
+          else
+              lcd.setColor(CUSTOM_COLOR, 0xFFFF)
+              lcd.drawText(tickX, minY-3, yawRibbonPoints[tickIdx+1], CUSTOM_COLOR+SMLSIZE+CENTER)
+          end
+      end
+      tickIdx = (tickIdx + 1) % 16
+      tickX = tickX + stepCount
+  end
+  -- home icon
+  local homeOffset = 0
+  local angle = telemetry.homeAngle - telemetry.yaw
+  if angle < 0 then angle = angle + 360 end
+  if angle > 270 or angle < 90 then
+    homeOffset = ((angle + 90) % 180)/180  * width
+  elseif angle >= 90 and angle < 180 then
+    homeOffset = width
+  end
+  drawHomeIcon(xMin + homeOffset -5,minY + (bigFont and 28 or 20),utils)
+  
+  -- text box
+  local w = 60 -- 3 digits width
+  if heading < 0 then heading = heading + 360 end
+  if heading < 10 then
+      w = 20
+  elseif heading < 100 then
+      w = 40
+  end
+  local scale = bigFont and 1 or 0.7
+  lcd.setColor(CUSTOM_COLOR, 0x0000)
+  lcd.drawFilledRectangle(midX - (w/2)*scale, minY-2, w*scale, 28*scale, CUSTOM_COLOR+SOLID)
+  lcd.setColor(CUSTOM_COLOR, 0xFFFF)
+  lcd.drawNumber(midX, bigFont and minY-6 or minY-2, heading, CUSTOM_COLOR+(bigFont and DBLSIZE or 0)+CENTER)
+end
 
 -- optimized yaw ribbon drawing
-local function drawCompassRibbon(y,myWidget,conf,telemetry,status,battery,utils,width,xMin,xMax,stepWidth,bigFont)
+--[[
+local function oldDrawCompassRibbon(y,myWidget,conf,telemetry,status,battery,utils,width,xMin,xMax,stepWidth,bigFont)
   -- ribbon centered +/- 90 on yaw
   local centerYaw = (telemetry.yaw + 270 - (bigFont and 16 or 10))%360 -- (-10 needed to center ribbon)
   -- this is the first point left to be drawn on the compass ribbon
@@ -421,15 +459,15 @@ local function drawCompassRibbon(y,myWidget,conf,telemetry,status,battery,utils,
       local lineOffset = 4
       if nextPointX >= xMin -3 and nextPointX < xMax then
         if yawRibbonPoints[i] == nil then
-          lcd.setColor(CUSTOM_COLOR,0xFFFF)
+          lcd.setColor(CUSTOM_COLOR,COLOR_LINES)
           lcd.drawLine(nextPointX + lineOffset, y+1, nextPointX + lineOffset, y+7, SOLID, CUSTOM_COLOR)
         else
           if #yawRibbonPoints[i] > 1 then
             letterOffset = -5
             lineOffset = 2
           end
-          lcd.setColor(CUSTOM_COLOR,0xFFFF)
-          --lcd.setColor(CUSTOM_COLOR,0x7BCF)
+          lcd.setColor(CUSTOM_COLOR,COLOR_TEXT)
+          --lcd.setColor(CUSTOM_COLOR,COLOR_GREY)
           lcd.drawText(nextPointX+letterOffset,y+(bigFont and -2 or 0),yawRibbonPoints[i],SMLSIZE+CUSTOM_COLOR)
         end
       end
@@ -458,12 +496,13 @@ local function drawCompassRibbon(y,myWidget,conf,telemetry,status,battery,utils,
     xx = bigFont and 60 or 42
   end
   --lcd.drawNumber(LCD_W/2 + xx - 6, YAW_Y, telemetry.yaw, MIDSIZE+INVERS)
-  lcd.setColor(CUSTOM_COLOR,0x0000)
+  lcd.setColor(CUSTOM_COLOR,COLOR_BLACK)
   lcd.drawFilledRectangle(LCD_W/2 - (xx/2), y - 1, xx, bigFont and 28 or 20, CUSTOM_COLOR+SOLID)
   lcd.drawRectangle(LCD_W/2 - (xx/2) - 1, y - 1, xx+2, bigFont and 28 or 20, CUSTOM_COLOR+SOLID)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
+  lcd.setColor(CUSTOM_COLOR,COLOR_TEXT)
   lcd.drawNumber(LCD_W/2 - (xx/2), y - 6, telemetry.yaw, (bigFont and DBLSIZE or MIDSIZE)+CUSTOM_COLOR)
 end
+--]]
 
 local function drawStatusBar(maxRows,conf,telemetry,status,battery,alarms,frame,utils,gpsStatuses)
   local yDelta = (maxRows-1)*12
@@ -480,10 +519,6 @@ local function drawStatusBar(maxRows,conf,telemetry,status,battery,alarms,frame,
   end
   -- gps status, draw coordinatyes if good at least once
   if telemetry.lon ~= nil and telemetry.lat ~= nil then
-    --[[
-    lcd.drawText(370,227-yDelta,utils.decToDMSFull(telemetry.lat),SMLSIZE+CUSTOM_COLOR+RIGHT)
-    lcd.drawText(370,241-yDelta,utils.decToDMSFull(telemetry.lon,telemetry.lat),SMLSIZE+CUSTOM_COLOR+RIGHT)
-    --]]
     lcd.drawText(370, 227-yDelta, telemetry.strLat, SMLSIZE+CUSTOM_COLOR+RIGHT)
     lcd.drawText(370, 241-yDelta, telemetry.strLon, SMLSIZE+CUSTOM_COLOR+RIGHT)
   end
@@ -553,6 +588,7 @@ return {
   drawStatusBar=drawStatusBar,
   drawFilledRectangle=drawFilledRectangle,
   drawCompassRibbon=drawCompassRibbon,
+  --oldDrawCompassRibbon=oldDrawCompassRibbon,
   yawRibbonPoints=yawRibbonPoints
 }
 

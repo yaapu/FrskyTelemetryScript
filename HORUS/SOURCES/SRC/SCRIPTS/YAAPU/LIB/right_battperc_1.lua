@@ -55,7 +55,8 @@
 --#define TESTMODE
 -- enable debug of generated hash or short hash string
 --#define HASHDEBUG
-
+-- enable MESSAGES DEBUG
+--#define DEBUG_MESSAGES
 ---------------------
 -- DEBUG REFRESH RATES
 ---------------------
@@ -109,7 +110,9 @@
 --#define HUD_ALGO1
 -- enable optimized hor bars HUD drawing
 --#define HUD_ALGO2
--- enable hor bars HUD drawing
+-- enable hor bars HUD drawing, 2 px resolution
+-- enable hor bars HUD drawing, 1 px resolution
+--#define HUD_ALGO4
 
 
 
@@ -135,9 +138,6 @@ local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 -- offsets are: 1 celm, 4 batt, 7 curr, 10 mah, 13 cap, indexing starts at 1
 -- 
 
------------------------
--- LIBRARY LOADING
------------------------
 
 ----------------------
 --- COLORS

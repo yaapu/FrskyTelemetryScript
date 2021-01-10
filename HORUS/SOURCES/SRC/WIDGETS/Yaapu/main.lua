@@ -55,7 +55,8 @@
 --#define TESTMODE
 -- enable debug of generated hash or short hash string
 --#define HASHDEBUG
-
+-- enable MESSAGES DEBUG
+--#define DEBUG_MESSAGES
 ---------------------
 -- DEBUG REFRESH RATES
 ---------------------
@@ -109,7 +110,9 @@
 --#define HUD_ALGO1
 -- enable optimized hor bars HUD drawing
 --#define HUD_ALGO2
--- enable hor bars HUD drawing
+-- enable hor bars HUD drawing, 2 px resolution
+-- enable hor bars HUD drawing, 1 px resolution
+--#define HUD_ALGO4
 
 
 
@@ -135,9 +138,6 @@ local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 -- offsets are: 1 celm, 4 batt, 7 curr, 10 mah, 13 cap, indexing starts at 1
 -- 
 
------------------------
--- LIBRARY LOADING
------------------------
 
 ----------------------
 --- COLORS
@@ -402,6 +402,8 @@ status.lastMessage = nil
 status.lastMessageSeverity = 0
 status.lastMessageCount = 1
 status.messageCount = 0
+status.messageOffset = 0
+status.messageAutoScroll = true
 -- LINK STATUS
 status.noTelemetryData = 1
 status.hideNoTelemetry = false
@@ -413,6 +415,7 @@ status.mapZoomLevel = 1
 -- FLIGHTMODE
 status.strFlightMode = nil
 status.modelString = nil
+
 ---------------------------
 -- BATTERY TABLE
 ---------------------------
@@ -536,7 +539,7 @@ local conf = {
   cell1Count = 0,
   cell2Count = 0,
   enableBattPercByVoltage = false,
-  rangeMax=0,
+  rangeFinderMax=0,
   enableSynthVSpeed=false,
   horSpeedMultiplier=1,
   vertSpeedMultiplier=1,
@@ -549,16 +552,18 @@ local conf = {
   rightPanel = 1,
   leftPanel = 1,
   widgetLayout = 1,
-  widgetLayoutFilename = nil,
-  centerPanelFilename = nil,
-  rightPanelFilename = nil,
-  leftPanelFilename = nil,
-  mapType = "sat_tiles",
-  mapZoomLevel = -2,
+  widgetLayoutFilename = "layout_1",
+  centerPanelFilename = "hud_1",
+  rightPanelFilename = "right_1",
+  leftPanelFilename = "left_1",
+  mapType = "sat_tiles", -- applies to gmapcacther only
+  mapZoomMax = 17,
+  mapZoomMin = -2,
   enableMapGrid = true,
-  screenToggleChannelId = nil,
-  mapToggleChannelId = nil,
+  screenToggleChannelId = 0,
+  screenWheelChannelId = 0,
   gpsFormat = 1, -- DMS
+  mapProvider = 1, -- 1 GMapCatcher, 2 Google, 3 Yandex
 }
 
 -------------------------
@@ -593,6 +598,7 @@ local hash = 2166136261
 -------------------------------
 local drawMainLayout = nil
 local drawMapLayout = nil
+
 
 local function triggerReset()
   resetPending = true
@@ -689,7 +695,6 @@ utils.clearTable = function(t)
   t = nil
   collectgarbage()
   collectgarbage()
-  maxmem = 0
 end  
 
 local function resetLayouts()
@@ -698,35 +703,25 @@ local function resetLayouts()
       -- empty step
       resetLayoutPhase = 0
     elseif resetLayoutPhase == 0 then
-      print("luaDebug: layout reset 0 start")
       utils.clearTable(layout)
       layout = nil
-      print("luaDebug: layout reset 0 end")
       resetLayoutPhase = 1
     elseif resetLayoutPhase == 1 then
-      print("luaDebug: layout reset 1 start")
       utils.clearTable(centerPanel)
       centerPanel = nil
-      print("luaDebug: layout reset 1 end")
       resetLayoutPhase = 2
     elseif resetLayoutPhase == 2 then
-      print("luaDebug: layout reset 2 start")
       utils.clearTable(rightPanel)
       rightPanel = nil
-      print("luaDebug: layout reset 2 end")
       resetLayoutPhase = 3
     elseif resetLayoutPhase == 3 then
-      print("luaDebug: layout reset 3 start")
       utils.clearTable(leftPanel)
       leftPanel = nil
-      print("luaDebug: layout reset 3 end")
       resetLayoutPhase = 4
     elseif resetLayoutPhase == 4 then
-      print("luaDebug: layout reset 4 start")
       utils.clearTable(mapLayout)
       mapLayout = nil
       drawMainLayout = layoutLoad
-      print("luaDebug: layout reset 4 end")
       resetLayoutPhase = 0
       resetLayoutPending = false
     end
@@ -785,7 +780,6 @@ utils.playSoundByFlightMode = function(flightMode)
 end
 
 
-
 local function formatMessage(severity,msg)
   local clippedMsg = msg
   
@@ -795,9 +789,9 @@ local function formatMessage(severity,msg)
   end
   
   if status.lastMessageCount > 1 then
-    return string.format("%02d:%s (x%d) %s", status.messageCount, mavSeverity[severity], status.lastMessageCount, clippedMsg)
+    return string.format("%02d:%02d %s (x%d) %s", status.flightTime/60, status.flightTime%60, mavSeverity[severity], status.lastMessageCount, clippedMsg)
   else
-    return string.format("%02d:%s %s", status.messageCount, mavSeverity[severity], clippedMsg)
+    return string.format("%02d:%02d %s %s", status.flightTime/60, status.flightTime%60, mavSeverity[severity], clippedMsg)
   end
 end
 
@@ -821,14 +815,19 @@ utils.pushMessage = function(severity, msg)
     status.lastMessageCount = 1
     status.messageCount = status.messageCount + 1
   end
-  if status.messages[(status.messageCount-1) % 20] == nil then
-    status.messages[(status.messageCount-1) % 20] = {}
+  local msgIndex = (status.messageCount-1) % 200
+  if status.messages[msgIndex] == nil then
+    status.messages[msgIndex] = {}
   end
-  status.messages[(status.messageCount-1) % 20][1] = formatMessage(severity,msg)
-  status.messages[(status.messageCount-1) % 20][2] = severity
+  status.messages[msgIndex][1] = formatMessage(severity,msg)
+  status.messages[msgIndex][2] = severity
   
   status.lastMessage = msg
   status.lastMessageSeverity = severity
+  -- each new message scrolls all messages to the end (offset is absolute)
+  if status.messageAutoScroll == true then
+    status.messageOffset = math.max(0, status.messageCount - 20)
+  end
 end
 
 
@@ -1077,9 +1076,6 @@ local function processTelemetry(DATA_ID,VALUE)
         playHash()
         resetHash()
         status.msgBuffer = nil
-        -- recover memory
-        collectgarbage()
-        collectgarbage()
         status.msgBuffer = ""
       end
     end
@@ -1582,30 +1578,24 @@ end
 local function reset()
   if resetPending then
     if resetPhase == 0 then
-      print("luaDebug: reset 0 start")
       -- reset frame
       utils.clearTable(frame.frameTypes)
       drainTelemetryQueues()
       resetPhase = 1
     elseif resetPhase == 1 then
-      print("luaDebug: reset 1 start")
       resetTelemetry()
       resetPhase = 2
     elseif resetPhase == 2 then
-      print("luaDebug: reset 2 start")
       resetStatus()
       resetPhase = 3
     elseif resetPhase == 3 then
-      print("luaDebug: reset 3 start")
       resetAlarms()
       resetPhase = 4
     elseif resetPhase == 4 then
-      print("luaDebug: reset 4 start")
       resetTimers()
       resetMessages()
       resetPhase = 5
     elseif resetPhase == 5 then
-      print("luaDebug: reset 5 start")
       currentPage = 0
       minmaxValues = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
       status.showMinMaxValues = false
@@ -1615,7 +1605,6 @@ local function reset()
       frame = {}
       resetPhase = 6
     elseif resetPhase == 6 then
-      print("luaDebug: reset 6 start")
       -- custom sensors
       utils.clearTable(customSensors)
       customSensors = nil
@@ -1623,8 +1612,7 @@ local function reset()
       -- done
       resetPhase = 7
     elseif resetPhase == 7 then
-      print("luaDebug: reset 7 start")
-      utils.pushMessage(7,"Yaapu Telemetry Widget 1.9.1-beta1")
+      utils.pushMessage(7,"Yaapu Telemetry Widget 1.9.3-beta")
       utils.playSound("yaapu")
       -- on model change reload config!
       if modelChangePending == true then
@@ -1632,7 +1620,6 @@ local function reset()
         loadConfigPending = true
         model.setGlobalVariable(8, 8, 1)
       end
-      print("luaDebug: reset DONE")
       resetPhase = 0
       resetPending = false
     end
@@ -1712,18 +1699,21 @@ utils.drawTopBar = function()
 end
 
 local function drawMessageScreen()
-  for i=0,#status.messages do
-    if  status.messages[(status.messageCount + i) % (#status.messages+1)][2] == 4 then
+  local row = 0
+  local offsetStart = status.messageOffset
+  local offsetEnd = math.min(status.messageCount-1, status.messageOffset + 20 - 1)
+  
+  for i=offsetStart,offsetEnd  do
+    if status.messages[i % 200][2] == 4 then
       lcd.setColor(CUSTOM_COLOR,lcd.RGB(255,255,0))
-    elseif status.messages[(status.messageCount + i) % (#status.messages+1)][2] < 4 then
-      --lcd.setColor(CUSTOM_COLOR,0xF800)
+    elseif status.messages[i % 200][2] < 4 then
       lcd.setColor(CUSTOM_COLOR,lcd.RGB(255,70,0))  
     else
       lcd.setColor(CUSTOM_COLOR,0xFFFF)
     end
-    lcd.drawText(0,2+13*i, status.messages[(status.messageCount + i) % (#status.messages+1)][1],SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(0,4+12*row, status.messages[i % 200][1],SMLSIZE+CUSTOM_COLOR)
+    row = row+1
   end
-  
   lcd.setColor(CUSTOM_COLOR,0x0AB1)
   lcd.drawFilledRectangle(405,0,75,272,CUSTOM_COLOR)
   
@@ -1765,6 +1755,24 @@ local function drawMessageScreen()
   -- HOMEDIR
   lcd.setColor(CUSTOM_COLOR,0xFE60)
   drawLib.drawRArrow(442,235,22,math.floor(telemetry.homeAngle - telemetry.yaw),CUSTOM_COLOR)--HomeDirection(telemetry)
+  -- AUTOSCROLL
+  if status.messageAutoScroll == true then
+    lcd.setColor(CUSTOM_COLOR,0xFFFF)
+  else
+    lcd.setColor(CUSTOM_COLOR,0xFE60)
+  end
+  local maxPages = tonumber(math.ceil((#status.messages+1)/20))
+  local currentPage = 1+tonumber(maxPages - (status.messageCount - status.messageOffset)/20)
+  
+  lcd.drawText(LCD_W-2, LCD_H-16, string.format("%d/%d",currentPage,maxPages), SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.setColor(CUSTOM_COLOR,0x7BCF)
+  lcd.drawLine(0,LCD_H-20,405,LCD_H-20,SOLID,CUSTOM_COLOR)
+  
+  lcd.setColor(CUSTOM_COLOR,0xFFFF)
+  if status.strFlightMode ~= nil then
+    lcd.drawText(0,LCD_H-20,status.strFlightMode,CUSTOM_COLOR)
+  end
+  lcd.drawTimer(402, LCD_H-20, model.getTimer(2).value, CUSTOM_COLOR+RIGHT)
 end
 
 ---------------------------------
@@ -1854,7 +1862,6 @@ local function loadFlightModes()
     elseif frameTypes[telemetry.frameType] == "r" or frameTypes[telemetry.frameType] == "b" then
       frame = utils.doLibrary("rover")
     end
-    maxmem = 0
   end
 end
 
@@ -1917,6 +1924,7 @@ local function checkEvents(celm)
     status.batLevel = 99
   end
   end
+  
   for l=1,13 do
     -- trigger alarm as as soon as it falls below level + 1 (i.e 91%,81%,71%,...)
     if status.batLevel <= batLevels[l] + 1 and l < status.lastBattLevel then
@@ -2010,8 +2018,6 @@ local function crossfirePop()
         -- hash reset
         resetHash()
         status.msgBuffer = nil
-        collectgarbage()
-        collectgarbage()
         status.msgBuffer = ""
       elseif #data > 48 and data[1] == 0xF2 then
         -- passthrough array
@@ -2032,9 +2038,8 @@ end
 
 local function loadConfig(init)
   -- load menu library
-  menuLib = dofile(basePath..menuLibFile..".lua")
+  local menuLib = utils.doLibrary("../"..menuLibFile)
   menuLib.loadConfig(conf)
-  utils.clearTable(menuLib)
   -- ok configuration loaded
   status.battsource = conf.defaultBattSource
   -- CRSF or SPORT?
@@ -2049,13 +2054,16 @@ local function loadConfig(init)
     resetLayoutPending = true
     resetLayoutPhase = -1
   end
+  status.mapZoomLevel=conf.mapProvider == 1 and conf.mapZoomMin or conf.mapZoomMax 
   loadConfigPending = false
 end
 
 -------------------------------
 -- running at 20Hz (every 50ms)
 -------------------------------
-local timer2Hz = getTime()
+local timerPage = getTime()
+local timerWheel = getTime()
+
 local function backgroundTasks(myWidget,telemetryLoops)
   -- don't process telemetry while resetting to prevent CPU kill
   if resetPending == false and resetLayoutPending == false and loadConfigPending == false then
@@ -2080,25 +2088,23 @@ local function backgroundTasks(myWidget,telemetryLoops)
     if type(gpsData) == "table" and gpsData.lat ~= nil and gpsData.lon ~= nil then
       telemetry.lat = gpsData.lat
       telemetry.lon = gpsData.lon
-      if conf.gpsFormat == 1 then
-        -- DMS
-        telemetry.strLat = utils.decToDMSFull(telemetry.lat)
-        telemetry.strLon = utils.decToDMSFull(telemetry.lon, telemetry.lat)
-      else
-        -- decimal
-        telemetry.strLat = string.format("%.06f", telemetry.lat)
-        telemetry.strLon = string.format("%.06f", telemetry.lon)
-      end
     end
-    --export OpenTX sensor values
+    -- export OpenTX sensor values
     setSensorValues()
     -- update total distance as often as po
     utils.updateTotalDist()
     
-    if getTime() - timer2Hz > 50 then
+    -- handle page emulation
+    if getTime() - timerPage > 50 then
       status.screenTogglePage = utils.getScreenTogglePage(myWidget,conf,status)
-      status.mapZoomLevel = utils.getMapZoomLevel(myWidget,conf,status)
-      timer2Hz = getTime()
+      timerPage = getTime()
+    end
+    -- handle wheel emulation
+    if getTime() - timerWheel > 200 then
+      local chValue = getValue(conf.screenWheelChannelId)
+      status.mapZoomLevel = utils.getMapZoomLevel(myWidget,conf,status,chValue)
+      status.messageOffset = utils.getMessageOffset(myWidget,conf,status,chValue)
+      timerWheel = getTime()
     end
     
     -- flight mode
@@ -2129,7 +2135,6 @@ local function backgroundTasks(myWidget,telemetryLoops)
   end
   
   -- SLOWER: this runs around 1.25Hz but not when the previous block runs
-  -- because bgclock%4 == 0 is always different than bgclock%2==1
   if bgclock % 4 == 0 then
     -- update battery
     calcBattery()
@@ -2170,7 +2175,10 @@ local function backgroundTasks(myWidget,telemetryLoops)
     -- indipendent values
     minmaxValues[8] = math.max(telemetry.batt1current,minmaxValues[8])
     minmaxValues[9] = math.max(telemetry.batt2current,minmaxValues[9])
-    
+  end
+  
+  -- SLOWER: this runs around 1.25Hz but not when the previous block runs
+  if bgclock % 4 == 2 then
     -- reset backlight panel
     if (model.getGlobalVariable(8,0) > 0 and getTime()/100 - backlightLastTime > 5) then
       model.setGlobalVariable(8,0,0)
@@ -2190,17 +2198,27 @@ local function backgroundTasks(myWidget,telemetryLoops)
     if rightPanel ~= nil then
       rightPanel.background(myWidget,conf,telemetry,status,utils)
     end
-        
-    bgclock = 0
+  
+    if telemetry.lat ~= nil then
+      if conf.gpsFormat == 1 then
+        -- DMS
+        telemetry.strLat = utils.decToDMSFull(telemetry.lat)
+        telemetry.strLon = utils.decToDMSFull(telemetry.lon, telemetry.lat)
+      else
+        -- decimal
+        telemetry.strLat = string.format("%.06f", telemetry.lat)
+        telemetry.strLon = string.format("%.06f", telemetry.lon)
+      end
+    end
   end
-  bgclock = bgclock+1
+
+  bgclock = (bgclock%4)+1
+  
   -- blinking support
   if (getTime() - blinktime) > 65 then
     blinkon = not blinkon
     blinktime = getTime()
   end
-  collectgarbage()
-  collectgarbage()
   return 0
 end
 
@@ -2220,7 +2238,7 @@ local function init()
   -- load battery config
   utils.loadBatteryConfigFile()
   -- ok done
-  utils.pushMessage(7,"Yaapu Telemetry Widget 1.9.1-beta1")
+  utils.pushMessage(7,"Yaapu Telemetry Widget 1.9.3-beta")
   utils.playSound("yaapu")
   -- fix for generalsettings lazy loading...
   unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
@@ -2279,23 +2297,65 @@ utils.getScreenTogglePage = function(myWidget,conf,status)
   return myWidget.options.page
 end
 
-utils.getMapZoomLevel = function(myWidget,conf,status)
-  local chValue = getValue(conf.mapToggleChannelId)
-  
-  if conf.mapToggleChannelId > -1 then
-    if chValue >= 600 then
-      return conf.mapZoomLevel + 2
+
+utils.getMessageOffset = function(myWidget,conf,status,chValue)
+  if myWidget.options.page ~= 2 and status.screenTogglePage ~= 2 then
+    return status.messageOffset
+  end
+  if conf.screenWheelChannelId > -1 then
+    -- SW up
+    if chValue < -600 then
+      local offset = math.min(status.messageOffset + 20, math.max(0,status.messageCount - 20))
+      if offset >= (status.messageCount - 20) then
+        status.messageAutoScroll = true
+      else
+        status.messageAutoScroll = false
+      end
+      return offset
     end
-    
-    if chValue > - 600 and chValue < 600 then
-      return conf.mapZoomLevel + 1
+    -- SW down
+    if chValue > 600 then
+      status.messageAutoScroll = false
+      return math.max(0,math.max(status.messageCount - 200,status.messageOffset - 20))
     end
   end
-  return conf.mapZoomLevel
+  return status.messageOffset
+end
+
+utils.getMapZoomLevel = function(myWidget,conf,status,chValue)
+  if myWidget.options.page ~= 5 and status.screenTogglePage ~= 5 then
+    return status.mapZoomLevel
+  end
+
+  if conf.screenWheelChannelId > -1 then
+    -- SW up (increase zoom level)
+    if chValue < -600 then
+      if conf.mapProvider == 1 then
+        return status.mapZoomLevel > conf.mapZoomMin and status.mapZoomLevel - 1 or status.mapZoomLevel
+      end
+      return status.mapZoomLevel < conf.mapZoomMax and status.mapZoomLevel + 1 or status.mapZoomLevel
+    end
+    -- SW down (decrease zoom level)
+    if chValue > 600 then
+      if conf.mapProvider == 1 then
+        return status.mapZoomLevel < conf.mapZoomMax and status.mapZoomLevel + 1 or status.mapZoomLevel
+      end
+      return status.mapZoomLevel > conf.mapZoomMin and status.mapZoomLevel - 1 or status.mapZoomLevel
+    end
+  end
+  -- SW mid
+  return status.mapZoomLevel
 end
 
 -- called when widget instance page changes
 local function onChangePage(myWidget)
+  if myWidget.options.page == 3 then
+    -- when page 3 goes to foreground show minmax values
+    status.showMinMaxValues = true
+  elseif myWidget.options.page == 4 then
+    -- when page 4 goes to foreground show dual battery view
+    status.showDualBattery = true
+  end
   -- reset HUD counters
   myWidget.vars.hudcounter = 0
 end
@@ -2305,7 +2365,7 @@ local function background(myWidget)
   -- when page 1 goes to background run bg tasks
   if myWidget.options.page == 1 then
     -- run bg tasks
-    backgroundTasks(myWidget,20)
+    backgroundTasks(myWidget,15)
     return
   end
   -- when page 3 goes to background hide minmax values
@@ -2373,18 +2433,20 @@ local function drawInitialingMsg()
   lcd.drawText(155, 95, "initializing...", DBLSIZE+CUSTOM_COLOR)
 end
 
+local fgclock = 0
+
 -- Called when script is visible
 local function drawFullScreen(myWidget)
   -- when page 1 goes to foreground run bg tasks
   if myWidget.options.page == 1 then
     -- run bg tasks only if we are not resetting, this prevent cpu limit kill
-    if resetPending == false and resetLayoutPending == false then
-      backgroundTasks(myWidget,20)
+    if not (resetPending or resetLayoutPending) then
+      backgroundTasks(myWidget,15)
     end
   end
   lcd.setColor(CUSTOM_COLOR, 0x0AB1)
   
-  if resetPending == false and resetLayoutPending == false and loadConfigPending == false then
+  if not (resetPending or resetLayoutPending or loadConfigPending) then
     if myWidget.options.page == 2 or status.screenTogglePage == 2 then
       ------------------------------------
       -- Widget Page 2: MESSAGES
@@ -2421,41 +2483,33 @@ local function drawFullScreen(myWidget)
     drawInitialingMsg()
   end
   
-  if getTime() - fastTimer > 20 then
+  if fgclock % 2 == 1 then
     -- reset phase 2 if reset pending
     if resetLayoutPending == true then
       resetLayouts()
     elseif resetPending == true then
       reset()
-    else
-      -- frametype and model name
-      local info = model.getInfo()
-      -- model change event
-      if currentModel ~= info.name then
-        currentModel = info.name
-        -- trigger reset
-        triggerReset()
-      end
     end
   end
   
-  if getTime() - slowTimer > 50 then
-    if myWidget.options.page == 3 then
-      -- when page 3 goes to foreground show minmax values
-      status.showMinMaxValues = true
-    elseif myWidget.options.page == 4 then
-      -- when page 4 goes to foreground show dual battery view
-      status.showDualBattery = true
-    end
-    
-    -- check if current widget page changed
+  if fgclock % 4 == 0 then
     if currentPage ~= myWidget.options.page then
       currentPage = myWidget.options.page
       onChangePage(myWidget)
     end
-    
-    slowTimer = getTime()
   end
+  
+  if fgclock % 8 == 2 then
+    -- frametype and model name
+    local info = model.getInfo()
+    -- model change event
+    if currentModel ~= info.name then
+      currentModel = info.name
+      -- trigger reset
+      triggerReset()
+    end
+  end
+  fgclock = (fgclock % 8) + 1
   
   -- no telemetry/minmax outer box
   if telemetryEnabled() == false then
@@ -2477,10 +2531,11 @@ end
 
 -- are we full screen? if 
 local function drawScreen(myWidget)
-    drawScreen = drawFullScreen
     if myWidget.zone.h < 250 then 
-      drawScreen = fullScreenRequired
+      fullScreenRequired(myWidget)
+      return
     end
+    drawFullScreen(myWidget)
 end
 
 function refresh(myWidget)

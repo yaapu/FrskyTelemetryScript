@@ -55,7 +55,8 @@
 --#define TESTMODE
 -- enable debug of generated hash or short hash string
 --#define HASHDEBUG
-
+-- enable MESSAGES DEBUG
+--#define DEBUG_MESSAGES
 ---------------------
 -- DEBUG REFRESH RATES
 ---------------------
@@ -109,7 +110,9 @@
 --#define HUD_ALGO1
 -- enable optimized hor bars HUD drawing
 --#define HUD_ALGO2
--- enable hor bars HUD drawing
+-- enable hor bars HUD drawing, 2 px resolution
+-- enable hor bars HUD drawing, 1 px resolution
+--#define HUD_ALGO4
 
 
 
@@ -135,9 +138,6 @@ local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 -- offsets are: 1 celm, 4 batt, 7 curr, 10 mah, 13 cap, indexing starts at 1
 -- 
 
------------------------
--- LIBRARY LOADING
------------------------
 
 ----------------------
 --- COLORS
@@ -192,28 +192,25 @@ local ver, radio, maj, minor, rev = getVersion()
 local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)
 
   local r = -telemetry.roll
-  local cx,cy,dx,dy,ccx,ccy,cccx,cccy
+  local cx,cy,dx,dy--,ccx,ccy,cccx,cccy
   local yPos = 0 + 20 + 8
+  local scale = 1.85 -- 1.85
   -----------------------
   -- artificial horizon
   -----------------------
-  -- no roll ==> segments are vertical, offsets are multiples of 21
+  -- no roll ==> segments are vertical, offsets are multiples of 18.5
   if ( telemetry.roll == 0 or math.abs(telemetry.roll) == 180) then
     dx=0
-    dy=telemetry.pitch * 1.85
+    dy=telemetry.pitch * scale
     cx=0
-    cy=21
-    ccx=0
-    ccy=2*21
-    cccx=0
-    cccy=3*21
+    cy=18.5
   else
     -- center line offsets
     dx = math.cos(math.rad(90 - r)) * -telemetry.pitch
-    dy = math.sin(math.rad(90 - r)) * telemetry.pitch * 1.85
+    dy = math.sin(math.rad(90 - r)) * telemetry.pitch * scale
     -- 1st line offsets
-    cx = math.cos(math.rad(90 - r)) * 21
-    cy = math.sin(math.rad(90 - r)) * 21
+    cx = math.cos(math.rad(90 - r)) * 18.5
+    cy = math.sin(math.rad(90 - r)) * 18.5
   end
   local rollX = math.floor((LCD_W-280)/2 + 280/2)
   -----------------------
@@ -230,8 +227,6 @@ local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)
   local oy = 85 + dy
   local yy = 0
   
-  --lcd.setColor(CUSTOM_COLOR,lcd.RGB(0x7b, 0x9d, 0xff)) -- default blue 7B9DFF
-  --lcd.drawFilledRectangle(minX,minY,maxX-minX,maxY - minY,CUSTOM_COLOR)
   lcd.drawBitmap(utils.getBitmap("hud_bg_280x134"),(LCD_W-280)/2,18) --160x90  
   -- HUD
   --lcd.setColor(CUSTOM_COLOR,lcd.RGB(77, 153, 0))
@@ -297,11 +292,17 @@ local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)
   local linesMinY = minY+10
   lcd.setColor(CUSTOM_COLOR,0xFFFF)
   -- +/- 90 deg
-  for dist=1,8
+  for dist=1,6
   do
     drawLib.drawLineWithClipping(rollX + dx - dist*cx,dy + 85 + dist*cy,r,(dist%2==0 and 80 or 40),DOTTED,(LCD_W-280)/2+2,(LCD_W-280)/2+280-2,linesMinY,linesMaxY,CUSTOM_COLOR,radio,rev)
     drawLib.drawLineWithClipping(rollX + dx + dist*cx,dy + 85 - dist*cy,r,(dist%2==0 and 80 or 40),DOTTED,(LCD_W-280)/2+2,(LCD_W-280)/2+280-2,linesMinY,linesMaxY,CUSTOM_COLOR,radio,rev)
   end
+  
+  --[[
+  -- horizon line
+  lcd.setColor(CUSTOM_COLOR,lcd.RGB(160,160,160))
+  drawLib.drawLineWithClipping(rollX + dx,dy + HUD_Y_MID,r,200, SOLID, HUD_X+2,HUD_X+HUD_WIDTH-2,linesMinY,linesMaxY,CUSTOM_COLOR,radio,rev)
+  --]]
   
   -- hashmarks
   local startY = minY + 1
@@ -406,7 +407,6 @@ local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)
   
   -- compass ribbon
   drawLib.drawCompassRibbon(18,myWidget,conf,telemetry,status,battery,utils,240,(LCD_W-240)/2,(LCD_W+240)/2,25,true)
-  
   -- pitch and roll
   lcd.setColor(CUSTOM_COLOR,0xFE60)  
   local xoffset =  math.abs(telemetry.pitch) > 99 and 6 or 0
