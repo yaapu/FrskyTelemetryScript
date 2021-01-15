@@ -1,6 +1,6 @@
 # Yaapu Frsky Telemetry Script
 
-This is the home of the Yaapu Telemetry Script project, a [LUA](https://www.lua.org/about.html) telemetry script for the Frsky Horus and Taranis radios using the ArduPilot frsky passthru telemetry protocol.
+This is the home of the Yaapu Telemetry Script project, a [LUA](https://www.lua.org/about.html) telemetry script for radios running [OpenTX](https://www.open-tx.org/)
 
 ### please read the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki) for more info
 
