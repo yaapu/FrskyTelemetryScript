@@ -238,6 +238,11 @@ local menuItems = {
 
 local menuItemsByName = {}
 
+-- map from NEW to OLD settings
+local mapNewToOldItemCfg = {
+  ["SWC"] = "ZTC" -- ZTC was replaced by SWC
+}
+
 local menu  = {
   selectedItem = 1,
   editSelected = false,
@@ -480,6 +485,13 @@ local function loadConfig(conf)
     menuItemsByName[tostring(menuItems[i][2])] = i
     if cfg_found then
       local value = string.match(cfg_string, menuItems[i][2]..":([-%d]+)")
+      if value == nil then
+        -- check if it was replaced by an older settings
+        local oldCfg = mapNewToOldItemCfg[menuItems[i][2]]
+        if oldCfg ~= nil then
+          value = string.match(cfg_string, oldCfg..":([-%d]+)")
+        end
+      end
       if value ~= nil then
         menuItems[i][3] = tonumber(value)
         -- check if the value read from file is compatible with available options
