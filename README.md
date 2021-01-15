@@ -7,6 +7,7 @@ This is the home of the Yaapu Telemetry Script project, a [LUA](https://www.lua.
 - **the latest release versions are downloadable from the [clone/download](https://github.com/yaapu/FrskyTelemetryScript/archive/master.zip) button**
 - **the latest pre-release versions are downloadable from the [releases](https://github.com/yaapu/FrskyTelemetryScript/releases) section** 
 
+### please read the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki) for more info
 
 ![X10](https://github.com/yaapu/FrskyTelemetryScript/raw/master/HORUS/IMAGES/x10.png)
 
@@ -14,21 +15,11 @@ This is the home of the Yaapu Telemetry Script project, a [LUA](https://www.lua.
 
 ![X7](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7.png)
 
-The supported radios are:
-- Taranis X9D(+) and QX7 on OpenTX 2.2.2 or greater
-- X-Lite on OpenTX 2.2.2 or greater (by using the QX7 version)
-- Horus X10 and X12, Jumper T16 and Radiomaster TX16S on OpenTX 2.3.x
-
 Here you'll find
 - a **Telemetry** script for the Taranis radios: X9D,QX7 and X-Lite ([changelog](https://github.com/yaapu/FrskyTelemetryScript/raw/master/taranis-changelog.txt))
 - a **Widget** for the Frsky Horus radios: X10/S and X12 and for Jumper T16 ([changelog](https://github.com/yaapu/FrskyTelemetryScript/raw/master/horus-changelog.txt))
 
-
-both support all of the telemetry DIY 0x5000 packets sent by ardupilot’s [frsky passthrough protocol library](https://github.com/ArduPilot/ardupilot/tree/master/libraries/AP_Frsky_Telem)
-
 The script is also compatible with the excellent [MavlinkToPassthru](https://github.com/zs6buj/MavlinkToPassthru) converter firmware by Eric Stockenstrom
-
-Requires [OpenTX 2.2.x](http://www.open-tx.org/) and a recent release of [ArduPilot](http://ardupilot.org/ardupilot/index.html).
 
 ## Donation
 
