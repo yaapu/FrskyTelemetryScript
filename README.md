@@ -55,27 +55,6 @@ Requires [OpenTX 2.2.x](http://www.open-tx.org/) and a recent release of [ArduPi
  - [credits](#credits)
  - [donation](#donation)
  
-## Screenshots
-
-horus GPS maps view
-
-![X10maps](https://user-images.githubusercontent.com/30294218/65993331-4a553600-e491-11e9-94c5-acd237ef4455.png)
-
-dual battery view
-
-![X10dual](https://github.com/yaapu/FrskyTelemetryScript/raw/master/HORUS/IMAGES/x10dualbattery.png)
-
-![X9Ddual](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9ddual.png)
-
-![X7dual](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7dual.png)
-
-mavlink message history
-
-![X10messages](https://github.com/yaapu/FrskyTelemetryScript/raw/master/HORUS/IMAGES/x10messages.png)
-
-![X9Dmessages](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9dmessages.png)
-
-![X7messages](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7messages.png)
 
 ## Display layout
 
