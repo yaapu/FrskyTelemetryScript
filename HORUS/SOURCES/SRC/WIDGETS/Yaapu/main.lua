@@ -1204,7 +1204,7 @@ local function processMAVLink()
 	if rssi ~= nil then
 	  -- if rssi >= 255 then rssi = 0 end -- to handle MAVLink special case 0xFF, but ArduPilot does not adhere to MAVLink convention, so that must not use it, but next line
 	  if rssi >= 255 then rssi = 254 end
-	  telemetry.rssiMAVLink = rssi
+	  telemetry.rssiMAVLink = rssi / 2.54
 	end
 end
 
