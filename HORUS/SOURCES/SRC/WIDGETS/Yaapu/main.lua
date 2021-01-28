@@ -846,10 +846,10 @@ utils.getHomeFromAngleAndDistance = function(telemetry)
   d be distance (m),
   R as radius of Earth (m),
   Ad be the angular distance i.e d/R and
-  ? be the bearing in deg
+  θ be the bearing in deg
   
-  la2 =  asin(sin la1 * cos Ad  + cos la1 * sin Ad * cos ?), and
-  lo2 = lo1 + atan2(sin ? * sin Ad * cos la1 , cos Ad – sin la1 * sin la2)
+  la2 =  asin(sin la1 * cos Ad  + cos la1 * sin Ad * cos θ), and
+  lo2 = lo1 + atan2(sin θ * sin Ad * cos la1 , cos Ad – sin la1 * sin la2)
 --]]
   if telemetry.lat == nil or telemetry.lon == nil then
     return nil,nil
@@ -2306,7 +2306,7 @@ local function backgroundTasks(myWidget,telemetryLoops)
           processTelemetry(data_id,value)
         end
       end
-	end  
+    end
   end
   -- SLOW: this runs around 2.5Hz
   if bgclock % 2 == 1 then
@@ -2467,7 +2467,7 @@ local function init()
   -- load battery config
   utils.loadBatteryConfigFile()
   -- ok done
-  utils.pushMessage(7,"Yaapu Telemetry w. MAVLink 1.9.4-alpha")
+  utils.pushMessage(7,"Yaapu Telemetry Widget 1.9.3-beta")
   utils.playSound("yaapu")
   -- fix for generalsettings lazy loading...
   unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
