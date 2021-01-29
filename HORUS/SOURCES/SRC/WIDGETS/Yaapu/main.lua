@@ -2168,6 +2168,7 @@ local function checkEvents(celm)
     -- reset home on arming
     telemetry.homeLat = nil
     telemetry.homeLon = nil
+    status.homeGood = false
   elseif telemetry.statusArmed == 0 and status.lastStatusArmed == 1 then
     status.lastStatusArmed = telemetry.statusArmed
     utils.playSound("disarmed")
