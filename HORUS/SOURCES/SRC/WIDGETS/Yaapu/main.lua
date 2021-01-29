@@ -1129,6 +1129,14 @@ local function processMAVLink()
 	if Bat2Charge ~= nil then
 	  telemetry.batt2mah = Bat2Charge
 	end
+	-- telemetry.lat and telemetry.lon
+	local latlon = mavsdk.getGpsLatLonInt()
+	if latlon.lat ~= nil then
+	  telemetry.lat = latlon.lat / 10000000
+	end
+	if latlon.lon ~= nil then
+	  telemetry.lon = latlon.lon/ 10000000
+	end
 	-- telemetry.homeAngle and telemetry.homeDist
 	if status.homeGood and status.homelon ~= nil and status.homelat ~= nil and telemetry.lon ~= nil and telemetry.lat ~= nil then
 	  -- Equation from Mav2PT FrSky_Ports.h
