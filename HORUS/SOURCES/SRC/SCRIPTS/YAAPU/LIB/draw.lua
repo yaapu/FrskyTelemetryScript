@@ -123,6 +123,8 @@
 -- MENU VALUE,COMBO
 --------------------------------------------------------------------------------
 
+local statusArmTimeout = 0	-- timeout counter for "armed" dialog
+
 --------------------------
 -- UNIT OF MEASURE
 --------------------------
@@ -358,12 +360,25 @@ end
 
 local function drawArmStatus(status,telemetry,utils)
   -- armstatus
-  if telemetry.ekfFailsafe == 0 and telemetry.battFailsafe == 0 and status.timerRunning == 0 then
-    if (telemetry.statusArmed == 1) then
-      lcd.drawBitmap(utils.getBitmap("armed"),LCD_W/2 - 90,154)
-    else
-      utils.drawBlinkBitmap("disarmed",LCD_W/2 - 90,154)
-    end
+  if telemetry.ekfFailsafe == 0 and telemetry.battFailsafe == 0 then
+    if statusArmTimeout > 0 then
+	  -- we are displaying "armed"
+	  if statusArmTimeout < 10 then -- display "armed" for approx. 1.5 seconds
+        lcd.drawBitmap(utils.getBitmap("armed"),LCD_W/2 - 90,154)
+        statusArmTimeout = statusArmTimeout + 1
+      else
+	    statusArmTimeout = 0
+      end
+	end
+	if status.timerRunning == 0 then
+      if (telemetry.statusArmed == 1) then
+        lcd.drawBitmap(utils.getBitmap("armed"),LCD_W/2 - 90,154)
+        statusArmTimeout = 1 -- trigger incrementing dialog timeout displaying "armed"
+      else
+        utils.drawBlinkBitmap("disarmed",LCD_W/2 - 90,154)
+		statusArmTimeout = 0
+      end
+	end
   end
 end
 
