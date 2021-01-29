@@ -1053,7 +1053,7 @@ local function processMAVLink()
 	-- telemetry.flightMode
 	local fm = mavsdk.getFlightMode()
 	if fm ~= nil then
-		telemetry.flightMode = fm
+		telemetry.flightMode = fm + 1
 	end
 	-- telemetry.simpleMode
 	telemetry.simpleMode = 0
@@ -1135,7 +1135,7 @@ local function processMAVLink()
 	  telemetry.lat = latlon.lat / 10000000
 	end
 	if latlon.lon ~= nil then
-	  telemetry.lon = latlon.lon/ 10000000
+	  telemetry.lon = latlon.lon / 10000000
 	end
 	-- telemetry.homeAngle and telemetry.homeDist
 	if status.homeGood and status.homelon ~= nil and status.homelat ~= nil and telemetry.lon ~= nil and telemetry.lat ~= nil then
