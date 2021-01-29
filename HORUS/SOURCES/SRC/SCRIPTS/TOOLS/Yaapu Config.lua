@@ -365,10 +365,6 @@ local function updateMenuItems()
         menuItems[idx2][4] = { "GoogleSatelliteMap", "GoogleHybridMap", "GoogleMap", "GoogleTerrainMap" }
         menuItems[idx2][5] = { "GoogleSatelliteMap", "GoogleHybridMap", "GoogleMap", "GoogleTerrainMap" }
       end
-      
-      if menuItems[idx2][3] > #menuItems[idx2][4] then
-        menuItems[idx2][3] = 1
-      end
     end
     
     value2, name2, idx2 = getMenuItemByName(menuItems,"MAPmZ")
@@ -381,7 +377,13 @@ local function updateMenuItems()
         menuItems[idx2][4] = 1
         menuItems[idx2][5] = 20
       end
-      menuItems[idx2][3] = menuItems[idx2][4]
+	  -- check that the selected value is in range of the appropriate map product
+      if menuItems[idx2][3] < menuItems[idx2][4] then
+        menuItems[idx2][3] = menuItems[idx2][4]
+      end
+      if menuItems[idx2][3] > menuItems[idx2][5] then
+        menuItems[idx2][3] = menuItems[idx2][5]
+      end
     end
     
     value2, name2, idx2 = getMenuItemByName(menuItems,"MAPMZ")
@@ -394,7 +396,13 @@ local function updateMenuItems()
         menuItems[idx2][4] = 1
         menuItems[idx2][5] = 20
       end
-      menuItems[idx2][3] = menuItems[idx2][5]
+	  -- check that the selected value is in range of the appropriate map product
+      if menuItems[idx2][3] < menuItems[idx2][4] then
+        menuItems[idx2][3] = menuItems[idx2][4]
+      end
+      if menuItems[idx2][3] > menuItems[idx2][5] then
+        menuItems[idx2][3] = menuItems[idx2][5]
+      end
     end
     
     menu.updated = false
