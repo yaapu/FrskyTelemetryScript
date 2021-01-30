@@ -3,6 +3,8 @@
 --
 -- Copyright (C) 2018-2019. Alessandro Apostoli
 -- https://github.com/yaapu
+-- OlliW MavSDK additions by Risto Kõiva
+-- https://github.com/rotorman
 --
 -- This program is free software; you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -556,7 +558,7 @@ local conf = {
   maxHdopAlert = 2,
   enablePX4Modes = false,
   enableCRSF = false,
-  enableMAVLink = false,
+  enableMAVLink = true,
   centerPanel = 1,
   rightPanel = 1,
   leftPanel = 1,
@@ -846,10 +848,10 @@ utils.getHomeFromAngleAndDistance = function(telemetry)
   d be distance (m),
   R as radius of Earth (m),
   Ad be the angular distance i.e d/R and
-  θ be the bearing in deg
+  Theta be the bearing in deg
   
-  la2 =  asin(sin la1 * cos Ad  + cos la1 * sin Ad * cos θ), and
-  lo2 = lo1 + atan2(sin θ * sin Ad * cos la1 , cos Ad – sin la1 * sin la2)
+  la2 =  asin(sin la1 * cos Ad  + cos la1 * sin Ad * cos Theta), and
+  lo2 = lo1 + atan2(sin Theta * sin Ad * cos la1 , cos Ad – sin la1 * sin la2)
 --]]
   if telemetry.lat == nil or telemetry.lon == nil then
     return nil,nil
@@ -1021,40 +1023,28 @@ local function MarkHome() -- inspired by Mav2PT
   end
 end
 
--- processes OlliW MAVLink enhanced OpenTX messages
+-- processes OlliW MavSDK (MAVLink enhanced OpenTX) data
 local function processMAVLink()
 	-- telemetry.roll
 	local roll = mavsdk.getAttRollDeg()
-	if roll ~= nil then
-		telemetry.roll = roll
-	end
+	if roll ~= nil then telemetry.roll = roll end
 	-- telemetry.pitch
 	local pitch = mavsdk.getAttPitchDeg()
-	if pitch ~= nil then
-		telemetry.pitch = pitch
-	end
+	if pitch ~= nil then telemetry.pitch = pitch end
 	-- telemetry.range
 	telemetry.range = 0 -- not yet parsed by OlliW
 	-- telemetry.vSpeed
 	local vSpeed = mavsdk.getVfrClimbRate()
-	if vSpeed ~= nil then
-		telemetry.vSpeed = vSpeed * 10 -- from m/s to dm/s
-	end
+	if vSpeed ~= nil then telemetry.vSpeed = vSpeed * 10 end -- from m/s to dm/s 
 	-- telemetry.hSpeed
 	local hSpeed = mavsdk.getVfrGroundSpeed()
-	if hSpeed ~= nil then
-		telemetry.hSpeed =  hSpeed * 10 -- from m/s to dm/s
-	end
+	if hSpeed ~= nil then telemetry.hSpeed =  hSpeed * 10 end -- from m/s to dm/s
 	-- telemetry.yaw
 	local yaw = mavsdk.getVfrHeadingDeg()
-	if yaw ~= nil then
-		telemetry.yaw = yaw
-	end
+	if yaw ~= nil then telemetry.yaw = yaw end
 	-- telemetry.flightMode
 	local fm = mavsdk.getFlightMode()
-	if fm ~= nil then
-		telemetry.flightMode = fm + 1
-	end
+	if fm ~= nil then telemetry.flightMode = fm + 1 end -- needs to be incremented by one from MAVLink standard output
 	-- telemetry.simpleMode
 	telemetry.simpleMode = 0
 	-- telemetry.statusArmed and telemetry.landComplete
@@ -1090,63 +1080,47 @@ local function processMAVLink()
 		end
 	end
 	-- telemetry.gpsHdopC
-	local Hdop = mavsdk.getGpsHDop() --NOT divided with 10!
-	if Hdop ~= nil then
-		telemetry.gpsHdopC = Hdop
-	end
+	local Hdop = mavsdk.getGpsHDop() -- here NOT divided with 10 to keep the original MavLINK format, as compared with FrSky PT
+	if Hdop ~= nil then telemetry.gpsHdopC = Hdop end
 	-- telemetry.gpsAlt
 	local gpsAlt = mavsdk.getGpsAltitudeMsl()
-	if gpsAlt ~= nil then
-		telemetry.gpsAlt = gpsAlt * 10 --dm
-	end
+	if gpsAlt ~= nil then telemetry.gpsAlt = gpsAlt * 10 end -- from m to dm
 	-- telemetry.batt1volt
 	local batt1Volt = mavsdk.getBatVoltage()
-	if batt1Volt ~= nil then
-		telemetry.batt1volt = batt1Volt * 10 --dV
-	end
+	if batt1Volt ~= nil then telemetry.batt1volt = batt1Volt * 10 end -- from V to dV
 	-- telemetry.batt1current
 	local BatCurrent = mavsdk.getBatCurrent()
-	if BatCurrent ~= nil then
-	  telemetry.batt1current = BatCurrent
-	end
+	if BatCurrent ~= nil then telemetry.batt1current = BatCurrent end
 	-- telemetry.batt1mah
 	local BatCharge = mavsdk.getBatChargeConsumed()
-	if BatCharge ~= nil then
-	  telemetry.batt1mah = BatCharge
-	end
+	if BatCharge ~= nil then telemetry.batt1mah = BatCharge end
 	-- telemetry.batt2volt
 	local batt2Volt = mavsdk.getBat2Voltage()
-	if batt2Volt ~= nil then
-		telemetry.batt2volt = batt2Volt * 10 --dV
-	end
+	if batt2Volt ~= nil then telemetry.batt2volt = batt2Volt * 10 end -- from V to dV
 	-- telemetry.batt2current
 	local Bat2current = mavsdk.getBat2Current()
-	if Bat2current ~= nil then
-	  telemetry.batt2current = Bat2current
-	end
+	if Bat2current ~= nil then telemetry.batt2current = Bat2current end
 	-- telemetry.batt2mah
 	local Bat2Charge = mavsdk.getBat2ChargeConsumed()
-	if Bat2Charge ~= nil then
-	  telemetry.batt2mah = Bat2Charge
-	end
+	if Bat2Charge ~= nil then telemetry.batt2mah = Bat2Charge end
 	-- telemetry.lat and telemetry.lon
 	local latlon = mavsdk.getGpsLatLonInt()
 	if latlon.lat ~= nil then
-	  telemetry.lat = latlon.lat / 10000000
+	  telemetry.lat = latlon.lat / 10000000	-- converted to degrees.fraction
 	end
 	if latlon.lon ~= nil then
-	  telemetry.lon = latlon.lon / 10000000
+	  telemetry.lon = latlon.lon / 10000000 -- converted to degrees.fraction
 	end
 	-- telemetry.homeAngle and telemetry.homeDist
 	if status.homeGood and status.homelon ~= nil and status.homelat ~= nil and telemetry.lon ~= nil and telemetry.lat ~= nil then
-	  -- Equation from Mav2PT FrSky_Ports.h
+	  -- Equations from Mav2PT FrSky_Ports.h
 	  local lon1 = status.homelon/180*math.pi;  -- home position, converted from degrees to radians
       local lat1 = status.homelat/180*math.pi;
       local lon2 = telemetry.lon/180*math.pi; -- current position
       local lat2 = telemetry.lat/180*math.pi;
 	  local dLat = (lat2-lat1); -- latitude difference
       local dLon = (lon2-lon1); -- longitude difference
-      -- telemetry.homeAngle (over FrSky PT in 3° steps)
+      -- telemetry.homeAngle
 	  -- Calculate azimuth bearing of craft from home
 	  local ab = math.atan2(math.sin(lon2-lon1)*math.cos(lat2), math.cos(lat1)*math.sin(lat2)-math.sin(lat1)*math.cos(lat2)*math.cos(lon2-lon1)) * 180/math.pi - 180
 	  if ab < 0 then ab = ab + 360 end
@@ -1162,31 +1136,23 @@ local function processMAVLink()
 	end
 	-- telemetry.homeAlt
 	local homeAlt = mavsdk.getPositionAltitudeRelative() --getVfrAltitudeMsl()
-	if homeAlt ~= nil then
-	  telemetry.homeAlt = homeAlt * 10 --dm
-	end
+	if homeAlt ~= nil then telemetry.homeAlt = homeAlt * 10 end -- from m to dm
 	-- messages
 	if mavsdk.isStatusTextAvailable() then
 	  local severity, txt = mavsdk.getStatusText()
-	  utils.pushMessage( severity, txt)
+	  utils.pushMessage(severity, txt)
 	  playHash()
       resetHash()
 	end
 	-- telemetry.frameType
 	local frameType = mavsdk.getVehicleType()
-	if frameType ~= nil then
-	  telemetry.frameType = frameType
-	end
+	if frameType ~= nil then telemetry.frameType = frameType end
 	-- telemetry.batt1Capacity
 	local batt1Capacity = mavsdk.getBatCapacity()
-	if batt1Capacity ~= nil then
-	  telemetry.batt1Capacity = batt1Capacity
-    end 
+	if batt1Capacity ~= nil then telemetry.batt1Capacity = batt1Capacity end 
     -- telemetry.batt2Capacity
 	local batt2Capacity = mavsdk.getBat2Capacity()
-	if batt2Capacity ~= nil then
-	  telemetry.batt2Capacity = batt2Capacity
-	end
+	if batt2Capacity ~= nil then telemetry.batt2Capacity = batt2Capacity end
     -- telemetry.wpCommands is not yet parsed by OlliW
 	-- telemetry.wpNumber is not yet parsed by OlliW
     -- telemetry.wpDistance is not yet parsed by OlliW
@@ -1194,29 +1160,23 @@ local function processMAVLink()
     -- telemetry.wpBearing is not yet parsed by OlliW
 	-- telemetry.airspeed
     local airspeed = mavsdk.getVfrAirSpeed()
-	if airspeed ~= nil then
-	  telemetry.airspeed = airspeed * 10 -- dm/s
-	end
+	if airspeed ~= nil then telemetry.airspeed = airspeed * 10 end -- from m/s to dm/s
 	-- telemetry.throttle
 	local throttle = mavsdk.getVfrThrottle()
-	if throttle ~= nil then
-	  telemetry.throttle = throttle -- %
-	end
+	if throttle ~= nil then telemetry.throttle = throttle end -- unit [%]
     -- telemetry.baroAlt
 	local baroAlt = mavsdk.getVfrAltitudeMsl()
-	if baroAlt ~= nil then
-	  telemetry.baroAlt = baroAlt
-	end
+	if baroAlt ~= nil then telemetry.baroAlt = baroAlt end
 	-- RSSI
 	local rssi = mavsdk.getRadioRssi()
 	if rssi ~= nil then
 	  -- if rssi >= 255 then rssi = 0 end -- to handle MAVLink special case 0xFF, but ArduPilot does not adhere to MAVLink convention, so that must not use it, but next line
 	  if rssi >= 255 then rssi = 254 end
-	  telemetry.rssiMAVLink = math.floor(rssi / 2.54)
-	end
+      telemetry.rssiMAVLink = math.floor(rssi / 2.54) -- conversion 0-254 to 0-100 [%]
+    end
 end
 
-local function processTelemetry(DATA_ID,VALUE)
+local function processFrSkyPTtelemetry(DATA_ID,VALUE)
   if DATA_ID == 0x5006 then -- ROLLPITCH
     -- roll [0,1800] ==> [-180,180]
     telemetry.roll = (math.min(bit32.extract(VALUE,0,11),1800) - 900) * 0.2
@@ -1242,7 +1202,7 @@ local function processTelemetry(DATA_ID,VALUE)
     -- offset  4: NO_GPS = 0, NO_FIX = 1, GPS_OK_FIX_2D = 2, GPS_OK_FIX_3D or GPS_OK_FIX_3D_DGPS or GPS_OK_FIX_3D_RTK_FLOAT or GPS_OK_FIX_3D_RTK_FIXED = 3
     -- offset 14: 0: no advanced fix, 1: GPS_OK_FIX_3D_DGPS, 2: GPS_OK_FIX_3D_RTK_FLOAT, 3: GPS_OK_FIX_3D_RTK_FIXED
     telemetry.gpsStatus = bit32.extract(VALUE,4,2) + bit32.extract(VALUE,14,2)
-    telemetry.gpsHdopC = bit32.extract(VALUE,7,7) * (10^bit32.extract(VALUE,6,1))
+    telemetry.gpsHdopC = bit32.extract(VALUE,7,7) * (10^bit32.extract(VALUE,6,1)) -- dm
     telemetry.gpsAlt = bit32.extract(VALUE,24,7) * (10^bit32.extract(VALUE,22,2)) * (bit32.extract(VALUE,31,1) == 1 and -1 or 1)-- dm
   elseif DATA_ID == 0x5003 then -- BATT
     telemetry.batt1volt = bit32.extract(VALUE,0,9)
@@ -1837,7 +1797,7 @@ local function reset()
       -- done
       resetPhase = 7
     elseif resetPhase == 7 then
-      utils.pushMessage(7,"Yaapu Telemetry Widget 1.9.3-beta")
+      utils.pushMessage(7,"Yaapu 1.9.3b2 w. OlliW 21rc05 MavSDK by RK")
       utils.playSound("yaapu")
       -- on model change reload config!
       if modelChangePending == true then
@@ -2256,7 +2216,7 @@ local function crossfirePop()
           app_id = bit32.lshift(data[4+(6*i)],8) + data[3+(6*i)]
           value =  bit32.lshift(data[8+(6*i)],24) + bit32.lshift(data[7+(6*i)],16) + bit32.lshift(data[6+(6*i)],8) + data[5+(6*i)]
           --utils.pushMessage(7,string.format("CRSF:%d - %04X:%08X",i, app_id, value), true)
-          processTelemetry(app_id, value)
+          processFrSkyPTtelemetry(app_id, value)
         end
         status.noTelemetryData = 0
         status.hideNoTelemetry = true
@@ -2312,7 +2272,7 @@ local function backgroundTasks(myWidget,telemetryLoops)
           status.noTelemetryData = 0
           -- no telemetry dialog only shown once
           status.hideNoTelemetry = true
-          processTelemetry(data_id,value)
+          processFrSkyPTtelemetry(data_id,value)
         end
       end
     end
@@ -2476,7 +2436,7 @@ local function init()
   -- load battery config
   utils.loadBatteryConfigFile()
   -- ok done
-  utils.pushMessage(7,"Yaapu Telemetry Widget 1.9.3-beta")
+  utils.pushMessage(7,"Yaapu 1.9.3b2 w. OlliW 21rc05 MavSDK by RK")
   utils.playSound("yaapu")
   -- fix for generalsettings lazy loading...
   unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
@@ -2780,4 +2740,4 @@ function refresh(myWidget)
   drawScreen(myWidget)
 end
 
-return { name="Yaapu", options=options, create=create, update=update, background=background, refresh=refresh }
+return { name="Yaapu w. OlliW MavSDK support by RK", options=options, create=create, update=update, background=background, refresh=refresh }
