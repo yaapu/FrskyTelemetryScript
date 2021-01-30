@@ -3,6 +3,8 @@
 --
 -- Copyright (C) 2018-2019. Alessandro Apostoli
 -- https://github.com/yaapu
+-- OlliW MavSDK additions by Risto Kõiva
+-- https://github.com/rotorman
 --
 -- This program is free software; you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -132,7 +134,6 @@ local unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
 local unitLabel = getGeneralSettings().imperial == 0 and "m" or "ft"
 local unitLongScale = getGeneralSettings().imperial == 0 and 1/1000 or 1/1609.34
 local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
-
 
 -----------------------
 -- BATTERY 
@@ -367,7 +368,7 @@ local function drawArmStatus(status,telemetry,utils)
         lcd.drawBitmap(utils.getBitmap("armed"),LCD_W/2 - 90,154)
         statusArmTimeout = statusArmTimeout + 1
       else
-	statusArmTimeout = 0
+        statusArmTimeout = 0
       end
     end
     if status.timerRunning == 0 then
@@ -376,7 +377,7 @@ local function drawArmStatus(status,telemetry,utils)
         statusArmTimeout = 1 -- trigger incrementing dialog timeout displaying "armed"
       else
         utils.drawBlinkBitmap("disarmed",LCD_W/2 - 90,154)
-	statusArmTimeout = 0
+        statusArmTimeout = 0
       end
     end
   end
@@ -391,7 +392,7 @@ local function drawNoTelemetryData(status,telemetry,utils,telemetryEnabled)
     lcd.drawFilledRectangle(90,76, 300, 80, CUSTOM_COLOR)
     lcd.setColor(CUSTOM_COLOR,0xFFFF)
     lcd.drawText(110, 85, "no telemetry data", DBLSIZE+CUSTOM_COLOR)
-    lcd.drawText(130, 120, "Yaapu Telemetry Widget 1.9.3-beta", SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(97, 120, "Yaapu 1.9.3b2+OlliW 21rc05 MavSDK by RK", SMLSIZE+CUSTOM_COLOR)
   end
 end
 
@@ -606,4 +607,3 @@ return {
   --oldDrawCompassRibbon=oldDrawCompassRibbon,
   yawRibbonPoints=yawRibbonPoints
 }
-
