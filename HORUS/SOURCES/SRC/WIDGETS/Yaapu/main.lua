@@ -2740,4 +2740,4 @@ function refresh(myWidget)
   drawScreen(myWidget)
 end
 
-return { name="Yaapu w. OlliW MavSDK support by RK", options=options, create=create, update=update, background=background, refresh=refresh }
+return { name="Yaapu", options=options, create=create, update=update, background=background, refresh=refresh }
