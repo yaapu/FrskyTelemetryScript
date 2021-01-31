@@ -392,7 +392,8 @@ local function drawNoTelemetryData(status,telemetry,utils,telemetryEnabled)
     lcd.drawFilledRectangle(90,76, 300, 80, CUSTOM_COLOR)
     lcd.setColor(CUSTOM_COLOR,0xFFFF)
     lcd.drawText(110, 85, "no telemetry data", DBLSIZE+CUSTOM_COLOR)
-    lcd.drawText(97, 120, "Yaapu 1.9.3b2+OlliW 21rc05 MavSDK by RK", SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(128, 120, "Yaapu Telemetry Widget 1.9.3-beta2", SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(97, 135, "w. OlliW MavSDK v21rc08 support by Risto", SMLSIZE+CUSTOM_COLOR)
   end
 end
 

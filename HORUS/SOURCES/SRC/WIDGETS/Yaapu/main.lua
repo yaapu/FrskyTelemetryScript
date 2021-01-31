@@ -1032,7 +1032,7 @@ local function processMAVLink()
 	local pitch = mavsdk.getAttPitchDeg()
 	if pitch ~= nil then telemetry.pitch = pitch end
 	-- telemetry.range
-	telemetry.range = 0 -- not yet parsed by OlliW
+	telemetry.range = 0 -- new in OlliW rc08, will be added soon
 	-- telemetry.vSpeed
 	local vSpeed = mavsdk.getVfrClimbRate()
 	if vSpeed ~= nil then telemetry.vSpeed = vSpeed * 10 end -- from m/s to dm/s 
@@ -1064,7 +1064,7 @@ local function processMAVLink()
 	-- telemetry.ekfFailsafe
 	telemetry.ekfFailsafe = 0
 	-- telemetry.imuTemp
-	telemetry.imuTemp = 19 -- C° not yet parsed by OlliW
+	telemetry.imuTemp = 19 -- const +19°C, value not yet parsed by OlliW
 	-- telemetry.numSats
 	local gpssat = mavsdk.getGpsSat()
 	if gpssat ~= nil then
@@ -1153,11 +1153,11 @@ local function processMAVLink()
     -- telemetry.batt2Capacity
 	local batt2Capacity = mavsdk.getBat2Capacity()
 	if batt2Capacity ~= nil then telemetry.batt2Capacity = batt2Capacity end
-    -- telemetry.wpCommands is not yet parsed by OlliW
-	-- telemetry.wpNumber is not yet parsed by OlliW
-    -- telemetry.wpDistance is not yet parsed by OlliW
-    -- telemetry.wpXTError is not yet parsed by OlliW
-    -- telemetry.wpBearing is not yet parsed by OlliW
+    -- telemetry.wpCommands new in OlliW rc08, will be added soon
+	-- telemetry.wpNumber new in OlliW rc08, will be added soon
+    -- telemetry.wpDistance new in OlliW rc08, will be added soon
+    -- telemetry.wpXTError new in OlliW rc08, will be added soon
+    -- telemetry.wpBearing new in OlliW rc08, will be added soon
 	-- telemetry.airspeed
     local airspeed = mavsdk.getVfrAirSpeed()
 	if airspeed ~= nil then telemetry.airspeed = airspeed * 10 end -- from m/s to dm/s
@@ -1172,7 +1172,11 @@ local function processMAVLink()
 	if rssi ~= nil then
 	  -- if rssi >= 255 then rssi = 0 end -- to handle MAVLink special case 0xFF, but ArduPilot does not adhere to MAVLink convention, so that must not use it, but next line
 	  if rssi >= 255 then rssi = 254 end
-      telemetry.rssiMAVLink = math.floor(rssi / 2.54) -- conversion 0-254 to 0-100 [%]
+	  rssi = math.floor(rssi / 2.54) -- conversion 0-254 to 0-100 [%]
+      telemetry.rssiMAVLink = rssi
+	  -- next two commands are to override outputting 'RF signal low/critical' warning tones if rssi value sent by ArduPilot is 0xFF
+	  mavsdk.optionSetRssi(1)
+	  mavsdk.setOpentTxRssi(rssi)
     end
 end
 
@@ -1196,7 +1200,7 @@ local function processFrSkyPTtelemetry(DATA_ID,VALUE)
     telemetry.battFailsafe = bit32.extract(VALUE,9,1)
     telemetry.ekfFailsafe = bit32.extract(VALUE,10,2)
     -- IMU temperature: 0 means temp =< 19°, 63 means temp => 82°
-    telemetry.imuTemp = bit32.extract(VALUE,26,6) + 19 -- C°
+    telemetry.imuTemp = bit32.extract(VALUE,26,6) + 19 -- °C
   elseif DATA_ID == 0x5002 then -- GPS STATUS
     telemetry.numSats = bit32.extract(VALUE,0,4)
     -- offset  4: NO_GPS = 0, NO_FIX = 1, GPS_OK_FIX_2D = 2, GPS_OK_FIX_3D or GPS_OK_FIX_3D_DGPS or GPS_OK_FIX_3D_RTK_FLOAT or GPS_OK_FIX_3D_RTK_FIXED = 3
@@ -1797,7 +1801,7 @@ local function reset()
       -- done
       resetPhase = 7
     elseif resetPhase == 7 then
-      utils.pushMessage(7,"Yaapu 1.9.3b2 w. OlliW 21rc05 MavSDK by RK")
+      utils.pushMessage(7,"Yaapu 1.9.3b2 w. OlliW 21rc08 MavSDK by Risto")
       utils.playSound("yaapu")
       -- on model change reload config!
       if modelChangePending == true then
@@ -2436,7 +2440,7 @@ local function init()
   -- load battery config
   utils.loadBatteryConfigFile()
   -- ok done
-  utils.pushMessage(7,"Yaapu 1.9.3b2 w. OlliW 21rc05 MavSDK by RK")
+  utils.pushMessage(7,"Yaapu 1.9.3b2 w. OlliW 21rc08 MavSDK by Risto")
   utils.playSound("yaapu")
   -- fix for generalsettings lazy loading...
   unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
