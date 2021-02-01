@@ -1080,7 +1080,7 @@ local function processMAVLink()
 		end
 	end
 	-- telemetry.gpsHdopC
-	local Hdop = mavsdk.getGpsHDop() -- here NOT divided with 10 to keep the original MavLINK format, as compared with FrSky PT
+	local Hdop = mavsdk.getGpsHDop() -- here NOT divided with 10 to keep the original dilution scale
 	if Hdop ~= nil then telemetry.gpsHdopC = Hdop end
 	-- telemetry.gpsAlt
 	local gpsAlt = mavsdk.getGpsAltitudeMsl()
@@ -1135,7 +1135,7 @@ local function processMAVLink()
 	  end
 	end
 	-- telemetry.homeAlt
-	local homeAlt = mavsdk.getPositionAltitudeRelative() --getVfrAltitudeMsl()
+	local homeAlt = mavsdk.getPositionAltitudeRelative() -- getVfrAltitudeMsl()
 	if homeAlt ~= nil then telemetry.homeAlt = homeAlt * 10 end -- from m to dm
 	-- messages
 	if mavsdk.isStatusTextAvailable() then
@@ -1154,9 +1154,13 @@ local function processMAVLink()
 	local batt2Capacity = mavsdk.getBat2Capacity()
 	if batt2Capacity ~= nil then telemetry.batt2Capacity = batt2Capacity end
     -- telemetry.wpCommands new in OlliW rc08, will be added soon
-	-- telemetry.wpNumber new in OlliW rc08, will be added soon
-    -- telemetry.wpDistance new in OlliW rc08, will be added soon
-    -- telemetry.wpXTError new in OlliW rc08, will be added soon
+	-- telemetry.wpNumber
+	local mission = mavsdk.getMission()
+	if mission.current_seq ~= nil then telemetry.wpNumber = mission.current_seq end
+    -- telemetry.wpDistance
+	local navcontroller = mavsdk.getNavController()
+	if navcontroller.wp_dist ~= nil then telemetry.wpDistance = navcontroller.wp_dist end -- unit m
+    -- telemetry.wpXTError not yet parsed by OlliW
     -- telemetry.wpBearing new in OlliW rc08, will be added soon
 	-- telemetry.airspeed
     local airspeed = mavsdk.getVfrAirSpeed()
