@@ -1155,7 +1155,7 @@ local function processMAVLink()
 	if batt2Capacity ~= nil then telemetry.batt2Capacity = batt2Capacity end
 	-- telemetry.wpNumber and telemetry.wpCommands
 	local mission = mavsdk.getMission()
-	if mission.current_seq ~= nil then telemetry.wpNumber = mission.current_seq end
+	if mission.current_seq ~= nil and mission.current_seq ~= UINT16_MAX then telemetry.wpNumber = mission.current_seq end -- OlliW initializes to UINT16_MAX, need to discard this value
 	if mission.count ~= nil then telemetry.wpCommands = mission.count end
     -- telemetry.wpDistance
 	local navcontroller = mavsdk.getNavController()
@@ -1178,17 +1178,6 @@ local function processMAVLink()
     -- telemetry.baroAlt
 	local baroAlt = mavsdk.getVfrAltitudeMsl()
 	if baroAlt ~= nil then telemetry.baroAlt = baroAlt end
-	-- RSSI
-	local rssi = mavsdk.getRadioRssi()
-	if rssi ~= nil then
-	  -- if rssi >= 255 then rssi = 0 end -- to handle MAVLink special case 0xFF, but ArduPilot does not adhere to MAVLink convention, so that must not use it, but next line
-	  if rssi >= 255 then rssi = 254 end
-	  rssi = math.floor(rssi / 2.54) -- conversion 0-254 to 0-100 [%]
-      telemetry.rssiMAVLink = rssi
-	  -- next two commands are to override outputting 'RF signal low/critical' warning tones if rssi value sent by ArduPilot is 0xFF
-	  mavsdk.optionSetRssi(0)
-	  mavsdk.setOpentTxRssi(rssi)
-    end
 end
 
 local function processFrSkyPTtelemetry(DATA_ID,VALUE)
@@ -2573,8 +2562,28 @@ local function onChangePage(myWidget)
   myWidget.vars.hudcounter = 0
 end
 
+-- Inspired by OlliW Telemetry Widget Script
+local function doAlways()
+  if conf.enableMAVLink then
+	-- RSSI
+	if mavsdk.getRadioRssi() ~= nil then
+	  local rssi = mavsdk.getRadioRssi()
+	  if rssi ~= nil then
+	    -- if rssi >= 255 then rssi = 0 end -- to handle MAVLink special case 0xFF, but ArduPilot does not adhere to MAVLink convention, so that must not use it, but next line
+	    if rssi >= 255 then rssi = 254 end
+	    rssi = math.floor(rssi / 2.54) -- conversion 0-254 to 0-100 [%]
+        telemetry.rssiMAVLink = rssi
+	    -- next two commands are to override outputting 'RF signal low/critical' warning tones if rssi value sent by ArduPilot is 0xFF
+	    mavsdk.optionSetRssi(1)
+	    mavsdk.setOpentTxRssi(rssi)
+      end
+	end
+  end
+end
+
 -- Called when script is hidden @20Hz
 local function background(myWidget)
+  doAlways()
   -- when page 1 goes to background run bg tasks
   if myWidget.options.page == 1 then
     -- run bg tasks
@@ -2752,6 +2761,7 @@ local function drawScreen(myWidget)
 end
 
 function refresh(myWidget)
+  doAlways()
   drawScreen(myWidget)
 end
 
