@@ -1161,7 +1161,14 @@ local function processMAVLink()
 	local navcontroller = mavsdk.getNavController()
 	if navcontroller.wp_dist ~= nil then telemetry.wpDistance = navcontroller.wp_dist end -- unit m
     -- telemetry.wpXTError not yet used in telemetry script further and also not yet parsed by OlliW
-    -- telemetry.wpBearing new in OlliW rc08, will be added soon
+    -- telemetry.wpBearing
+	local cog = mavsdk.getGpsCourseOverGroundDeg()
+	if navcontroller.target_bearing ~= nil and cog ~= nil then
+	  -- Equation from Mav2PT FrSky_Ports.h
+	  local angle = math.fmod (navcontroller.target_bearing - cog, 360.0);
+      if angle < 0 then angle = angle + 360.0 end -- shift, if necessary, to be in range between 0 and 360
+	  telemetry.wpBearing = ((angle + 22.5) / 45.0) % 8 -- convert into nearest 45° bearing offset from COG (to match FrSky PT)
+	end
 	-- telemetry.airspeed
     local airspeed = mavsdk.getVfrAirSpeed()
 	if airspeed ~= nil then telemetry.airspeed = airspeed * 10 end -- from m/s to dm/s
