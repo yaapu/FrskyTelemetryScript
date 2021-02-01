@@ -1179,7 +1179,7 @@ local function processMAVLink()
 	  rssi = math.floor(rssi / 2.54) -- conversion 0-254 to 0-100 [%]
       telemetry.rssiMAVLink = rssi
 	  -- next two commands are to override outputting 'RF signal low/critical' warning tones if rssi value sent by ArduPilot is 0xFF
-	  mavsdk.optionSetRssi(1)
+	  mavsdk.optionSetRssi(0)
 	  mavsdk.setOpentTxRssi(rssi)
     end
 end
