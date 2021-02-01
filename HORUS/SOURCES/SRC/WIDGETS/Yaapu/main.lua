@@ -1032,7 +1032,8 @@ local function processMAVLink()
 	local pitch = mavsdk.getAttPitchDeg()
 	if pitch ~= nil then telemetry.pitch = pitch end
 	-- telemetry.range
-	telemetry.range = 0 -- new in OlliW rc08, will be added soon
+	local range = mavsdk.apGetRangefinder()
+	if range ~= nil then telemetry.range = range * 100 end -- from m to cm
 	-- telemetry.vSpeed
 	local vSpeed = mavsdk.getVfrClimbRate()
 	if vSpeed ~= nil then telemetry.vSpeed = vSpeed * 10 end -- from m/s to dm/s 
@@ -1063,8 +1064,7 @@ local function processMAVLink()
 	end
 	-- telemetry.ekfFailsafe
 	telemetry.ekfFailsafe = 0
-	-- telemetry.imuTemp
-	telemetry.imuTemp = 19 -- const +19°C, value not yet parsed by OlliW
+	-- telemetry.imuTemp -- [°C] value not yet parsed by OlliW
 	-- telemetry.numSats
 	local gpssat = mavsdk.getGpsSat()
 	if gpssat ~= nil then
