@@ -1155,7 +1155,7 @@ local function processMAVLink()
 	if batt2Capacity ~= nil then telemetry.batt2Capacity = batt2Capacity end
 	-- telemetry.wpNumber and telemetry.wpCommands
 	local mission = mavsdk.getMission()
-	if mission.current_seq ~= nil and mission.current_seq ~= UINT16_MAX then telemetry.wpNumber = mission.current_seq end -- OlliW initializes to UINT16_MAX, need to discard this value
+	if mission.current_seq ~= nil and mission.current_seq ~= 65535 then telemetry.wpNumber = mission.current_seq end -- OlliW initializes to UINT16_MAX, need to discard this value
 	if mission.count ~= nil then telemetry.wpCommands = mission.count end
     -- telemetry.wpDistance
 	local navcontroller = mavsdk.getNavController()
