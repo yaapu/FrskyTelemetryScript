@@ -1153,14 +1153,14 @@ local function processMAVLink()
     -- telemetry.batt2Capacity
 	local batt2Capacity = mavsdk.getBat2Capacity()
 	if batt2Capacity ~= nil then telemetry.batt2Capacity = batt2Capacity end
-    -- telemetry.wpCommands new in OlliW rc08, will be added soon
-	-- telemetry.wpNumber
+	-- telemetry.wpNumber and telemetry.wpCommands
 	local mission = mavsdk.getMission()
 	if mission.current_seq ~= nil then telemetry.wpNumber = mission.current_seq end
+	if mission.count ~= nil then telemetry.wpCommands = mission.count end
     -- telemetry.wpDistance
 	local navcontroller = mavsdk.getNavController()
 	if navcontroller.wp_dist ~= nil then telemetry.wpDistance = navcontroller.wp_dist end -- unit m
-    -- telemetry.wpXTError not yet parsed by OlliW
+    -- telemetry.wpXTError not yet used in telemetry script further and also not yet parsed by OlliW
     -- telemetry.wpBearing new in OlliW rc08, will be added soon
 	-- telemetry.airspeed
     local airspeed = mavsdk.getVfrAirSpeed()
@@ -1805,7 +1805,7 @@ local function reset()
       -- done
       resetPhase = 7
     elseif resetPhase == 7 then
-      utils.pushMessage(7,"Yaapu 1.9.3b2 w. OlliW 21rc08 MavSDK by Risto")
+      utils.pushMessage(7,"Yaapu 1.9.3b2 w. OlliW 21rc09 MavSDK by Risto")
       utils.playSound("yaapu")
       -- on model change reload config!
       if modelChangePending == true then
@@ -2444,7 +2444,7 @@ local function init()
   -- load battery config
   utils.loadBatteryConfigFile()
   -- ok done
-  utils.pushMessage(7,"Yaapu 1.9.3b2 w. OlliW 21rc08 MavSDK by Risto")
+  utils.pushMessage(7,"Yaapu 1.9.3b2 w. OlliW 21rc09 MavSDK by Risto")
   utils.playSound("yaapu")
   -- fix for generalsettings lazy loading...
   unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
