@@ -306,7 +306,7 @@ local function updateMenuItems()
       end
       
       value, name, idx = getMenuItemByName(menuItems,"LPANE")
-      menuItems[idx][4] = { "default", "mav2passthru" };
+      menuItems[idx][4] = { "default", "MavSDK/Mav2PT" };
       menuItems[idx][5] = { 1, 2 };
       
       if menuItems[idx][3] > #menuItems[idx][4] then
@@ -339,7 +339,7 @@ local function updateMenuItems()
       end
       
       value, name, idx = getMenuItemByName(menuItems,"LPANE")
-      menuItems[idx][4] = { "default","mav2passthru" };
+      menuItems[idx][4] = { "default", "MavSDK/Mav2PT" };
       menuItems[idx][5] = { 1, 2 };
       
       if menuItems[idx][3] > #menuItems[idx][4] then
