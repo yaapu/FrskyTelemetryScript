@@ -1178,6 +1178,9 @@ local function processMAVLink()
     -- telemetry.baroAlt
 	local baroAlt = mavsdk.getVfrAltitudeMsl()
 	if baroAlt ~= nil then telemetry.baroAlt = baroAlt end
+	-- RSSI
+	local rssi = mavsdk.getRadioRssiScaled()
+	if rssi ~= nil then telemetry.rssiMAVLink = rssi end -- scaling 0 to 100 (FrSky 0 to 99)
 end
 
 local function processFrSkyPTtelemetry(DATA_ID,VALUE)
@@ -1595,10 +1598,13 @@ end
 
 local function drawRssi()
   -- RSSI
-  lcd.drawText(323, 0, "RS:", 0 +CUSTOM_COLOR)
   if conf.enableMAVLink then
-    lcd.drawText(323 + 30,0, telemetry.rssiMAVLink, 0 +CUSTOM_COLOR)  
+    -- MavSDK RSSI can have up to 3 digits. Need to be more left in comparison to FrSky 2 digit RSSI output
+    lcd.drawText(310, 0, "RS:", 0 +CUSTOM_COLOR)
+    lcd.drawText(310 + 30,0, telemetry.rssiMAVLink, 0 +CUSTOM_COLOR)
   else
+    -- only 2 RSSI digits max with FrSky
+    lcd.drawText(323, 0, "RS:", 0 +CUSTOM_COLOR)
     lcd.drawText(323 + 30,0, getRSSI(), 0 +CUSTOM_COLOR)  
   end  
 end
@@ -1801,7 +1807,7 @@ local function reset()
       -- done
       resetPhase = 7
     elseif resetPhase == 7 then
-      utils.pushMessage(7,"Yaapu 1.9.3b2 w. OlliW 21rc09 MavSDK by Risto")
+      utils.pushMessage(7,"Yaapu 1.9.3b2 w. OlliW 21rc10 MavSDK by Risto")
       utils.playSound("yaapu")
       -- on model change reload config!
       if modelChangePending == true then
@@ -1877,10 +1883,9 @@ utils.drawTopBar = function()
   local strtime = string.format("%02d:%02d:%02d",time.hour,time.min,time.sec)
   lcd.drawText(LCD_W, 0, strtime, SMLSIZE+RIGHT+CUSTOM_COLOR)
   -- RSSI
-  -- RSSI
   if telemetryEnabled() == false then
     lcd.setColor(CUSTOM_COLOR,0xF800)    
-    lcd.drawText(323-23, 0, "NO TELEM", 0 +CUSTOM_COLOR)
+    lcd.drawText(323-36, 0, "NO TELEM", 0 +CUSTOM_COLOR)
   else
     utils.drawRssi()
   end
@@ -2440,7 +2445,7 @@ local function init()
   -- load battery config
   utils.loadBatteryConfigFile()
   -- ok done
-  utils.pushMessage(7,"Yaapu 1.9.3b2 w. OlliW 21rc09 MavSDK by Risto")
+  utils.pushMessage(7,"Yaapu 1.9.3b2 w. OlliW 21rc10 MavSDK by Risto")
   utils.playSound("yaapu")
   -- fix for generalsettings lazy loading...
   unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
@@ -2562,28 +2567,8 @@ local function onChangePage(myWidget)
   myWidget.vars.hudcounter = 0
 end
 
--- Inspired by OlliW Telemetry Widget Script
-local function doAlways()
-  if conf.enableMAVLink then
-	-- RSSI
-	if mavsdk.getRadioRssi() ~= nil then
-	  local rssi = mavsdk.getRadioRssi()
-	  if rssi ~= nil then
-	    -- if rssi >= 255 then rssi = 0 end -- to handle MAVLink special case 0xFF, but ArduPilot does not adhere to MAVLink convention, so that must not use it, but next line
-	    if rssi >= 255 then rssi = 254 end
-	    rssi = math.floor(rssi / 2.54) -- conversion 0-254 to 0-100 [%]
-        telemetry.rssiMAVLink = rssi
-	    -- next two commands are to override outputting 'RF signal low/critical' warning tones if rssi value sent by ArduPilot is 0xFF
-	    mavsdk.optionSetRssi(1)
-	    mavsdk.setOpentTxRssi(rssi)
-      end
-	end
-  end
-end
-
 -- Called when script is hidden @20Hz
 local function background(myWidget)
-  doAlways()
   -- when page 1 goes to background run bg tasks
   if myWidget.options.page == 1 then
     -- run bg tasks
@@ -2761,7 +2746,6 @@ local function drawScreen(myWidget)
 end
 
 function refresh(myWidget)
-  doAlways()
   drawScreen(myWidget)
 end
 
