@@ -1600,12 +1600,12 @@ local function drawRssi()
   -- RSSI
   if conf.enableMAVLink then
     -- MavSDK RSSI can have up to 3 digits. Need to be more left in comparison to FrSky 2 digit RSSI output
-    lcd.drawText(310, 0, "RS:", 0 +CUSTOM_COLOR)
-    lcd.drawText(310 + 30,0, telemetry.rssiMAVLink, 0 +CUSTOM_COLOR)
+    lcd.drawText(294, 0, "RSSI:", 0 +CUSTOM_COLOR)
+    lcd.drawText(294 + 47, 0, telemetry.rssiMAVLink, 0 +CUSTOM_COLOR)
   else
     -- only 2 RSSI digits max with FrSky
-    lcd.drawText(323, 0, "RS:", 0 +CUSTOM_COLOR)
-    lcd.drawText(323 + 30,0, getRSSI(), 0 +CUSTOM_COLOR)  
+    lcd.drawText(304, 0, "RSSI:", 0 +CUSTOM_COLOR)
+    lcd.drawText(304 + 47, 0, getRSSI(), 0 +CUSTOM_COLOR)  
   end  
 end
 
@@ -1807,7 +1807,7 @@ local function reset()
       -- done
       resetPhase = 7
     elseif resetPhase == 7 then
-      utils.pushMessage(7,"Yaapu 1.9.3b2 w. OlliW 21rc10 MavSDK by Risto")
+      utils.pushMessage(7,"Yaapu v1.9.3b2 w. OlliW v21 MavSDK by Risto")
       utils.playSound("yaapu")
       -- on model change reload config!
       if modelChangePending == true then
@@ -2445,7 +2445,7 @@ local function init()
   -- load battery config
   utils.loadBatteryConfigFile()
   -- ok done
-  utils.pushMessage(7,"Yaapu 1.9.3b2 w. OlliW 21rc10 MavSDK by Risto")
+  utils.pushMessage(7,"Yaapu v1.9.3b2 w. OlliW v21 MavSDK by Risto")
   utils.playSound("yaapu")
   -- fix for generalsettings lazy loading...
   unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
