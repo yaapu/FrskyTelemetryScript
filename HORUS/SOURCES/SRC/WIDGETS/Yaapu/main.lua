@@ -2755,6 +2755,11 @@ local function drawFullScreen(myWidget)
     end
   end
   
+  if conf.enableMAVLink and mavsdk == nil then
+    -- MAVLink enabled in configuration, but OpenTX firmware without MavSDK support
+    drawLib.drawNoMavSDK()
+  end
+  
   drawLib.drawFailsafe(telemetry,utils);
   
   loadCycle=(loadCycle+1)%8

@@ -397,6 +397,17 @@ local function drawNoTelemetryData(status,telemetry,utils,telemetryEnabled)
   end
 end
 
+local function drawNoMavSDK()
+  lcd.setColor(CUSTOM_COLOR,0xFFFF)
+  lcd.drawFilledRectangle(88,74, 304, 84, CUSTOM_COLOR)
+  lcd.setColor(CUSTOM_COLOR,0xF800)
+  lcd.drawFilledRectangle(90,76, 300, 80, CUSTOM_COLOR)
+  lcd.setColor(CUSTOM_COLOR,0xFFFF)
+  lcd.drawText(110, 85, "OpenTX w/o MAVLink!", MIDSIZE+CUSTOM_COLOR)
+  lcd.drawText(105, 120, "Please flash OlliW OpenTX (v21 or later)", SMLSIZE+CUSTOM_COLOR)
+  lcd.drawText(118, 135, "or disable MAVLink in configuration", SMLSIZE+CUSTOM_COLOR)
+end
+
 local function drawFilledRectangle(x,y,w,h,flags)
     if w > 0 and h > 0 then
       lcd.drawFilledRectangle(x,y,w,h,flags)
@@ -602,6 +613,7 @@ return {
   drawFailsafe=drawFailsafe,
   drawArmStatus=drawArmStatus,
   drawNoTelemetryData=drawNoTelemetryData,
+  drawNoMavSDK=drawNoMavSDK,
   drawStatusBar=drawStatusBar,
   drawFilledRectangle=drawFilledRectangle,
   drawCompassRibbon=drawCompassRibbon,
