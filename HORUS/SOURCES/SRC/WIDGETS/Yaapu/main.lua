@@ -1025,6 +1025,7 @@ end
 
 -- processes OlliW MavSDK (MAVLink enhanced OpenTX) data
 local function processMAVLinkCPUlight()
+  if mavsdk ~= nil then -- in order not for the script to get disabled when running on non OlliW OpenTX firmware
 	-- telemetry.roll
 	local roll = mavsdk.getAttRollDeg()
 	if roll ~= nil then telemetry.roll = roll end
@@ -1139,9 +1140,11 @@ local function processMAVLinkCPUlight()
 	-- RSSI
 	local rssi = mavsdk.getRadioRssiScaled()
 	if rssi ~= nil then telemetry.rssiMAVLink = rssi end -- scaling 0 to 100 (FrSky 0 to 99)
+  end
 end
 
 local function processMAVLinkCPUheavy()
+  if mavsdk ~= nil then -- in order not for the script to get disabled when running on non OlliW OpenTX firmware
 	-- telemetry.lat and telemetry.lon
 	local latlon = mavsdk.getGpsLatLonInt()
 	if type(latlon) == "table" and latlon.lat ~= nil then
@@ -1184,6 +1187,7 @@ local function processMAVLinkCPUheavy()
       if angle < 0 then angle = angle + 360.0 end -- shift, if necessary, to be in range between 0 and 360
 	  telemetry.wpBearing = ((angle + 22.5) / 45.0) % 8 -- convert into nearest 45° bearing offset from COG (to match FrSky PT)
 	end
+  end
 end
 
 local function processFrSkyPTtelemetry(DATA_ID,VALUE)
@@ -1298,8 +1302,10 @@ end
 
 local function telemetryEnabled()
   if conf.enableMAVLink then
-	if not mavsdk.isReceiving() then
-	  status.noTelemetryData = 1
+    if mavsdk ~= nil then -- in order not for the script to get disabled when running on non OlliW OpenTX firmware
+	  if not mavsdk.isReceiving() then
+	    status.noTelemetryData = 1
+	  end
 	end
     return status.noTelemetryData == 0
   end
@@ -1603,12 +1609,14 @@ local function drawRssi()
   -- RSSI
   if conf.enableMAVLink then
     -- MavSDK RSSI can have up to 3 digits. Need to be more left in comparison to FrSky 2 digit RSSI output
-    lcd.drawText(294, 0, "RSSI:", 0 +CUSTOM_COLOR)
-    lcd.drawText(294 + 47, 0, telemetry.rssiMAVLink, 0 +CUSTOM_COLOR)
+	lcd.drawBitmap(utils.getBitmap("rssi"), 326, 3)
+	lcd.drawText(326 + 10, 0, ":", 0 +CUSTOM_COLOR)
+    lcd.drawText(326 + 10 + 5, 0, telemetry.rssiMAVLink, 0 +CUSTOM_COLOR)
   else
     -- only 2 RSSI digits max with FrSky
-    lcd.drawText(304, 0, "RSSI:", 0 +CUSTOM_COLOR)
-    lcd.drawText(304 + 47, 0, getRSSI(), 0 +CUSTOM_COLOR)  
+	lcd.drawBitmap(utils.getBitmap("rssi"), 336, 3)
+	lcd.drawText(336 + 10, 0, ":", 0 +CUSTOM_COLOR)
+    lcd.drawText(336 + 10 + 5, 0, getRSSI(), 0 +CUSTOM_COLOR)
   end  
 end
 
@@ -2269,12 +2277,14 @@ local function backgroundTasks(myWidget,telemetryLoops)
   -- don't process telemetry while resetting to prevent CPU kill
   if resetPending == false and resetLayoutPending == false and loadConfigPending == false then
     if conf.enableMAVLink then
+	  if mavsdk ~= nil then -- in order not for the script to get disabled when running on non OlliW OpenTX firmware
 		if mavsdk.isReceiving() then
 		   status.noTelemetryData = 0
            -- no telemetry dialog only shown once
 		   status.hideNoTelemetry = true
 	       processMAVLinkCPUlight()
 		end
+	  end
     else							   
 	  for i=1,telemetryLoops
       do
@@ -2294,9 +2304,11 @@ local function backgroundTasks(myWidget,telemetryLoops)
     calcFlightTime()
 
     if conf.enableMAVLink then
-      if mavsdk.isReceiving() then
-         processMAVLinkCPUheavy() -- process expensive calculations slower
-      end
+	  if mavsdk ~= nil then -- in order not for the script to get disabled when running on non OlliW OpenTX firmware
+        if mavsdk.isReceiving() then
+          processMAVLinkCPUheavy() -- process expensive calculations slower
+        end
+	  end
     else
       -- FrSky PT
       -- update gps telemetry data
