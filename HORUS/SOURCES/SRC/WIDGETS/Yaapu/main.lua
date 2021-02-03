@@ -1024,7 +1024,7 @@ local function MarkHome() -- inspired by Mav2PT
 end
 
 -- processes OlliW MavSDK (MAVLink enhanced OpenTX) data
-local function processMAVLink()
+local function processMAVLinkCPUlight()
 	-- telemetry.roll
 	local roll = mavsdk.getAttRollDeg()
 	if roll ~= nil then telemetry.roll = roll end
@@ -1103,9 +1103,48 @@ local function processMAVLink()
 	-- telemetry.batt2mah
 	local Bat2Charge = mavsdk.getBat2ChargeConsumed()
 	if Bat2Charge ~= nil then telemetry.batt2mah = Bat2Charge end
+	-- telemetry.homeAlt
+	local homeAlt = mavsdk.getPositionAltitudeRelative() -- getVfrAltitudeMsl()
+	if homeAlt ~= nil then telemetry.homeAlt = homeAlt * 10 end -- from m to dm
+	-- messages
+	if mavsdk.isStatusTextAvailable() then
+	  local severity, txt = mavsdk.getStatusText()
+	  utils.pushMessage(severity, txt)
+	  playHash()
+      resetHash()
+	end
+	-- telemetry.frameType
+	local frameType = mavsdk.getVehicleType()
+	if frameType ~= nil then telemetry.frameType = frameType end
+	-- telemetry.batt1Capacity
+	local batt1Capacity = mavsdk.getBatCapacity()
+	if batt1Capacity ~= nil then telemetry.batt1Capacity = batt1Capacity end 
+    -- telemetry.batt2Capacity
+	local batt2Capacity = mavsdk.getBat2Capacity()
+	if batt2Capacity ~= nil then telemetry.batt2Capacity = batt2Capacity end
+	-- telemetry.wpNumber and telemetry.wpCommands
+	local mission = mavsdk.getMission()
+	if mission.current_seq ~= nil and mission.current_seq ~= 65535 then telemetry.wpNumber = mission.current_seq end -- OlliW initializes to UINT16_MAX, need to discard this value
+	if mission.count ~= nil then telemetry.wpCommands = mission.count end
+    -- telemetry.wpXTError not yet used in telemetry script further and also not yet parsed by OlliW
+	-- telemetry.airspeed
+    local airspeed = mavsdk.getVfrAirSpeed()
+	if airspeed ~= nil then telemetry.airspeed = airspeed * 10 end -- from m/s to dm/s
+	-- telemetry.throttle
+	local throttle = mavsdk.getVfrThrottle()
+	if throttle ~= nil then telemetry.throttle = throttle end -- unit [%]
+    -- telemetry.baroAlt
+	local baroAlt = mavsdk.getVfrAltitudeMsl()
+	if baroAlt ~= nil then telemetry.baroAlt = baroAlt end
+	-- RSSI
+	local rssi = mavsdk.getRadioRssiScaled()
+	if rssi ~= nil then telemetry.rssiMAVLink = rssi end -- scaling 0 to 100 (FrSky 0 to 99)
+end
+
+local function processMAVLinkCPUheavy()
 	-- telemetry.lat and telemetry.lon
 	local latlon = mavsdk.getGpsLatLonInt()
-	if latlon.lat ~= nil then
+	if type(latlon) == "table" and latlon.lat ~= nil then
 	  telemetry.lat = latlon.lat / 10000000	-- converted to degrees.fraction
 	end
 	if latlon.lon ~= nil then
@@ -1134,53 +1173,17 @@ local function processMAVLink()
 		telemetry.homeDist = 6371000 * 2 * math.asin(math.sqrt(a)) -- radius of the Earth is 6371km
 	  end
 	end
-	-- telemetry.homeAlt
-	local homeAlt = mavsdk.getPositionAltitudeRelative() -- getVfrAltitudeMsl()
-	if homeAlt ~= nil then telemetry.homeAlt = homeAlt * 10 end -- from m to dm
-	-- messages
-	if mavsdk.isStatusTextAvailable() then
-	  local severity, txt = mavsdk.getStatusText()
-	  utils.pushMessage(severity, txt)
-	  playHash()
-      resetHash()
-	end
-	-- telemetry.frameType
-	local frameType = mavsdk.getVehicleType()
-	if frameType ~= nil then telemetry.frameType = frameType end
-	-- telemetry.batt1Capacity
-	local batt1Capacity = mavsdk.getBatCapacity()
-	if batt1Capacity ~= nil then telemetry.batt1Capacity = batt1Capacity end 
-    -- telemetry.batt2Capacity
-	local batt2Capacity = mavsdk.getBat2Capacity()
-	if batt2Capacity ~= nil then telemetry.batt2Capacity = batt2Capacity end
-	-- telemetry.wpNumber and telemetry.wpCommands
-	local mission = mavsdk.getMission()
-	if mission.current_seq ~= nil and mission.current_seq ~= 65535 then telemetry.wpNumber = mission.current_seq end -- OlliW initializes to UINT16_MAX, need to discard this value
-	if mission.count ~= nil then telemetry.wpCommands = mission.count end
     -- telemetry.wpDistance
 	local navcontroller = mavsdk.getNavController()
-	if navcontroller.wp_dist ~= nil then telemetry.wpDistance = navcontroller.wp_dist end -- unit m
-    -- telemetry.wpXTError not yet used in telemetry script further and also not yet parsed by OlliW
+	if type(navcontroller) == "table" and navcontroller.wp_dist ~= nil then telemetry.wpDistance = navcontroller.wp_dist end -- unit m
     -- telemetry.wpBearing
 	local cog = mavsdk.getGpsCourseOverGroundDeg()
-	if navcontroller.target_bearing ~= nil and cog ~= nil then
+	if type(navcontroller) == "table" and navcontroller.target_bearing ~= nil and cog ~= nil then
 	  -- Equation from Mav2PT FrSky_Ports.h
 	  local angle = math.fmod (navcontroller.target_bearing - cog, 360.0);
       if angle < 0 then angle = angle + 360.0 end -- shift, if necessary, to be in range between 0 and 360
 	  telemetry.wpBearing = ((angle + 22.5) / 45.0) % 8 -- convert into nearest 45° bearing offset from COG (to match FrSky PT)
 	end
-	-- telemetry.airspeed
-    local airspeed = mavsdk.getVfrAirSpeed()
-	if airspeed ~= nil then telemetry.airspeed = airspeed * 10 end -- from m/s to dm/s
-	-- telemetry.throttle
-	local throttle = mavsdk.getVfrThrottle()
-	if throttle ~= nil then telemetry.throttle = throttle end -- unit [%]
-    -- telemetry.baroAlt
-	local baroAlt = mavsdk.getVfrAltitudeMsl()
-	if baroAlt ~= nil then telemetry.baroAlt = baroAlt end
-	-- RSSI
-	local rssi = mavsdk.getRadioRssiScaled()
-	if rssi ~= nil then telemetry.rssiMAVLink = rssi end -- scaling 0 to 100 (FrSky 0 to 99)
 end
 
 local function processFrSkyPTtelemetry(DATA_ID,VALUE)
@@ -2270,7 +2273,7 @@ local function backgroundTasks(myWidget,telemetryLoops)
 		   status.noTelemetryData = 0
            -- no telemetry dialog only shown once
 		   status.hideNoTelemetry = true
-	       processMAVLink()
+	       processMAVLinkCPUlight()
 		end
     else							   
 	  for i=1,telemetryLoops
@@ -2289,13 +2292,22 @@ local function backgroundTasks(myWidget,telemetryLoops)
   -- SLOW: this runs around 2.5Hz
   if bgclock % 2 == 1 then
     calcFlightTime()
-    -- update gps telemetry data
-    local gpsData = getValue("GPS")
+
+    if conf.enableMAVLink then
+      if mavsdk.isReceiving() then
+         processMAVLinkCPUheavy() -- process expensive calculations slower
+      end
+    else
+      -- FrSky PT
+      -- update gps telemetry data
+      local gpsData = getValue("GPS")
     
-    if type(gpsData) == "table" and gpsData.lat ~= nil and gpsData.lon ~= nil then
-      telemetry.lat = gpsData.lat
-      telemetry.lon = gpsData.lon
+      if type(gpsData) == "table" and gpsData.lat ~= nil and gpsData.lon ~= nil then
+        telemetry.lat = gpsData.lat
+        telemetry.lon = gpsData.lon
+      end
     end
+  
     -- export OpenTX sensor values
     setSensorValues()
     -- update total distance as often as po
