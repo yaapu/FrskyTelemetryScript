@@ -393,7 +393,7 @@ local function drawNoTelemetryData(status,telemetry,utils,telemetryEnabled)
     lcd.setColor(CUSTOM_COLOR,0xFFFF)
     lcd.drawText(110, 85, "no telemetry data", DBLSIZE+CUSTOM_COLOR)
     lcd.drawText(123, 120, "Yaapu Telemetry Widget 1.9.3-beta2", SMLSIZE+CUSTOM_COLOR)
-    lcd.drawText(105, 135, "with OlliW MavSDK v21 support by Risto", SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(100, 135, "with OlliW MavSDK >=v22 support by Risto", SMLSIZE+CUSTOM_COLOR)
   end
 end
 
@@ -404,7 +404,7 @@ local function drawNoMavSDK()
   lcd.drawFilledRectangle(90,76, 300, 80, CUSTOM_COLOR)
   lcd.setColor(CUSTOM_COLOR,0xFFFF)
   lcd.drawText(110, 85, "OpenTX w/o MAVLink!", MIDSIZE+CUSTOM_COLOR)
-  lcd.drawText(105, 120, "Please flash OlliW OpenTX (v21 or later)", SMLSIZE+CUSTOM_COLOR)
+  lcd.drawText(105, 120, "Please flash OlliW OpenTX (v22 or later)", SMLSIZE+CUSTOM_COLOR)
   lcd.drawText(118, 135, "or disable MAVLink in configuration", SMLSIZE+CUSTOM_COLOR)
 end
 

@@ -3,7 +3,9 @@
 --
 -- Copyright (C) 2018-2019. Alessandro Apostoli
 -- https://github.com/yaapu
---
+-- OlliW MavSDK additions by Risto Kõiva
+-- https://github.com/rotorman
+-- 
 -- This program is free software; you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
 -- the Free Software Foundation; either version 3 of the License, or
@@ -226,6 +228,7 @@ local menuItems = {
   {"left panel:", "LPANE", 1, {  "option 1","option 2","option 3","option 4" }, { 1 , 2, 3, 4 } },
   {"enable PX4 flightmodes:", "PX4", 1, { "no", "yes" }, { false, true } },
   {"enable CRSF support:", "CRSF", 1, { "no", "yes" }, { false, true } },
+  {"enable MAVLink support:", "MAVLINK", 1, { "no", "yes" }, { false, true } },
   {"emulated page channel:", "STC", 0, 0, 32,nil,0,1 },
   {"emulated wheel channel:", "SWC", 0, 0, 32,nil,0,1 },
   {"GPS coordinates format:", "GPS", 1, { "DMS", "decimal" }, { 1, 2 } },
@@ -303,7 +306,7 @@ local function updateMenuItems()
       end
       
       value, name, idx = getMenuItemByName(menuItems,"LPANE")
-      menuItems[idx][4] = { "default", "mav2passthru" };
+      menuItems[idx][4] = { "default", "MavSDK/Mav2PT" };
       menuItems[idx][5] = { 1, 2 };
       
       if menuItems[idx][3] > #menuItems[idx][4] then
@@ -336,7 +339,7 @@ local function updateMenuItems()
       end
       
       value, name, idx = getMenuItemByName(menuItems,"LPANE")
-      menuItems[idx][4] = { "default","mav2passthru" };
+      menuItems[idx][4] = { "default", "MavSDK/Mav2PT" };
       menuItems[idx][5] = { 1, 2 };
       
       if menuItems[idx][3] > #menuItems[idx][4] then
@@ -364,10 +367,6 @@ local function updateMenuItems()
         menuItems[idx2][4] = { "GoogleSatelliteMap", "GoogleHybridMap", "GoogleMap", "GoogleTerrainMap" }
         menuItems[idx2][5] = { "GoogleSatelliteMap", "GoogleHybridMap", "GoogleMap", "GoogleTerrainMap" }
       end
-      
-      if menuItems[idx2][3] > #menuItems[idx2][4] then
-        menuItems[idx2][3] = 1
-      end
     end
     
     value2, name2, idx2 = getMenuItemByName(menuItems,"MAPmZ")
@@ -380,7 +379,13 @@ local function updateMenuItems()
         menuItems[idx2][4] = 1
         menuItems[idx2][5] = 20
       end
-      menuItems[idx2][3] = menuItems[idx2][4]
+	  -- check that the selected value is in range of the appropriate map product
+      if menuItems[idx2][3] < menuItems[idx2][4] then
+        menuItems[idx2][3] = menuItems[idx2][4]
+      end
+      if menuItems[idx2][3] > menuItems[idx2][5] then
+        menuItems[idx2][3] = menuItems[idx2][5]
+      end
     end
     
     value2, name2, idx2 = getMenuItemByName(menuItems,"MAPMZ")
@@ -393,7 +398,13 @@ local function updateMenuItems()
         menuItems[idx2][4] = 1
         menuItems[idx2][5] = 20
       end
-      menuItems[idx2][3] = menuItems[idx2][5]
+	  -- check that the selected value is in range of the appropriate map product
+      if menuItems[idx2][3] < menuItems[idx2][4] then
+        menuItems[idx2][3] = menuItems[idx2][4]
+      end
+      if menuItems[idx2][3] > menuItems[idx2][5] then
+        menuItems[idx2][3] = menuItems[idx2][5]
+      end
     end
     
     menu.updated = false
@@ -443,7 +454,8 @@ local function applyConfigValues(conf)
   conf.leftPanelFilename = leftPanelFiles[conf.leftPanel]
   conf.enablePX4Modes = getMenuItemByName(menuItems,"PX4")
   conf.enableCRSF = getMenuItemByName(menuItems,"CRSF")
-  
+  conf.enableMAVLink = getMenuItemByName(menuItems,"MAVLINK")
+
   conf.mapZoomMin = getMenuItemByName(menuItems,"MAPmZ")
   conf.mapZoomMax = getMenuItemByName(menuItems,"MAPMZ")
   
@@ -541,7 +553,7 @@ local function drawConfigMenuBars()
   lcd.drawFilledRectangle(0,LCD_H-20, LCD_W, 20, CUSTOM_COLOR)
   lcd.drawRectangle(0, LCD_H-20, LCD_W, 20, CUSTOM_COLOR)
   lcd.setColor(CUSTOM_COLOR,0xFFFF)  
-  lcd.drawText(2,0,"Yaapu Telemetry Widget 1.9.3-beta",CUSTOM_COLOR)
+  lcd.drawText(2,0,"Yaapu v1.9.3b2 w. OlliW v22 MavSDK by Risto",CUSTOM_COLOR)
   lcd.drawText(2,LCD_H-20+1,getConfigFilename(),CUSTOM_COLOR)
   lcd.drawText(LCD_W,LCD_H-20+1,itemIdx,CUSTOM_COLOR+RIGHT)
 end
