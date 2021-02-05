@@ -200,6 +200,10 @@ local function drawHomeIcon(x,y,utils)
   lcd.drawBitmap(utils.getBitmap("minihomeorange"),x,y)
 end
 
+local function drawRadioIcon(x,y,utils)
+  lcd.drawBitmap(utils.getBitmap("rcradioorange"),x,y)
+end
+
 local function computeOutCode(x,y,xmin,ymin,xmax,ymax)
     local code = 0; --initialised as being inside of hud
     --
@@ -453,7 +457,13 @@ local function drawCompassRibbon(y,myWidget,conf,telemetry,status,battery,utils,
   elseif angle >= 90 and angle < 180 then
     homeOffset = width
   end
-  drawHomeIcon(xMin + homeOffset -5,minY + (bigFont and 28 or 20),utils)
+  if conf.enableTxGPS then
+    -- radio home
+    drawRadioIcon(xMin + homeOffset -5,minY + (bigFont and 28 or 20),utils)
+  else
+    -- vehicle home
+    drawHomeIcon(xMin + homeOffset -5,minY + (bigFont and 28 or 20),utils)
+  end
   
   -- text box
   local w = 60 -- 3 digits width
@@ -513,7 +523,13 @@ local function oldDrawCompassRibbon(y,myWidget,conf,telemetry,status,battery,uti
   elseif angle >= 90 and angle <= 180 then
     homeOffset = width
   end
-  drawHomeIcon(xMin + homeOffset -5,y + (bigFont and 28 or 20),utils)
+  if conf.enableTxGPS then
+    -- radio home
+    drawRadioIcon(xMin + homeOffset -5,y + (bigFont and 28 or 20),utils)
+  else
+    -- vehicle home
+    drawHomeIcon(xMin + homeOffset -5,y + (bigFont and 28 or 20),utils)
+  end
   -- yaw angle box
   local xx = 0
   if ( telemetry.yaw < 10) then
@@ -603,6 +619,7 @@ end
 return {
   drawNumberWithDim=drawNumberWithDim,
   drawHomeIcon=drawHomeIcon,
+  drawRadioIcon=drawRadioIcon,
   drawHArrow=drawHArrow,
   drawVArrow=drawVArrow,
   drawRArrow=drawRArrow,

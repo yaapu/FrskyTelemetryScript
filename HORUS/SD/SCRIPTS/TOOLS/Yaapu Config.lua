@@ -237,6 +237,7 @@ local menuItems = {
   {"map min zoom level:", "MAPmZ", -2, -2, 17,nil,0,1 },
   {"map max zoom level:", "MAPMZ", 17, -2, 17,nil,0,1 },
   {"map grid lines:", "MAPG", 1, { "yes", "no" }, { true, false } },
+  {"use radio GPS for home:", "TXGPS", 1, { "no", "yes" }, { false, true } },  
 }
 
 local menuItemsByName = {}
@@ -476,6 +477,8 @@ local function applyConfigValues(conf)
   end
   conf.gpsFormat = getMenuItemByName(menuItems,"GPS")
   conf.enableBattPercByVoltage = getMenuItemByName(menuItems,"BPBV")
+  
+  conf.enableTxGPS = getMenuItemByName(menuItems,"TXGPS")
   menu.editSelected = false
 end
 

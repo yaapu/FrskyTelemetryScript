@@ -220,7 +220,13 @@ local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gp
   -- VALUES
   lcd.setColor(CUSTOM_COLOR,0xFFFF)
   -- home distance
-  drawLib.drawHomeIcon(69 + 15, 20 + 2,utils)
+  if conf.enableTxGPS then
+    -- radio home
+    drawLib.drawRadioIcon(69 + 15, 20 + 2,utils)
+  else
+    -- vehicle home
+    drawLib.drawHomeIcon(69 + 15, 20 + 2,utils)
+  end
   flags = 0
   if telemetry.homeAngle == -1 then
     flags = BLINK

@@ -421,8 +421,8 @@ status.strFlightMode = nil
 status.modelString = nil
 -- HOME POS
 status.homeGood = false
-status.homelat = nil  -- somewhat duplicated unused telemetry.homeLat
-status.homelon = nil  -- somewhat duplicates unused telemetry.homeLon
+status.homelat = nil  -- gets directly set from MAVLink, thus if ~= nil, can use directly
+status.homelon = nil  -- gets directly set from MAVLink, thus if ~= nil, can use directly
 status.homealt = nil
 status.homehdg = nil
 
@@ -575,6 +575,7 @@ local conf = {
   screenWheelChannelId = 0,
   gpsFormat = 1, -- DMS
   mapProvider = 1, -- 1 GMapCatcher, 2 Google, 3 Yandex
+  enableTxGPS = false,
 }
 
 -------------------------
@@ -1023,6 +1024,22 @@ local function MarkHome() -- inspired by Mav2PT
   end
 end
 
+local function TxGPShome() -- uses GPS connected to radio for home position
+  local txGPS = getTxGPS()
+  if txGPS ~= nil then
+    -- txGPS.numsat -- number of sats locked 
+    -- txGPS.hdop * 0.01 -- GPS dilution, converted to std. unit where approx. 1 is good
+	if txGPS.fix then
+	  status.homelat = txGPS.lat -- internal gpsData.latitude * 0.000001, positive is North
+	  status.homelon = txGPS.lon -- internal gpsData.longitude * 0.000001, positive is East
+	  status.homealt = txGPS.alt -- unit m
+	  -- txGPS.speed * 0.01 -- converted to m/s
+	  status.homehdg = txGPS.heading * 0.1 -- converted to degrees
+	  status.homeGood = true
+	end
+  end
+end
+
 -- processes OlliW MavSDK (MAVLink enhanced OpenTX) data
 local function processMAVLinkCPUlight()
   if mavsdk ~= nil then -- in order not for the script to get disabled when running on non OlliW OpenTX firmware
@@ -1052,16 +1069,22 @@ local function processMAVLinkCPUlight()
 	-- telemetry.statusArmed and telemetry.landComplete
 	local armed = mavsdk.isArmed()
 	if armed ~= nil then
-		if armed then
-		  telemetry.statusArmed = 1
-		  telemetry.landComplete = 1
-		else
-		  telemetry.statusArmed = 0
-		  telemetry.landComplete = 0
-		end
+	  if armed then
+		telemetry.statusArmed = 1
+		telemetry.landComplete = 1
+	  else
+		telemetry.statusArmed = 0
+		telemetry.landComplete = 0
+	  end
+      if conf.enableTxGPS then
+        -- use radio GPS for home position
+        TxGPShome() -- update even if status.homeGood == true to keep moving radio as home
+	  else
+		-- use vehicle GPS for home position
         if not status.homeGood then
 		  MarkHome()
 		end
+	  end
 	end
 	-- telemetry.ekfFailsafe
 	telemetry.ekfFailsafe = 0
@@ -1076,7 +1099,7 @@ local function processMAVLinkCPUlight()
 	local gpsStatus = mavsdk.getGpsFix()
 	if gpsStatus ~= nil then
 		telemetry.gpsStatus = gpsStatus
-	    if not status.homeGood then
+	    if ((not status.homeGood) and (not conf.enableTxGPS)) then
 		  MarkHome()
 		end
 	end
@@ -1150,32 +1173,32 @@ local function processMAVLinkCPUheavy()
 	-- telemetry.lat and telemetry.lon
 	local latlon = mavsdk.getGpsLatLonInt()
 	if type(latlon) == "table" and latlon.lat ~= nil then
-	  telemetry.lat = latlon.lat / 10000000	-- converted to degrees.fraction
+	  telemetry.lat = latlon.lat * 0.0000001 -- converted to degrees.fraction
 	end
 	if latlon.lon ~= nil then
-	  telemetry.lon = latlon.lon / 10000000 -- converted to degrees.fraction
+	  telemetry.lon = latlon.lon * 0.0000001 -- converted to degrees.fraction
 	end
 	-- telemetry.homeAngle and telemetry.homeDist
 	if status.homeGood and status.homelon ~= nil and status.homelat ~= nil and telemetry.lon ~= nil and telemetry.lat ~= nil then
 	  -- Equations from Mav2PT FrSky_Ports.h
-	  local lon1 = status.homelon/180*math.pi;  -- home position, converted from degrees to radians
-      local lat1 = status.homelat/180*math.pi;
-      local lon2 = telemetry.lon/180*math.pi; -- current position
-      local lat2 = telemetry.lat/180*math.pi;
+	  local lon1 = status.homelon/180.0*math.pi;  -- home position, converted from degrees to radians
+      local lat1 = status.homelat/180.0*math.pi;
+      local lon2 = telemetry.lon/180.0*math.pi; -- current position
+      local lat2 = telemetry.lat/180.0*math.pi;
 	  local dLat = (lat2-lat1); -- latitude difference
       local dLon = (lon2-lon1); -- longitude difference
       -- telemetry.homeAngle
 	  -- Calculate azimuth bearing of craft from home
-	  local ab = math.atan2(math.sin(lon2-lon1)*math.cos(lat2), math.cos(lat1)*math.sin(lat2)-math.sin(lat1)*math.cos(lat2)*math.cos(lon2-lon1)) * 180/math.pi - 180
-	  if ab < 0 then ab = ab + 360 end
-	  if ab > 359 then ab = ab - 360 end
+	  local ab = math.atan2(math.sin(lon2-lon1)*math.cos(lat2), math.cos(lat1)*math.sin(lat2)-math.sin(lat1)*math.cos(lat2)*math.cos(lon2-lon1)) * 180.0/math.pi - 180.0
+	  if ab < 0 then ab = ab + 360.0 end
+	  if ab > 359.0 then ab = ab - 360.0 end
 	  telemetry.homeAngle = ab
 	  -- telemetry.homeDist
-      local a = math.sin(dLat/2) * math.sin(dLat/2) + math.sin(dLon/2) * math.sin(dLon/2) * math.cos(lat1) * math.cos(lat2); 
+      local a = math.sin(dLat*0.5) * math.sin(dLat*0.5) + math.sin(dLon*0.5) * math.sin(dLon*0.5) * math.cos(lat1) * math.cos(lat2); 
 	  if a == 0 then
 	    telemetry.homeDist = 0
 	  else
-		telemetry.homeDist = 6371000 * 2 * math.asin(math.sqrt(a)) -- radius of the Earth is 6371km
+		telemetry.homeDist = 6371000.0 * 2.0 * math.asin(math.sqrt(a)) -- radius of the Earth is 6371km times
 	  end
 	end
     -- telemetry.wpDistance
@@ -2166,9 +2189,16 @@ local function checkEvents(celm)
   
   -- home detecting code
   if telemetry.homeLat == nil then
-    if telemetry.gpsStatus > 2 and telemetry.homeAngle ~= -1 then
-      telemetry.homeLat, telemetry.homeLon = utils.getHomeFromAngleAndDistance(telemetry)
-    end
+    if ((status.homelat ~= nil) and (status.homelon ~= nil)) then
+      -- with MAVLink we already have the values, no need to calculate
+	  telemetry.homeLat = status.homelat
+	  telemetry.homeLon = status.homelon
+    else
+      -- with FrSky PT we only get home angle and home distance, need to calculate lat and lon
+      if telemetry.gpsStatus > 2 and telemetry.homeAngle ~= -1 then
+        telemetry.homeLat, telemetry.homeLon = utils.getHomeFromAngleAndDistance(telemetry)
+      end
+	end
   end
    
   -- flightmode transitions have a grace period to prevent unwanted flightmode call out
@@ -2195,13 +2225,12 @@ local function checkCellVoltage(celm)
   if status.battLevel1 == false then status.battLevel1 = alarms[7][1] end
   if status.battLevel2 == false then status.battLevel2 = alarms[8][1] end
 end
+
 --------------------------------------------------------------------------------
 -- MAIN LOOP
 --------------------------------------------------------------------------------
---
+
 local bgclock = 0
-
-
 
 -- telemetry pop function, either SPort or CRSF
 local telemetryPop = nil
@@ -2224,10 +2253,8 @@ local function crossfirePop()
           updateHash(data[i])
         end
         utils.pushMessage(severity, status.msgBuffer)
-        -- hash audio support
-        playHash()
-        -- hash reset
-        resetHash()
+        playHash() -- hash audio support
+        resetHash() -- hash reset
         status.msgBuffer = nil
         status.msgBuffer = ""
       elseif #data > 48 and data[1] == 0xF2 then
