@@ -608,7 +608,19 @@ local function drawMap(myWidget,drawLib,conf,telemetry,status,battery,utils,leve
     if telemetry.homeLat ~= nil and telemetry.homeLon ~= nil and homeScreenX ~= nil then
       local homeCode = drawLib.computeOutCode(homeScreenX, homeScreenY, minX+11, minY+10, maxX-11, maxY-10);
       if homeCode == 0 then
-        lcd.drawBitmap(utils.getBitmap("homeorange"),homeScreenX-11,homeScreenY-10)
+	    if conf.enableTxGPS then
+		  -- home position is the radio position
+		  if getTxGPS() == nil then
+            -- internalgps option not included in the OpenTX build - blink the red rcradio symbol
+			utils.drawBlinkBitmap("radiored",homeScreenX-11,homeScreenY-10)
+          else
+            -- draw solid radio
+            lcd.drawBitmap(utils.getBitmap("rcradioorange"),homeScreenX-11,homeScreenY-10)
+          end
+		else
+		  -- home position is the armed position, draw a symbol of a house
+          lcd.drawBitmap(utils.getBitmap("homeorange"),homeScreenX-11,homeScreenY-10)
+		end
       end
     end
     

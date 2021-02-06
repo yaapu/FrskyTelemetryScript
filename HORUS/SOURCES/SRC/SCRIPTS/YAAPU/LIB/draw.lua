@@ -202,10 +202,10 @@ end
 
 local function drawRadioIcon(x,y,utils)
   if getTxGPS() == nil then
-    -- internalgps option not in OpenTX build or no TxGPS hardware found - blink the red rcradio symbol
+    -- internalgps option not included in the OpenTX build - blink the red minircradio symbol
 	utils.drawBlinkBitmap("minircradiored",x,y)
   else
-    -- draw solid radio
+    -- draw solid minircradio
     lcd.drawBitmap(utils.getBitmap("minircradioorange"),x,y)
   end
 end
