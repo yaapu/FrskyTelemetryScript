@@ -1041,7 +1041,23 @@ local function TxGPShome() -- uses GPS connected to radio for home position
 end
 
 -- processes OlliW MavSDK (MAVLink enhanced OpenTX) data
-local function processMAVLinkCPUlight()
+local function processMAVLinkFastUpdate()
+  -- only status text needs to be quickly updated in order not to miss any messages
+  if mavsdk ~= nil then -- in order not for the script to get disabled when running on non OlliW OpenTX firmware
+	-- messages
+	if mavsdk.isStatusTextAvailable() then
+	  local severity, txt = mavsdk.getStatusText()
+	  if severity ~= nil and txt ~= nil then
+	    utils.pushMessage(severity, txt)
+	    playHash()
+        resetHash()
+	  end
+	end
+  end
+end
+
+local function processMAVLinkSlowUpdate()
+  -- for all the data in this function it is irrelevant if we miss some info, we only need the latest value, thus slow rate is just fine
   if mavsdk ~= nil then -- in order not for the script to get disabled when running on non OlliW OpenTX firmware
 	-- telemetry.roll
 	local roll = mavsdk.getAttRollDeg()
@@ -1061,6 +1077,9 @@ local function processMAVLinkCPUlight()
 	-- telemetry.yaw
 	local yaw = mavsdk.getVfrHeadingDeg()
 	if yaw ~= nil then telemetry.yaw = yaw end
+	-- telemetry.frameType
+	local frameType = mavsdk.getVehicleType()
+	if frameType ~= nil then telemetry.frameType = frameType end
 	-- telemetry.flightMode
 	local fm = mavsdk.getFlightMode()
 	if fm ~= nil then telemetry.flightMode = fm + 1 end -- needs to be incremented by one from MAVLink standard output
@@ -1086,6 +1105,8 @@ local function processMAVLinkCPUlight()
 		end
 	  end
 	end
+	-- telemetry.battFailsafe
+	if ((mavsdk.getBatFaultBitMask() ~= nil) or (mavsdk.getBat2FaultBitMask() ~= nil)) then telemetry.battFailsafe = 1 end
 	-- telemetry.ekfFailsafe
 	telemetry.ekfFailsafe = 0
 	-- telemetry.imuTemp -- [°C] value not yet parsed by OlliW
@@ -1115,6 +1136,9 @@ local function processMAVLinkCPUlight()
 	-- telemetry.batt1current
 	local BatCurrent = mavsdk.getBatCurrent()
 	if BatCurrent ~= nil then telemetry.batt1current = BatCurrent end
+	-- telemetry.batt1Capacity
+	local batt1Capacity = mavsdk.getBatCapacity()
+	if batt1Capacity ~= nil then telemetry.batt1Capacity = batt1Capacity end 
 	-- telemetry.batt1mah
 	local BatCharge = mavsdk.getBatChargeConsumed()
 	if BatCharge ~= nil then telemetry.batt1mah = BatCharge end
@@ -1124,52 +1148,12 @@ local function processMAVLinkCPUlight()
 	-- telemetry.batt2current
 	local Bat2current = mavsdk.getBat2Current()
 	if Bat2current ~= nil then telemetry.batt2current = Bat2current end
-	-- telemetry.batt2mah
-	local Bat2Charge = mavsdk.getBat2ChargeConsumed()
-	if Bat2Charge ~= nil then telemetry.batt2mah = Bat2Charge end
-	-- telemetry.homeAlt
-	local homeAlt = mavsdk.getPositionAltitudeRelative() -- getVfrAltitudeMsl()
-	if homeAlt ~= nil then telemetry.homeAlt = homeAlt * 10 end -- from m to dm
-	-- messages
-	if mavsdk.isStatusTextAvailable() then
-	  local severity, txt = mavsdk.getStatusText()
-	  if severity ~= nil and txt ~= nil then
-	    utils.pushMessage(severity, txt)
-	    playHash()
-        resetHash()
-	  end
-	end
-	-- telemetry.frameType
-	local frameType = mavsdk.getVehicleType()
-	if frameType ~= nil then telemetry.frameType = frameType end
-	-- telemetry.batt1Capacity
-	local batt1Capacity = mavsdk.getBatCapacity()
-	if batt1Capacity ~= nil then telemetry.batt1Capacity = batt1Capacity end 
     -- telemetry.batt2Capacity
 	local batt2Capacity = mavsdk.getBat2Capacity()
 	if batt2Capacity ~= nil then telemetry.batt2Capacity = batt2Capacity end
-	-- telemetry.wpNumber and telemetry.wpCommands
-	local mission = mavsdk.getMission()
-	if mission.current_seq ~= nil and mission.current_seq ~= 65535 then telemetry.wpNumber = mission.current_seq end -- OlliW initializes to UINT16_MAX, need to discard this value
-	if mission.count ~= nil then telemetry.wpCommands = mission.count end
-    -- telemetry.wpXTError not yet used in telemetry script further and also not yet parsed by OlliW
-	-- telemetry.airspeed
-    local airspeed = mavsdk.getVfrAirSpeed()
-	if airspeed ~= nil then telemetry.airspeed = airspeed * 10 end -- from m/s to dm/s
-	-- telemetry.throttle
-	local throttle = mavsdk.getVfrThrottle()
-	if throttle ~= nil then telemetry.throttle = throttle end -- unit [%]
-    -- telemetry.baroAlt
-	local baroAlt = mavsdk.getVfrAltitudeMsl()
-	if baroAlt ~= nil then telemetry.baroAlt = baroAlt end
-	-- RSSI
-	local rssi = mavsdk.getRadioRssiScaled()
-	if rssi ~= nil then telemetry.rssiMAVLink = rssi end -- scaling 0 to 100 (FrSky 0 to 99)
-  end
-end
-
-local function processMAVLinkCPUheavy()
-  if mavsdk ~= nil then -- in order not for the script to get disabled when running on non OlliW OpenTX firmware
+	-- telemetry.batt2mah
+	local Bat2Charge = mavsdk.getBat2ChargeConsumed()
+	if Bat2Charge ~= nil then telemetry.batt2mah = Bat2Charge end
 	-- telemetry.lat and telemetry.lon
 	local latlon = mavsdk.getGpsLatLonInt()
 	if type(latlon) == "table" and latlon.lat ~= nil then
@@ -1178,6 +1162,9 @@ local function processMAVLinkCPUheavy()
 	if latlon.lon ~= nil then
 	  telemetry.lon = latlon.lon * 0.0000001 -- converted to degrees.fraction
 	end
+	-- telemetry.homeAlt
+	local homeAlt = mavsdk.getPositionAltitudeRelative() -- getVfrAltitudeMsl()
+	if homeAlt ~= nil then telemetry.homeAlt = homeAlt * 10 end -- from m to dm
 	-- telemetry.homeAngle and telemetry.homeDist
 	if status.homeGood and status.homelon ~= nil and status.homelat ~= nil and telemetry.lon ~= nil and telemetry.lat ~= nil then
 	  -- Equations from Mav2PT FrSky_Ports.h
@@ -1201,6 +1188,11 @@ local function processMAVLinkCPUheavy()
 		telemetry.homeDist = 6371000.0 * 2.0 * math.asin(math.sqrt(a)) -- radius of the Earth is 6371km times
 	  end
 	end
+	-- telemetry.wpNumber and telemetry.wpCommands
+	local mission = mavsdk.getMission()
+	if mission.current_seq ~= nil and mission.current_seq ~= 65535 then telemetry.wpNumber = mission.current_seq end -- OlliW initializes to UINT16_MAX, need to discard this value
+	if mission.count ~= nil then telemetry.wpCommands = mission.count end
+    -- telemetry.wpXTError not yet used in telemetry script further and also not yet parsed by OlliW
     -- telemetry.wpDistance
 	local navcontroller = mavsdk.getNavController()
 	if type(navcontroller) == "table" and navcontroller.wp_dist ~= nil then telemetry.wpDistance = navcontroller.wp_dist end -- unit m
@@ -1212,6 +1204,18 @@ local function processMAVLinkCPUheavy()
       if angle < 0 then angle = angle + 360.0 end -- shift, if necessary, to be in range between 0 and 360
 	  telemetry.wpBearing = ((angle + 22.5) / 45.0) % 8 -- convert into nearest 45° bearing offset from COG (to match FrSky PT)
 	end
+	-- telemetry.airspeed
+    local airspeed = mavsdk.getVfrAirSpeed()
+	if airspeed ~= nil then telemetry.airspeed = airspeed * 10 end -- from m/s to dm/s
+	-- telemetry.throttle
+	local throttle = mavsdk.getVfrThrottle()
+	if throttle ~= nil then telemetry.throttle = throttle end -- unit [%]
+    -- telemetry.baroAlt
+	local baroAlt = mavsdk.getVfrAltitudeMsl()
+	if baroAlt ~= nil then telemetry.baroAlt = baroAlt end
+	-- RSSI
+	local rssi = mavsdk.getRadioRssiScaled()
+	if rssi ~= nil then telemetry.rssiMAVLink = rssi end -- scaling 0 to 100 (FrSky 0 to 99)
   end
 end
 
@@ -1328,15 +1332,19 @@ end
 local function telemetryEnabled()
   if conf.enableMAVLink then
     if mavsdk ~= nil then -- in order not for the script to get disabled when running on non OlliW OpenTX firmware
-	  if not mavsdk.isReceiving() then
+	  if mavsdk.isReceiving() then
+	    status.noTelemetryData = 0
+	  else
 	    status.noTelemetryData = 1
 	  end
 	end
-    return status.noTelemetryData == 0
-  end
-  -- not MAVLink  
-  if getRSSI() == 0 then
-    status.noTelemetryData = 1
+  else
+    -- not MAVLink  
+    if getRSSI() == 0 then
+      status.noTelemetryData = 1
+    else
+      status.noTelemetryData = 0
+	end
   end
   return status.noTelemetryData == 0
 end
@@ -2311,7 +2319,7 @@ local function backgroundTasks(myWidget,telemetryLoops)
 		   status.noTelemetryData = 0
            -- no telemetry dialog only shown once
 		   status.hideNoTelemetry = true
-	       processMAVLinkCPUlight()
+	       processMAVLinkFastUpdate()
 		end
 	  end
     else							   
@@ -2335,7 +2343,7 @@ local function backgroundTasks(myWidget,telemetryLoops)
     if conf.enableMAVLink then
 	  if mavsdk ~= nil then -- in order not for the script to get disabled when running on non OlliW OpenTX firmware
         if mavsdk.isReceiving() then
-          processMAVLinkCPUheavy() -- process expensive calculations slower
+          processMAVLinkSlowUpdate() -- most MAVLink messages can be processed with low update rate, as we are only interested on latest values
         end
 	  end
     else

@@ -201,7 +201,13 @@ local function drawHomeIcon(x,y,utils)
 end
 
 local function drawRadioIcon(x,y,utils)
-  lcd.drawBitmap(utils.getBitmap("rcradioorange"),x,y)
+  if getTxGPS() == nil then
+    -- internalgps option not in OpenTX build or no TxGPS hardware found - blink the red rcradio symbol
+	utils.drawBlinkBitmap("rcradiored",x,y)
+  else
+    -- draw solid radio
+    lcd.drawBitmap(utils.getBitmap("rcradioorange"),x,y)
+  end
 end
 
 local function computeOutCode(x,y,xmin,ymin,xmax,ymax)
