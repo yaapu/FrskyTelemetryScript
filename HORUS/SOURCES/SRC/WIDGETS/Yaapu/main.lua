@@ -1163,8 +1163,8 @@ local function processMAVLinkSlowUpdate()
 	  telemetry.lon = latlon.lon * 0.0000001 -- converted to degrees.fraction
 	end
 	-- telemetry.homeAlt
-	local homeAlt = mavsdk.getPositionAltitudeRelative() -- getVfrAltitudeMsl()
-	if homeAlt ~= nil then telemetry.homeAlt = homeAlt * 10 end -- from m to dm
+	local homeAlt = mavsdk.getPositionAltitudeRelative()
+	if homeAlt ~= nil then telemetry.homeAlt = homeAlt end -- m
 	-- telemetry.homeAngle and telemetry.homeDist
 	if status.homeGood and status.homelon ~= nil and status.homelat ~= nil and telemetry.lon ~= nil and telemetry.lat ~= nil then
 	  -- Equations from Mav2PT FrSky_Ports.h
