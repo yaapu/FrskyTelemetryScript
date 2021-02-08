@@ -1162,7 +1162,7 @@ local function processMAVLinkSlowUpdate()
 	if latlon.lon ~= nil then
 	  telemetry.lon = latlon.lon * 0.0000001 -- converted to degrees.fraction
 	end
-	-- telemetry.homeAlt
+	-- telemetry.homeAlt (altitude above ground)
 	local homeAlt = mavsdk.getPositionAltitudeRelative()
 	if homeAlt ~= nil then telemetry.homeAlt = homeAlt end -- m
 	-- telemetry.homeAngle and telemetry.homeDist
@@ -1255,7 +1255,7 @@ local function processFrSkyPTtelemetry(DATA_ID,VALUE)
       -- assume a 2Vx12 as minimum acceptable "real" voltage
       telemetry.batt1volt = 512 + telemetry.batt1volt
     end
-    telemetry.batt1current = bit32.extract(VALUE,10,7) * (10^bit32.extract(VALUE,9,1))
+    telemetry.batt1current = bit32.extract(VALUE,10,7) * (10^bit32.extract(VALUE,9,1)) -- unit cA
     telemetry.batt1mah = bit32.extract(VALUE,17,15)
   elseif DATA_ID == 0x5008 then -- BATT2
     telemetry.batt2volt = bit32.extract(VALUE,0,9)
@@ -1265,11 +1265,11 @@ local function processFrSkyPTtelemetry(DATA_ID,VALUE)
       -- assume a 2Vx12 as minimum acceptable "real" voltage
       telemetry.batt2volt = 512 + telemetry.batt2volt
     end
-    telemetry.batt2current = bit32.extract(VALUE,10,7) * (10^bit32.extract(VALUE,9,1))
+    telemetry.batt2current = bit32.extract(VALUE,10,7) * (10^bit32.extract(VALUE,9,1)) -- unit cA
     telemetry.batt2mah = bit32.extract(VALUE,17,15)
   elseif DATA_ID == 0x5004 then -- HOME
     telemetry.homeDist = bit32.extract(VALUE,2,10) * (10^bit32.extract(VALUE,0,2))
-    telemetry.homeAlt = bit32.extract(VALUE,14,10) * (10^bit32.extract(VALUE,12,2)) * 0.1 * (bit32.extract(VALUE,24,1) == 1 and -1 or 1)
+    telemetry.homeAlt = bit32.extract(VALUE,14,10) * (10^bit32.extract(VALUE,12,2)) * 0.1 * (bit32.extract(VALUE,24,1) == 1 and -1 or 1) -- m (altitude above ground)
     telemetry.homeAngle = bit32.extract(VALUE, 25,  7) * 3
   elseif DATA_ID == 0x5000 then -- MESSAGES
     if VALUE ~= status.lastMsgValue then
