@@ -1135,7 +1135,7 @@ local function processMAVLinkSlowUpdate()
 	if batt1Volt ~= nil then telemetry.batt1volt = batt1Volt * 10 end -- from V to dV
 	-- telemetry.batt1current
 	local BatCurrent = mavsdk.getBatCurrent()
-	if BatCurrent ~= nil then telemetry.batt1current = BatCurrent end
+	if BatCurrent ~= nil then telemetry.batt1current = BatCurrent * 10 end -- from A to cA
 	-- telemetry.batt1Capacity
 	local batt1Capacity = mavsdk.getBatCapacity()
 	if batt1Capacity ~= nil then telemetry.batt1Capacity = batt1Capacity end 
@@ -1147,7 +1147,7 @@ local function processMAVLinkSlowUpdate()
 	if batt2Volt ~= nil then telemetry.batt2volt = batt2Volt * 10 end -- from V to dV
 	-- telemetry.batt2current
 	local Bat2current = mavsdk.getBat2Current()
-	if Bat2current ~= nil then telemetry.batt2current = Bat2current end
+	if Bat2current ~= nil then telemetry.batt2current = Bat2current * 10 end -- from A to cA
     -- telemetry.batt2Capacity
 	local batt2Capacity = mavsdk.getBat2Capacity()
 	if batt2Capacity ~= nil then telemetry.batt2Capacity = batt2Capacity end
@@ -1163,8 +1163,8 @@ local function processMAVLinkSlowUpdate()
 	  telemetry.lon = latlon.lon * 0.0000001 -- converted to degrees.fraction
 	end
 	-- telemetry.homeAlt
-	local homeAlt = mavsdk.getPositionAltitudeRelative() -- getVfrAltitudeMsl()
-	if homeAlt ~= nil then telemetry.homeAlt = homeAlt * 10 end -- from m to dm
+	local homeAlt = mavsdk.getPositionAltitudeRelative()
+	if homeAlt ~= nil then telemetry.homeAlt = homeAlt end -- m
 	-- telemetry.homeAngle and telemetry.homeDist
 	if status.homeGood and status.homelon ~= nil and status.homelat ~= nil and telemetry.lon ~= nil and telemetry.lat ~= nil then
 	  -- Equations from Mav2PT FrSky_Ports.h
