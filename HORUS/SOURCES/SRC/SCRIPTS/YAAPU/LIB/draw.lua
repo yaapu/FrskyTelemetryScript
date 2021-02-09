@@ -3,6 +3,8 @@
 --
 -- Copyright (C) 2018-2019. Alessandro Apostoli
 -- https://github.com/yaapu
+-- OlliW MavSDK additions by Risto Kõiva
+-- https://github.com/rotorman
 --
 -- This program is free software; you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -123,6 +125,8 @@
 -- MENU VALUE,COMBO
 --------------------------------------------------------------------------------
 
+local statusArmTimeout = 0	-- timeout counter for "armed" dialog
+
 --------------------------
 -- UNIT OF MEASURE
 --------------------------
@@ -130,7 +134,6 @@ local unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
 local unitLabel = getGeneralSettings().imperial == 0 and "m" or "ft"
 local unitLongScale = getGeneralSettings().imperial == 0 and 1/1000 or 1/1609.34
 local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
-
 
 -----------------------
 -- BATTERY 
@@ -195,6 +198,16 @@ end
 
 local function drawHomeIcon(x,y,utils)
   lcd.drawBitmap(utils.getBitmap("minihomeorange"),x,y)
+end
+
+local function drawRadioIcon(x,y,utils)
+  if getTxGPS() == nil then
+    -- internalgps option not included in the OpenTX build - blink the red minircradio symbol
+	utils.drawBlinkBitmap("minircradiored",x,y)
+  else
+    -- draw solid minircradio
+    lcd.drawBitmap(utils.getBitmap("minircradioorange"),x,y)
+  end
 end
 
 local function computeOutCode(x,y,xmin,ymin,xmax,ymax)
@@ -358,11 +371,24 @@ end
 
 local function drawArmStatus(status,telemetry,utils)
   -- armstatus
-  if telemetry.ekfFailsafe == 0 and telemetry.battFailsafe == 0 and status.timerRunning == 0 then
-    if (telemetry.statusArmed == 1) then
-      lcd.drawBitmap(utils.getBitmap("armed"),LCD_W/2 - 90,154)
-    else
-      utils.drawBlinkBitmap("disarmed",LCD_W/2 - 90,154)
+  if telemetry.ekfFailsafe == 0 and telemetry.battFailsafe == 0 then
+    if statusArmTimeout > 0 then
+      -- we are displaying "armed"
+      if statusArmTimeout < 10 then -- display "armed" for approx. 1.5 seconds
+        lcd.drawBitmap(utils.getBitmap("armed"),LCD_W/2 - 90,154)
+        statusArmTimeout = statusArmTimeout + 1
+      else
+        statusArmTimeout = 0
+      end
+    end
+    if status.timerRunning == 0 then
+      if (telemetry.statusArmed == 1) then
+        lcd.drawBitmap(utils.getBitmap("armed"),LCD_W/2 - 90,154)
+        statusArmTimeout = 1 -- trigger incrementing dialog timeout displaying "armed"
+      else
+        utils.drawBlinkBitmap("disarmed",LCD_W/2 - 90,154)
+        statusArmTimeout = 0
+      end
     end
   end
 end
@@ -376,8 +402,20 @@ local function drawNoTelemetryData(status,telemetry,utils,telemetryEnabled)
     lcd.drawFilledRectangle(90,76, 300, 80, CUSTOM_COLOR)
     lcd.setColor(CUSTOM_COLOR,0xFFFF)
     lcd.drawText(110, 85, "no telemetry data", DBLSIZE+CUSTOM_COLOR)
-    lcd.drawText(130, 120, "Yaapu Telemetry Widget 1.9.3-beta", SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(123, 120, "Yaapu Telemetry Widget 1.9.3-beta2", SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(100, 135, "with OlliW MavSDK >=v22 support by Risto", SMLSIZE+CUSTOM_COLOR)
   end
+end
+
+local function drawNoMavSDK()
+  lcd.setColor(CUSTOM_COLOR,0xFFFF)
+  lcd.drawFilledRectangle(88,74, 304, 84, CUSTOM_COLOR)
+  lcd.setColor(CUSTOM_COLOR,0xF800)
+  lcd.drawFilledRectangle(90,76, 300, 80, CUSTOM_COLOR)
+  lcd.setColor(CUSTOM_COLOR,0xFFFF)
+  lcd.drawText(110, 85, "OpenTX w/o MAVLink!", MIDSIZE+CUSTOM_COLOR)
+  lcd.drawText(105, 120, "Please flash OlliW OpenTX (v22 or later)", SMLSIZE+CUSTOM_COLOR)
+  lcd.drawText(118, 135, "or disable MAVLink in configuration", SMLSIZE+CUSTOM_COLOR)
 end
 
 local function drawFilledRectangle(x,y,w,h,flags)
@@ -425,7 +463,13 @@ local function drawCompassRibbon(y,myWidget,conf,telemetry,status,battery,utils,
   elseif angle >= 90 and angle < 180 then
     homeOffset = width
   end
-  drawHomeIcon(xMin + homeOffset -5,minY + (bigFont and 28 or 20),utils)
+  if conf.enableTxGPS then
+    -- radio home
+    drawRadioIcon(xMin + homeOffset -5,minY + (bigFont and 28 or 20),utils)
+  else
+    -- vehicle home
+    drawHomeIcon(xMin + homeOffset -5,minY + (bigFont and 28 or 20),utils)
+  end
   
   -- text box
   local w = 60 -- 3 digits width
@@ -485,7 +529,13 @@ local function oldDrawCompassRibbon(y,myWidget,conf,telemetry,status,battery,uti
   elseif angle >= 90 and angle <= 180 then
     homeOffset = width
   end
-  drawHomeIcon(xMin + homeOffset -5,y + (bigFont and 28 or 20),utils)
+  if conf.enableTxGPS then
+    -- radio home
+    drawRadioIcon(xMin + homeOffset -5,y + (bigFont and 28 or 20),utils)
+  else
+    -- vehicle home
+    drawHomeIcon(xMin + homeOffset -5,y + (bigFont and 28 or 20),utils)
+  end
   -- yaw angle box
   local xx = 0
   if ( telemetry.yaw < 10) then
@@ -575,6 +625,7 @@ end
 return {
   drawNumberWithDim=drawNumberWithDim,
   drawHomeIcon=drawHomeIcon,
+  drawRadioIcon=drawRadioIcon,
   drawHArrow=drawHArrow,
   drawVArrow=drawVArrow,
   drawRArrow=drawRArrow,
@@ -585,10 +636,10 @@ return {
   drawFailsafe=drawFailsafe,
   drawArmStatus=drawArmStatus,
   drawNoTelemetryData=drawNoTelemetryData,
+  drawNoMavSDK=drawNoMavSDK,
   drawStatusBar=drawStatusBar,
   drawFilledRectangle=drawFilledRectangle,
   drawCompassRibbon=drawCompassRibbon,
   --oldDrawCompassRibbon=oldDrawCompassRibbon,
   yawRibbonPoints=yawRibbonPoints
 }
-

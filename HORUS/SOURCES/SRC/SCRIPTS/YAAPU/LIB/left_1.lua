@@ -210,8 +210,14 @@ local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gp
     lcd.drawText(90, 37, stralt, MIDSIZE+flags+RIGHT+CUSTOM_COLOR)
   end
   -- LABELS
-  lcd.setColor(CUSTOM_COLOR,0x0000)       
-  drawLib.drawHomeIcon(90 - 70, 70,utils)
+  lcd.setColor(CUSTOM_COLOR,0x0000)
+  if conf.enableTxGPS then
+    -- radio home
+    drawLib.drawRadioIcon(90 - 70, 70,utils)
+  else
+    -- vehicle home
+    drawLib.drawHomeIcon(90 - 70, 70,utils)
+  end
   lcd.drawText(90, 70, "Dist("..unitLabel..")", SMLSIZE+RIGHT+CUSTOM_COLOR)
   lcd.drawText(90, 117, "Travel("..unitLongLabel..")", SMLSIZE+RIGHT+CUSTOM_COLOR)
   -- VALUES
