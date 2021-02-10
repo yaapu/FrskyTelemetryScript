@@ -597,7 +597,7 @@ local function drawStatusBar(maxRows,conf,telemetry,status,battery,alarms,frame,
     lcd.drawText(170,226-yDelta, strStatus, SMLSIZE+CUSTOM_COLOR)
 
     lcd.setColor(CUSTOM_COLOR,0xFFFF)
-    if telemetry.numSats == 15 then
+	if ((not conf.enableMAVLink) and (telemetry.numSats == 15)) then -- MavSDK can output also numSats > 15
       lcd.drawNumber(170,235-yDelta, telemetry.numSats, MIDSIZE+CUSTOM_COLOR)
       lcd.drawText(200,239-yDelta, "+", SMLSIZE+CUSTOM_COLOR)
     else
