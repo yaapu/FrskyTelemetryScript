@@ -217,7 +217,6 @@ local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gp
     -- vehicle home
     drawLib.drawHomeIcon(155 - 68, 29,utils)
   end
-  lcd.drawText(155, 29, "Dist("..unitLabel..")", SMLSIZE+RIGHT+CUSTOM_COLOR)
   lcd.drawText(73, 95, "Spd("..conf.horSpeedLabel..")", SMLSIZE+RIGHT+CUSTOM_COLOR)
   lcd.drawText(155, 95, "Travel("..unitLongLabel..")", SMLSIZE+RIGHT+CUSTOM_COLOR)
   -- VALUES
@@ -231,10 +230,36 @@ local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gp
   if status.showMinMaxValues == true then
     flags = 0
   end
-  local strdist = string.format("%d",dist*unitScale)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)  
-  --lcd.setColor(CUSTOM_COLOR,0xFE60) --yellow  
-  lcd.drawText(155, 41, strdist, MIDSIZE+flags+RIGHT+CUSTOM_COLOR)
+  if getGeneralSettings().imperial == 0 then
+    -- metric, special handling for km
+	if dist > 9999 then
+	  -- add "k" for kilo
+	  lcd.setColor(CUSTOM_COLOR,0x0000)
+      lcd.drawText(155, 29, "Dist(m"..unitLabel..")", SMLSIZE+RIGHT+CUSTOM_COLOR)
+      lcd.setColor(CUSTOM_COLOR,0xFFFF)       
+      local strdist = string.format("%d",dist*unitScale/1000)
+      lcd.setColor(CUSTOM_COLOR,0xFFFF)
+      --lcd.setColor(CUSTOM_COLOR,0xFE60) --yellow  
+      lcd.drawText(155, 41, strdist, MIDSIZE+flags+RIGHT+CUSTOM_COLOR)
+	else
+      lcd.setColor(CUSTOM_COLOR,0x0000)
+      lcd.drawText(155, 29, "Dist("..unitLabel..")", SMLSIZE+RIGHT+CUSTOM_COLOR)
+      lcd.setColor(CUSTOM_COLOR,0xFFFF)       
+      local strdist = string.format("%d",dist*unitScale)
+      lcd.setColor(CUSTOM_COLOR,0xFFFF)  
+      --lcd.setColor(CUSTOM_COLOR,0xFE60) --yellow  
+      lcd.drawText(155, 41, strdist, MIDSIZE+flags+RIGHT+CUSTOM_COLOR)
+	end
+  else
+    -- imperial
+	lcd.setColor(CUSTOM_COLOR,0x0000)
+    lcd.drawText(155, 29, "Dist("..unitLabel..")", SMLSIZE+RIGHT+CUSTOM_COLOR)
+    lcd.setColor(CUSTOM_COLOR,0xFFFF)       
+    local strdist = string.format("%d",dist*unitScale)
+    lcd.setColor(CUSTOM_COLOR,0xFFFF)  
+    --lcd.setColor(CUSTOM_COLOR,0xFE60) --yellow  
+    lcd.drawText(155, 41, strdist, MIDSIZE+flags+RIGHT+CUSTOM_COLOR)
+  end
   -- total distance
   lcd.setColor(CUSTOM_COLOR,0xFFFF)  
   lcd.drawNumber(155, 107, telemetry.totalDist*unitLongScale*100, PREC2+MIDSIZE+RIGHT+CUSTOM_COLOR)

@@ -683,11 +683,28 @@ local function drawMap(myWidget,drawLib,conf,telemetry,status,battery,utils,leve
     lcd.setColor(CUSTOM_COLOR,0xFFFF)
     lcd.drawNumber(10,50+103, telemetry.vSpeed*0.1*conf.vertSpeedMultiplier, MIDSIZE+CUSTOM_COLOR+0)
     -- DIST
-    lcd.setColor(CUSTOM_COLOR,0x0000)
-    lcd.drawText(10, 50+130, "Dist("..unitLabel..")", SMLSIZE+0+CUSTOM_COLOR)
-    lcd.setColor(CUSTOM_COLOR,0xFFFF)
-    lcd.drawNumber(10, 50+141, telemetry.homeDist*unitScale, MIDSIZE+0+CUSTOM_COLOR)
-    
+    if getGeneralSettings().imperial == 0 then
+      -- metric, special handling for km
+	  local dist = telemetry.homeDist*unitScale
+	  if dist > 9999 then
+	    -- add "k" for kilo
+        lcd.setColor(CUSTOM_COLOR,0x0000)
+        lcd.drawText(10, 50+130, "Dist(k"..unitLabel..")", SMLSIZE+0+CUSTOM_COLOR)
+        lcd.setColor(CUSTOM_COLOR,0xFFFF)
+        lcd.drawNumber(10, 50+141, telemetry.homeDist*unitScale/1000, MIDSIZE+0+CUSTOM_COLOR)
+      else
+        lcd.setColor(CUSTOM_COLOR,0x0000)
+        lcd.drawText(10, 50+130, "Dist("..unitLabel..")", SMLSIZE+0+CUSTOM_COLOR)
+        lcd.setColor(CUSTOM_COLOR,0xFFFF)
+        lcd.drawNumber(10, 50+141, telemetry.homeDist*unitScale, MIDSIZE+0+CUSTOM_COLOR)
+	  end
+    else
+      -- imperial
+      lcd.setColor(CUSTOM_COLOR,0x0000)
+      lcd.drawText(10, 50+130, "Dist("..unitLabel..")", SMLSIZE+0+CUSTOM_COLOR)
+      lcd.setColor(CUSTOM_COLOR,0xFFFF)
+      lcd.drawNumber(10, 50+141, telemetry.homeDist*unitScale, MIDSIZE+0+CUSTOM_COLOR)
+    end
     -- RIGHT
     -- CELL
     if battery[1] * 0.01 < 10 then

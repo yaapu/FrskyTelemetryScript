@@ -211,14 +211,6 @@ local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gp
   end
   -- LABELS
   lcd.setColor(CUSTOM_COLOR,0x0000)
-  if conf.enableTxGPS then
-    -- radio home
-    drawLib.drawRadioIcon(90 - 70, 70,utils)
-  else
-    -- vehicle home
-    drawLib.drawHomeIcon(90 - 70, 70,utils)
-  end
-  lcd.drawText(90, 70, "Dist("..unitLabel..")", SMLSIZE+RIGHT+CUSTOM_COLOR)
   lcd.drawText(90, 117, "Travel("..unitLongLabel..")", SMLSIZE+RIGHT+CUSTOM_COLOR)
   -- VALUES
   lcd.setColor(CUSTOM_COLOR,0xFFFF)       
@@ -231,9 +223,54 @@ local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gp
   if status.showMinMaxValues == true then
     flags = 0
   end
-  local strdist = string.format("%d",dist*unitScale)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)  
-  lcd.drawText(90, 82, strdist, MIDSIZE+flags+RIGHT+CUSTOM_COLOR)
+  if getGeneralSettings().imperial == 0 then
+    -- metric, special handling for km
+    if dist > 9999 then
+	  -- add "k" for kilo, paint radio or home icon 8 pixels towards left
+      lcd.setColor(CUSTOM_COLOR,0x0000)
+      if conf.enableTxGPS then
+        -- radio home
+        drawLib.drawRadioIcon(82 - 70, 70,utils)
+      else
+        -- vehicle home
+        drawLib.drawHomeIcon(82 - 70, 70,utils)
+      end
+      lcd.setColor(CUSTOM_COLOR,0xFFFF)       
+      lcd.drawText(82, 70, "Dist(k"..unitLabel..")", SMLSIZE+RIGHT+CUSTOM_COLOR)
+      local strdist = string.format("%d",dist*unitScale/1000)
+      lcd.setColor(CUSTOM_COLOR,0xFFFF)  
+      lcd.drawText(90, 82, strdist, MIDSIZE+flags+RIGHT+CUSTOM_COLOR)
+	else
+      lcd.setColor(CUSTOM_COLOR,0x0000)
+      if conf.enableTxGPS then
+        -- radio home
+        drawLib.drawRadioIcon(90 - 70, 70,utils)
+      else
+        -- vehicle home
+        drawLib.drawHomeIcon(90 - 70, 70,utils)
+      end
+      lcd.setColor(CUSTOM_COLOR,0xFFFF)       
+      lcd.drawText(90, 70, "Dist("..unitLabel..")", SMLSIZE+RIGHT+CUSTOM_COLOR)
+      local strdist = string.format("%d",dist*unitScale)
+      lcd.setColor(CUSTOM_COLOR,0xFFFF)  
+      lcd.drawText(90, 82, strdist, MIDSIZE+flags+RIGHT+CUSTOM_COLOR)
+	end
+  else
+    -- imperial
+    lcd.setColor(CUSTOM_COLOR,0x0000)
+    if conf.enableTxGPS then
+      -- radio home
+      drawLib.drawRadioIcon(90 - 70, 70,utils)
+    else
+      -- vehicle home
+      drawLib.drawHomeIcon(90 - 70, 70,utils)
+    end
+    lcd.setColor(CUSTOM_COLOR,0xFFFF)       
+    lcd.drawText(90, 70, "Dist("..unitLabel..")", SMLSIZE+RIGHT+CUSTOM_COLOR)
+    local strdist = string.format("%d",dist*unitScale)
+    lcd.setColor(CUSTOM_COLOR,0xFFFF)  
+    lcd.drawText(90, 82, strdist, MIDSIZE+flags+RIGHT+CUSTOM_COLOR)
+  end
   -- total distance
   lcd.setColor(CUSTOM_COLOR,0xFFFF)  
   lcd.drawNumber(90, 129, telemetry.totalDist*unitLongScale*100, PREC2+MIDSIZE+RIGHT+CUSTOM_COLOR)

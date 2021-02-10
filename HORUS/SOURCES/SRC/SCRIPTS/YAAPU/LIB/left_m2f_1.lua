@@ -216,7 +216,6 @@ local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gp
   end
   -- LABELS
   lcd.setColor(CUSTOM_COLOR,0x0000)
-  lcd.drawText(88, 102, "Dist("..unitLabel..")", SMLSIZE+RIGHT+CUSTOM_COLOR)
   --lcd.drawText(88, 138, "Dist("..unitLongLabel..")", SMLSIZE+RIGHT+CUSTOM_COLOR)
   lcd.drawText(88, 154, "WPN", SMLSIZE+RIGHT+CUSTOM_COLOR)
   lcd.drawText(165, 154, "WPD("..unitLabel..")", SMLSIZE+RIGHT+CUSTOM_COLOR)
@@ -241,10 +240,33 @@ local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gp
   if status.showMinMaxValues == true then
     flags = 0
   end
-  lcd.setColor(CUSTOM_COLOR,lcd.RGB(255, 0xce, 0)) --yellow
-  local strdist = string.format("%d",dist*unitScale)
-  lcd.setColor(CUSTOM_COLOR,0xFE60)   
-  lcd.drawText(88, 113, strdist, MIDSIZE+flags+RIGHT+CUSTOM_COLOR)
+  if getGeneralSettings().imperial == 0 then
+    -- metric, special handling for km
+    if dist > 9999 then
+	  -- add "k" for kilo
+      lcd.setColor(CUSTOM_COLOR,0x0000)
+      lcd.drawText(80, 102, "Dist(k"..unitLabel..")", SMLSIZE+RIGHT+CUSTOM_COLOR)
+      --lcd.setColor(CUSTOM_COLOR,lcd.RGB(255, 0xce, 0)) --yellow
+      local strdist = string.format("%d",dist*unitScale/1000)
+      lcd.setColor(CUSTOM_COLOR,0xFE60)   
+      lcd.drawText(88, 113, strdist, MIDSIZE+flags+RIGHT+CUSTOM_COLOR)
+    else
+      lcd.setColor(CUSTOM_COLOR,0x0000)
+      lcd.drawText(88, 102, "Dist("..unitLabel..")", SMLSIZE+RIGHT+CUSTOM_COLOR)
+      --lcd.setColor(CUSTOM_COLOR,lcd.RGB(255, 0xce, 0)) --yellow
+      local strdist = string.format("%d",dist*unitScale)
+      lcd.setColor(CUSTOM_COLOR,0xFE60)   
+      lcd.drawText(88, 113, strdist, MIDSIZE+flags+RIGHT+CUSTOM_COLOR)
+	end
+  else
+    -- imperial
+    lcd.setColor(CUSTOM_COLOR,0x0000)
+    lcd.drawText(88, 102, "Dist("..unitLabel..")", SMLSIZE+RIGHT+CUSTOM_COLOR)
+    --lcd.setColor(CUSTOM_COLOR,lcd.RGB(255, 0xce, 0)) --yellow
+    local strdist = string.format("%d",dist*unitScale)
+    lcd.setColor(CUSTOM_COLOR,0xFE60)   
+    lcd.drawText(88, 113, strdist, MIDSIZE+flags+RIGHT+CUSTOM_COLOR)
+  end
   -- total distance
   lcd.setColor(CUSTOM_COLOR,0xFFFF)
   lcd.drawText(88, 138, unitLongLabel, SMLSIZE+RIGHT+CUSTOM_COLOR)

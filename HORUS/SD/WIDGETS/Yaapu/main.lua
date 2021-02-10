@@ -1127,9 +1127,6 @@ local function processMAVLinkSlowUpdate()
 	-- telemetry.gpsHdopC
 	local Hdop = mavsdk.getGpsHDop() -- here NOT divided with 10 to keep the original dilution scale
 	if Hdop ~= nil then telemetry.gpsHdopC = Hdop end
-	-- telemetry.gpsAlt
-	local gpsAlt = mavsdk.getGpsAltitudeMsl()
-	if gpsAlt ~= nil then telemetry.gpsAlt = gpsAlt * 10 end -- from m to dm
 	-- telemetry.batt1volt
 	local batt1Volt = mavsdk.getBatVoltage()
 	if batt1Volt ~= nil then telemetry.batt1volt = batt1Volt * 10 end -- from V to dV
@@ -1155,14 +1152,20 @@ local function processMAVLinkSlowUpdate()
 	local Bat2Charge = mavsdk.getBat2ChargeConsumed()
 	if Bat2Charge ~= nil then telemetry.batt2mah = Bat2Charge end
 	-- telemetry.lat and telemetry.lon
-	local latlon = mavsdk.getGpsLatLonInt()
-	if type(latlon) == "table" and latlon.lat ~= nil then
-	  telemetry.lat = latlon.lat * 0.0000001 -- converted to degrees.fraction
+	
+	if telemetry.gpsStatus >= 2 then -- minimally 2D-Fix required to pass GPS data
+	  local latlon = mavsdk.getGpsLatLonInt()
+	  if type(latlon) == "table" and latlon.lat ~= nil then
+	    telemetry.lat = latlon.lat * 0.0000001 -- converted to degrees.fraction
+	  end
+	  if latlon.lon ~= nil then
+	    telemetry.lon = latlon.lon * 0.0000001 -- converted to degrees.fraction
+	  end
+	  -- telemetry.gpsAlt
+	  local gpsAlt = mavsdk.getGpsAltitudeMsl()
+	  if gpsAlt ~= nil then telemetry.gpsAlt = gpsAlt * 10 end -- from m to dm
 	end
-	if latlon.lon ~= nil then
-	  telemetry.lon = latlon.lon * 0.0000001 -- converted to degrees.fraction
-	end
-	-- telemetry.homeAlt
+    -- telemetry.homeAlt (altitude above ground)
 	local homeAlt = mavsdk.getPositionAltitudeRelative()
 	if homeAlt ~= nil then telemetry.homeAlt = homeAlt end -- m
 	-- telemetry.homeAngle and telemetry.homeDist
@@ -1255,7 +1258,7 @@ local function processFrSkyPTtelemetry(DATA_ID,VALUE)
       -- assume a 2Vx12 as minimum acceptable "real" voltage
       telemetry.batt1volt = 512 + telemetry.batt1volt
     end
-    telemetry.batt1current = bit32.extract(VALUE,10,7) * (10^bit32.extract(VALUE,9,1))
+    telemetry.batt1current = bit32.extract(VALUE,10,7) * (10^bit32.extract(VALUE,9,1)) -- unit cA
     telemetry.batt1mah = bit32.extract(VALUE,17,15)
   elseif DATA_ID == 0x5008 then -- BATT2
     telemetry.batt2volt = bit32.extract(VALUE,0,9)
@@ -1265,11 +1268,11 @@ local function processFrSkyPTtelemetry(DATA_ID,VALUE)
       -- assume a 2Vx12 as minimum acceptable "real" voltage
       telemetry.batt2volt = 512 + telemetry.batt2volt
     end
-    telemetry.batt2current = bit32.extract(VALUE,10,7) * (10^bit32.extract(VALUE,9,1))
+    telemetry.batt2current = bit32.extract(VALUE,10,7) * (10^bit32.extract(VALUE,9,1)) -- unit cA
     telemetry.batt2mah = bit32.extract(VALUE,17,15)
   elseif DATA_ID == 0x5004 then -- HOME
     telemetry.homeDist = bit32.extract(VALUE,2,10) * (10^bit32.extract(VALUE,0,2))
-    telemetry.homeAlt = bit32.extract(VALUE,14,10) * (10^bit32.extract(VALUE,12,2)) * 0.1 * (bit32.extract(VALUE,24,1) == 1 and -1 or 1)
+    telemetry.homeAlt = bit32.extract(VALUE,14,10) * (10^bit32.extract(VALUE,12,2)) * 0.1 * (bit32.extract(VALUE,24,1) == 1 and -1 or 1) -- m (altitude above ground)
     telemetry.homeAngle = bit32.extract(VALUE, 25,  7) * 3
   elseif DATA_ID == 0x5000 then -- MESSAGES
     if VALUE ~= status.lastMsgValue then
@@ -1984,10 +1987,28 @@ local function drawMessageScreen()
   lcd.setColor(CUSTOM_COLOR,0xFFFF)
   lcd.drawNumber(410,107, telemetry.vSpeed*0.1*conf.vertSpeedMultiplier, MIDSIZE+CUSTOM_COLOR+0)
   -- DIST
-  lcd.setColor(CUSTOM_COLOR,0x0000)
-  lcd.drawText(410, 130, "Dist("..unitLabel..")", SMLSIZE+0+CUSTOM_COLOR)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
-  lcd.drawNumber(410, 142, telemetry.homeDist*unitScale, MIDSIZE+0+CUSTOM_COLOR)
+  if getGeneralSettings().imperial == 0 then
+    -- metric, special handling for km
+	local dist = telemetry.homeDist*unitScale
+	if dist > 9999 then
+	  -- add "k" for kilo
+      lcd.setColor(CUSTOM_COLOR,0x0000)
+      lcd.drawText(410, 130, "Dist(k"..unitLabel..")", SMLSIZE+0+CUSTOM_COLOR)
+      lcd.setColor(CUSTOM_COLOR,0xFFFF)
+      lcd.drawNumber(410, 142, telemetry.homeDist*unitScale/1000, MIDSIZE+0+CUSTOM_COLOR)
+	else
+      lcd.setColor(CUSTOM_COLOR,0x0000)
+      lcd.drawText(410, 130, "Dist("..unitLabel..")", SMLSIZE+0+CUSTOM_COLOR)
+      lcd.setColor(CUSTOM_COLOR,0xFFFF)
+      lcd.drawNumber(410, 142, telemetry.homeDist*unitScale, MIDSIZE+0+CUSTOM_COLOR)
+	end
+  else
+    -- imperial
+    lcd.setColor(CUSTOM_COLOR,0x0000)
+    lcd.drawText(410, 130, "Dist("..unitLabel..")", SMLSIZE+0+CUSTOM_COLOR)
+    lcd.setColor(CUSTOM_COLOR,0xFFFF)
+    lcd.drawNumber(410, 142, telemetry.homeDist*unitScale, MIDSIZE+0+CUSTOM_COLOR)
+  end
   -- HDG
   lcd.setColor(CUSTOM_COLOR,0x0000)
   lcd.drawText(410, 165, "Heading", SMLSIZE+0+CUSTOM_COLOR)
