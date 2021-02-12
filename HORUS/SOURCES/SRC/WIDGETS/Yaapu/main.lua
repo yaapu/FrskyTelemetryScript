@@ -2588,7 +2588,7 @@ end
 
 
 utils.getMessageOffset = function(myWidget,conf,status,chValue)
-  if myWidget.options.page ~= 2 and status.screenTogglePage ~= 2 then
+  if currentPage ~= 2 and status.screenTogglePage ~= 2 then
     return status.messageOffset
   end
   if conf.screenWheelChannelId > -1 then
@@ -2612,7 +2612,7 @@ utils.getMessageOffset = function(myWidget,conf,status,chValue)
 end
 
 utils.getMapZoomLevel = function(myWidget,conf,status,chValue)
-  if myWidget.options.page ~= 5 and status.screenTogglePage ~= 5 then
+  if currentPage ~= 5 and status.screenTogglePage ~= 5 then
     return status.mapZoomLevel
   end
 
