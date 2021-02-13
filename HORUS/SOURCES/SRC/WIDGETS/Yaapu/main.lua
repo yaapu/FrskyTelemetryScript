@@ -1854,7 +1854,7 @@ local function reset()
       -- done
       resetPhase = 7
     elseif resetPhase == 7 then
-      utils.pushMessage(7,"Yaapu v1.9.3b2 w. OlliW v22 MavSDK by Risto")
+      utils.pushMessage(7,"Yaapu v1.9.3b4 (OlliW MavSDK support by Risto)")
       utils.playSound("yaapu")
       -- on model change reload config!
       if modelChangePending == true then
@@ -2527,7 +2527,7 @@ local function init()
   -- load battery config
   utils.loadBatteryConfigFile()
   -- ok done
-  utils.pushMessage(7,"Yaapu v1.9.3b2 w. OlliW v22 MavSDK by Risto")
+  utils.pushMessage(7,"Yaapu v1.9.3b4 (OlliW MavSDK support by Risto)")
   utils.playSound("yaapu")
   -- fix for generalsettings lazy loading...
   unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084

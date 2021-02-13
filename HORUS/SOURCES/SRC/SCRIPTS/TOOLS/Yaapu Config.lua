@@ -228,7 +228,7 @@ local menuItems = {
   {"left panel:", "LPANE", 1, {  "option 1","option 2","option 3","option 4" }, { 1 , 2, 3, 4 } },
   {"enable PX4 flightmodes:", "PX4", 1, { "no", "yes" }, { false, true } },
   {"enable CRSF support:", "CRSF", 1, { "no", "yes" }, { false, true } },
-  {"enable MAVLink support:", "MAVLINK", 1, { "no", "yes" }, { false, true } },
+  {"enable OlliW MavSDK support:", "MAVLINK", 1, { "no", "yes" }, { false, true } },
   {"emulated page channel:", "STC", 0, 0, 32,nil,0,1 },
   {"emulated wheel channel:", "SWC", 0, 0, 32,nil,0,1 },
   {"GPS coordinates format:", "GPS", 1, { "DMS", "decimal" }, { 1, 2 } },
@@ -556,7 +556,7 @@ local function drawConfigMenuBars()
   lcd.drawFilledRectangle(0,LCD_H-20, LCD_W, 20, CUSTOM_COLOR)
   lcd.drawRectangle(0, LCD_H-20, LCD_W, 20, CUSTOM_COLOR)
   lcd.setColor(CUSTOM_COLOR,0xFFFF)  
-  lcd.drawText(2,0,"Yaapu v1.9.3b2 w. OlliW v22 MavSDK by Risto",CUSTOM_COLOR)
+  lcd.drawText(2,0,"Yaapu v1.9.3b4 (OlliW MavSDK support by Risto)",CUSTOM_COLOR)
   lcd.drawText(2,LCD_H-20+1,getConfigFilename(),CUSTOM_COLOR)
   lcd.drawText(LCD_W,LCD_H-20+1,itemIdx,CUSTOM_COLOR+RIGHT)
 end
