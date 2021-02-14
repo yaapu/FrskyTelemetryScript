@@ -347,8 +347,8 @@ telemetry.baroAlt = 0
 telemetry.totalDist = 0
 -- CRSF
 telemetry.rssiCRSF = 0
--- MAVLink
-telemetry.rssiMAVLink = 0
+-- MavSDK
+telemetry.rssiMavSDK = 0
 --------------------------------
 -- STATUS DATA
 --------------------------------
@@ -421,8 +421,8 @@ status.strFlightMode = nil
 status.modelString = nil
 -- HOME POS
 status.homeGood = false
-status.homelat = nil  -- gets directly set from MAVLink, thus if ~= nil, can use directly
-status.homelon = nil  -- gets directly set from MAVLink, thus if ~= nil, can use directly
+status.homelat = nil  -- gets directly set from MavSDK, thus if ~= nil, can use directly
+status.homelon = nil  -- gets directly set from MavSDK, thus if ~= nil, can use directly
 status.homealt = nil
 status.homehdg = nil
 
@@ -558,7 +558,7 @@ local conf = {
   maxHdopAlert = 2,
   enablePX4Modes = false,
   enableCRSF = false,
-  enableMAVLink = true,
+  enableMavSDK = true,
   centerPanel = 1,
   rightPanel = 1,
   leftPanel = 2, -- MavSDK/Mav2PT left pane by default
@@ -1041,7 +1041,7 @@ local function TxGPShome() -- uses GPS connected to radio for home position
 end
 
 -- processes OlliW MavSDK (MAVLink enhanced OpenTX) data
-local function processMAVLinkFastUpdate()
+local function processMavSDKfastUpdate()
   -- only status text needs to be quickly updated in order not to miss any messages
   if mavsdk ~= nil then -- in order not for the script to get disabled when running on non OlliW OpenTX firmware
 	-- messages
@@ -1056,7 +1056,7 @@ local function processMAVLinkFastUpdate()
   end
 end
 
-local function processMAVLinkSlowUpdate()
+local function processMavSDKslowUpdate()
   -- for all the data in this function it is irrelevant if we miss some info, we only need the latest value, thus slow rate is just fine
   if mavsdk ~= nil then -- in order not for the script to get disabled when running on non OlliW OpenTX firmware
 	-- telemetry.roll
@@ -1158,7 +1158,7 @@ local function processMAVLinkSlowUpdate()
 	  if type(latlon) == "table" and latlon.lat ~= nil then
 	    telemetry.lat = latlon.lat * 0.0000001 -- converted to degrees.fraction
 	  end
-	  if latlon.lon ~= nil then
+	  if type(latlon) == "table" and latlon.lon ~= nil then
 	    telemetry.lon = latlon.lon * 0.0000001 -- converted to degrees.fraction
 	  end
 	  -- telemetry.gpsAlt
@@ -1218,7 +1218,7 @@ local function processMAVLinkSlowUpdate()
 	if baroAlt ~= nil then telemetry.baroAlt = baroAlt end
 	-- RSSI
 	local rssi = mavsdk.getRadioRssiScaled()
-	if rssi ~= nil then telemetry.rssiMAVLink = rssi end -- scaling 0 to 100 (FrSky 0 to 99)
+	if rssi ~= nil then telemetry.rssiMavSDK = rssi end -- scaling 0 to 100 (FrSky 0 to 99)
   end
 end
 
@@ -1333,7 +1333,7 @@ local function processFrSkyPTtelemetry(DATA_ID,VALUE)
 end
 
 local function telemetryEnabled()
-  if conf.enableMAVLink then
+  if conf.enableMavSDK then
     if mavsdk ~= nil then -- in order not for the script to get disabled when running on non OlliW OpenTX firmware
 	  if mavsdk.isReceiving() then
 	    status.noTelemetryData = 0
@@ -1342,7 +1342,7 @@ local function telemetryEnabled()
 	  end
 	end
   else
-    -- not MAVLink  
+    -- not MavSDK
     if getRSSI() == 0 then
       status.noTelemetryData = 1
     else
@@ -1643,11 +1643,11 @@ end
 
 local function drawRssi()
   -- RSSI
-  if conf.enableMAVLink then
+  if conf.enableMavSDK then
     -- MavSDK RSSI can have up to 3 digits. Need to be more left in comparison to FrSky 2 digit RSSI output
 	lcd.drawBitmap(utils.getBitmap("rssi"), 326, 3)
 	lcd.drawText(326 + 10, 0, ":", 0 +CUSTOM_COLOR)
-    lcd.drawText(326 + 10 + 5, 0, telemetry.rssiMAVLink, 0 +CUSTOM_COLOR)
+    lcd.drawText(326 + 10 + 5, 0, telemetry.rssiMavSDK, 0 +CUSTOM_COLOR)
   else
     -- only 2 RSSI digits max with FrSky
 	lcd.drawBitmap(utils.getBitmap("rssi"), 336, 3)
@@ -1881,8 +1881,8 @@ local function calcFlightTime()
 end
 
 local function setSensorValues()
-  if not conf.enableMAVLink then
-    -- only if MAVLink is not enabled
+  if not conf.enableMavSDK then
+    -- only if MavSDK is not enabled
     if (not telemetryEnabled()) then
       return
     end
@@ -2219,7 +2219,7 @@ local function checkEvents(celm)
   -- home detecting code
   if telemetry.homeLat == nil then
     if ((status.homelat ~= nil) and (status.homelon ~= nil)) then
-      -- with MAVLink we already have the values, no need to calculate
+      -- with MavSDK we directly get the lat and lon values, can directly assign them
 	  telemetry.homeLat = status.homelat
 	  telemetry.homeLon = status.homelon
     else
@@ -2334,13 +2334,13 @@ local timerWheel = getTime()
 local function backgroundTasks(myWidget,telemetryLoops)
   -- don't process telemetry while resetting to prevent CPU kill
   if resetPending == false and resetLayoutPending == false and loadConfigPending == false then
-    if conf.enableMAVLink then
+    if conf.enableMavSDK then
 	  if mavsdk ~= nil then -- in order not for the script to get disabled when running on non OlliW OpenTX firmware
 		if mavsdk.isReceiving() then
 		   status.noTelemetryData = 0
            -- no telemetry dialog only shown once
 		   status.hideNoTelemetry = true
-	       processMAVLinkFastUpdate()
+	       processMavSDKfastUpdate()
 		end
 	  end
     else							   
@@ -2361,10 +2361,10 @@ local function backgroundTasks(myWidget,telemetryLoops)
   if bgclock % 2 == 1 then
     calcFlightTime()
 
-    if conf.enableMAVLink then
+    if conf.enableMavSDK then
 	  if mavsdk ~= nil then -- in order not for the script to get disabled when running on non OlliW OpenTX firmware
         if mavsdk.isReceiving() then
-          processMAVLinkSlowUpdate() -- most MAVLink messages can be processed with low update rate, as we are only interested on latest values
+          processMavSDKslowUpdate() -- most MAVLink messages can be processed with low update rate, as we are only interested on latest values
         end
 	  end
     else
@@ -2813,8 +2813,8 @@ local function drawFullScreen(myWidget)
     end
   end
   
-  if conf.enableMAVLink and mavsdk == nil then
-    -- MAVLink enabled in configuration, but OpenTX firmware without MavSDK support
+  if conf.enableMavSDK and mavsdk == nil then
+    -- MavSDK enabled in configuration, but OpenTX firmware without MavSDK support
     drawLib.drawNoMavSDK()
   end
   

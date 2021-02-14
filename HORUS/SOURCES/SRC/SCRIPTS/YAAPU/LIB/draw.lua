@@ -413,9 +413,9 @@ local function drawNoMavSDK()
   lcd.setColor(CUSTOM_COLOR,0xF800)
   lcd.drawFilledRectangle(90,76, 300, 80, CUSTOM_COLOR)
   lcd.setColor(CUSTOM_COLOR,0xFFFF)
-  lcd.drawText(110, 85, "OpenTX w/o MAVLink!", MIDSIZE+CUSTOM_COLOR)
+  lcd.drawText(113, 85, "OpenTX w/o MavSDK!", MIDSIZE+CUSTOM_COLOR)
   lcd.drawText(105, 120, "Please flash OlliW OpenTX (v22 or later)", SMLSIZE+CUSTOM_COLOR)
-  lcd.drawText(118, 135, "or disable MAVLink in configuration", SMLSIZE+CUSTOM_COLOR)
+  lcd.drawText(120, 135, "or disable MavSDK in configuration", SMLSIZE+CUSTOM_COLOR)
 end
 
 local function drawFilledRectangle(x,y,w,h,flags)
@@ -597,7 +597,7 @@ local function drawStatusBar(maxRows,conf,telemetry,status,battery,alarms,frame,
     lcd.drawText(170,226-yDelta, strStatus, SMLSIZE+CUSTOM_COLOR)
 
     lcd.setColor(CUSTOM_COLOR,0xFFFF)
-	if ((not conf.enableMAVLink) and (telemetry.numSats == 15)) then -- MavSDK can output also numSats > 15
+	if ((not conf.enableMavSDK) and (telemetry.numSats == 15)) then -- MavSDK can output also numSats > 15
       lcd.drawNumber(170,235-yDelta, telemetry.numSats, MIDSIZE+CUSTOM_COLOR)
       lcd.drawText(200,239-yDelta, "+", SMLSIZE+CUSTOM_COLOR)
     else

@@ -228,7 +228,7 @@ local menuItems = {
   {"left panel:", "LPANE", 1, {  "option 1","option 2","option 3","option 4" }, { 1 , 2, 3, 4 } },
   {"enable PX4 flightmodes:", "PX4", 1, { "no", "yes" }, { false, true } },
   {"enable CRSF support:", "CRSF", 1, { "no", "yes" }, { false, true } },
-  {"enable OlliW MavSDK support:", "MAVLINK", 1, { "no", "yes" }, { false, true } },
+  {"enable OlliW MavSDK support:", "MAVSDK", 1, { "no", "yes" }, { false, true } },
   {"emulated page channel:", "STC", 0, 0, 32,nil,0,1 },
   {"emulated wheel channel:", "SWC", 0, 0, 32,nil,0,1 },
   {"GPS coordinates format:", "GPS", 1, { "DMS", "decimal" }, { 1, 2 } },
@@ -455,7 +455,7 @@ local function applyConfigValues(conf)
   conf.leftPanelFilename = leftPanelFiles[conf.leftPanel]
   conf.enablePX4Modes = getMenuItemByName(menuItems,"PX4")
   conf.enableCRSF = getMenuItemByName(menuItems,"CRSF")
-  conf.enableMAVLink = getMenuItemByName(menuItems,"MAVLINK")
+  conf.enableMavSDK = getMenuItemByName(menuItems,"MAVSDK")
 
   conf.mapZoomMin = getMenuItemByName(menuItems,"MAPmZ")
   conf.mapZoomMax = getMenuItemByName(menuItems,"MAPMZ")
