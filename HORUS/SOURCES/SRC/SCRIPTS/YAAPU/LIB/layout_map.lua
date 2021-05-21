@@ -638,7 +638,7 @@ local function drawMap(myWidget,drawLib,conf,telemetry,status,battery,utils,leve
     -- aggregate batt %
     local perc = battery[16]
     local strperc = string.format("%2d%%",perc)
-    lcd.drawText(410+65, 15+30, strperc, MIDSIZE+CUSTOM_COLOR+RIGHT)
+    lcd.drawText(410+65, 15+30, battery[4+battId], MIDSIZE+CUSTOM_COLOR+RIGHT)
     -- Tracker
     lcd.setColor(CUSTOM_COLOR,0x0000)
     lcd.drawText(410, 15+70, "Tracker", SMLSIZE+0+CUSTOM_COLOR)
