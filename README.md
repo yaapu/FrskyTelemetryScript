@@ -2,9 +2,10 @@
 
 This is the home of the Yaapu Telemetry Script project, a [LUA](https://www.lua.org/about.html) telemetry script for radios running [OpenTX](https://www.open-tx.org/)
 
-- latest stable is 1.8.1
-- latest Taranis beta is 1.9.1
-- latest Horus beta is 1.9.3
+**Downloading**
+- **the latest release versions are downloadable from the [clone/download](https://github.com/yaapu/FrskyTelemetryScript/archive/master.zip) button**
+- **the latest pre-release versions are downloadable from the [releases](https://github.com/yaapu/FrskyTelemetryScript/releases) section** 
+- **the latest dev versions are downloadable from the [clone/download of the DEV branch](https://github.com/yaapu/FrskyTelemetryScript/archive/refs/heads/dev.zip) button** 
 
 ### please read the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki) for more info
 
