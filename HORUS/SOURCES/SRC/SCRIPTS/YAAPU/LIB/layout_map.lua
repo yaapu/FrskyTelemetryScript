@@ -394,9 +394,8 @@ local function drawTiles(conf,drawLib,width,xmin,xmax,ymin,ymax,color,level)
     end
   end
   -- draw 50m or 150ft line at max zoom
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
-  lcd.drawLine(xmin+5,ymin+2*100-13,xmin+5+scaleLen,ymin+2*100-13,SOLID,CUSTOM_COLOR)
-  lcd.drawText(xmin+5,ymin+2*100-27,scaleLabel,SMLSIZE+CUSTOM_COLOR)
+  lcd.drawLine(xmin+5,ymin+2*100-13,xmin+5+scaleLen,ymin+2*100-13,SOLID,WHITE)
+  lcd.drawText(xmin+5,ymin+2*100-27,scaleLabel,SMLSIZE+WHITE)
 end
 
 local function getScreenCoordinates(conf,minX,minY,tile_x,tile_y,offset_x,offset_y,level)
@@ -456,21 +455,15 @@ local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)--ge
   local oy = 43 + dy
   local yy = 0
   
- --lcd.setColor(CUSTOM_COLOR,lcd.RGB(0x0d, 0x68, 0xb1)) -- bighud blue
-  lcd.setColor(CUSTOM_COLOR,lcd.RGB(0x7b, 0x9d, 0xff)) -- default blue
-  lcd.drawFilledRectangle(minX,minY,maxX-minX,maxY - minY,CUSTOM_COLOR)
+  lcd.drawFilledRectangle(minX,minY,maxX-minX,maxY - minY,lcd.RGB(0x7B,0x9D,0xFF)) -- default blue
  -- HUD
-  --lcd.setColor(CUSTOM_COLOR,lcd.RGB(77, 153, 0))
-  --lcd.setColor(CUSTOM_COLOR,lcd.RGB(0x90, 0x63, 0x20)) --906320 bighud brown
-  lcd.setColor(CUSTOM_COLOR,lcd.RGB(0x63, 0x30, 0x00)) --623000 old brown
-  
   -- angle of the line passing on point(ox,oy)
   local angle = math.tan(math.rad(-telemetry.roll))
   -- prevent divide by zero
   if telemetry.roll == 0 then
-    drawLib.drawFilledRectangle(minX,math.max(minY,dy+minY+(maxY-minY)/2),maxX-minX,math.min(maxY-minY,(maxY-minY)/2-dy+(math.abs(dy) > 0 and 1 or 0)),CUSTOM_COLOR)
+    drawLib.drawFilledRectangle(minX,math.max(minY,dy+minY+(maxY-minY)/2),maxX-minX,math.min(maxY-minY,(maxY-minY)/2-dy+(math.abs(dy) > 0 and 1 or 0)),lcd.RGB(0x63,0x30,0x00)) -- 0x623000 = old brown
   elseif math.abs(telemetry.roll) >= 180 then
-    drawLib.drawFilledRectangle(minX,minY,maxX-minX,math.min(maxY-minY,(maxY-minY)/2+dy),CUSTOM_COLOR)
+    drawLib.drawFilledRectangle(minX,minY,maxX-minX,math.min(maxY-minY,(maxY-minY)/2+dy),lcd.RGB(0x63,0x30,0x00)) -- 0x623000 = old brown
   else
     -- HUD drawn using horizontal bars of height 2
     -- true if flying inverted
@@ -489,7 +482,7 @@ local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)--ge
         yy = minY + s*step
         xx = ox + (yy-oy)/angle
         if xx >= minX and xx <= maxX then
-          lcd.drawFilledRectangle(xx, yy, maxX-xx+1, step,CUSTOM_COLOR)
+          lcd.drawFilledRectangle(xx, yy, maxX-xx+1, step,lcd.RGB(0x63,0x30,0x00)) -- 0x623000 = old brown
         elseif xx < minX then
           yRect = inverted and math.max(yy,yRect)+step or math.min(yy,yRect)
           fillNeeded = true
@@ -501,7 +494,7 @@ local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)--ge
         yy = minY + s*step
         xx = ox + (yy-oy)/angle
         if xx >= minX and xx <= maxX then
-          lcd.drawFilledRectangle(minX, yy, xx-minX, step,CUSTOM_COLOR)
+          lcd.drawFilledRectangle(minX, yy, xx-minX, step,lcd.RGB(0x63,0x30,0x00)) -- 0x623000 = old brown
         elseif xx > maxX then
           yRect = inverted and math.max(yy,yRect)+step or math.min(yy,yRect)
           fillNeeded = true
@@ -512,8 +505,7 @@ local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)--ge
     if fillNeeded then
       local yMin = inverted and minY or yRect
       local height = inverted and yRect - minY or maxY-yRect
-      --lcd.setColor(CUSTOM_COLOR,0xF800) --623000 old brown
-      lcd.drawFilledRectangle(minX, yMin, maxX-minX, height ,CUSTOM_COLOR)
+      lcd.drawFilledRectangle(minX, yMin, maxX-minX, height ,lcd.RGB(0x63,0x30,0x00)) -- 0x623000 = old brown
     end
   end
 
@@ -521,12 +513,11 @@ local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)--ge
   local linesMaxY = maxY-1
   local linesMinY = minY+1
   local rollX = math.floor(7 + 76/2)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
   -- +/- 90 deg
   for dist=1,6
   do
-    drawLib.drawLineWithClipping(rollX + dx - dist*cx,dy + 43 + dist*cy,r,(dist%2==0 and 40 or 20),DOTTED,7+2,7+76-2,linesMinY,linesMaxY,CUSTOM_COLOR,radio,rev)
-    drawLib.drawLineWithClipping(rollX + dx + dist*cx,dy + 43 - dist*cy,r,(dist%2==0 and 40 or 20),DOTTED,7+2,7+76-2,linesMinY,linesMaxY,CUSTOM_COLOR,radio,rev)
+    drawLib.drawLineWithClipping(rollX + dx - dist*cx,dy + 43 + dist*cy,r,(dist%2==0 and 40 or 20),DOTTED,7+2,7+76-2,linesMinY,linesMaxY,WHITE,radio,rev)
+    drawLib.drawLineWithClipping(rollX + dx + dist*cx,dy + 43 - dist*cy,r,(dist%2==0 and 40 or 20),DOTTED,7+2,7+76-2,linesMinY,linesMaxY,WHITE,radio,rev)
   end
   -------------------------------------
   -- hud bitmap
@@ -602,8 +593,7 @@ local function drawMap(myWidget,drawLib,conf,telemetry,status,battery,utils,leve
     end
     
     -- draw map tiles
-    lcd.setColor(CUSTOM_COLOR,0xFE60)
-    drawTiles(conf,drawLib,3,minX,maxX,minY,maxY,CUSTOM_COLOR,level)
+    drawTiles(conf,drawLib,3,minX,maxX,minY,maxY,lcd.RGB(0xFF,0xCE,0x00),level) -- 0xFE60 = 0xFFCE00 = yellow tone
     -- draw home
     if telemetry.homeLat ~= nil and telemetry.homeLon ~= nil and homeScreenX ~= nil then
       local homeCode = drawLib.computeOutCode(homeScreenX, homeScreenY, minX+11, minY+10, maxX-11, maxY-10);
@@ -629,21 +619,17 @@ local function drawMap(myWidget,drawLib,conf,telemetry,status,battery,utils,leve
     if estimatedHomeGps.lat ~= nil and estimatedHomeGps.lon ~= nil and estimatedHomeScreenX ~= nil then
       local homeCode = drawLib.computeOutCode(estimatedHomeScreenX, estimatedHomeScreenY, minX+11, minY+10, maxX-11, maxY-10);
       if homeCode == 0 then
-        lcd.setColor(CUSTOM_COLOR,COLOR_RED)
-        lcd.drawRectangle(estimatedHomeScreenX-11,estimatedHomeScreenY-11,20,20,CUSTOM_COLOR)
+        lcd.drawRectangle(estimatedHomeScreenX-11,estimatedHomeScreenY-11,20,20,RED)
       end
     end
     --]]
     
     -- draw vehicle
     if myScreenX ~= nil then
-      lcd.setColor(CUSTOM_COLOR,0xFFFF)
-      drawLib.drawRArrow(myScreenX,myScreenY,17-5,telemetry.yaw,CUSTOM_COLOR)
-      lcd.setColor(CUSTOM_COLOR,0x0000)
-      drawLib.drawRArrow(myScreenX,myScreenY,17,telemetry.yaw,CUSTOM_COLOR)
+      drawLib.drawRArrow(myScreenX,myScreenY,17-5,telemetry.yaw,WHITE)
+      drawLib.drawRArrow(myScreenX,myScreenY,17,telemetry.yaw,BLACK)
     end
     -- draw gps trace
-    lcd.setColor(CUSTOM_COLOR,0xFE60)
     for p=0, math.min(sampleCount-1,20-1)
     do
       if p ~= (sampleCount-1)%20 then
@@ -654,84 +640,64 @@ local function drawMap(myWidget,drawLib,conf,telemetry,status,battery,utils,leve
             local idx = 3*(y-1)+x
             -- check if tile is on screen
             if tiles[idx] == posHistory[p][1] then
-              lcd.drawFilledRectangle(minX + (x-1)*100 + posHistory[p][2], minY + (y-1)*100 + posHistory[p][3],3,3,CUSTOM_COLOR)
+              lcd.drawFilledRectangle(minX + (x-1)*100 + posHistory[p][2], minY + (y-1)*100 + posHistory[p][3],3,3,lcd.RGB(0xFF,0xCE,0x00)) -- 0xFE60 = 0xFFCE00 = yellow tone
             end
           end
         end
       end
     end
     -- DEBUG
-    lcd.setColor(CUSTOM_COLOR,0xFFFF)
-    lcd.drawText((LCD_W-300)/2+5,18+5,string.format("zoom:%d",level),SMLSIZE+CUSTOM_COLOR)
-    lcd.setColor(CUSTOM_COLOR,0xFFFF)
+    lcd.drawText((LCD_W-300)/2+5,18+5,string.format("zoom:%d",level),SMLSIZE+WHITE)
     
     -- LEFT ---
     
     -- ALT
-    lcd.setColor(CUSTOM_COLOR,0x0000)
-    lcd.drawText(10, 50+16, "Alt("..unitLabel..")", SMLSIZE+0+CUSTOM_COLOR)
-    lcd.setColor(CUSTOM_COLOR,0xFFFF)
-    lcd.drawNumber(10,50+27,telemetry.homeAlt*unitScale,MIDSIZE+CUSTOM_COLOR+0)
+    lcd.drawText(10, 50+16, "Alt("..unitLabel..")", SMLSIZE+BLACK)
+    lcd.drawNumber(10,50+27,telemetry.homeAlt*unitScale,MIDSIZE+WHITE)
     -- SPEED
-    lcd.setColor(CUSTOM_COLOR,0x0000)
-    lcd.drawText(10, 50+54, "Spd("..conf.horSpeedLabel..")", SMLSIZE+0+CUSTOM_COLOR)
-    lcd.setColor(CUSTOM_COLOR,0xFFFF)
-    lcd.drawNumber(10,50+65,telemetry.hSpeed*0.1* conf.horSpeedMultiplier,MIDSIZE+CUSTOM_COLOR+0)
+    lcd.drawText(10, 50+54, "Spd("..conf.horSpeedLabel..")", SMLSIZE+BLACK)
+    lcd.drawNumber(10,50+65,telemetry.hSpeed*0.1* conf.horSpeedMultiplier,MIDSIZE+WHITE)
     -- VSPEED
-    lcd.setColor(CUSTOM_COLOR,0x0000)
-    lcd.drawText(10, 50+92, "VSI("..conf.vertSpeedLabel..")", SMLSIZE+0+CUSTOM_COLOR)
-    lcd.setColor(CUSTOM_COLOR,0xFFFF)
-    lcd.drawNumber(10,50+103, telemetry.vSpeed*0.1*conf.vertSpeedMultiplier, MIDSIZE+CUSTOM_COLOR+0)
+    lcd.drawText(10, 50+92, "VSI("..conf.vertSpeedLabel..")", SMLSIZE+BLACK)
+    lcd.drawNumber(10,50+103, telemetry.vSpeed*0.1*conf.vertSpeedMultiplier, MIDSIZE+WHITE)
     -- DIST
     if getGeneralSettings().imperial == 0 then
       -- metric, special handling for km
 	  local dist = telemetry.homeDist*unitScale
 	  if dist > 9999 then
 	    -- add "k" for kilo
-        lcd.setColor(CUSTOM_COLOR,0x0000)
-        lcd.drawText(10, 50+130, "Dist(k"..unitLabel..")", SMLSIZE+0+CUSTOM_COLOR)
-        lcd.setColor(CUSTOM_COLOR,0xFFFF)
-        lcd.drawNumber(10, 50+141, telemetry.homeDist*unitScale/1000, MIDSIZE+0+CUSTOM_COLOR)
+        lcd.drawText(10, 50+130, "Dist(k"..unitLabel..")", SMLSIZE+BLACK)
+        lcd.drawNumber(10, 50+141, telemetry.homeDist*unitScale/1000, MIDSIZE+WHITE)
       else
-        lcd.setColor(CUSTOM_COLOR,0x0000)
-        lcd.drawText(10, 50+130, "Dist("..unitLabel..")", SMLSIZE+0+CUSTOM_COLOR)
-        lcd.setColor(CUSTOM_COLOR,0xFFFF)
-        lcd.drawNumber(10, 50+141, telemetry.homeDist*unitScale, MIDSIZE+0+CUSTOM_COLOR)
+        lcd.drawText(10, 50+130, "Dist("..unitLabel..")", SMLSIZE+BLACK)
+        lcd.drawNumber(10, 50+141, telemetry.homeDist*unitScale, MIDSIZE+WHITE)
 	  end
     else
       -- imperial
-      lcd.setColor(CUSTOM_COLOR,0x0000)
-      lcd.drawText(10, 50+130, "Dist("..unitLabel..")", SMLSIZE+0+CUSTOM_COLOR)
-      lcd.setColor(CUSTOM_COLOR,0xFFFF)
-      lcd.drawNumber(10, 50+141, telemetry.homeDist*unitScale, MIDSIZE+0+CUSTOM_COLOR)
+      lcd.drawText(10, 50+130, "Dist("..unitLabel..")", SMLSIZE+BLACK)
+      lcd.drawNumber(10, 50+141, telemetry.homeDist*unitScale, MIDSIZE+WHITE)
     end
     -- RIGHT
     -- CELL
     if battery[1] * 0.01 < 10 then
-      lcd.drawNumber(410, 15+5, battery[1] + 0.5, PREC2+0+MIDSIZE+CUSTOM_COLOR)
+      lcd.drawNumber(410, 15+5, battery[1] + 0.5, PREC2+MIDSIZE+WHITE)
     else
-      lcd.drawNumber(410, 15+5, (battery[1] + 0.5)*0.1, PREC1+0+MIDSIZE+CUSTOM_COLOR)
+      lcd.drawNumber(410, 15+5, (battery[1] + 0.5)*0.1, PREC1+MIDSIZE+WHITE)
     end
-    lcd.drawText(410+50, 15+6, status.battsource, SMLSIZE+CUSTOM_COLOR)
-    lcd.drawText(410+50, 15+16, "V", SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(410+50, 15+6, status.battsource, SMLSIZE+WHITE)
+    lcd.drawText(410+50, 15+16, "V", SMLSIZE+WHITE)
     -- aggregate batt %
     local strperc = string.format("%2d%%",battery[16])
-    lcd.drawText(410+65, 15+30, strperc, MIDSIZE+CUSTOM_COLOR+RIGHT)
+    lcd.drawText(410+65, 15+30, strperc, MIDSIZE+WHITE+RIGHT)
     -- Tracker
-    lcd.setColor(CUSTOM_COLOR,0x0000)
-    lcd.drawText(410, 15+70, "Tracker", SMLSIZE+0+CUSTOM_COLOR)
-    lcd.setColor(CUSTOM_COLOR,0xFFFF)
-    lcd.drawText(410, 15+82, string.format("%d@",(telemetry.homeAngle - 180) < 0 and telemetry.homeAngle + 180 or telemetry.homeAngle - 180), MIDSIZE+0+CUSTOM_COLOR)
+    lcd.drawText(410, 15+70, "Tracker", SMLSIZE+BLACK)
+    lcd.drawText(410, 15+82, string.format("%d@",(telemetry.homeAngle - 180) < 0 and telemetry.homeAngle + 180 or telemetry.homeAngle - 180), MIDSIZE+WHITE)
     -- HDG
-    lcd.setColor(CUSTOM_COLOR,0x0000)
-    lcd.drawText(410, 15+110, "Heading", SMLSIZE+0+CUSTOM_COLOR)
-    lcd.setColor(CUSTOM_COLOR,0xFFFF)
-    lcd.drawText(410, 15+122, string.format("%d@",telemetry.yaw), MIDSIZE+0+CUSTOM_COLOR)
+    lcd.drawText(410, 15+110, "Heading", SMLSIZE+BLACK)
+    lcd.drawText(410, 15+122, string.format("%d@",telemetry.yaw), MIDSIZE+WHITE)
     -- home
-    lcd.setColor(CUSTOM_COLOR,0xFE60)
-    drawLib.drawRArrow(410+28,15+175,22,math.floor(telemetry.homeAngle - telemetry.yaw),CUSTOM_COLOR)
+    drawLib.drawRArrow(410+28,15+175,22,math.floor(telemetry.homeAngle - telemetry.yaw),lcd.RGB(0xFF,0xCE,0x00)) -- 0xFE60 = 0xFFCE00 = yellow tone
   end
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
 end
 
 local initDone = false

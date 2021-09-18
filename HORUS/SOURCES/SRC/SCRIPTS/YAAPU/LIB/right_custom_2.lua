@@ -204,8 +204,7 @@ local function drawCustomSensors(x,customSensors,utils,status)
           label = string.format("%s(%s)",sensorConfig[1],sensorConfig[4])
         end
         -- draw sensor label
-        lcd.setColor(CUSTOM_COLOR,0x0000)
-        lcd.drawText(x+customSensorXY[i][1], customSensorXY[i][2],label, SMLSIZE+RIGHT+CUSTOM_COLOR)
+        lcd.drawText(x+customSensorXY[i][1], customSensorXY[i][2],label, SMLSIZE+RIGHT+BLACK)
         
         mult =  sensorConfig[3] == 0 and 1 or ( sensorConfig[3] == 1 and 10 or 100 )
         prec =  mult == 1 and 0 or (mult == 10 and 32 or 48)
@@ -222,22 +221,20 @@ local function drawCustomSensors(x,customSensors,utils,status)
           flags = MIDSIZE
         end
 
-        local color = 0xFFFF
+        local colr = WHITE
         local sign = sensorConfig[6] == "+" and 1 or -1
         
         -- max tracking, high values are critical
         if math.abs(value) ~= 0 and status.showMinMaxValues == false then
-          color = ( sensorValue*sign > sensorConfig[9]*sign and 0xF800 or (sensorValue*sign > sensorConfig[8]*sign and 0xFE60 or 0xFFFF))
+          colr = ( sensorValue*sign > sensorConfig[9]*sign and RED or (sensorValue*sign > sensorConfig[8]*sign and lcd.RGB(0xFF,0xCE,0x00) or WHITE))
         end
-        
-        lcd.setColor(CUSTOM_COLOR,color)
         
         local voffset = (i>2 and flags==MIDSIZE) and 5 or 0
         -- if a lookup table exists use it!
         if customSensors.lookups[i] ~= nil and customSensors.lookups[i][value] ~= nil then
-          lcd.drawText(x+customSensorXY[i][3], customSensorXY[i][4]+voffset, customSensors.lookups[i][value] or value, flags+RIGHT+CUSTOM_COLOR)
+          lcd.drawText(x+customSensorXY[i][3], customSensorXY[i][4]+voffset, customSensors.lookups[i][value] or value, flags+RIGHT+colr)
         else
-          lcd.drawNumber(x+customSensorXY[i][3], customSensorXY[i][4]+voffset, value, flags+RIGHT+prec+CUSTOM_COLOR)
+          lcd.drawNumber(x+customSensorXY[i][3], customSensorXY[i][4]+voffset, value, flags+RIGHT+prec+colr)
         end
       end
     end
@@ -256,12 +253,9 @@ BATT_ID1 1
 BATT_ID2 2
 --]]
 local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gpsStatuses,utils,customSensors)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)  
   local perc = battery[16+battId]
   --  battery min cell
-  local flags = 0
-  --
-  lcd.setColor(CUSTOM_COLOR,0xFFFF) -- white
+  local colr = WHITE
   if status.showMinMaxValues == false then
     if status.battLevel2 == false and alarms[8][2] > 0 then
       utils.drawBlinkBitmap("cell_red_small",x+110+1,16 + 7)
@@ -269,54 +263,47 @@ local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gp
     elseif status.battLevel2 == true then
       lcd.drawBitmap(utils.getBitmap("cell_red_small"),x+110+1,16 + 7)
     elseif status.battLevel1 == false and alarms[7][2] > 0 then
-      --lcd.setColor(CUSTOM_COLOR,0x0000) -- black
       utils.drawBlinkBitmap("cell_orange_small_blink",x+110+1,16 + 7)
       utils.lcdBacklightOn()
     elseif status.battLevel1 == true then
       lcd.drawBitmap(utils.getBitmap("cell_orange_small"),x+110+1,16 + 7)
-      lcd.setColor(CUSTOM_COLOR,0x0000) -- black
+	  colr = BLACK
     end
   end
-  flags = CUSTOM_COLOR
   --PREC2 forces a math.floor() whereas a math.round() is required, math.round(f) = math.floor(f+0.5)
   if battery[1+battId] * 0.01 < 10 then
-    lcd.drawNumber(x+110+2, 16, battery[1+battId] + 0.5, PREC2+DBLSIZE+flags)
+    lcd.drawNumber(x+110+2, 16, battery[1+battId] + 0.5, PREC2+DBLSIZE+colr)
   else
-    lcd.drawNumber(x+110+2, 16, (battery[1+battId] + 0.5)*0.1, PREC1+DBLSIZE+flags)
+    lcd.drawNumber(x+110+2, 16, (battery[1+battId] + 0.5)*0.1, PREC1+DBLSIZE+colr)
   end
   local lx = x+180
-  lcd.drawText(lx, 19, "V", SMLSIZE+flags)
-  lcd.drawText(lx-2, 35, status.battsource, SMLSIZE+flags)
+  lcd.drawText(lx, 19, "V", SMLSIZE+colr)
+  lcd.drawText(lx-2, 35, status.battsource, SMLSIZE+colr)
   
-  lcd.setColor(CUSTOM_COLOR,0xFFFF) -- white  
   -- battery voltage
-  drawLib.drawNumberWithDim(x+110,48,x+110, 46, battery[4+battId],"V",MIDSIZE+PREC1+RIGHT+CUSTOM_COLOR,SMLSIZE+CUSTOM_COLOR)
+  drawLib.drawNumberWithDim(x+110,48,x+110, 46, battery[4+battId],"V",MIDSIZE+PREC1+RIGHT+WHITE,SMLSIZE+WHITE)
   -- battery current
-  drawLib.drawNumberWithDim(x+178,48,x+178,48,battery[7+battId],"A",MIDSIZE+RIGHT+PREC1+CUSTOM_COLOR,SMLSIZE+CUSTOM_COLOR)
+  drawLib.drawNumberWithDim(x+178,48,x+178,48,battery[7+battId],"A",MIDSIZE+RIGHT+PREC1+WHITE,SMLSIZE+WHITE)
   -- display capacity bar %
   if perc > 50 then
-    lcd.setColor(CUSTOM_COLOR,lcd.RGB(0, 255, 0))
+    colr = GREEN
   elseif perc <= 50 and perc > 25 then
-      lcd.setColor(CUSTOM_COLOR,lcd.RGB(255, 204, 0)) -- yellow
+    colr = lcd.RGB(255, 204, 0) -- yellow
   else
-    lcd.setColor(CUSTOM_COLOR,lcd.RGB(255,0, 0))
+    colr = RED
   end
   lcd.drawBitmap(utils.getBitmap("gauge_bg_small"),x+47,29)
-  lcd.drawGauge(x+47, 29,58,16,perc,100,CUSTOM_COLOR)
+  lcd.drawGauge(x+47, 29,58,16,perc,100,colr)
   -- battery percentage
-  lcd.setColor(CUSTOM_COLOR,0x0000) -- black
-  
   local strperc = string.format("%02d%%",perc)
-  lcd.drawText(x+63, 27, strperc, 0+CUSTOM_COLOR)
+  lcd.drawText(x+63, 27, strperc, 0+BLACK)
   
   -- battery mah
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
   local strmah = string.format("%.02f/%.01f",battery[10+battId]/1000,battery[13+battId]/1000)
-  lcd.drawText(x+180, 71+4, "Ah", SMLSIZE+RIGHT+CUSTOM_COLOR)
-  lcd.drawText(x+180 - 22, 71, strmah, 0+RIGHT+CUSTOM_COLOR)
+  lcd.drawText(x+180, 71+4, "Ah", SMLSIZE+RIGHT+WHITE)
+  lcd.drawText(x+180 - 22, 71, strmah, 0+RIGHT+WHITE)
     
-  lcd.setColor(CUSTOM_COLOR,0x5AEB)
-  --lcd.drawText(475,124,battId == 0 and "B1+B2" or (battId == 1 and "B1" or "B2"),SMLSIZE+CUSTOM_COLOR+RIGHT)
+  -- lcd.setColor(CUSTOM_COLOR,0x5AEB)  -- 0x5AEB = 0x5A5D5A = grey tone
   lcd.drawBitmap(utils.getBitmap("battbox_small"),x+42,21)
 
   -- do no show custom sensors when displaying 2nd battery info

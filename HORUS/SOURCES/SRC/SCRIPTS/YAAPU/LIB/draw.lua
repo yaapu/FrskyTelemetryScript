@@ -396,26 +396,20 @@ end
 local function drawNoTelemetryData(status,telemetry,utils,telemetryEnabled)
   -- no telemetry data
   if (not telemetryEnabled()) then
-    lcd.setColor(CUSTOM_COLOR,0xFFFF)
-    lcd.drawFilledRectangle(88,74, 304, 84, CUSTOM_COLOR)
-    lcd.setColor(CUSTOM_COLOR,0xF800)
-    lcd.drawFilledRectangle(90,76, 300, 80, CUSTOM_COLOR)
-    lcd.setColor(CUSTOM_COLOR,0xFFFF)
-    lcd.drawText(110, 85, "no telemetry data", DBLSIZE+CUSTOM_COLOR)
-    lcd.drawText(123, 120, "Yaapu Telemetry Widget 1.9.3-beta4", SMLSIZE+CUSTOM_COLOR)
-    lcd.drawText(100, 135, "with OlliW MavSDK >=v22 support by Risto", SMLSIZE+CUSTOM_COLOR)
+    lcd.drawFilledRectangle(88,74, 304, 84, WHITE)
+    lcd.drawFilledRectangle(90,76, 300, 80, RED)
+    lcd.drawText(110, 85, "no telemetry data", DBLSIZE+WHITE)
+    lcd.drawText(123, 120, "Yaapu Telemetry Widget 1.9.3-beta4", SMLSIZE+WHITE)
+    lcd.drawText(100, 135, "with OlliW MavSDK >=v22 support by Risto", SMLSIZE+WHITE)
   end
 end
 
 local function drawNoMavSDK()
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
-  lcd.drawFilledRectangle(88,74, 304, 84, CUSTOM_COLOR)
-  lcd.setColor(CUSTOM_COLOR,0xF800)
-  lcd.drawFilledRectangle(90,76, 300, 80, CUSTOM_COLOR)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
-  lcd.drawText(113, 85, "OpenTX w/o MavSDK!", MIDSIZE+CUSTOM_COLOR)
-  lcd.drawText(105, 120, "Please flash OlliW OpenTX (v22 or later)", SMLSIZE+CUSTOM_COLOR)
-  lcd.drawText(120, 135, "or disable MavSDK in configuration", SMLSIZE+CUSTOM_COLOR)
+  lcd.drawFilledRectangle(88,74, 304, 84, WHITE)
+  lcd.drawFilledRectangle(90,76, 300, 80, RED)
+  lcd.drawText(113, 85, "OpenTX w/o MavSDK!", MIDSIZE+WHITE)
+  lcd.drawText(105, 120, "Please flash OlliW OpenTX (v22 or later)", SMLSIZE+WHITE)
+  lcd.drawText(120, 135, "or disable MavSDK in configuration", SMLSIZE+WHITE)
 end
 
 local function drawFilledRectangle(x,y,w,h,flags)
@@ -444,11 +438,9 @@ local function drawCompassRibbon(y,myWidget,conf,telemetry,status,battery,utils,
   for i = 1,10 do
       if tickX >= minX and tickX < maxX then
           if yawRibbonPoints[tickIdx+1] == nil then
-              lcd.setColor(CUSTOM_COLOR, 0xFFFF)
-              lcd.drawLine(tickX, minY, tickX, y+5, SOLID, CUSTOM_COLOR)
+              lcd.drawLine(tickX, minY, tickX, y+5, SOLID, WHITE)
           else
-              lcd.setColor(CUSTOM_COLOR, 0xFFFF)
-              lcd.drawText(tickX, minY-3, yawRibbonPoints[tickIdx+1], CUSTOM_COLOR+SMLSIZE+CENTER)
+              lcd.drawText(tickX, minY-3, yawRibbonPoints[tickIdx+1], WHITE+SMLSIZE+CENTER)
           end
       end
       tickIdx = (tickIdx + 1) % 16
@@ -480,97 +472,24 @@ local function drawCompassRibbon(y,myWidget,conf,telemetry,status,battery,utils,
       w = 40
   end
   local scale = bigFont and 1 or 0.7
-  lcd.setColor(CUSTOM_COLOR, 0x0000)
-  lcd.drawFilledRectangle(midX - (w/2)*scale, minY-2, w*scale, 28*scale, CUSTOM_COLOR+SOLID)
-  lcd.setColor(CUSTOM_COLOR, 0xFFFF)
-  lcd.drawNumber(midX, bigFont and minY-6 or minY-2, heading, CUSTOM_COLOR+(bigFont and DBLSIZE or 0)+CENTER)
+  lcd.drawFilledRectangle(midX - (w/2)*scale, minY-2, w*scale, 28*scale, BLACK+SOLID)
+  lcd.drawNumber(midX, bigFont and minY-6 or minY-2, heading, WHITE+(bigFont and DBLSIZE or 0)+CENTER)
 end
-
--- optimized yaw ribbon drawing
---[[
-local function oldDrawCompassRibbon(y,myWidget,conf,telemetry,status,battery,utils,width,xMin,xMax,stepWidth,bigFont)
-  -- ribbon centered +/- 90 on yaw
-  local centerYaw = (telemetry.yaw + 270 - (bigFont and 16 or 10))%360 -- (-10 needed to center ribbon)
-  -- this is the first point left to be drawn on the compass ribbon
-  local nextPoint = math.floor(centerYaw/22.5) * 22.5
-  -- x coord of first ribbon letter
-  local nextPointX = xMin + (nextPoint - centerYaw)/22.5 * stepWidth
-  --
-  local i = (nextPoint / 22.5) % 16
-  for idx=1,12
-  do
-      local letterOffset = 1
-      local lineOffset = 4
-      if nextPointX >= xMin -3 and nextPointX < xMax then
-        if yawRibbonPoints[i] == nil then
-          lcd.setColor(CUSTOM_COLOR,COLOR_LINES)
-          lcd.drawLine(nextPointX + lineOffset, y+1, nextPointX + lineOffset, y+7, SOLID, CUSTOM_COLOR)
-        else
-          if #yawRibbonPoints[i] > 1 then
-            letterOffset = -5
-            lineOffset = 2
-          end
-          lcd.setColor(CUSTOM_COLOR,COLOR_TEXT)
-          --lcd.setColor(CUSTOM_COLOR,COLOR_GREY)
-          lcd.drawText(nextPointX+letterOffset,y+(bigFont and -2 or 0),yawRibbonPoints[i],SMLSIZE+CUSTOM_COLOR)
-        end
-      end
-      i = (i + 1) % 16
-      nextPointX = nextPointX + stepWidth
-  end
-  -- home icon
-  local homeOffset = 0
-  local angle = telemetry.homeAngle - telemetry.yaw
-  if angle < 0 then
-    angle = 360 + angle
-  end
-  if angle > 270 or angle < 90 then
-    homeOffset = ((angle + 90) % 180)/180  * width
-  elseif angle >= 90 and angle <= 180 then
-    homeOffset = width
-  end
-  if conf.enableTxGPS then
-    -- radio home
-    drawRadioIcon(xMin + homeOffset -5,y + (bigFont and 28 or 20),utils)
-  else
-    -- vehicle home
-    drawHomeIcon(xMin + homeOffset -5,y + (bigFont and 28 or 20),utils)
-  end
-  -- yaw angle box
-  local xx = 0
-  if ( telemetry.yaw < 10) then
-    xx = bigFont and 20 or 14
-  elseif (telemetry.yaw < 100) then
-    xx = bigFont and 40 or 28
-  else
-    xx = bigFont and 60 or 42
-  end
-  --lcd.drawNumber(LCD_W/2 + xx - 6, YAW_Y, telemetry.yaw, MIDSIZE+INVERS)
-  lcd.setColor(CUSTOM_COLOR,COLOR_BLACK)
-  lcd.drawFilledRectangle(LCD_W/2 - (xx/2), y - 1, xx, bigFont and 28 or 20, CUSTOM_COLOR+SOLID)
-  lcd.drawRectangle(LCD_W/2 - (xx/2) - 1, y - 1, xx+2, bigFont and 28 or 20, CUSTOM_COLOR+SOLID)
-  lcd.setColor(CUSTOM_COLOR,COLOR_TEXT)
-  lcd.drawNumber(LCD_W/2 - (xx/2), y - 6, telemetry.yaw, (bigFont and DBLSIZE or MIDSIZE)+CUSTOM_COLOR)
-end
---]]
 
 local function drawStatusBar(maxRows,conf,telemetry,status,battery,alarms,frame,utils,gpsStatuses)
   local yDelta = (maxRows-1)*12
   
-  lcd.setColor(CUSTOM_COLOR,0x0000)
-  lcd.drawFilledRectangle(0,229-yDelta,480,LCD_H-(229-yDelta),CUSTOM_COLOR)
+  lcd.drawFilledRectangle(0,229-yDelta,480,LCD_H-(229-yDelta),BLACK)
   -- flight time
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
-  lcd.drawTimer(LCD_W, 224-yDelta, model.getTimer(2).value, DBLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.drawTimer(LCD_W, 224-yDelta, model.getTimer(2).value, DBLSIZE+WHITE+RIGHT)
   -- flight mode
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
   if status.strFlightMode ~= nil then
-    lcd.drawText(1,230-yDelta,status.strFlightMode,MIDSIZE+CUSTOM_COLOR)
+    lcd.drawText(1,230-yDelta,status.strFlightMode,MIDSIZE+WHITE)
   end
   -- gps status, draw coordinatyes if good at least once
   if telemetry.lon ~= nil and telemetry.lat ~= nil then
-    lcd.drawText(370, 227-yDelta, telemetry.strLat, SMLSIZE+CUSTOM_COLOR+RIGHT)
-    lcd.drawText(370, 241-yDelta, telemetry.strLon, SMLSIZE+CUSTOM_COLOR+RIGHT)
+    lcd.drawText(370, 227-yDelta, telemetry.strLat, SMLSIZE+WHITE+RIGHT)
+    lcd.drawText(370, 241-yDelta, telemetry.strLon, SMLSIZE+WHITE+RIGHT)
   end
   -- gps status
   local hdop = telemetry.gpsHdopC
@@ -591,17 +510,15 @@ local function drawStatusBar(maxRows,conf,telemetry,status,battery,alarms,frame,
       mult=0.1
     end
     -- HDOP
-    lcd.drawNumber(270,226-yDelta, hdop*mult,DBLSIZE+flags+RIGHT+CUSTOM_COLOR)
+    lcd.drawNumber(270,226-yDelta, hdop*mult,DBLSIZE+flags+RIGHT+WHITE)
     -- SATS
-    lcd.setColor(CUSTOM_COLOR,0xFFFF)
-    lcd.drawText(170,226-yDelta, strStatus, SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(170,226-yDelta, strStatus, SMLSIZE+WHITE)
 
-    lcd.setColor(CUSTOM_COLOR,0xFFFF)
 	if ((not conf.enableMavSDK) and (telemetry.numSats == 15)) then -- MavSDK can output also numSats > 15
-      lcd.drawNumber(170,235-yDelta, telemetry.numSats, MIDSIZE+CUSTOM_COLOR)
-      lcd.drawText(200,239-yDelta, "+", SMLSIZE+CUSTOM_COLOR)
+      lcd.drawNumber(170,235-yDelta, telemetry.numSats, MIDSIZE+WHITE)
+      lcd.drawText(200,239-yDelta, "+", SMLSIZE+WHITE)
     else
-      lcd.drawNumber(170,235-yDelta,telemetry.numSats, MIDSIZE+CUSTOM_COLOR)
+      lcd.drawNumber(170,235-yDelta,telemetry.numSats, MIDSIZE+WHITE)
     end
   elseif telemetry.gpsStatus == 0 then
     utils.drawBlinkBitmap("nogpsicon",150,227-yDelta)
@@ -610,15 +527,16 @@ local function drawStatusBar(maxRows,conf,telemetry,status,battery,alarms,frame,
   end
   
   local offset = math.min(maxRows,#status.messages+1)
+  local colr
   for i=0,offset-1 do
     if status.messages[(status.messageCount + i - offset) % (#status.messages+1)][2] < 4 then
-      lcd.setColor(CUSTOM_COLOR,lcd.RGB(255,70,0))
+      colr = lcd.RGB(255,70,0)
     elseif status.messages[(status.messageCount + i - offset) % (#status.messages+1)][2] == 4 then
-      lcd.setColor(CUSTOM_COLOR,lcd.RGB(255,255,0))
+      colr = lcd.RGB(255,255,0)
     else
-      lcd.setColor(CUSTOM_COLOR,0xFFFF)
+	  colr = WHITE
     end
-    lcd.drawText(1,(256-yDelta)+(12*i), status.messages[(status.messageCount + i - offset) % (#status.messages+1)][1],SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(1,(256-yDelta)+(12*i), status.messages[(status.messageCount + i - offset) % (#status.messages+1)][1],SMLSIZE+colr)
   end
 end
 

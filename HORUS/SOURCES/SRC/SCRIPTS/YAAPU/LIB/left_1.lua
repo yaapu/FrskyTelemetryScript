@@ -178,19 +178,15 @@ local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 
 
 local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gpsStatuses,utils)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)   
   if conf.rangeFinderMax > 0 then
     flags = 0
     local rng = telemetry.range
     rng = utils.getMaxValue(rng,16)
-    lcd.setColor(CUSTOM_COLOR,0x0000)   
-    lcd.drawText(90, 25, "Range("..unitLabel..")", SMLSIZE+CUSTOM_COLOR+RIGHT)
-    lcd.setColor(CUSTOM_COLOR,0xF800)       
+    lcd.drawText(90, 25, "Range("..unitLabel..")", SMLSIZE+BLACK+RIGHT)
     if rng > conf.rangeFinderMax and status.showMinMaxValues == false then
-      lcd.drawFilledRectangle(90-65, 37+4,65,21,CUSTOM_COLOR)
+      lcd.drawFilledRectangle(90-65, 37+4,65,21,RED)
     end
-    lcd.setColor(CUSTOM_COLOR,0xFFFF)       
-    lcd.drawText(90, 37, string.format("%.1f",rng*0.01*unitScale), MIDSIZE+RIGHT+CUSTOM_COLOR)
+    lcd.drawText(90, 37, string.format("%.1f",rng*0.01*unitScale), MIDSIZE+RIGHT+WHITE)
   else
     flags = BLINK
     -- always display gps altitude even without 3d lock
@@ -203,17 +199,13 @@ local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gp
     if status.showMinMaxValues == true then
       flags = 0
     end
-    lcd.setColor(CUSTOM_COLOR,0x0000)       
-    lcd.drawText(90, 25, "GPSAlt("..unitLabel..")", SMLSIZE+CUSTOM_COLOR+RIGHT)
+    lcd.drawText(90, 25, "GPSAlt("..unitLabel..")", SMLSIZE+BLACK+RIGHT)
     local stralt = string.format("%d",alt*unitScale)
-    lcd.setColor(CUSTOM_COLOR,0xFFFF)       
-    lcd.drawText(90, 37, stralt, MIDSIZE+flags+RIGHT+CUSTOM_COLOR)
+    lcd.drawText(90, 37, stralt, MIDSIZE+flags+RIGHT+WHITE)
   end
   -- LABELS
-  lcd.setColor(CUSTOM_COLOR,0x0000)
-  lcd.drawText(90, 117, "Travel("..unitLongLabel..")", SMLSIZE+RIGHT+CUSTOM_COLOR)
+  lcd.drawText(90, 117, "Travel("..unitLongLabel..")", SMLSIZE+RIGHT+BLACK)
   -- VALUES
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)       
   -- home distance
   flags = 0
   if telemetry.homeAngle == -1 then
@@ -227,7 +219,6 @@ local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gp
     -- metric, special handling for km
     if dist > 9999 then
 	  -- add "k" for kilo, paint radio or home icon 8 pixels towards left
-      lcd.setColor(CUSTOM_COLOR,0x0000)
       if conf.enableTxGPS then
         -- radio home
         drawLib.drawRadioIcon(82 - 70, 70,utils)
@@ -235,13 +226,10 @@ local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gp
         -- vehicle home
         drawLib.drawHomeIcon(82 - 70, 70,utils)
       end
-      lcd.setColor(CUSTOM_COLOR,0xFFFF)       
-      lcd.drawText(82, 70, "Dist(k"..unitLabel..")", SMLSIZE+RIGHT+CUSTOM_COLOR)
+      lcd.drawText(82, 70, "Dist(k"..unitLabel..")", SMLSIZE+RIGHT+WHITE)
       local strdist = string.format("%d",dist*unitScale/1000)
-      lcd.setColor(CUSTOM_COLOR,0xFFFF)  
-      lcd.drawText(90, 82, strdist, MIDSIZE+flags+RIGHT+CUSTOM_COLOR)
+      lcd.drawText(90, 82, strdist, MIDSIZE+flags+RIGHT+WHITE)
 	else
-      lcd.setColor(CUSTOM_COLOR,0x0000)
       if conf.enableTxGPS then
         -- radio home
         drawLib.drawRadioIcon(90 - 70, 70,utils)
@@ -249,15 +237,12 @@ local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gp
         -- vehicle home
         drawLib.drawHomeIcon(90 - 70, 70,utils)
       end
-      lcd.setColor(CUSTOM_COLOR,0xFFFF)       
-      lcd.drawText(90, 70, "Dist("..unitLabel..")", SMLSIZE+RIGHT+CUSTOM_COLOR)
+      lcd.drawText(90, 70, "Dist("..unitLabel..")", SMLSIZE+RIGHT+WHITE)
       local strdist = string.format("%d",dist*unitScale)
-      lcd.setColor(CUSTOM_COLOR,0xFFFF)  
-      lcd.drawText(90, 82, strdist, MIDSIZE+flags+RIGHT+CUSTOM_COLOR)
+      lcd.drawText(90, 82, strdist, MIDSIZE+flags+RIGHT+WHITE)
 	end
   else
     -- imperial
-    lcd.setColor(CUSTOM_COLOR,0x0000)
     if conf.enableTxGPS then
       -- radio home
       drawLib.drawRadioIcon(90 - 70, 70,utils)
@@ -265,15 +250,12 @@ local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gp
       -- vehicle home
       drawLib.drawHomeIcon(90 - 70, 70,utils)
     end
-    lcd.setColor(CUSTOM_COLOR,0xFFFF)       
-    lcd.drawText(90, 70, "Dist("..unitLabel..")", SMLSIZE+RIGHT+CUSTOM_COLOR)
+    lcd.drawText(90, 70, "Dist("..unitLabel..")", SMLSIZE+RIGHT+WHITE)
     local strdist = string.format("%d",dist*unitScale)
-    lcd.setColor(CUSTOM_COLOR,0xFFFF)  
-    lcd.drawText(90, 82, strdist, MIDSIZE+flags+RIGHT+CUSTOM_COLOR)
+    lcd.drawText(90, 82, strdist, MIDSIZE+flags+RIGHT+WHITE)
   end
   -- total distance
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)  
-  lcd.drawNumber(90, 129, telemetry.totalDist*unitLongScale*100, PREC2+MIDSIZE+RIGHT+CUSTOM_COLOR)
+  lcd.drawNumber(90, 129, telemetry.totalDist*unitLongScale*100, PREC2+MIDSIZE+RIGHT+WHITE)
   
   if status.showMinMaxValues == true then
     drawLib.drawVArrow(4, 37 + 4,true,false,utils)

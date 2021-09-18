@@ -194,11 +194,8 @@ local customSensorXY = {
 }
 
 local function drawCustomSensors(x,customSensors,utils,status)
-    --lcd.setColor(CUSTOM_COLOR,lcd.RGB(0,75,128))
-    lcd.setColor(CUSTOM_COLOR,0x0000)
-    lcd.drawFilledRectangle(0,194,LCD_W,35,CUSTOM_COLOR)
-    lcd.setColor(CUSTOM_COLOR,0x7BCF)
-    lcd.drawLine(1,228,LCD_W-2,228,SOLID,CUSTOM_COLOR)
+    lcd.drawFilledRectangle(0,194,LCD_W,35,BLACK)
+    lcd.drawLine(1,228,LCD_W-2,228,SOLID,lcd.RGB(0x7B,0x79,0x7B)) -- 0x7BCF = 0x7B797B = grey tone
     
     local label,data,prec,mult,flags,sensorConfig
     for i=1,6
@@ -212,8 +209,7 @@ local function drawCustomSensors(x,customSensors,utils,status)
           label = string.format("%s(%s)",sensorConfig[1],sensorConfig[4])
         end
         -- draw sensor label
-        lcd.setColor(CUSTOM_COLOR,0x8C71)
-        lcd.drawText(x+customSensorXY[i][1], customSensorXY[i][2],label, SMLSIZE+RIGHT+CUSTOM_COLOR)
+        lcd.drawText(x+customSensorXY[i][1], customSensorXY[i][2],label, SMLSIZE+RIGHT+lcd.RGB(0x8C,0x8E,0x8C)) -- 0x8C71 = 0x8C8E8C = light grey
         
         mult =  sensorConfig[3] == 0 and 1 or ( sensorConfig[3] == 1 and 10 or 100 )
         prec =  mult == 1 and 0 or (mult == 10 and 32 or 48)
@@ -230,31 +226,27 @@ local function drawCustomSensors(x,customSensors,utils,status)
           flags = 0
         end
         
-        local color = 0xFFFF
+        local color = WHITE
         local sign = sensorConfig[6] == "+" and 1 or -1
         -- max tracking, high values are critical
         if math.abs(value) ~= 0 and status.showMinMaxValues == false then
-          color = ( sensorValue*sign > sensorConfig[9]*sign and lcd.RGB(255,70,0) or (sensorValue*sign > sensorConfig[8]*sign and 0xFE60 or 0xFFFF))
+          color = ( sensorValue*sign > sensorConfig[9]*sign and lcd.RGB(255,70,0) or (sensorValue*sign > sensorConfig[8]*sign and lcd.RGB(0xFF,0xCE,0x00) or WHITE))
         end
-        
-        lcd.setColor(CUSTOM_COLOR,color)
         
         local voffset = flags==0 and 6 or 0
         -- if a lookup table exists use it!
         if customSensors.lookups[i] ~= nil and customSensors.lookups[i][value] ~= nil then
-          lcd.drawText(x+customSensorXY[i][3], customSensorXY[i][4]+voffset, customSensors.lookups[i][value] or value, flags+RIGHT+CUSTOM_COLOR)
+          lcd.drawText(x+customSensorXY[i][3], customSensorXY[i][4]+voffset, customSensors.lookups[i][value] or value, flags+RIGHT+color)
         else
-          lcd.drawNumber(x+customSensorXY[i][3], customSensorXY[i][4]+voffset, value, flags+RIGHT+prec+CUSTOM_COLOR)
+          lcd.drawNumber(x+customSensorXY[i][3], customSensorXY[i][4]+voffset, value, flags+RIGHT+prec+color)
         end
       end
     end
 end
 
 local function draw(myWidget,drawLib,conf,telemetry,status,battery,alarms,frame,utils,customSensors,gpsStatuses,leftPanel,centerPanel,rightPanel)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
   centerPanel.drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)
-  --lcd.setColor(CUSTOM_COLOR,0xFE60)
-  drawLib.drawRArrow(240,174,20,math.floor(telemetry.homeAngle - telemetry.yaw),CUSTOM_COLOR)--HomeDirection(telemetry)
+  drawLib.drawRArrow(240,174,20,math.floor(telemetry.homeAngle - telemetry.yaw),WHITE)--HomeDirection(telemetry)
   -- with dual battery default is to show aggregate view
   if status.batt2sources.fc or status.batt2sources.vs then
     if status.showDualBattery == false then

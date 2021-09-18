@@ -174,27 +174,24 @@ local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 
 local function drawExtendedStatusBar(drawLib,conf,telemetry,status,battery,alarms,frame,utils,gpsStatuses)
   -- LEFT label
-  lcd.setColor(CUSTOM_COLOR,0x0000)  
-  lcd.drawText(153,165,"Alt("..unitLabel..")",SMLSIZE+CUSTOM_COLOR+RIGHT)
-  lcd.drawText(68,165,"VSI("..conf.vertSpeedLabel..")",SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.drawText(153,165,"Alt("..unitLabel..")",SMLSIZE+BLACK+RIGHT)
+  lcd.drawText(68,165,"VSI("..conf.vertSpeedLabel..")",SMLSIZE+BLACK+RIGHT)
   
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)  
   -- altitude
   local alt = utils.getMaxValue(telemetry.homeAlt,11) * unitScale
   if math.abs(alt) > 999 then
-    lcd.drawNumber(153,178,alt,MIDSIZE+RIGHT+CUSTOM_COLOR)
+    lcd.drawNumber(153,178,alt,MIDSIZE+RIGHT+WHITE)
   elseif math.abs(alt) >= 10 then
-    lcd.drawNumber(153,178,alt,MIDSIZE+RIGHT+CUSTOM_COLOR)
+    lcd.drawNumber(153,178,alt,MIDSIZE+RIGHT+WHITE)
   else
-    lcd.drawNumber(153,178,alt*10,MIDSIZE+RIGHT+PREC1+CUSTOM_COLOR)
+    lcd.drawNumber(153,178,alt*10,MIDSIZE+RIGHT+PREC1+WHITE)
   end
   -- vertical speed
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)  
   local vSpeed = utils.getMaxValue(telemetry.vSpeed,13) * 0.1 * conf.vertSpeedMultiplier
   if (math.abs(telemetry.vSpeed) >= 10) then
-    lcd.drawNumber(68,178, vSpeed ,MIDSIZE+RIGHT+CUSTOM_COLOR)
+    lcd.drawNumber(68,178, vSpeed ,MIDSIZE+RIGHT+WHITE)
   else
-    lcd.drawNumber(68,178,vSpeed*10,MIDSIZE+RIGHT+PREC1+CUSTOM_COLOR)
+    lcd.drawNumber(68,178,vSpeed*10,MIDSIZE+RIGHT+PREC1+WHITE)
   end
   -- min/max arrows
   if status.showMinMaxValues == true then
@@ -206,8 +203,7 @@ end
 
 local function draw(myWidget,drawLib,conf,telemetry,status,battery,alarms,frame,utils,customSensors,gpsStatuses,leftPanel,centerPanel,rightPanel)
   if leftPanel ~= nil and centerPanel ~= nil and rightPanel ~= nil then
-    lcd.setColor(CUSTOM_COLOR,0xFFFF)
-    drawLib.drawRArrow((LCD_W/2),180,22,math.floor(telemetry.homeAngle - telemetry.yaw),CUSTOM_COLOR)--HomeDirection(telemetry)
+    drawLib.drawRArrow((LCD_W/2),180,22,math.floor(telemetry.homeAngle - telemetry.yaw),WHITE)--HomeDirection(telemetry)
     centerPanel.drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils,customSensors)
     -- with dual battery default is to show aggregate view
     if status.batt2sources.fc or status.batt2sources.vs then

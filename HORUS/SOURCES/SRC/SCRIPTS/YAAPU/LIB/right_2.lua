@@ -181,12 +181,10 @@ BATT_ID1 1
 BATT_ID2 2
 --]]
 local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gpsStatuses,utils)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)  
   local perc = battery[16+battId] 
   --  battery min cell
-  local flags = 0
-  --
-  lcd.setColor(CUSTOM_COLOR,0xFFFF) -- white
+  local colr = WHITE
+
   if status.showMinMaxValues == false then
     if status.battLevel2 == false and alarms[8][2] > 0 then
       utils.drawBlinkBitmap("cell_red",x+41 - 2,13 + 7)
@@ -194,55 +192,48 @@ local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gp
     elseif status.battLevel2 == true then
       lcd.drawBitmap(utils.getBitmap("cell_red"),x+41 - 2,13 + 7)
     elseif status.battLevel1 == false and alarms[7][2] > 0 then
-      --lcd.setColor(CUSTOM_COLOR,0x0000) -- black
       utils.drawBlinkBitmap("cell_orange_blink",x+41 - 2,13 + 7)
       utils.lcdBacklightOn()
     elseif status.battLevel1 == true then
       lcd.drawBitmap(utils.getBitmap("cell_orange"),x+41 - 2,13 + 7)
-      lcd.setColor(CUSTOM_COLOR,0x0000) -- black
+	  colr = BLACK
     end
   end
-  flags = CUSTOM_COLOR
   --PREC2 forces a math.floor() whereas a math.round() is required, math.round(f) = math.floor(f+0.5)
   if battery[1+battId] * 0.01 < 10 then
-    lcd.drawNumber(x+41+2, 13, battery[1+battId] + 0.5, PREC2+XXLSIZE+flags)
+    lcd.drawNumber(x+41+2, 13, battery[1+battId] + 0.5, PREC2+XXLSIZE+colr)
   else
-    lcd.drawNumber(x+41+2, 13, (battery[1+battId] + 0.5)*0.1, PREC1+XXLSIZE+flags)
+    lcd.drawNumber(x+41+2, 13, (battery[1+battId] + 0.5)*0.1, PREC1+XXLSIZE+colr)
   end
   
-  --lcd.drawNumber(x+41+2, 13, battery[1+battId] + 0.5, XXLSIZE+flags)
+  --lcd.drawNumber(x+41+2, 13, battery[1+battId] + 0.5, XXLSIZE+colr)
   local lx = x+175
-  lcd.drawText(lx, 23, "V", flags)
-  lcd.drawText(lx, 58, status.battsource, flags)
+  lcd.drawText(lx, 23, "V", colr)
+  lcd.drawText(lx, 58, status.battsource, colr)
   
-  lcd.setColor(CUSTOM_COLOR,0xFFFF) -- white  
   -- battery voltage
-  drawLib.drawNumberWithDim(x+105,79,x+103, 79, battery[4+battId],"V",DBLSIZE+PREC1+RIGHT+CUSTOM_COLOR,SMLSIZE+CUSTOM_COLOR)
+  drawLib.drawNumberWithDim(x+105,79,x+103, 79, battery[4+battId],"V",DBLSIZE+PREC1+RIGHT+WHITE,SMLSIZE+WHITE)
   -- battery current
-  drawLib.drawNumberWithDim(x+178,79,x+176,79,battery[7+battId]*(battery[7+battId] >= 100 and 0.1 or 1),"A",DBLSIZE+RIGHT+CUSTOM_COLOR+(battery[7+battId] >= 100 and 0 or PREC1),SMLSIZE+CUSTOM_COLOR)
+  drawLib.drawNumberWithDim(x+178,79,x+176,79,battery[7+battId]*(battery[7+battId] >= 100 and 0.1 or 1),"A",DBLSIZE+RIGHT+WHITE+(battery[7+battId] >= 100 and 0 or PREC1),SMLSIZE+WHITE)
   -- display capacity bar %
   if perc > 50 then
-    lcd.setColor(CUSTOM_COLOR,lcd.RGB(0, 255, 0))
+    colr = GREEN
   elseif perc <= 50 and perc > 25 then
-      lcd.setColor(CUSTOM_COLOR,lcd.RGB(255, 204, 0)) -- yellow
+    colr = lcd.RGB(255, 204, 0) -- yellow
   else
-    lcd.setColor(CUSTOM_COLOR,lcd.RGB(255,0, 0))
+    colr = RED
   end
   lcd.drawBitmap(utils.getBitmap("gauge_bg"),x+43-2,117-2)
-  lcd.drawGauge(x+43, 117,147,23,perc,100,CUSTOM_COLOR)
+  lcd.drawGauge(x+43, 117,147,23,perc,100,colr)
   -- battery percentage
-  lcd.setColor(CUSTOM_COLOR,0x0000) -- black
-  
   local strperc = string.format("%02d%%",perc)
-  lcd.drawText(x+98, 114, strperc, MIDSIZE+CUSTOM_COLOR)
+  lcd.drawText(x+98, 114, strperc, MIDSIZE+BLACK)
   
   -- battery mah
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
   local strmah = string.format("%.02f/%.01f",battery[10+battId]/1000,battery[13+battId]/1000)
-  lcd.drawText(x+183, 140+6, "Ah", RIGHT+CUSTOM_COLOR)
-  lcd.drawText(x+183 - 22, 140, strmah, MIDSIZE+RIGHT+CUSTOM_COLOR)
+  lcd.drawText(x+183, 140+6, "Ah", RIGHT+WHITE)
+  lcd.drawText(x+183 - 22, 140, strmah, MIDSIZE+RIGHT+WHITE)
     
-  lcd.setColor(CUSTOM_COLOR,0x5AEB)
   local battLabel = "B1+B2"
   if battId == 0 then
     if conf.battConf ==  3 then
@@ -256,23 +247,21 @@ local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gp
     battLabel = (battId == 1 and "B1(Ah)" or "B2(Ah)")
   end
   
-  lcd.drawText(x+190, 124, battLabel, SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.drawText(x+190, 124, battLabel, SMLSIZE+lcd.RGB(0x5A,0x5D,0x5A)+RIGHT) -- 0x5AEB = 0x5A5D5A = grey tone
   
   if battId < 2 then
     -- RIGHT labels
-    lcd.setColor(CUSTOM_COLOR,0x0000)  
-    lcd.drawText(478, 165, "Eff(mAh)", SMLSIZE+RIGHT+CUSTOM_COLOR)
-    lcd.drawText(395, 165, "Power(W)", SMLSIZE+CUSTOM_COLOR+RIGHT)
+    lcd.drawText(478, 165, "Eff(mAh)", SMLSIZE+RIGHT+BLACK)
+    lcd.drawText(395, 165, "Power(W)", SMLSIZE+BLACK+RIGHT)
     --data
-    lcd.setColor(CUSTOM_COLOR,0xFFFF)
     -- efficiency for indipendent batteries makes sense only for battery 1
     local speed = utils.getMaxValue(telemetry.hSpeed,14)  
     local eff = speed > 2 and (conf.battConf == 3 and battery[7+1] or battery[7])*1000/(speed*conf.horSpeedMultiplier) or 0
     eff = ( conf.battConf == 3 and battId == 2) and 0 or eff
-    lcd.drawNumber(478,178,eff,MIDSIZE+RIGHT+CUSTOM_COLOR)
+    lcd.drawNumber(478,178,eff,MIDSIZE+RIGHT+WHITE)
     -- power
     local power = battery[4]*(conf.battConf == 3 and battery[7+1] or battery[7])*0.01
-    lcd.drawNumber(395,178,power,MIDSIZE+RIGHT+CUSTOM_COLOR)
+    lcd.drawNumber(395,178,power,MIDSIZE+RIGHT+WHITE)
   end
   
   if status.showMinMaxValues == true then

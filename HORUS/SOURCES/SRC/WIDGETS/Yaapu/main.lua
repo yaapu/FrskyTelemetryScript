@@ -1645,23 +1645,22 @@ local function drawRssi()
   if conf.enableMavSDK then
     -- MavSDK RSSI can have up to 3 digits. Need to be more left in comparison to FrSky 2 digit RSSI output
 	lcd.drawBitmap(utils.getBitmap("rssi"), 326, 3)
-	lcd.drawText(326 + 10, 0, ":", 0 +CUSTOM_COLOR)
-    lcd.drawText(326 + 10 + 5, 0, telemetry.rssiMavSDK, 0 +CUSTOM_COLOR)
+	lcd.drawText(326 + 10, 0, ":", WHITE)
+    lcd.drawText(326 + 10 + 5, 0, telemetry.rssiMavSDK, WHITE)
   else
     -- only 2 RSSI digits max with FrSky
 	lcd.drawBitmap(utils.getBitmap("rssi"), 336, 3)
-	lcd.drawText(336 + 10, 0, ":", 0 +CUSTOM_COLOR)
-    lcd.drawText(336 + 10 + 5, 0, getRSSI(), 0 +CUSTOM_COLOR)
+	lcd.drawText(336 + 10, 0, ":", WHITE)
+    lcd.drawText(336 + 10 + 5, 0, getRSSI(), WHITE)
   end  
 end
 
 local function drawRssiCRSF()
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
   -- RSSI
-  lcd.drawText(323 - 128, 0, "RTP:", 0 +CUSTOM_COLOR+SMLSIZE)
-  lcd.drawText(323, 0, "RS:", 0 +CUSTOM_COLOR+SMLSIZE)
-  lcd.drawText(323 - 128 + 30, 0, string.format("%d/%d/%d",getValue("RQly"),getValue("TQly"),getValue("TPWR")), 0 +CUSTOM_COLOR+SMLSIZE)  
-  lcd.drawText(323 + 22, 0, string.format("%d/%d", status.rssiCRSF, getValue("RFMD")), 0 +CUSTOM_COLOR+SMLSIZE)
+  lcd.drawText(323 - 128, 0, "RTP:", 0 +WHITE+SMLSIZE)
+  lcd.drawText(323, 0, "RS:", 0 +WHITE+SMLSIZE)
+  lcd.drawText(323 - 128 + 30, 0, string.format("%d/%d/%d",getValue("RQly"),getValue("TQly"),getValue("TPWR")), 0 +WHITE+SMLSIZE)  
+  lcd.drawText(323 + 22, 0, string.format("%d/%d", status.rssiCRSF, getValue("RFMD")), 0 +WHITE+SMLSIZE)
 end
 
 local function resetTelemetry()
@@ -1916,29 +1915,25 @@ local function setSensorValues()
 end
 
 utils.drawTopBar = function()
-  lcd.setColor(CUSTOM_COLOR,0x0000)  
   -- black bar
-  lcd.drawFilledRectangle(0,0, LCD_W, 18, CUSTOM_COLOR)
+  lcd.drawFilledRectangle(0,0, LCD_W, 18, BLACK)
   -- frametype and model name
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
   if status.modelString ~= nil then
-    lcd.drawText(2, 0, status.modelString, CUSTOM_COLOR)
+    lcd.drawText(2, 0, status.modelString, WHITE)
   end
   -- flight time
   local time = getDateTime()
   local strtime = string.format("%02d:%02d:%02d",time.hour,time.min,time.sec)
-  lcd.drawText(LCD_W, 0, strtime, SMLSIZE+RIGHT+CUSTOM_COLOR)
+  lcd.drawText(LCD_W, 0, strtime, SMLSIZE+RIGHT+WHITE)
   -- RSSI
   if telemetryEnabled() == false then
-    lcd.setColor(CUSTOM_COLOR,0xF800)    
-    lcd.drawText(323-36, 0, "NO TELEM", 0 +CUSTOM_COLOR)
+    lcd.drawText(323-36, 0, "NO TELEM", RED)
   else
     utils.drawRssi()
   end
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)    
   -- tx voltage
   local vtx = string.format("%.1fv",getValue(getFieldInfo("tx-voltage").id))
-  lcd.drawText(391,0, vtx, 0+CUSTOM_COLOR+SMLSIZE)
+  lcd.drawText(391,0, vtx, WHITE+SMLSIZE)
 end
 
 local function drawMessageScreen()
@@ -1947,93 +1942,77 @@ local function drawMessageScreen()
   local offsetEnd = math.min(status.messageCount-1, status.messageOffset + 20 - 1)
   
   for i=offsetStart,offsetEnd  do
+    local colr
     if status.messages[i % 200][2] == 4 then
-      lcd.setColor(CUSTOM_COLOR,lcd.RGB(255,255,0))
+	  colr = lcd.RGB(255,255,0)
     elseif status.messages[i % 200][2] < 4 then
-      lcd.setColor(CUSTOM_COLOR,lcd.RGB(255,70,0))  
+	  colr = lcd.RGB(255,70,0)
     else
-      lcd.setColor(CUSTOM_COLOR,0xFFFF)
+	  colr = WHITE
     end
-    lcd.drawText(0,4+12*row, status.messages[i % 200][1],SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(0,4+12*row, status.messages[i % 200][1],SMLSIZE+colr)
     row = row+1
   end
-  lcd.setColor(CUSTOM_COLOR,0x0AB1)
-  lcd.drawFilledRectangle(405,0,75,272,CUSTOM_COLOR)
+  lcd.drawFilledRectangle(405,0,75,272,lcd.RGB(8,85,140)) -- 0x0AB1 = 0x08558C = blue tone
   
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
   -- print info on the right
   -- CELL
   if battery[1] * 0.01 < 10 then
-    lcd.drawNumber(410, 0, battery[1] + 0.5, PREC2+0+MIDSIZE+CUSTOM_COLOR)
+    lcd.drawNumber(410, 0, battery[1] + 0.5, PREC2+MIDSIZE+WHITE)
   else
-    lcd.drawNumber(410, 0, (battery[1] + 0.5)*0.1, PREC1+0+MIDSIZE+CUSTOM_COLOR)
+    lcd.drawNumber(410, 0, (battery[1] + 0.5)*0.1, PREC1+MIDSIZE+WHITE)
   end
-  lcd.drawText(410+50, 1, status.battsource, SMLSIZE+CUSTOM_COLOR)
-  lcd.drawText(410+50, 11, "V", SMLSIZE+CUSTOM_COLOR)
+  lcd.drawText(410+50, 1, status.battsource, SMLSIZE+WHITE)
+  lcd.drawText(410+50, 11, "V", SMLSIZE+WHITE)
   -- ALT
-  lcd.setColor(CUSTOM_COLOR,0x0000)
-  lcd.drawText(410, 25, "Alt("..unitLabel..")", SMLSIZE+0+CUSTOM_COLOR)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
-  lcd.drawNumber(410,37,telemetry.homeAlt*unitScale,MIDSIZE+CUSTOM_COLOR+0)
+  lcd.drawText(410, 25, "Alt("..unitLabel..")", SMLSIZE+BLACK)
+  lcd.drawNumber(410,37,telemetry.homeAlt*unitScale,MIDSIZE+WHITE)
   -- SPEED
-  lcd.setColor(CUSTOM_COLOR,0x0000)
-  lcd.drawText(410, 60, "Spd("..conf.horSpeedLabel..")", SMLSIZE+0+CUSTOM_COLOR)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
-  lcd.drawNumber(410,72,telemetry.hSpeed*0.1* conf.horSpeedMultiplier,MIDSIZE+CUSTOM_COLOR+0)
+  lcd.drawText(410, 60, "Spd("..conf.horSpeedLabel..")", SMLSIZE+BLACK)
+  lcd.drawNumber(410,72,telemetry.hSpeed*0.1* conf.horSpeedMultiplier,MIDSIZE+WHITE)
   -- VSPEED
-  lcd.setColor(CUSTOM_COLOR,0x0000)
-  lcd.drawText(410, 95, "VSI("..conf.vertSpeedLabel..")", SMLSIZE+0+CUSTOM_COLOR)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
-  lcd.drawNumber(410,107, telemetry.vSpeed*0.1*conf.vertSpeedMultiplier, MIDSIZE+CUSTOM_COLOR+0)
+  lcd.drawText(410, 95, "VSI("..conf.vertSpeedLabel..")", SMLSIZE+BLACK)
+  lcd.drawNumber(410,107, telemetry.vSpeed*0.1*conf.vertSpeedMultiplier, MIDSIZE+WHITE)
   -- DIST
   if getGeneralSettings().imperial == 0 then
     -- metric, special handling for km
 	local dist = telemetry.homeDist*unitScale
 	if dist > 9999 then
 	  -- add "k" for kilo
-      lcd.setColor(CUSTOM_COLOR,0x0000)
-      lcd.drawText(410, 130, "Dist(k"..unitLabel..")", SMLSIZE+0+CUSTOM_COLOR)
-      lcd.setColor(CUSTOM_COLOR,0xFFFF)
-      lcd.drawNumber(410, 142, telemetry.homeDist*unitScale/1000, MIDSIZE+0+CUSTOM_COLOR)
+      lcd.drawText(410, 130, "Dist(k"..unitLabel..")", SMLSIZE+BLACK)
+      lcd.drawNumber(410, 142, telemetry.homeDist*unitScale/1000, MIDSIZE+WHITE)
 	else
-      lcd.setColor(CUSTOM_COLOR,0x0000)
-      lcd.drawText(410, 130, "Dist("..unitLabel..")", SMLSIZE+0+CUSTOM_COLOR)
-      lcd.setColor(CUSTOM_COLOR,0xFFFF)
-      lcd.drawNumber(410, 142, telemetry.homeDist*unitScale, MIDSIZE+0+CUSTOM_COLOR)
+      lcd.drawText(410, 130, "Dist("..unitLabel..")", SMLSIZE+BLACK)
+      lcd.drawNumber(410, 142, telemetry.homeDist*unitScale, MIDSIZE+WHITE)
 	end
   else
     -- imperial
-    lcd.setColor(CUSTOM_COLOR,0x0000)
-    lcd.drawText(410, 130, "Dist("..unitLabel..")", SMLSIZE+0+CUSTOM_COLOR)
-    lcd.setColor(CUSTOM_COLOR,0xFFFF)
-    lcd.drawNumber(410, 142, telemetry.homeDist*unitScale, MIDSIZE+0+CUSTOM_COLOR)
+    lcd.drawText(410, 130, "Dist("..unitLabel..")", SMLSIZE+BLACK)
+    lcd.drawNumber(410, 142, telemetry.homeDist*unitScale, MIDSIZE+WHITE)
   end
   -- HDG
-  lcd.setColor(CUSTOM_COLOR,0x0000)
-  lcd.drawText(410, 165, "Heading", SMLSIZE+0+CUSTOM_COLOR)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
-  lcd.drawNumber(410, 177, telemetry.yaw, MIDSIZE+0+CUSTOM_COLOR)
+  lcd.drawText(410, 165, "Heading", SMLSIZE+BLACK)
+  lcd.drawNumber(410, 177, telemetry.yaw, MIDSIZE+WHITE)
   -- HOMEDIR
-  lcd.setColor(CUSTOM_COLOR,0xFE60)
-  drawLib.drawRArrow(442,235,22,math.floor(telemetry.homeAngle - telemetry.yaw),CUSTOM_COLOR)--HomeDirection(telemetry)
+  drawLib.drawRArrow(442,235,22,math.floor(telemetry.homeAngle - telemetry.yaw),lcd.RGB(255,206,0)) -- HomeDirection(telemetry) 0xFE60 = 0xFFCE00 = yellow
   -- AUTOSCROLL
+  local colr
   if status.messageAutoScroll == true then
-    lcd.setColor(CUSTOM_COLOR,0xFFFF)
+    colr = WHITE
   else
-    lcd.setColor(CUSTOM_COLOR,0xFE60)
+    colr = lcd.RGB(255,206,0) -- 0xFE60 = FFCE00 = yellow tone
   end
   local maxPages = tonumber(math.ceil((#status.messages+1)/20))
   local currentPage = 1+tonumber(maxPages - (status.messageCount - status.messageOffset)/20)
   
-  lcd.drawText(LCD_W-2, LCD_H-16, string.format("%d/%d",currentPage,maxPages), SMLSIZE+CUSTOM_COLOR+RIGHT)
-  lcd.setColor(CUSTOM_COLOR,0x7BCF)
-  lcd.drawLine(0,LCD_H-20,405,LCD_H-20,SOLID,CUSTOM_COLOR)
+  lcd.drawText(LCD_W-2, LCD_H-16, string.format("%d/%d",currentPage,maxPages), SMLSIZE+colr+RIGHT)
+  lcd.drawLine(0,LCD_H-20,405,LCD_H-20,SOLID,lcd.RGB(123,121,123)) -- 0x7BCF = 0x7B797B = grey
   
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
   if status.strFlightMode ~= nil then
-    lcd.drawText(0,LCD_H-20,status.strFlightMode,CUSTOM_COLOR)
+    lcd.drawText(0,LCD_H-20,status.strFlightMode,WHITE)
+    lcd.drawText(0,LCD_H-20,status.strFlightMode,WHITE)
   end
-  lcd.drawTimer(402, LCD_H-20, model.getTimer(2).value, CUSTOM_COLOR+RIGHT)
+  lcd.drawTimer(402, LCD_H-20, model.getTimer(2).value, WHITE+RIGHT)
 end
 
 ---------------------------------
@@ -2672,9 +2651,8 @@ local slowTimer = getTime()
 local fastTimer = getTime()
 
 local function fullScreenRequired(myWidget)
-  lcd.setColor(CUSTOM_COLOR,lcd.RGB(255, 0, 0))
-  lcd.drawText(myWidget.zone.x,myWidget.zone.y,"Yaapu requires",SMLSIZE+CUSTOM_COLOR)
-  lcd.drawText(myWidget.zone.x,myWidget.zone.y+16,"full screen",SMLSIZE+CUSTOM_COLOR)
+  lcd.drawText(myWidget.zone.x,myWidget.zone.y,"Yaapu requires",SMLSIZE+RED)
+  lcd.drawText(myWidget.zone.x,myWidget.zone.y+16,"full screen",SMLSIZE+RED)
 end
 
 
@@ -2696,12 +2674,9 @@ local function loadLayout()
     layout = utils.doLibrary(conf.widgetLayoutFilename)
   end
 
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
-  lcd.drawFilledRectangle(88,74, 304, 84, CUSTOM_COLOR)
-  lcd.setColor(CUSTOM_COLOR,0x10A3)
-  lcd.drawFilledRectangle(90,76, 300, 80, CUSTOM_COLOR)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
-  lcd.drawText(120, 95, "loading layout...", DBLSIZE+CUSTOM_COLOR)
+  lcd.drawFilledRectangle(88,74, 304, 84, WHITE)
+  lcd.drawFilledRectangle(90,76, 300, 80, lcd.RGB(16,20,25)) -- 0x10A3 = 0x101419 = almost black
+  lcd.drawText(120, 95, "loading layout...", DBLSIZE+WHITE)
 end
 
 local function loadMapLayout()
@@ -2712,13 +2687,9 @@ local function loadMapLayout()
 end
 
 local function drawInitialingMsg()
-  lcd.clear(CUSTOM_COLOR)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
-  lcd.drawFilledRectangle(88,74, 304, 84, CUSTOM_COLOR)
-  lcd.setColor(CUSTOM_COLOR,0x10A3)
-  lcd.drawFilledRectangle(90,76, 300, 80, CUSTOM_COLOR)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
-  lcd.drawText(155, 95, "initializing...", DBLSIZE+CUSTOM_COLOR)
+  lcd.drawFilledRectangle(88,74, 304, 84, WHITE)
+  lcd.drawFilledRectangle(90,76, 300, 80, lcd.RGB(16,20,25)) -- 0x10A3 = 0x101419 = almost black
+  lcd.drawText(155, 95, "initializing...", DBLSIZE+WHITE)
 end
 
 local fgclock = 0
@@ -2732,7 +2703,7 @@ local function drawFullScreen(myWidget)
       backgroundTasks(myWidget,15)
     end
   end
-  lcd.setColor(CUSTOM_COLOR, 0x0AB1)
+  -- TODO! lcd.setColor(CUSTOM_COLOR, 0x0AB1) -- 0x0AB1 = 0x08558C = lcd.RGB(8, 85, 140)
   
   if not (resetPending or resetLayoutPending or loadConfigPending) then
     if myWidget.options.page == 2 or status.screenTogglePage == 2 then
@@ -2740,15 +2711,14 @@ local function drawFullScreen(myWidget)
       -- Widget Page 2: MESSAGES
       ------------------------------------
       -- message history has black background
-      lcd.setColor(CUSTOM_COLOR, 0x0000)
-      lcd.clear(CUSTOM_COLOR)
+      lcd.clear(BLACK)
       
       drawMessageScreen()
     elseif myWidget.options.page == 5 or status.screenTogglePage == 5 then
       ------------------------------------
       -- Widget Page 5: MAP
       ------------------------------------
-      lcd.clear(CUSTOM_COLOR)
+      lcd.clear(lcd.RGB(8, 85, 140))
       
       if mapLayout ~= nil then
         mapLayout.draw(myWidget,drawLib,conf,telemetry,status,battery,alarms,frame,utils,customSensors,gpsStatuses,leftPanel,centerPanel,rightPanel)
@@ -2759,7 +2729,7 @@ local function drawFullScreen(myWidget)
       ------------------------------------
       -- Widget Page 1: HUD
       ------------------------------------
-      lcd.clear(CUSTOM_COLOR)
+      lcd.clear(lcd.RGB(8, 85, 140))
       if layout ~= nil then
         layout.draw(myWidget,drawLib,conf,telemetry,status,battery,alarms,frame,utils,customSensors,gpsStatuses,leftPanel,centerPanel,rightPanel)
       else

@@ -226,7 +226,6 @@ BATT_ID1 1
 BATT_ID2 2
 --]]
 local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gpsStatuses,utils)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)  
   local perc = 99
   if conf.enableBattPercByVoltage == true then
     --[[
@@ -258,28 +257,20 @@ local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gp
   end --conf.enableBattPercByVoltage
   
   -- battery 1 cell voltage (no alerts on battery 1)
-  local flags = 0
-  --
-  lcd.setColor(CUSTOM_COLOR,lcd.RGB(200,200,200)) -- white
-  lcd.drawFilledRectangle(x+7,16+5,86,52,CUSTOM_COLOR)
-  --lcd.setColor(CUSTOM_COLOR,0xFFFF) -- white
-  lcd.setColor(CUSTOM_COLOR,0x0000) -- white
-  flags = CUSTOM_COLOR
+  lcd.drawFilledRectangle(x+7,16+5,86,52,lcd.RGB(200,200,200))
   --PREC2 forces a math.floor() whereas a math.round() is required, math.round(f) = math.floor(f+0.5)
   if battery[1+1] * 0.01 < 10 then
-    lcd.drawNumber(x+75+2, 16, battery[1+1] + 0.5, PREC2+DBLSIZE+RIGHT+flags)
+    lcd.drawNumber(x+75+2, 16, battery[1+1] + 0.5, PREC2+DBLSIZE+RIGHT+BLACK)
   else
-    lcd.drawNumber(x+75+2, 16, (battery[1+1] + 0.5)*0.1, PREC1+DBLSIZE+RIGHT+flags)
+    lcd.drawNumber(x+75+2, 16, (battery[1+1] + 0.5)*0.1, PREC1+DBLSIZE+RIGHT+BLACK)
   end
   
   local lx = x+76
-  lcd.drawText(lx, 36, "V", flags)
-  lcd.drawText(lx, 18, status.battsource, flags)
+  lcd.drawText(lx, 36, "V", BLACK)
+  lcd.drawText(lx, 18, status.battsource, BLACK)
   
   --  BATT2 Cell voltage
-  flags = 0
-  --
-  lcd.setColor(CUSTOM_COLOR,0xFFFF) -- white
+  local colr = WHITE
   if status.showMinMaxValues == false then
     if status.battLevel2 == false and alarms[8][2] > 0 then
       utils.drawBlinkBitmap("cell_red_blink_86x30",x+7,76)
@@ -287,79 +278,48 @@ local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gp
     elseif status.battLevel2 == true then
       lcd.drawBitmap(utils.getBitmap("cell_red_86x30"),x+7,76)
     elseif status.battLevel1 == false and alarms[7][2] > 0 then
-      --lcd.setColor(CUSTOM_COLOR,0x0000) -- black
       utils.drawBlinkBitmap("cell_orange_blink_86x30",x+7,76)
       utils.lcdBacklightOn()
     elseif status.battLevel1 == true then
       lcd.drawBitmap(utils.getBitmap("cell_orange_86x30"),x+7,76)
-      lcd.setColor(CUSTOM_COLOR,0x0000) -- black
+	  colr = BLACK
     end
   end
-  flags = CUSTOM_COLOR
   --PREC2 forces a math.floor() whereas a math.round() is required, math.round(f) = math.floor(f+0.5)
   if battery[1+2] * 0.01 < 10 then
-    lcd.drawNumber(x+75+2, 72, battery[1+2] + 0.5, PREC2+DBLSIZE+RIGHT+flags)
+    lcd.drawNumber(x+75+2, 72, battery[1+2] + 0.5, PREC2+DBLSIZE+RIGHT+colr)
   else
-    lcd.drawNumber(x+75+2, 72, (battery[1+2] + 0.5)*0.1, PREC1+DBLSIZE+RIGHT+flags)
+    lcd.drawNumber(x+75+2, 72, (battery[1+2] + 0.5)*0.1, PREC1+DBLSIZE+RIGHT+colr)
   end
   
   lx = x+78
-  lcd.drawText(lx, 88, "V", flags)
-  lcd.drawText(lx, 72, status.battsource, flags)
+  lcd.drawText(lx, 88, "V", colr)
+  lcd.drawText(lx, 72, status.battsource, colr)
   
   -- BATTERY BAR % --
-  --[[
-  -- batt1 capacity bar %
-  lcd.setColor(CUSTOM_COLOR,lcd.RGB(255,255, 255))
-  lcd.drawFilledRectangle(x+BATTGAUGE_X, BATTGAUGE_Y,BATTGAUGE_WIDTH,BATTGAUGE_HEIGHT,CUSTOM_COLOR)
-  if perc > 50 then
-    lcd.setColor(CUSTOM_COLOR,lcd.RGB(0, 255, 0))
-  elseif perc <= 50 and perc > 25 then
-      lcd.setColor(CUSTOM_COLOR,lcd.RGB(255, 204, 0)) -- yellow
-  else
-    lcd.setColor(CUSTOM_COLOR,lcd.RGB(255,0, 0))
-  end
-  lcd.drawGauge(x+BATTGAUGE_X, BATTGAUGE_Y,BATTGAUGE_WIDTH,BATTGAUGE_HEIGHT,perc,100,CUSTOM_COLOR)
-  -- battery 1 percentage
-  lcd.setColor(CUSTOM_COLOR,COLOR_BLACK) -- black
-  local strperc = string.format("%02d%%",perc)
-  lcd.drawText(x+BATTPERC_X, BATTPERC_Y, strperc, BATTPERC_FLAGS+CUSTOM_COLOR)
-  --]]
   -- batt2 capacity bar %
-  lcd.setColor(CUSTOM_COLOR,lcd.RGB(255,255, 255))
-  lcd.drawFilledRectangle(x+10, 130,80,21,CUSTOM_COLOR)
+  lcd.drawFilledRectangle(x+10, 130,80,21,WHITE)
   if perc2 > 50 then
-    lcd.setColor(CUSTOM_COLOR,lcd.RGB(0, 255, 0))
+    colr = GREEN
   elseif perc2 <= 50 and perc2 > 25 then
-      lcd.setColor(CUSTOM_COLOR,lcd.RGB(255, 204, 0)) -- yellow
+    colr = lcd.RGB(255, 204, 0) -- yellow
   else
-    lcd.setColor(CUSTOM_COLOR,lcd.RGB(255,0, 0))
+    colr = RED
   end
-  lcd.drawGauge(x+10, 130,80,21,perc2,100,CUSTOM_COLOR)
+  lcd.drawGauge(x+10, 130,80,21,perc2,100,colr)
   -- battery 1 percentage
-  lcd.setColor(CUSTOM_COLOR,0x0000) -- black
   local strperc2 = string.format("%02d%%",perc2)
-  lcd.drawText(x+35, 126, strperc2, MIDSIZE+CUSTOM_COLOR)
+  lcd.drawText(x+35, 126, strperc2, MIDSIZE+BLACK)
   
   -- POWER --
   -- power 1
-  lcd.setColor(CUSTOM_COLOR,0x0000)
   local power1 = battery[4+1]*battery[7+1]*0.01
-  lcd.drawNumber(x+75,46,power1,MIDSIZE+RIGHT+CUSTOM_COLOR)
-  lcd.drawText(x+77,53,"W",CUSTOM_COLOR)
+  lcd.drawNumber(x+75,46,power1,MIDSIZE+RIGHT+BLACK)
+  lcd.drawText(x+77,53,"W",BLACK)
   -- power 2
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
   local power2 = battery[4+2]*battery[7+2]*0.01
-  lcd.drawNumber(x+75,103,power2,MIDSIZE+RIGHT+CUSTOM_COLOR)
-  lcd.drawText(x+77,110,"W",CUSTOM_COLOR)
-  
-  --[[
-  if status.showMinMaxValues == true then
-    drawLib.drawVArrow(x+BATTCELL_X+11, BATTCELL_Y + 8,false,true,utils)
-    drawLib.drawVArrow(x+BATTVOLT_X+11,BATTVOLT_Y + 3, false,true,utils)
-    drawLib.drawVArrow(x+BATTCURR_X+11,BATTCURR_Y + 10,true,false,utils)
-  end
-  --]]
+  lcd.drawNumber(x+75,103,power2,MIDSIZE+RIGHT+WHITE)
+  lcd.drawText(x+77,110,"W",WHITE)
 end
 
 local function background(myWidget,conf,telemetry,status,utils)

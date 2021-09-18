@@ -231,21 +231,15 @@ local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)
   local oy = 69 + dy
   local yy = 0
   
-  --lcd.setColor(CUSTOM_COLOR,lcd.RGB(0x0d, 0x68, 0xb1)) -- bighud blue
-  lcd.setColor(CUSTOM_COLOR,lcd.RGB(0x7b, 0x9d, 0xff)) -- default blue
-  lcd.drawFilledRectangle(minX,minY,maxX-minX,maxY - minY,CUSTOM_COLOR)
+  lcd.drawFilledRectangle(minX,minY,maxX-minX,maxY - minY,lcd.RGB(0x7B,0x9D,0xFF)) -- default blue
   -- HUD
-  --lcd.setColor(CUSTOM_COLOR,lcd.RGB(77, 153, 0))
-  --lcd.setColor(CUSTOM_COLOR,lcd.RGB(0x90, 0x63, 0x20)) --906320 bighud brown
-  lcd.setColor(CUSTOM_COLOR,lcd.RGB(0x63, 0x30, 0x00)) --623000 old brown
-  
   -- angle of the line passing on point(ox,oy)
   local angle = math.tan(math.rad(-telemetry.roll))
   -- prevent divide by zero
   if telemetry.roll == 0 then
-    drawLib.drawFilledRectangle(minX,math.max(minY,dy+minY+(maxY-minY)/2),maxX-minX,math.min(maxY-minY,(maxY-minY)/2-dy+(math.abs(dy) > 0 and 1 or 0)),CUSTOM_COLOR)
+    drawLib.drawFilledRectangle(minX,math.max(minY,dy+minY+(maxY-minY)/2),maxX-minX,math.min(maxY-minY,(maxY-minY)/2-dy+(math.abs(dy) > 0 and 1 or 0)),lcd.RGB(0x63,0x30,0x00)) -- 0x623000 = old brown
   elseif math.abs(telemetry.roll) >= 180 then
-    drawLib.drawFilledRectangle(minX,minY,maxX-minX,math.min(maxY-minY,(maxY-minY)/2+dy),CUSTOM_COLOR)
+    drawLib.drawFilledRectangle(minX,minY,maxX-minX,math.min(maxY-minY,(maxY-minY)/2+dy),lcd.RGB(0x63,0x30,0x00)) -- 0x623000 = old brown
   else
     -- HUD drawn using horizontal bars of height 2
     -- true if flying inverted
@@ -264,7 +258,7 @@ local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)
         yy = minY + s*step
         xx = ox + (yy-oy)/angle
         if xx >= minX and xx <= maxX then
-          lcd.drawFilledRectangle(xx, yy, maxX-xx+1, step,CUSTOM_COLOR)
+          lcd.drawFilledRectangle(xx, yy, maxX-xx+1, step,lcd.RGB(0x63,0x30,0x00)) -- 0x623000 = old brown
         elseif xx < minX then
           yRect = inverted and math.max(yy,yRect)+step or math.min(yy,yRect)
           fillNeeded = true
@@ -276,7 +270,7 @@ local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)
         yy = minY + s*step
         xx = ox + (yy-oy)/angle
         if xx >= minX and xx <= maxX then
-          lcd.drawFilledRectangle(minX, yy, xx-minX, step,CUSTOM_COLOR)
+          lcd.drawFilledRectangle(minX, yy, xx-minX, step,lcd.RGB(0x63,0x30,0x00)) -- 0x623000 = old brown
         elseif xx > maxX then
           yRect = inverted and math.max(yy,yRect)+step or math.min(yy,yRect)
           fillNeeded = true
@@ -287,8 +281,7 @@ local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)
     if fillNeeded then
       local yMin = inverted and minY or yRect
       local height = inverted and yRect - minY or maxY-yRect
-      --lcd.setColor(CUSTOM_COLOR,0xF800) --623000 old brown
-      lcd.drawFilledRectangle(minX, yMin, maxX-minX, height ,CUSTOM_COLOR)
+      lcd.drawFilledRectangle(minX, yMin, maxX-minX, height,lcd.RGB(0x63,0x30,0x00)) -- 0x623000 = old brown
     end
   end
 
@@ -296,18 +289,16 @@ local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)
   -- parallel lines above and below horizon
   local linesMaxY = maxY-1
   local linesMinY = minY+1
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
   -- +/- 90 deg
   for dist=1,8
   do
-    drawLib.drawLineWithClipping(rollX + dx - dist*cx,dy + 69 + dist*cy,r,(dist%2==0 and 40 or 20),DOTTED,(LCD_W-160)/2+2,(LCD_W-160)/2+160-2,linesMinY,linesMaxY,CUSTOM_COLOR,radio,rev)
-    drawLib.drawLineWithClipping(rollX + dx + dist*cx,dy + 69 - dist*cy,r,(dist%2==0 and 40 or 20),DOTTED,(LCD_W-160)/2+2,(LCD_W-160)/2+160-2,linesMinY,linesMaxY,CUSTOM_COLOR,radio,rev)
+    drawLib.drawLineWithClipping(rollX + dx - dist*cx,dy + 69 + dist*cy,r,(dist%2==0 and 40 or 20),DOTTED,(LCD_W-160)/2+2,(LCD_W-160)/2+160-2,linesMinY,linesMaxY,WHITE,radio,rev)
+    drawLib.drawLineWithClipping(rollX + dx + dist*cx,dy + 69 - dist*cy,r,(dist%2==0 and 40 or 20),DOTTED,(LCD_W-160)/2+2,(LCD_W-160)/2+160-2,linesMinY,linesMaxY,WHITE,radio,rev)
   end
 -- hashmarks
   local startY = minY + 1
   local endY = maxY - 10
   local step = 18
-  lcd.setColor(CUSTOM_COLOR,lcd.RGB(120,120,120))
   -- hSpeed 
   local roundHSpeed = math.floor((telemetry.hSpeed*conf.horSpeedMultiplier*0.1/5)+0.5)*5;
   local offset = math.floor((telemetry.hSpeed*conf.horSpeedMultiplier*0.1-roundHSpeed)*0.2*step);
@@ -317,8 +308,8 @@ local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)
   do
       yy = startY + (ii*step) + offset
       if yy >= startY and yy < endY then
-        lcd.drawLine((LCD_W-160)/2 + 1, yy+9, (LCD_W-160)/2 + 5, yy+9, SOLID, CUSTOM_COLOR)
-        lcd.drawNumber((LCD_W-160)/2 + 8,  yy, j, SMLSIZE+CUSTOM_COLOR)
+        lcd.drawLine((LCD_W-160)/2 + 1, yy+9, (LCD_W-160)/2 + 5, yy+9, SOLID, lcd.RGB(120,120,120))
+        lcd.drawNumber((LCD_W-160)/2 + 8,  yy, j, SMLSIZE+lcd.RGB(120,120,120))
       end
       ii=ii+1;
   end
@@ -331,12 +322,11 @@ local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)
   do
       yy = startY + (ii*step) + offset
       if yy >= startY and yy < endY then
-        lcd.drawLine((LCD_W-160)/2 + 160 - 15, yy+8, (LCD_W-160)/2 + 160 -10, yy+8, SOLID, CUSTOM_COLOR)
-        lcd.drawNumber((LCD_W-160)/2 + 160 - 16,  yy, j, SMLSIZE+RIGHT+CUSTOM_COLOR)
+        lcd.drawLine((LCD_W-160)/2 + 160 - 15, yy+8, (LCD_W-160)/2 + 160 -10, yy+8, SOLID, lcd.RGB(120,120,120))
+        lcd.drawNumber((LCD_W-160)/2 + 160 - 16,  yy, j, SMLSIZE+RIGHT+lcd.RGB(120,120,120))
       end
       ii=ii+1;
   end
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
   -------------------------------------
   -- hud bitmap
   -------------------------------------
@@ -352,35 +342,27 @@ local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)
   else
     varioY = 24 + 55
   end
-  --00ae10
-  lcd.setColor(CUSTOM_COLOR,lcd.RGB(255, 0xce, 0)) --yellow
-  -- lcd.setColor(CUSTOM_COLOR,lcd.RGB(00, 0xED, 0x32)) --green
-  -- lcd.setColor(CUSTOM_COLOR,lcd.RGB(50, 50, 50)) --dark grey
-  lcd.drawFilledRectangle(310, varioY, 10, varioH, CUSTOM_COLOR, 0)  
+  lcd.drawFilledRectangle(310, varioY, 10, varioH, lcd.RGB(0xFF,0xCE,0x00), 0) -- yellow
   
   -------------------------------------
   -- left and right indicators on HUD
   -------------------------------------
   -- DATA
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)  
   -- altitude
   local alt = utils.getMaxValue(telemetry.homeAlt,11) * unitScale
   if math.abs(alt) > 999 then
-    lcd.setColor(CUSTOM_COLOR,lcd.RGB(00, 0xED, 0x32)) --green
-    lcd.drawNumber((LCD_W-160)/2+160+1,69-10,alt,CUSTOM_COLOR+RIGHT)
+    lcd.drawNumber((LCD_W-160)/2+160+1,69-10,alt,lcd.RGB(0x00,0xED,0x32)+RIGHT) -- green
   elseif math.abs(alt) >= 10 then
-    lcd.setColor(CUSTOM_COLOR,lcd.RGB(00, 0xED, 0x32)) --green
-    lcd.drawNumber((LCD_W-160)/2+160+1,69-14,alt,MIDSIZE+CUSTOM_COLOR+RIGHT)
+    lcd.drawNumber((LCD_W-160)/2+160+1,69-14,alt,MIDSIZE+lcd.RGB(0x00,0xED,0x32)+RIGHT) -- green
   else
-    lcd.setColor(CUSTOM_COLOR,lcd.RGB(00, 0xED, 0x32)) --green
-    lcd.drawNumber((LCD_W-160)/2+160+1,69-14,alt*10,MIDSIZE+PREC1+CUSTOM_COLOR+RIGHT)
+    lcd.drawNumber((LCD_W-160)/2+160+1,69-14,alt*10,MIDSIZE+PREC1+lcd.RGB(0x00,0xED,0x32)+RIGHT) -- green
   end
   -- telemetry.hSpeed is in dm/s
   local hSpeed = utils.getMaxValue(telemetry.hSpeed,14) * 0.1 * conf.horSpeedMultiplier
   if (math.abs(hSpeed) >= 10) then
-    lcd.drawNumber((LCD_W-160)/2+2,69-14,hSpeed,MIDSIZE+CUSTOM_COLOR)
+    lcd.drawNumber((LCD_W-160)/2+2,69-14,hSpeed,MIDSIZE+WHITE)
   else
-    lcd.drawNumber((LCD_W-160)/2+2,69-14,hSpeed*10,MIDSIZE+CUSTOM_COLOR+PREC1)
+    lcd.drawNumber((LCD_W-160)/2+2,69-14,hSpeed*10,MIDSIZE+WHITE+PREC1)
   end
   -- min/max arrows
   if status.showMinMaxValues == true then

@@ -186,11 +186,9 @@ BATT_ID2 2
     On hybrid vehicle we have voltage and current from battery 1, mah from battery 2
 --]]
 local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gpsStatuses,utils)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)  
   --  battery min cell
-  local flags = 0
+  local colr = WHITE
   --
-  lcd.setColor(CUSTOM_COLOR,0xFFFF) -- white
   if status.showMinMaxValues == false then
     if status.battLevel2 == false and alarms[8][2] > 0 then
       utils.drawBlinkBitmap("cell_red_blink_86x30",x+7,20)
@@ -198,62 +196,37 @@ local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,gp
     elseif status.battLevel2 == true then
       lcd.drawBitmap(utils.getBitmap("cell_red_86x30"),x+7,20)
     elseif status.battLevel1 == false and alarms[7][2] > 0 then
-      --lcd.setColor(CUSTOM_COLOR,0x0000) -- black
       utils.drawBlinkBitmap("cell_orange_blink_86x30",x+7,20)
       utils.lcdBacklightOn()
     elseif status.battLevel1 == true then
       lcd.drawBitmap(utils.getBitmap("cell_orange_86x30"),x+7,20)
-      lcd.setColor(CUSTOM_COLOR,0x0000) -- black
+	  colr = BLACK
     end
   end
-  flags = CUSTOM_COLOR
   -- PREC2 forces a math.floor() whereas a math.round() is required, math.round(f) = math.floor(f+0.5)
   if battery[1+1] * 0.01 < 10 then
-    lcd.drawNumber(x+75+2, 16, battery[1+1] + 0.5, PREC2+DBLSIZE+RIGHT+flags)
+    lcd.drawNumber(x+75+2, 16, battery[1+1] + 0.5, PREC2+DBLSIZE+RIGHT+colr)
   else
-    lcd.drawNumber(x+75+2, 16, (battery[1+1] + 0.5)*0.1, PREC1+DBLSIZE+RIGHT+flags)
+    lcd.drawNumber(x+75+2, 16, (battery[1+1] + 0.5)*0.1, PREC1+DBLSIZE+RIGHT+colr)
   end
   
   local lx = x+76
-  lcd.drawText(lx, 32, "V", flags)
-  lcd.drawText(lx, 18, status.battsource, flags)
+  lcd.drawText(lx, 32, "V", colr)
+  lcd.drawText(lx, 18, status.battsource, colr)
   
-  lcd.setColor(CUSTOM_COLOR,0xFFFF) -- white  
   -- battery current
   local lowAmp = battery[7+1]*0.1 < 10
-  drawLib.drawNumberWithDim(x+75,68+86,x+76,83+86,battery[7+1]*(lowAmp and 1 or 0.1),"A",DBLSIZE+RIGHT+CUSTOM_COLOR+(lowAmp and PREC1 or 0),0+CUSTOM_COLOR)
-  --[[
-  -- display capacity bar %
-  lcd.setColor(CUSTOM_COLOR,lcd.RGB(255,255, 255))
-  lcd.drawFilledRectangle(x+BATTGAUGE_X, BATTGAUGE_Y,BATTGAUGE_WIDTH,BATTGAUGE_HEIGHT,CUSTOM_COLOR)
-  if perc > 50 then
-    lcd.setColor(CUSTOM_COLOR,lcd.RGB(0, 255, 0))
-  elseif perc <= 50 and perc > 25 then
-      lcd.setColor(CUSTOM_COLOR,lcd.RGB(255, 204, 0)) -- yellow
-  else
-    lcd.setColor(CUSTOM_COLOR,lcd.RGB(255,0, 0))
-  end
-  lcd.drawGauge(x+BATTGAUGE_X, BATTGAUGE_Y,BATTGAUGE_WIDTH,BATTGAUGE_HEIGHT,perc,100,CUSTOM_COLOR)
-  --]]
-  -- battery percentage
-  --[[
-  lcd.setColor(CUSTOM_COLOR,COLOR_BLACK) -- black
-  
-  local strperc = string.format("%02d%%",perc)
-  lcd.drawText(x+BATTPERC_X, BATTPERC_Y, strperc, BATTPERC_FLAGS+CUSTOM_COLOR)
-  --]]
+  drawLib.drawNumberWithDim(x+75,68+86,x+76,83+86,battery[7+1]*(lowAmp and 1 or 0.1),"A",DBLSIZE+RIGHT+WHITE+(lowAmp and PREC1 or 0),0+WHITE)
   
   -- battery mah is from battery 2
   -- we display remaining liters vs used liters as usual
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
   local strmah = string.format("%.01fL/%.01fL",(battery[13+2]-battery[10+2])/1000,battery[13+2]/1000)
-  lcd.drawText(x+90, 133, strmah, 0+RIGHT+CUSTOM_COLOR)
+  lcd.drawText(x+90, 133, strmah, 0+RIGHT+WHITE)
   -- fuel gauge from battery 2
   -- battery % only from battery 2
   local perc = battery[16+2]
   
-  lcd.setColor(CUSTOM_COLOR,0xF800)
-  drawLib.drawGauge(393,54,"fuelgauge_75x75", 430, 94, 25, 8, perc, 125, CUSTOM_COLOR, utils)
+  drawLib.drawGauge(393,54,"fuelgauge_75x75", 430, 94, 25, 8, perc, 125, RED, utils)
 end
 
 local function background(myWidget,conf,telemetry,status,utils)
