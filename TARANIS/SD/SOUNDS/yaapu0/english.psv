@@ -4,6 +4,7 @@ SOUNDS/yaapu0/en|althold|Altitude hold flight mode
 SOUNDS/yaapu0/en|armed|Motors armed
 SOUNDS/yaapu0/en|auto|Auto flight mode
 SOUNDS/yaapu0/en|auto_r|Auto mode
+SOUNDS/yaapu0/en|autortl|Auto RTL flight mode
 SOUNDS/yaapu0/en|autotune|Autotune enabled
 SOUNDS/yaapu0/en|avoidadsb|Avoid A D S B flight mode
 SOUNDS/yaapu0/en|bat5|Battery at 5 percent
@@ -27,6 +28,9 @@ SOUNDS/yaapu0/en|cruise|Cruise flight mode
 SOUNDS/yaapu0/en|disarmed|Motors disarmed
 SOUNDS/yaapu0/en|drift|Drift flight mode
 SOUNDS/yaapu0/en|ekf|E K F failsafe
+SOUNDS/yaapu0/en|failsafe|failsafe
+SOUNDS/yaapu0/en|fence|fence enabled
+SOUNDS/yaapu0/en|fencebreach|fence breach
 SOUNDS/yaapu0/en|flip|Flip flight mode
 SOUNDS/yaapu0/en|flowhold|flow position hold flight mode
 SOUNDS/yaapu0/en|flybywirea|Fly by wire a flight mode
@@ -71,9 +75,15 @@ SOUNDS/yaapu0/en|ssimpleoff|super simple mode disabled
 SOUNDS/yaapu0/en|ssimpleon|super simple mode enabled
 SOUNDS/yaapu0/en|stabilize|Stabilize flight mode
 SOUNDS/yaapu0/en|steering_r|Steering mode
+SOUNDS/yaapu0/en|terrainko|no terrain data
+SOUNDS/yaapu0/en|thermal|Thermal flight mode
 SOUNDS/yaapu0/en|throw|Throw flight mode
 SOUNDS/yaapu0/en|timealert|Timer alert
 SOUNDS/yaapu0/en|training|Training flight mode
+SOUNDS/yaapu0/en|turtle|turtle mode
 SOUNDS/yaapu0/en|zigzag|Zigzag flight mode
-SOUNDS/yaapu0/en|yaapu|Yaa-pu telemetry ready
-
+SOUNDS/yaapu0/en|takeoff|takeoff flight mode
+SOUNDS/yaapu0/en|systemid|System I D flight mode
+SOUNDS/yaapu0/en|autorotate|autorotate flight mode
+SOUNDS/yaapu0/en|velocity|velocity flight mode
+SOUNDS/yaapu0/en|yaapu|Yaa-pu telemetry ready
