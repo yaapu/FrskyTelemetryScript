@@ -1,8 +1,8 @@
 --
--- An FRSKY S.Port <passthrough protocol> based Telemetry script for the Horus X10 and X12 radios
+-- A FRSKY SPort/FPort/FPort2 and TBS CRSF telemetry widget for the Horus class radios
+-- based on ArduPilot's passthrough telemetry protocol
 --
--- Copyright (C) 2018-2019. Alessandro Apostoli
--- https://github.com/yaapu
+-- Author: Alessandro Apostoli, https://github.com/yaapu
 --
 -- This program is free software; you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -17,178 +17,21 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program; if not, see <http://www.gnu.org/licenses>.
 --
-
----------------------
--- MAIN CONFIG
--- 480x272 LCD_W x LCD_H
----------------------
-
----------------------
--- VERSION
----------------------
--- load and compile of lua files
--- uncomment to force compile of all chunks, comment for release
---#define COMPILE
--- fix for issue OpenTX 2.2.1 on X10/X10S - https://github.com/opentx/opentx/issues/5764
-
----------------------
--- FEATURE CONFIG
----------------------
--- enable splash screen for no telemetry data
---#define SPLASH
--- enable code to draw a compass rose vs a compass ribbon
---#define COMPASS_ROSE
-
----------------------
--- DEV FEATURE CONFIG
----------------------
--- enable memory debuging 
---#define MEMDEBUG
--- enable dev code
---#define DEV
--- uncomment haversine calculation routine
---#define HAVERSINE
--- enable telemetry logging to file (experimental)
---#define LOGTELEMETRY
--- use radio channels imputs to generate fake telemetry data
---#define TESTMODE
--- enable debug of generated hash or short hash string
---#define HASHDEBUG
-
----------------------
--- DEBUG REFRESH RATES
----------------------
--- calc and show hud refresh rate
---#define HUDRATE
--- calc and show telemetry process rate
---#define BGTELERATE
-
----------------------
--- SENSOR IDS
----------------------
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
--- Throttle and RC use RPM sensor IDs
-
----------------------
--- BATTERY DEFAULTS
----------------------
----------------------------------
--- BACKLIGHT SUPPORT
--- GV is zero based, GV 8 = GV 9 in OpenTX
----------------------------------
----------------------------------
--- CONF REFRESH GV
----------------------------------
-
----------------------------------
--- ALARMS
----------------------------------
---[[
- ALARM_TYPE_MIN needs arming (min has to be reached first), value below level for grace, once armed is periodic, reset on landing
- ALARM_TYPE_MAX no arming, value above level for grace, once armed is periodic, reset on landing
- ALARM_TYPE_TIMER no arming, fired periodically, spoken time, reset on landing
- ALARM_TYPE_BATT needs arming (min has to be reached first), value below level for grace, no reset on landing
-{ 
-  1 = notified, 
-  2 = alarm start, 
-  3 = armed, 
-  4 = type(0=min,1=max,2=timer,3=batt), 
-  5 = grace duration
-  6 = ready
-  7 = last alarm
-}  
---]]--
---
---
-
---
-
-----------------------
--- COMMON LAYOUT
-----------------------
--- enable vertical bars HUD drawing (same as taranis)
---#define HUD_ALGO1
--- enable optimized hor bars HUD drawing
---#define HUD_ALGO2
--- enable hor bars HUD drawing
-
-
-
-
-
-
---------------------------------------------------------------------------------
--- MENU VALUE,COMBO
---------------------------------------------------------------------------------
-
---------------------------
--- UNIT OF MEASURE
---------------------------
 local unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
 local unitLabel = getGeneralSettings().imperial == 0 and "m" or "ft"
 local unitLongScale = getGeneralSettings().imperial == 0 and 1/1000 or 1/1609.34
 local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 
 
------------------------
--- BATTERY 
------------------------
--- offsets are: 1 celm, 4 batt, 7 curr, 10 mah, 13 cap, indexing starts at 1
--- 
-
------------------------
--- LIBRARY LOADING
------------------------
-
-----------------------
---- COLORS
-----------------------
-
---#define COLOR_LABEL 0x7BCF
---#define COLOR_BG 0x0169
---#define COLOR_BARSEX 0x10A3
-
-
---#define COLOR_SENSORS 0x0169
-
------------------------------------
--- STATE TRANSITION ENGINE SUPPORT
------------------------------------
-
-
---------------------------
--- CLIPPING ALGO DEFINES
---------------------------
-
-
-
-
-
-
-
-
-
+local soundFileBasePath = "/SOUNDS/yaapu0"
+local utils = {}
 local frameNames = {}
 -- copter
 frameNames[0]   = "GEN"
 frameNames[2]   = "QUAD"
 frameNames[3]   = "COAX"
 frameNames[4]   = "HELI"
+frameNames[7]   = "BLIMP"
 frameNames[13]  = "HEX"
 frameNames[14]  = "OCTO"
 frameNames[15]  = "TRI"
@@ -212,7 +55,6 @@ frameNames[11]  = "BOAT"
 
 local currentModel = nil
 local frameTypes = {}
-local frameType = nil
 
 --[[
 	MAV_TYPE_GENERIC=0,               /* Generic micro air vehicle. | */
@@ -246,11 +88,13 @@ local frameType = nil
 	MAV_TYPE_PARAFOIL=28,             /* Steerable, nonrigid airfoil | */
 	MAV_TYPE_DODECAROTOR=29,          /* Dodecarotor | */
 ]]
+
 -- copter
 frameTypes[0]   = "c"
 frameTypes[2]   = "c"
 frameTypes[3]   = "c"
 frameTypes[4]   = "c"
+frameTypes[7]   = "a"
 frameTypes[13]  = "c"
 frameTypes[14]  = "c"
 frameTypes[15]  = "c"
@@ -272,16 +116,15 @@ frameTypes[10]  = "r"
 frameTypes[11]  = "b"
 
 
-local soundFileBasePath = "/SOUNDS/yaapu0"
-local gpsStatuses = {}
-
-gpsStatuses[0]="NoGPS"
-gpsStatuses[1]="NoLock"
-gpsStatuses[2]="2D"
-gpsStatuses[3]="3D"
-gpsStatuses[4]="DGPS"
-gpsStatuses[5]="RTK"
-gpsStatuses[6]="RTK"
+-- GPS fix types
+utils.gpsStatuses = {}
+utils.gpsStatuses[0]="NoGPS"
+utils.gpsStatuses[1]="NoLock"
+utils.gpsStatuses[2]="2D"
+utils.gpsStatuses[3]="3D"
+utils.gpsStatuses[4]="DGPS"
+utils.gpsStatuses[5]="RTKFlt"
+utils.gpsStatuses[6]="RTKFxd"
 
 --[[
 0	MAV_SEVERITY_EMERGENCY	System is unusable. This is a "panic" condition.
@@ -293,28 +136,33 @@ gpsStatuses[6]="RTK"
 6	MAV_SEVERITY_INFO	Normal operational messages. Useful for logging. No action is required for these messages.
 7	MAV_SEVERITY_DEBUG	Useful non-operational messages that can assist in debugging. These should not occur during normal operation.
 --]]
-local mavSeverity = {}
-mavSeverity[0]="EMR"
-mavSeverity[1]="ALR"
-mavSeverity[2]="CRT"
-mavSeverity[3]="ERR"
-mavSeverity[4]="WRN"
-mavSeverity[5]="NOT"
-mavSeverity[6]="INF"
-mavSeverity[7]="DBG"
+
+utils.mavSeverity = {}
+
+utils.mavSeverity[0] = {"EMR", 0xFB60}
+utils.mavSeverity[1] = {"ALR", 0xFB60}
+utils.mavSeverity[2] = {"CRT", 0xFB60}
+utils.mavSeverity[3] = {"ERR", 0xFB60}
+utils.mavSeverity[4] = {"WRN", 0xFFE0}
+utils.mavSeverity[5] = {"NTC", 0x1FEA}
+utils.mavSeverity[6] = {"INF", 0xFFFF}
+utils.mavSeverity[7] = {"DBG", 0xFFFF}
 
 ------------------------------
 -- TELEMETRY DATA
 ------------------------------
 local telemetry = {}
--- STATUS 
+-- STATUS
 telemetry.flightMode = 0
 telemetry.simpleMode = 0
 telemetry.landComplete = 0
 telemetry.statusArmed = 0
 telemetry.battFailsafe = 0
 telemetry.ekfFailsafe = 0
+telemetry.failsafe = 0
 telemetry.imuTemp = 0
+telemetry.fencePresent = 0
+telemetry.fenceBreached = 0
 -- GPS
 telemetry.numSats = 0
 telemetry.gpsStatus = 0
@@ -339,7 +187,7 @@ telemetry.yaw = 0
 -- ROLLPITCH
 telemetry.roll = 0
 telemetry.pitch = 0
-telemetry.range = 0 
+telemetry.range = 0
 -- PARAMS
 telemetry.frameType = -1
 telemetry.batt1Capacity = 0
@@ -349,6 +197,8 @@ telemetry.lat = nil
 telemetry.lon = nil
 telemetry.homeLat = nil
 telemetry.homeLon = nil
+telemetry.strLat = "N/A"
+telemetry.strLon = "N/A"
 -- WP
 telemetry.wpNumber = 0
 telemetry.wpDistance = 0
@@ -363,6 +213,21 @@ telemetry.throttle = 0
 telemetry.baroAlt = 0
 -- Total distance
 telemetry.totalDist = 0
+-- RPM
+telemetry.rpm1 = 0
+telemetry.rpm2 = 0
+-- TERRAIN
+telemetry.heightAboveTerrain = 0
+telemetry.terrainUnhealthy = 0
+-- WIND
+telemetry.trueWindSpeed = 0
+telemetry.trueWindAngle = 0
+telemetry.apparentWindSpeed = 0
+telemetry.apparentWindAngle = 0
+-- RSSI
+telemetry.rssi = 0
+telemetry.rssiCRSF = 0
+
 --------------------------------
 -- STATUS DATA
 --------------------------------
@@ -393,6 +258,10 @@ status.batt2sources = {
   vs = false,
   fc = false
 }
+-- SYNTH VSPEED SUPPORT
+status.vspd = 0
+status.synthVSpeedTime = 0
+status.prevHomeAlt = 0
 -- FLIGHT TIME
 status.lastTimerStart = 0
 status.timerRunning = 0
@@ -416,6 +285,8 @@ status.lastMessage = nil
 status.lastMessageSeverity = 0
 status.lastMessageCount = 1
 status.messageCount = 0
+status.messageOffset = 0
+status.messageAutoScroll = true
 -- LINK STATUS
 status.noTelemetryData = 1
 status.hideNoTelemetry = false
@@ -427,6 +298,16 @@ status.mapZoomLevel = 1
 -- FLIGHTMODE
 status.strFlightMode = nil
 status.modelString = nil
+-- TERRAIN
+status.terrainEnabled = 0
+status.terrainLastData = getTime()
+-- AIRSPEED
+status.airspeedEnabled = 0
+-- PLOT data
+status.plotSources = nil
+-- UNIT CONVERSION
+status.unitConversion = {}
+
 ---------------------------
 -- BATTERY TABLE
 ---------------------------
@@ -443,7 +324,6 @@ local menuLibFile = "menu"
 
 local frame = {}
 local drawLib = {}
-local utils = {}
 
 -------------------------------
 -- MAIN SCREEN LAYOUT
@@ -456,34 +336,62 @@ local leftPanel = nil
 -- MP SCREEN LAYOUT
 -------------------------------
 local mapLayout = nil
-
+local plotLayout = nil
+-------------------------------
+-- SENSORS
+-------------------------------
 local customSensors = nil
 
 local backlightLastTime = 0
-local resetPending = false
 
+local resetPhase = 0
+local resetPending = false
+local loadConfigPending = false
+local modelChangePending = false
+
+local resetLayoutPhase = 0
+local resetLayoutPending = false
+
+---------------------------------
+-- ALARMS
+---------------------------------
+--[[
+ ALARM_TYPE_MIN needs arming (min has to be reached first), value below level for grace, once armed is periodic, reset on landing
+ ALARM_TYPE_MAX no arming, value above level for grace, once armed is periodic, reset on landing
+ ALARM_TYPE_TIMER no arming, fired periodically, spoken time, reset on landing
+ ALARM_TYPE_BATT needs arming (min has to be reached first), value below level for grace, no reset on landing
+{
+  1 = notified,
+  2 = alarm start,
+  3 = armed,
+  4 = type(0=min,1=max,2=timer,3=batt),
+  5 = grace duration
+  6 = ready
+  7 = last alarm
+}
+--]]
 local alarms = {
-  --{ notified, alarm_start, armed, type(0=min,1=max,2=timer,3=batt), grace, ready, last_alarm}  
+  --{ notified, alarm_start, armed, type(0=min,1=max,2=timer,3=batt), grace, ready, last_alarm}
     { false, 0 , false, 0, 0, false, 0}, --MIN_ALT
-    { false, 0 , false, 1 , 0, false, 0 }, --MAX_ALT
-    { false, 0 , false, 1 , 0, false, 0 }, --15
-    { false, 0 , true, 1 , 0, false, 0 }, --FS_EKF
-    { false, 0 , true, 1 , 0, false, 0 }, --FS_BAT
+    { false, 0 , false, 1, 0, false, 0 }, --MAX_ALT
+    { false, 0 , false, 1, 0, false, 0 }, --15
+    { false, 0 , true, 1, 0, false, 0 }, --FS_EKF
+    { false, 0 , true, 1, 0, false, 0 }, --FS_BAT
     { false, 0 , true, 2, 0, false, 0 }, --FLIGTH_TIME
     { false, 0 , false, 3, 4, false, 0 }, --BATT L1
     { false, 0 , false, 4, 4, false, 0 }, --BATT L2
-    { false, 0 , false, 1 , 0, false, 0 } --MAX_HDOP
+    { false, 0 , true, 1, 0, false, 0 }, --FS
+    { false, 0 , true, 1, 0, false, 0 }, --FENCE
+    { false, 0 , true, 1, 0, false, 0 }, --TERRAIN
 }
 
 local transitions = {
-  --{ last_value, last_changed, transition_done, delay }  
+  --{ last_value, last_changed, transition_done, delay }
     { 0, 0, false, 30 },
 }
 
 -- SYNTH GPS DIST SUPPORT
-local prevDist = 0
 local lastSpeed = 0
-local lastYaw = 0
 local lastUpdateTotDist = 0
 
 local  paramId,paramValue
@@ -524,57 +432,157 @@ local conf = {
   battConf = 1, -- 1=parallel,2=other
   cell1Count = 0,
   cell2Count = 0,
-  rangeMax=0,
+  enableBattPercByVoltage = false,
+  rangeFinderMax=0,
+  enableSynthVSpeed=false,
   horSpeedMultiplier=1,
   vertSpeedMultiplier=1,
   horSpeedLabel = "m/s",
   vertSpeedLabel = "m/s",
   maxHdopAlert = 2,
   enablePX4Modes = false,
+  enableCRSF = false,
   centerPanel = 1,
   rightPanel = 1,
   leftPanel = 1,
   widgetLayout = 1,
-  widgetLayoutFilename = nil,
-  centerPanelFilename = nil,
-  rightPanelFilename = nil,
-  leftPanelFilename = nil,
-  mapType = "sat_tiles",
-  mapZoomLevel = -2,
+  widgetLayoutFilename = "layout_1",
+  centerPanelFilename = "hud_1",
+  rightPanelFilename = "right_1",
+  leftPanelFilename = "left_1",
+  mapType = "sat_tiles", -- applies to gmapcacther only
+  mapZoomLevel = 2,
+  mapZoomMax = 17,
+  mapZoomMin = -2,
   enableMapGrid = true,
-  screenToggleChannelId = nil,
-  mapToggleChannelId = nil,
+  screenToggleChannelId = 0,
+  screenWheelChannelId = 0,
+  screenWheelChannelDelay = 20,
+  gpsFormat = 1, -- DMS
+  mapProvider = 1, -- 1 GMapCatcher, 2 Google
+  enableRPM = 0,
+  enableWIND = 0,
+  plotSource1 = 1,
+  plotSource2 = 1
 }
 
 -------------------------
 -- message hash support
 -------------------------
-local shortHashes = { 
-  -- 16 bytes hashes
-  {554623408},      -- "554623408.wav", "Takeoff complete"
-  {3025044912},     -- "3025044912.wav", "SmartRTL deactiv"
-  {3956583920},     -- "3956583920.wav", "EKF2 IMU0 is usi"
-  {1309405592},     -- "1309405592.wav", "EKF3 IMU0 is usi"
-  {4091124880,true}, -- "4091124880.wav", "Reached command "
-  {3311875476,true}, -- "3311875476.wav", "Reached waypoint"
-  {1997782032,true}, -- "1997782032.wav", "Passed waypoint "
-}
+local shortHashes = {}
+-- 16 bytes hashes
+shortHashes[2730864352] = false -- Soaring: Too high
+shortHashes[1698465616] = false -- Soaring: Too low
+shortHashes[981284144] = false -- Soaring: Thermal ended
+shortHashes[2913564252] = false -- Soaring: Drifted too far
+shortHashes[1746499976] = false -- Soaring: Exit via RC switch
+shortHashes[883458048] = false -- Soaring: Enabled.
+shortHashes[2139150204] = false -- Soaring: thermal weak
+shortHashes[1352994600] = false -- Soaring: reached upper altitude
+shortHashes[4026147344] = false -- Soaring: reached lower altitude
+
+shortHashes[4091124880] = true -- reached command:
+shortHashes[3311875476] = true -- reached waypoint:
+shortHashes[1997782032] = true -- Passed waypoint:
+shortHashes[554623408] = false -- Takeoff complete
+shortHashes[3025044912] = false -- Smart RTL deactivated
+shortHashes[3956583920] = false -- GPS home acquired
+shortHashes[1309405592] = false -- GPS home acquired
 
 local shortHash = nil
 local parseShortHash = false
 local hashByteIndex = 0
 local hash = 2166136261
 
+
+local function triggerReset()
+  resetPending = true
+  modelChangePending = true
+end
+
+utils.failsafeActive = function(telemetry)
+  if telemetry.ekfFailsafe == 0 and telemetry.battFailsafe == 0 and telemetry.failsafe == 0 then
+    return false
+  end
+  return true
+end
+
+local function calcCellCount()
+  -- cellcount override from menu
+  local c1 = 0
+  local c2 = 0
+
+  if conf.cell1Count ~= nil and conf.cell1Count > 0 then
+    c1 = conf.cell1Count
+  elseif status.batt1sources.vs == true and status.cell1count > 1 then
+    c1 = status.cell1count
+  else
+    c1 = math.floor( ((status.cell1maxFC*0.1) / 4.35) + 1)
+  end
+
+  if conf.cell2Count ~= nil and conf.cell2Count > 0 then
+    c2 = conf.cell2Count
+  elseif status.batt2sources.vs == true and status.cell2count > 1 then
+    c2 = status.cell2count
+  else
+    c2 = math.floor(((status.cell2maxFC*0.1)/4.35) + 1)
+  end
+
+  return c1,c2
+end
+
+--[[
+  Example data based on a 18 minutes flight for quad, battery:5200mAh LiPO 10C, hover @15A
+  Notes:
+  - when motors are armed VOLTAGE_DROP offset is applied!
+  - number of samples is fixed at 11 but percentage values can be anything and are not restricted to multiples of 10
+  - voltage between samples is assumed to be linear
+--]]
+local battPercByVoltage = {}
+
+utils.getBattPercByCell = function(voltage)
+  if battPercByVoltage.dischargeCurve == nil then
+    return 99
+  end
+  -- when disarmed apply voltage drop to use an "under load" curve
+  if telemetry.statusArmed == 0 then
+    voltage = voltage - battPercByVoltage.voltageDrop
+  end
+
+  if battPercByVoltage.useCellVoltage == false then
+    voltage = voltage*calcCellCount()
+  end
+  if voltage == 0 then
+    return 99
+  end
+  if voltage >= battPercByVoltage.dischargeCurve[#battPercByVoltage.dischargeCurve][1] then
+    return 99
+  end
+  if voltage <= battPercByVoltage.dischargeCurve[1][1] then
+    return 0
+  end
+  for i=2,#battPercByVoltage.dischargeCurve do
+    if voltage <= battPercByVoltage.dischargeCurve[i][1] then
+      --
+      local v0 = battPercByVoltage.dischargeCurve[i-1][1]
+      local fv0 = battPercByVoltage.dischargeCurve[i-1][2]
+      --
+      local v1 = battPercByVoltage.dischargeCurve[i][1]
+      local fv1 = battPercByVoltage.dischargeCurve[i][2]
+      -- interpolation polinomial
+      return fv0 + ((fv1 - fv0)/(v1-v0))*(voltage - v0)
+    end
+  end --for
+end
+
 local loadCycle = 0
 
 utils.doLibrary = function(filename)
   local f = assert(loadScript(libBasePath..filename..".lua"))
-  collectgarbage()
-  collectgarbage()
   return f()
 end
 -----------------------------
--- clears the loaded table 
+-- clears the loaded table
 -- and recovers memory
 -----------------------------
 utils.clearTable = function(t)
@@ -589,29 +597,38 @@ utils.clearTable = function(t)
   t = nil
   collectgarbage()
   collectgarbage()
-  maxmem = 0
-end  
-  
-local function loadConfig()
-  -- load menu library
-  menuLib = dofile(basePath..menuLibFile..".lua")
-  menuLib.loadConfig(conf)
-  -- ok configuration loaded
-  status.battsource = conf.defaultBattSource
-  -- unload libraries
-  utils.clearTable(menuLib)
-  utils.clearTable(layout)
-  layout = nil
-  utils.clearTable(centerPanel)
-  centerPanel = nil
-  utils.clearTable(rightPanel)
-  rightPanel = nil
-  utils.clearTable(leftPanel)
-  leftPanel = nil
-  utils.clearTable(mapLayout)
-  mapLayout = nil
-  collectgarbage()
-  collectgarbage()
+end
+
+local function resetLayouts()
+  if resetLayoutPending == true then
+    if resetLayoutPhase == -1 then
+      -- empty step
+      resetLayoutPhase = 0
+    elseif resetLayoutPhase == 0 then
+      utils.clearTable(layout)
+      layout = nil
+      resetLayoutPhase = 1
+    elseif resetLayoutPhase == 1 then
+      utils.clearTable(centerPanel)
+      centerPanel = nil
+      resetLayoutPhase = 2
+    elseif resetLayoutPhase == 2 then
+      utils.clearTable(rightPanel)
+      rightPanel = nil
+      resetLayoutPhase = 3
+    elseif resetLayoutPhase == 3 then
+      utils.clearTable(leftPanel)
+      leftPanel = nil
+      resetLayoutPhase = 4
+    elseif resetLayoutPhase == 4 then
+      utils.clearTable(mapLayout)
+      mapLayout = nil
+      utils.clearTable(plotLayout)
+      plotLayout = nil
+      resetLayoutPhase = 0
+      resetLayoutPending = false
+    end
+  end
 end
 
 utils.getBitmap = function(name)
@@ -666,21 +683,18 @@ utils.playSoundByFlightMode = function(flightMode)
 end
 
 
-
 local function formatMessage(severity,msg)
   local clippedMsg = msg
-  
+
   if #msg > 50 then
     clippedMsg = string.sub(msg,1,50)
     msg = nil
-    collectgarbage()
-    collectgarbage()
   end
-  
+
   if status.lastMessageCount > 1 then
-    return string.format("%02d:%s (x%d) %s", status.messageCount, mavSeverity[severity], status.lastMessageCount, clippedMsg)
+    return string.format("%02d:%02d %s (x%d) %s", status.flightTime/60, status.flightTime%60, utils.mavSeverity[severity][1], status.lastMessageCount, clippedMsg)
   else
-    return string.format("%02d:%s %s", status.messageCount, mavSeverity[severity], clippedMsg)
+    return string.format("%02d:%02d %s %s", status.flightTime/60, status.flightTime%60, utils.mavSeverity[severity][1], clippedMsg)
   end
 end
 
@@ -697,24 +711,26 @@ utils.pushMessage = function(severity, msg)
       end
     end
   end
-  
+
   if msg == status.lastMessage then
     status.lastMessageCount = status.lastMessageCount + 1
-  else  
+  else
     status.lastMessageCount = 1
     status.messageCount = status.messageCount + 1
   end
-  if status.messages[(status.messageCount-1) % 20] == nil then
-    status.messages[(status.messageCount-1) % 20] = {}
+  local msgIndex = (status.messageCount-1) % 200
+  if status.messages[msgIndex] == nil then
+    status.messages[msgIndex] = {}
   end
-  status.messages[(status.messageCount-1) % 20][1] = formatMessage(severity,msg)
-  status.messages[(status.messageCount-1) % 20][2] = severity
-  
+  status.messages[msgIndex][1] = formatMessage(severity,msg)
+  status.messages[msgIndex][2] = severity
+
   status.lastMessage = msg
   status.lastMessageSeverity = severity
-  -- Collect Garbage
-  collectgarbage()
-  collectgarbage()
+  -- each new message scrolls all messages to the end (offset is absolute)
+  if status.messageAutoScroll == true then
+    status.messageOffset = math.max(0, status.messageCount - 20)
+  end
 end
 
 
@@ -725,13 +741,14 @@ utils.getHomeFromAngleAndDistance = function(telemetry)
   R as radius of Earth (m),
   Ad be the angular distance i.e d/R and
   θ be the bearing in deg
-  
+
   la2 =  asin(sin la1 * cos Ad  + cos la1 * sin Ad * cos θ), and
   lo2 = lo1 + atan2(sin θ * sin Ad * cos la1 , cos Ad – sin la1 * sin la2)
---]]  if telemetry.lat == nil or telemetry.lon == nil then
+--]]
+  if telemetry.lat == nil or telemetry.lon == nil then
     return nil,nil
   end
-  
+
   local lat1 = math.rad(telemetry.lat)
   local lon1 = math.rad(telemetry.lon)
   local Ad = telemetry.homeDist/(6371000) --meters
@@ -775,41 +792,71 @@ utils.drawBlinkBitmap = function(bitmap,x,y)
   end
 end
 
-local function getSensorsConfigFilename()
+local function getSensorsConfigFilename(panel)
   local info = model.getInfo()
-  return "/SCRIPTS/YAAPU/CFG/" .. string.lower(string.gsub(info.name, "[%c%p%s%z]", "").."_sensors.lua")
+  local strPanel = panel == nil and "" or "_"..panel
+  local cfg = "/SCRIPTS/YAAPU/CFG/" .. string.lower(string.gsub(info.name, "[%c%p%s%z]", "")..strPanel.."_sensors.lua")
+  print("luaDebug:",cfg)
+  local file = io.open(cfg,"r")
+
+  if file == nil then
+    cfg = "/SCRIPTS/YAAPU/CFG/default_sensors.lua"
+  else
+    io.close(file)
+  end
+
+  return cfg
+end
+
+local function getBattConfigFilename()
+  local info = model.getInfo()
+  return "/SCRIPTS/YAAPU/CFG/" .. string.lower(string.gsub(info.name, "[%c%p%s%z]", "").."_batt.lua")
 end
 
 --------------------------
 -- CUSTOM SENSORS SUPPORT
 --------------------------
 
-utils.loadCustomSensors = function()
-  local success, sensorScript = pcall(loadScript,getSensorsConfigFilename())
+utils.loadCustomSensors = function(panel)
+  local success, sensorScript = pcall(loadScript,getSensorsConfigFilename(panel))
   if success then
     if sensorScript == nil then
-      customSensors = nil
-      return
+      return nil
     end
-    collectgarbage()
-    customSensors = sensorScript()
+    local sensors = sensorScript()
     -- handle nil values for warning and critical levels
     for i=1,6
     do
-      if customSensors.sensors[i] ~= nil then 
-        local sign = customSensors.sensors[i][6] == "+" and 1 or -1
-        if customSensors.sensors[i][9] == nil then
-          customSensors.sensors[i][9] = math.huge*sign
+      if sensors.sensors[i] ~= nil then
+        local sign = sensors.sensors[i][6] == "+" and 1 or -1
+        if sensors.sensors[i][9] == nil then
+          sensors.sensors[i][9] = math.huge*sign
         end
-        if customSensors.sensors[i][8] == nil then
-          customSensors.sensors[i][8] = math.huge*sign
+        if sensors.sensors[i][8] == nil then
+          sensors.sensors[i][8] = math.huge*sign
         end
       end
     end
-    collectgarbage()
-    collectgarbage()
+    return sensors
   else
-    customSensors = nil
+    return nil
+  end
+end
+
+-------------------------------------------
+-- Battery Percentage By Voltage
+-------------------------------------------
+utils.loadBatteryConfigFile = function()
+  local success, battConfig = pcall(loadScript,getBattConfigFilename())
+  if success then
+    if battConfig == nil then
+      battPercByVoltage = {}
+      return
+    end
+    battPercByVoltage = battConfig()
+    --utils.pushMessage(6,"battery curve loaded")
+  else
+    battPercByVoltage = {}
   end
 end
 
@@ -827,8 +874,40 @@ end
 -----------------------------------------------------------------
 -- TELEMETRY
 -----------------------------------------------------------------
+local function updateHash(c)
+  hash = bit32.bxor(hash, c)
+  hash = (hash * 16777619) % 2^32
+  hashByteIndex = hashByteIndex+1
+  -- check if this hash matches any 16bytes prefix hash
+  if hashByteIndex == 16 then
+     parseShortHash = shortHashes[hash]
+     shortHash = hash
+  end
+end
 
-local function processTelemetry(DATA_ID,VALUE)
+local function playHash()
+  -- try to play the hash sound file without checking for existence
+  -- OpenTX will gracefully ignore it :-)
+  utils.playSound(tostring(shortHash == nil and hash or shortHash),true)
+  -- if required parse parameter and play it!
+  if parseShortHash == true then
+    local param = string.match(status.msgBuffer, ".*#(%d+).*")
+    if param ~= nil then
+      playNumber(tonumber(param),0)
+    end
+  end
+end
+
+local function resetHash()
+  -- reset hash for next string
+  parseShortHash = false
+  shortHash = nil
+  hash = 2166136261
+  hashByteIndex = 0
+end
+
+
+local function processTelemetry(DATA_ID,VALUE,now)
   if DATA_ID == 0x5006 then -- ROLLPITCH
     -- roll [0,1800] ==> [-180,180]
     telemetry.roll = (math.min(bit32.extract(VALUE,0,11),1800) - 900) * 0.2
@@ -837,9 +916,17 @@ local function processTelemetry(DATA_ID,VALUE)
     -- number encoded on 11 bits: 10 bits for digits + 1 for 10^power
     telemetry.range = bit32.extract(VALUE,22,10) * (10^bit32.extract(VALUE,21,1)) -- cm
   elseif DATA_ID == 0x5005 then -- VELANDYAW
-    telemetry.vSpeed = bit32.extract(VALUE,1,7) * (10^bit32.extract(VALUE,0,1)) * (bit32.extract(VALUE,8,1) == 1 and -1 or 1)-- dm/s 
-    telemetry.hSpeed = bit32.extract(VALUE,10,7) * (10^bit32.extract(VALUE,9,1)) -- dm/s
+    telemetry.vSpeed = bit32.extract(VALUE,1,7) * (10^bit32.extract(VALUE,0,1)) * (bit32.extract(VALUE,8,1) == 1 and -1 or 1)-- dm/s
     telemetry.yaw = bit32.extract(VALUE,17,11) * 0.2
+    -- once detected it's sticky
+    if bit32.extract(VALUE,28,1) == 1 then
+      telemetry.airspeed = bit32.extract(VALUE,10,7) * (10^bit32.extract(VALUE,9,1)) -- dm/s
+    else
+      telemetry.hSpeed = bit32.extract(VALUE,10,7) * (10^bit32.extract(VALUE,9,1)) -- dm/s
+    end
+    if status.airspeedEnabled == 0 then
+      status.airspeedEnabled = bit32.extract(VALUE,28,1)
+    end
   elseif DATA_ID == 0x5001 then -- AP STATUS
     telemetry.flightMode = bit32.extract(VALUE,0,5)
     telemetry.simpleMode = bit32.extract(VALUE,5,2)
@@ -847,6 +934,10 @@ local function processTelemetry(DATA_ID,VALUE)
     telemetry.statusArmed = bit32.extract(VALUE,8,1)
     telemetry.battFailsafe = bit32.extract(VALUE,9,1)
     telemetry.ekfFailsafe = bit32.extract(VALUE,10,2)
+    telemetry.failsafe = bit32.extract(VALUE,12,1)
+    telemetry.fencePresent = bit32.extract(VALUE,13,1)
+    telemetry.fenceBreached = telemetry.fencePresent == 1 and bit32.extract(VALUE,14,1) or 0 -- ignore if fence is disabled
+    telemetry.throttle = math.floor(0.5 + (bit32.extract(VALUE,19,6) * (bit32.extract(VALUE,25,1) == 1 and -1 or 1) * 1.58)) -- signed throttle [-63,63] -> [-100,100]
     -- IMU temperature: 0 means temp =< 19°, 63 means temp => 82°
     telemetry.imuTemp = bit32.extract(VALUE,26,6) + 19 -- C°
   elseif DATA_ID == 0x5002 then -- GPS STATUS
@@ -890,23 +981,7 @@ local function processTelemetry(DATA_ID,VALUE)
         c = bit32.extract(VALUE,i*8,7)
         if c ~= 0 then
           status.msgBuffer = status.msgBuffer .. string.char(c)
-          collectgarbage()
-          collectgarbage()
-          hash = bit32.bxor(hash, c)
-          hash = (hash * 16777619) % 2^32
-          hashByteIndex = hashByteIndex+1
-          -- check if this hash matches any 16bytes prefix hash
-          if hashByteIndex == 16 then
-            for i=1,#shortHashes
-            do
-              if hash == shortHashes[i][1] then
-                shortHash = hash
-                -- check if needs parsing
-                parseShortHash = shortHashes[i][2] == nil and false or true
-                break;
-              end
-            end
-          end
+          updateHash(c)
         else
           msgEnd = true;
           break;
@@ -915,27 +990,9 @@ local function processTelemetry(DATA_ID,VALUE)
       if msgEnd then
         local severity = (bit32.extract(VALUE,7,1) * 1) + (bit32.extract(VALUE,15,1) * 2) + (bit32.extract(VALUE,23,1) * 4)
         utils.pushMessage( severity, status.msgBuffer)
-        -- try to play the hash sound file without checking
-        -- for existence, OpenTX will gracefully ignore it :-)
-        utils.playSound(tostring(shortHash == nil and hash or shortHash),true)
-        -- if required parse parameter and play it!
-        if parseShortHash then
-          local param = string.match(status.msgBuffer, ".*#(%d+).*")
-          collectgarbage()
-          if param ~= nil then
-            playNumber(tonumber(param),0)
-            collectgarbage()
-          end
-        end
-        -- reset hash for next string
-        parseShortHash = false
-        shortHash = nil
-        hash = 2166136261
-        hashByteIndex = 0
+        playHash()
+        resetHash()
         status.msgBuffer = nil
-        -- recover memory
-        collectgarbage()
-        collectgarbage()
         status.msgBuffer = ""
       end
     end
@@ -950,24 +1007,42 @@ local function processTelemetry(DATA_ID,VALUE)
       telemetry.batt2Capacity = paramValue
     elseif paramId == 6 then
       telemetry.wpCommands = paramValue
-    end 
+    end
   elseif DATA_ID == 0x5009 then -- WAYPOINTS @1Hz
     telemetry.wpNumber = bit32.extract(VALUE,0,10) -- wp index
     telemetry.wpDistance = bit32.extract(VALUE,12,10) * (10^bit32.extract(VALUE,10,2)) -- meters
     telemetry.wpXTError = bit32.extract(VALUE,23,4) * (10^bit32.extract(VALUE,22,1)) * (bit32.extract(VALUE,27,1) == 1 and -1 or 1)-- meters
-    telemetry.wpBearing = bit32.extract(VALUE,29,3) -- offset from cog with 45° resolution 
+    telemetry.wpBearing = bit32.extract(VALUE,29,3) -- offset from cog with 45° resolution
+  elseif DATA_ID == 0x500A then -- RPM 1 and 2
+    -- rpm1 and rpm2 are int16_t
+    local rpm1 = bit32.extract(VALUE,0,16)
+    local rpm2 = bit32.extract(VALUE,16,16)
+    telemetry.rpm1 = 10*(bit32.extract(VALUE,15,1) == 0 and rpm1 or -1*(1+bit32.band(0x0000FFFF,bit32.bnot(rpm1)))) -- 2 complement if negative
+    telemetry.rpm2 = 10*(bit32.extract(VALUE,31,1) == 0 and rpm2 or -1*(1+bit32.band(0x0000FFFF,bit32.bnot(rpm2)))) -- 2 complement if negative
+  elseif DATA_ID == 0x500B then -- TERRAIN
+    telemetry.heightAboveTerrain = bit32.extract(VALUE,2,10) * (10^bit32.extract(VALUE,0,2)) * 0.1 * (bit32.extract(VALUE,12,1) == 1 and -1 or 1) -- dm to meters
+    telemetry.terrainUnhealthy = bit32.extract(VALUE,13,1)
+    status.terrainLastData = now
+    status.terrainEnabled = 1
+  elseif DATA_ID == 0x500C then -- WIND
+    telemetry.trueWindSpeed = bit32.extract(VALUE,8,7) * (10^bit32.extract(VALUE,7,1)) -- dm/s
+    telemetry.trueWindAngle = bit32.extract(VALUE, 0, 7) * 3 -- degrees
+    telemetry.apparentWindSpeed = bit32.extract(VALUE,23,7) * (10^bit32.extract(VALUE,22,1)) -- dm/s
+    telemetry.apparentWindAngle = bit32.extract(VALUE, 16, 6) * (bit32.extract(VALUE,15,1) == 1 and -1 or 1) * 3 -- degrees
   --[[
   elseif DATA_ID == 0x50F1 then -- RC CHANNELS
     -- channels 1 - 32
     local offset = bit32.extract(VALUE,0,4) * 4
-    rcchannels[1 + offset] = 100 * (bit32.extract(VALUE,4,6)/63) * (bit32.extract(VALUE,10,1) == 1 and -1 or 1) 
+    rcchannels[1 + offset] = 100 * (bit32.extract(VALUE,4,6)/63) * (bit32.extract(VALUE,10,1) == 1 and -1 or 1)
     rcchannels[2 + offset] = 100 * (bit32.extract(VALUE,11,6)/63) * (bit32.extract(VALUE,17,1) == 1 and -1 or 1)
     rcchannels[3 + offset] = 100 * (bit32.extract(VALUE,18,6)/63) * (bit32.extract(VALUE,24,1) == 1 and -1 or 1)
     rcchannels[4 + offset] = 100 * (bit32.extract(VALUE,25,6)/63) * (bit32.extract(VALUE,31,1) == 1 and -1 or 1)
-  --]]  elseif DATA_ID == 0x50F2 then -- VFR
+  --]]
+  elseif DATA_ID == 0x50F2 then -- VFR
     telemetry.airspeed = bit32.extract(VALUE,1,7) * (10^bit32.extract(VALUE,0,1)) -- dm/s
-    telemetry.throttle = bit32.extract(VALUE,8,7)
+    telemetry.throttle = bit32.extract(VALUE,8,7) -- unsigned throttle
     telemetry.baroAlt = bit32.extract(VALUE,17,10) * (10^bit32.extract(VALUE,15,2)) * 0.1 * (bit32.extract(VALUE,27,1) == 1 and -1 or 1)
+    status.airspeedEnabled = 1
   end
 end
 
@@ -990,30 +1065,6 @@ end
 -- returns the actual minimun only if both are > 0
 local function getNonZeroMin(v1,v2)
   return v1 == 0 and v2 or ( v2 == 0 and v1 or math.min(v1,v2))
-end
-
-local function calcCellCount()
-  -- cellcount override from menu
-  local c1 = 0
-  local c2 = 0
-  
-  if conf.cell1Count ~= nil and conf.cell1Count > 0 then
-    c1 = conf.cell1Count
-  elseif status.batt1sources.vs == true and status.cell1count > 1 then
-    c1 = status.cell1count
-  else
-    c1 = math.floor( ((status.cell1maxFC*0.1) / 4.35) + 1)
-  end
-  
-  if conf.cell2Count ~= nil and conf.cell2Count > 0 then
-    c2 = conf.cell2Count
-  elseif status.batt2sources.vs == true and status.cell2count > 1 then
-    c2 = status.cell2count
-  else
-    c2 = math.floor(((status.cell2maxFC*0.1)/4.35) + 1)
-  end
-  
-  return c1,c2
 end
 
 local function getBatt1Capacity()
@@ -1050,7 +1101,7 @@ local function calcFLVSSBatt(battIdx)
   local battSources = battIdx == 1 and status.batt1sources or status.batt2sources
 
   local cellResult = battIdx == 1 and getValue("Cels") or getValue("Cel2")
-  
+
   if type(cellResult) == "table" then
     cellMin = 4.35
     cellSum = 0
@@ -1083,12 +1134,12 @@ local function calcBattery()
   -- FLVSS 1
   ------------
   status.cell1min, status.cell1sum, status.cell1count = calcFLVSSBatt(1) --1 = Cels
-  
+
   ------------
   -- FLVSS 2
   ------------
   status.cell2min, status.cell2sum, status.cell2count = calcFLVSSBatt(2) --2 = Cel2
-  
+
   --------------------------------
   -- flight controller battery 1
   --------------------------------
@@ -1133,33 +1184,94 @@ local function calcBattery()
   -- value = offset + [0 aggregate|1 for batt 1| 2 for batt2]
   -- batt2 = 4 + 2 = 6
   ------------------------------------------
-  -- Note: these can be calculated. not necessary to track them as min/max 
+
+  -- 1 1
+  -- 4 4
+  -- 7 7
+  -- 10 10
+  -- 13 13
+  -- 16 16
+  -- possible battery configs
+  -- 1, 2, 3, 4, 5, 6
+
+  -- Note: these can be calculated. not necessary to track them as min/max
   -- cell1minFC = cell1sumFC/calcCellCount()
   -- cell2minFC = cell2sumFC/calcCellCount()
   -- cell1minA2 = cell1sumA2/calcCellCount()
   --
   local count1,count2 = calcCellCount()
-  
+
   battery[1+1] = getMinVoltageBySource(status.battsource, status.cell1min, status.cell1sumFC/count1, 1)*100 --cel1m
   battery[1+2] = getMinVoltageBySource(status.battsource, status.cell2min, status.cell2sumFC/count2, 2)*100 --cel2m
-  battery[1] = (conf.battConf ==  3 and battery[2] or getNonZeroMin(battery[2], battery[3]) )
 
   battery[4+1] = getMinVoltageBySource(status.battsource, status.cell1sum, status.cell1sumFC, 1)*10 --batt1
   battery[4+2] = getMinVoltageBySource(status.battsource, status.cell2sum, status.cell2sumFC, 2)*10 --batt2
-  battery[4] = (conf.battConf ==  3 and battery[5] or (conf.battConf == 2 and battery[5]+battery[6] or getNonZeroMin(battery[5],battery[6]))) 
 
-  battery[7] = utils.getMaxValue((conf.battConf ==  3 and telemetry.batt1current or telemetry.batt1current + telemetry.batt2current),7)
   battery[7+1] = utils.getMaxValue(telemetry.batt1current,8) --curr1
   battery[7+2] = utils.getMaxValue(telemetry.batt2current,9) --curr2
 
-  battery[10] = (conf.battConf ==  3 and telemetry.batt1mah or telemetry.batt1mah + telemetry.batt2mah)
   battery[10+1] = telemetry.batt1mah --mah1
   battery[10+2] = telemetry.batt2mah --mah2
-  
-  battery[13] = (conf.battConf ==  1 and getBatt1Capacity() + getBatt2Capacity() or getBatt1Capacity())
+
   battery[13+1] = getBatt1Capacity() --cap1
   battery[13+2] = getBatt2Capacity() --cap2
-  
+
+  if (conf.battConf == 1) then
+    battery[1] = getNonZeroMin(battery[2], battery[3])
+    battery[4] = getNonZeroMin(battery[5],battery[6])
+    battery[7] = utils.getMaxValue(telemetry.batt1current + telemetry.batt2current, 7)
+    battery[10] = telemetry.batt1mah + telemetry.batt2mah
+    battery[13] = getBatt2Capacity() + getBatt1Capacity()
+  elseif (conf.battConf == 2) then
+    battery[1] = getNonZeroMin(battery[2], battery[3])
+    battery[4] = battery[5] + battery[6]
+    battery[7] = utils.getMaxValue(telemetry.batt1current,7)
+    battery[10] = telemetry.batt1mah
+    battery[13] = getBatt1Capacity()
+  elseif (conf.battConf == 3) then
+    -- independent batteries, alerts and capacity % on battery 1
+    battery[1] = battery[2]
+    battery[4] = battery[5]
+    battery[7] = utils.getMaxValue(telemetry.batt1current,7)
+    battery[10] = telemetry.batt1mah
+    battery[13] = getBatt1Capacity()
+  elseif (conf.battConf == 4) then
+    -- independent batteries, alerts and capacity % on battery 2
+    battery[1] = battery[3]
+    battery[4] = battery[6]
+    battery[7] = utils.getMaxValue(telemetry.batt2current,7)
+    battery[10] = telemetry.batt2mah
+    battery[13] = getBatt2Capacity()
+  elseif (conf.battConf == 5) then
+    -- independent batteries, voltage alerts on battery 1, capacity % on battery 2
+    battery[1] = battery[2]
+    battery[4] = battery[5]
+    battery[7] = utils.getMaxValue(telemetry.batt2current,7)
+    battery[10] = telemetry.batt2mah
+    battery[13] = getBatt2Capacity()
+  elseif (conf.battConf == 6) then
+    -- independent batteries, voltage alerts on battery 2, capacity % on battery 1
+    battery[1] = battery[3]
+    battery[4] = battery[6]
+    battery[7] = utils.getMaxValue(telemetry.batt1current,7)
+    battery[10] = telemetry.batt1mah
+    battery[13] = getBatt1Capacity()
+  end
+
+  --[[
+    discharge curve is based on battery under load, when motors are disarmed
+    cellvoltage needs to be corrected by subtracting the "under load" voltage drop
+  --]]
+  if conf.enableBattPercByVoltage == true then
+    for battId=0,2
+    do
+      if telemetry.statusArmed then
+        battery[16+battId] = utils.getBattPercByCell(0.01*battery[1+battId])
+      else
+        battery[16+battId] = utils.getBattPercByCell((0.01*battery[1+battId])-0.15)
+      end
+    end
+  else
   for battId=0,2
   do
     if (battery[13+battId] > 0) then
@@ -1172,6 +1284,7 @@ local function calcBattery()
     else
       battery[16+battId] = 99
     end
+  end
   end
 
   if status.showDualBattery == true and conf.battConf ==  1 then
@@ -1207,58 +1320,267 @@ local function checkLandingStatus()
   status.timerRunning = telemetry.landComplete
 end
 
-local resetLib = {}
+local function drainTelemetryQueues()
+  if conf.enableCRSF == false then
+    -- SPORT
+    local i = 0
+    -- empty sport queue
+    local a,b,c,d = sportTelemetryPop()
+    while a ~= null and i < 50 do
+      a,b,c,d = sportTelemetryPop()
+      i = i + 1
+    end
+  else
+    -- CRSF
+    local i = 0
+    -- empty sport queue
+    local a,b = crossfireTelemetryPop()
+    while a ~= null and i < 50 do
+      a,b = crossfireTelemetryPop()
+      i = i + 1
+    end
+  end
+end
+
+local function drawRssi()
+  -- RSSI
+  lcd.drawText(323, 0, "RS:", 0+CUSTOM_COLOR)
+  lcd.drawText(323 + 30,0, getRSSI(), 0+CUSTOM_COLOR)
+end
+
+local function drawRssiCRSF()
+  lcd.setColor(CUSTOM_COLOR,0xFFFF)
+  -- RSSI
+  lcd.drawText(323 - 128, 0, "RTP:", 0+CUSTOM_COLOR+SMLSIZE)
+  lcd.drawText(323, 0, "RS:", 0+CUSTOM_COLOR+SMLSIZE)
+  lcd.drawText(323 - 128 + 30, 0, string.format("%d/%d/%d",getValue("RQly"),getValue("TQly"),getValue("TPWR")), 0+CUSTOM_COLOR+SMLSIZE)
+  lcd.drawText(323 + 22, 0, string.format("%d/%d", telemetry.rssiCRSF, getValue("RFMD")), 0+CUSTOM_COLOR+SMLSIZE)
+end
+
+local function resetTelemetry()
+  -----------------------------
+  -- TELEMETRY
+  -----------------------------
+  -- AP STATUS
+  telemetry.flightMode = 0
+  telemetry.simpleMode = 0
+  telemetry.landComplete = 0
+  telemetry.statusArmed = 0
+  telemetry.battFailsafe = 0
+  telemetry.ekfFailsafe = 0
+  telemetry.imuTemp = 0
+  -- GPS
+  telemetry.numSats = 0
+  telemetry.gpsStatus = 0
+  telemetry.gpsHdopC = 100
+  telemetry.gpsAlt = 0
+  -- BATT 1
+  telemetry.batt1volt = 0
+  telemetry.batt1current = 0
+  telemetry.batt1mah = 0
+  -- BATT 2
+  telemetry.batt2volt = 0
+  telemetry.batt2current = 0
+  telemetry.batt2mah = 0
+  -- HOME
+  telemetry.homeDist = 0
+  telemetry.homeAlt = 0
+  telemetry.homeAngle = -1
+  -- VELANDYAW
+  telemetry.vSpeed = 0
+  telemetry.hSpeed = 0
+  telemetry.yaw = 0
+  -- ROLLPITCH
+  telemetry.roll = 0
+  telemetry.pitch = 0
+  telemetry.range = 0
+  -- PARAMS
+  telemetry.frameType = -1
+  telemetry.batt1Capacity = 0
+  telemetry.batt2Capacity = 0
+  -- GPS
+  telemetry.lat = nil
+  telemetry.lon = nil
+  telemetry.homeLat = nil
+  telemetry.homeLon = nil
+  -- WP
+  telemetry.wpNumber = 0
+  telemetry.wpDistance = 0
+  telemetry.wpXTError = 0
+  telemetry.wpBearing = 0
+  telemetry.wpCommands = 0
+  -- RC channels
+  telemetry.rcchannels = {}
+  -- VFR
+  telemetry.airspeed = 0
+  telemetry.throttle = 0
+  telemetry.baroAlt = 0
+  -- Total distance
+  telemetry.totalDist = 0
+  -- RPM
+  telemetry.rpm1 = 0
+  telemetry.rpm2 = 0
+  -- TERRAIN
+  telemetry.heightAboveTerrain = 0
+  telemetry.terrainUnhealthy = 0
+  -- WIND
+  telemetry.trueWindSpeed = 0
+  telemetry.trueWindAngle = 0
+  telemetry.apparentWindSpeed = 0
+  telemetry.apparentWindAngle = 0
+  -- RSSI
+  telemetry.rssi = 0
+  telemetry.rssiCRSF = 0
+end
+
+local function resetStatus()
+  -----------------------------
+  -- SCRIPT STATUS
+  -----------------------------
+  -- FLVSS 1
+  status.cell1min = 0
+  status.cell1sum = 0
+  -- FLVSS 2
+  status.cell2min = 0
+  status.cell2sum = 0
+  -- FC 1
+  status.cell1sumFC = 0
+  status.cell1maxFC = 0
+  -- FC 2
+  status.cell2sumFC = 0
+  status.cell2maxFC = 0
+  -- BATT
+  status.cell1count = 0
+  status.cell2count = 0
+
+  status.battsource = "na"
+  -- BATT 1
+  status.batt1sources = {
+    vs = false,
+    fc = false
+  }
+  -- BATT 2
+  status.batt2sources = {
+    vs = false,
+    fc = false
+  }
+  -- TELEMETRY
+  status.noTelemetryData = 1
+  -- MESSAGES
+  status.msgBuffer = ""
+  status.lastMsgValue = 0
+  status.lastMsgTime = 0
+  -- FLIGHT TIME
+  status.lastTimerStart = 0
+  status.timerRunning = 0
+  status.flightTime = 0
+  -- EVENTS
+  status.lastStatusArmed = 0
+  status.lastGpsStatus = 0
+  status.lastFlightMode = 0
+  status.lastSimpleMode = 0
+  -- battery levels
+  status.batLevel = 99
+  status.battLevel1 = false
+  status.battLevel2 = false
+  status.lastBattLevel = 14
+  -------------------------
+  -- BATTERY ARRAY
+  -------------------------
+  battery = {0,0,0,0,0,0,0,0,0,0,0,0}
+end
+
+local function resetMessages()
+  -- MESSAGES
+  utils.clearTable(status.messages)
+
+  status.msgBuffer = ""
+  status.lastMsgValue = 0
+  status.lastMsgTime = 0
+  status.lastMessage = nil
+  status.lastMessageSeverity = 0
+  status.lastMessageCount = 1
+  status.messageCount = 0
+  status.messages = {}
+end
+
+local function resetAlarms()
+  -- reset alarms
+  alarms[1] = { false, 0 , false, 0, 0, false, 0} --MIN_ALT
+  alarms[2] = { false, 0 , true, 1, 0, false, 0 } --MAX_ALT
+  alarms[3] = { false, 0 , true, 1, 0, false, 0 } --15
+  alarms[4] = { false, 0 , true, 1, 0, false, 0 } --FS_EKF
+  alarms[5] = { false, 0 , true, 1, 0, false, 0 } --FS_BAT
+  alarms[6] = { false, 0 , true, 2, 0, false, 0 } --FLIGTH_TIME
+  alarms[7] = { false, 0 , false, 3, 4, false, 0 } --BATT L1
+  alarms[8] = { false, 0 , false, 4, 4, false, 0 } --BATT L2
+  alarms[9] = { false, 0 , true, 1, 0, false, 0 } --FS
+  alarms[10] = { false, 0 , true, 1, 0, false, 0 } --FENCE
+  alarms[11] = { false, 0 , true, 1, 0, false, 0 } --TERRAIN
+end
+
+local function resetTimers()
+  -- stop and reset timer
+  model.setTimer(2,{mode=0})
+  model.setTimer(2,{value=0})
+end
 
 local function reset()
-  -- ERRORE reset da kill CPU limit!!!!!!!!
-  -- 2 stage reset
-  if resetPending == false then
-    -- initialize status
-    if resetLib.resetWidget == nil then
-      resetLib = utils.doLibrary("reset")
-      collectgarbage()
-      collectgarbage()
+  if resetPending then
+    if resetPhase == 0 then
+      -- reset frame
+      utils.clearTable(frame.frameTypes)
+      drainTelemetryQueues()
+      resetPhase = 1
+    elseif resetPhase == 1 then
+      resetTelemetry()
+      resetPhase = 2
+    elseif resetPhase == 2 then
+      resetStatus()
+      resetPhase = 3
+    elseif resetPhase == 3 then
+      resetAlarms()
+      resetPhase = 4
+    elseif resetPhase == 4 then
+      resetTimers()
+      resetMessages()
+      resetPhase = 5
+    elseif resetPhase == 5 then
+      currentPage = 0
+      minmaxValues = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+      status.showMinMaxValues = false
+      status.showDualBattery = false
+      status.strFlightMode = nil
+      status.modelString = nil
+      frame = {}
+      drawLib.resetGraph("plot1")
+      drawLib.resetGraph("plot2")
+      resetPhase = 6
+    elseif resetPhase == 6 then
+      -- custom sensors
+      utils.clearTable(customSensors)
+      customSensors = utils.loadCustomSensors()
+      -- done
+      resetPhase = 7
+    elseif resetPhase == 7 then
+      utils.pushMessage(7,"Yaapu Telemetry Widget 1.9.5")
+      utils.playSound("yaapu")
+      -- on model change reload config!
+      if modelChangePending == true then
+        -- force load model config
+        loadConfigPending = true
+        model.setGlobalVariable(8, 8, 1)
+      end
+      resetPhase = 0
+      resetPending = false
     end
-    -- reset frame
-    utils.clearTable(frame.frameTypes)
-    -- reset widget pages
-    currentPage = 0
-    
-    minmaxValues = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
-    
-    status.showMinMaxValues = false
-    status.showDualBattery = false
-    status.strFlightMode = nil
-    status.modelString = nil
-    
-    frame = {}
-    -- reset all
-    resetLib.resetTelemetry(status,telemetry,battery,alarms,utils)
-    -- release resources
-    utils.clearTable(resetLib)
-    -- force load model config
-    model.setGlobalVariable(8,8,1)
-    collectgarbage()
-    collectgarbage()
-    utils.pushMessage(6,"telemetry reset done!")
-    resetPending = true
-  else
-    -- custom sensors
-    utils.clearTable(customSensors)
-    customSensors = nil
-    utils.loadCustomSensors()
-    -- done
-    utils.playSound("yaapu")
-    collectgarbage()
-    collectgarbage()
-    resetPending = false
   end
 end
 
 local function calcFlightTime()
   -- update local variable with timer 3 value
   if ( model.getTimer(2).value < status.flightTime and telemetry.statusArmed == 0) then
-    reset()
+    triggerReset()
   end
   if (model.getTimer(2).value < status.flightTime and telemetry.statusArmed == 1) then
     model.setTimer(2,{value=status.flightTime})
@@ -1277,27 +1599,44 @@ local function setSensorValues()
     battcapacity =  getBatt1Capacity() + getBatt2Capacity()
     battmah = telemetry.batt1mah + telemetry.batt2mah
   end
-  
+
   local perc = 0
-  
+
   if (battcapacity > 0) then
     perc = math.min(math.max((1 - (battmah/battcapacity))*100,0),99)
   end
 
-  setTelemetryValue(0x060F, 0, 0, perc, 13 , 0 , "Fuel")
+  -- CRSF
+  if not conf.enableCRSF then
+    setTelemetryValue(0x060F, 0, 0, perc, 13 , 0 , "Fuel")
+    setTelemetryValue(0x020F, 0, 0, telemetry.batt1current+telemetry.batt2current, 2 , 1 , "CURR")
+    setTelemetryValue(0x084F, 0, 0, math.floor(telemetry.yaw), 20 , 0 , "Hdg")
+    setTelemetryValue(0x010F, 0, 0, telemetry.homeAlt*10, 9 , 1 , "Alt")
+    setTelemetryValue(0x083F, 0, 0, telemetry.hSpeed*0.1, 5 , 0 , "GSpd")
+  end
+
   setTelemetryValue(0x021F, 0, 0, getNonZeroMin(telemetry.batt1volt,telemetry.batt2volt)*10, 1 , 2 , "VFAS")
-  setTelemetryValue(0x020F, 0, 0, telemetry.batt1current+telemetry.batt2current, 2 , 1 , "CURR")
   setTelemetryValue(0x011F, 0, 0, telemetry.vSpeed, 5 , 1 , "VSpd")
-  setTelemetryValue(0x083F, 0, 0, telemetry.hSpeed*0.1, 5 , 0 , "GSpd")
-  setTelemetryValue(0x010F, 0, 0, telemetry.homeAlt*10, 9 , 1 , "Alt")
   setTelemetryValue(0x082F, 0, 0, math.floor(telemetry.gpsAlt*0.1), 9 , 0 , "GAlt")
-  setTelemetryValue(0x084F, 0, 0, math.floor(telemetry.yaw), 20 , 0 , "Hdg")
   setTelemetryValue(0x041F, 0, 0, telemetry.imuTemp, 11 , 0 , "IMUt")
   setTelemetryValue(0x060F, 0, 1, telemetry.statusArmed*100, 0 , 0 , "ARM")
+  setTelemetryValue(0x050D, 0, 0, telemetry.throttle, 13 , 0 , "Thr")
+
+  if conf.enableRPM == 2  or conf.enableRPM == 3 then
+    setTelemetryValue(0x050E, 0, 0, telemetry.rpm1, 18 , 0 , "RPM1")
+  end
+  if conf.enableRPM == 3 then
+    setTelemetryValue(0x050F, 0, 0, telemetry.rpm2, 18 , 0 , "RPM2")
+  end
+  if status.airspeedEnabled == 1 then
+    setTelemetryValue(0x0AF, 0, 0, telemetry.airspeed*0.1, 4 , 0 , "ASpd")
+  end
+  --setTelemetryValue(0x070F, 0, 0, telemetry.roll, 20 , 0 , "ROLL")
+  --setTelemetryValue(0x071F, 0, 0, telemetry.pitch, 20 , 0 , "PTCH")
 end
 
 utils.drawTopBar = function()
-  lcd.setColor(CUSTOM_COLOR,0x0000)  
+  lcd.setColor(CUSTOM_COLOR,0x0000)
   -- black bar
   lcd.drawFilledRectangle(0,0, LCD_W, 18, CUSTOM_COLOR)
   -- frametype and model name
@@ -1308,37 +1647,34 @@ utils.drawTopBar = function()
   -- flight time
   local time = getDateTime()
   local strtime = string.format("%02d:%02d:%02d",time.hour,time.min,time.sec)
-  lcd.drawText(LCD_W, 0+4, strtime, SMLSIZE+RIGHT+CUSTOM_COLOR)
+  lcd.drawText(LCD_W, 0, strtime, SMLSIZE+RIGHT+CUSTOM_COLOR)
+  -- RSSI
   -- RSSI
   if telemetryEnabled() == false then
-    lcd.setColor(CUSTOM_COLOR,0xF800)    
-    lcd.drawText(285-23, 0, "NO TELEM", 0 +CUSTOM_COLOR)
+    lcd.setColor(CUSTOM_COLOR,0xF800)
+    lcd.drawText(323-23, 0, "NO TELEM", 0+CUSTOM_COLOR)
   else
-    lcd.drawText(285, 0, "RS:", 0 +CUSTOM_COLOR)
-    lcd.drawText(285 + 30,0, getRSSI(), 0 +CUSTOM_COLOR)  
+    utils.drawRssi()
   end
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)    
+  lcd.setColor(CUSTOM_COLOR,0xFFFF)
   -- tx voltage
-  local vtx = string.format("Tx:%.1fv",getValue(getFieldInfo("tx-voltage").id))
-  lcd.drawText(350,0, vtx, 0+CUSTOM_COLOR)
+  local vtx = string.format("%.1fv",getValue(getFieldInfo("tx-voltage").id))
+  lcd.drawText(391,0, vtx, 0+CUSTOM_COLOR+SMLSIZE)
 end
 
 local function drawMessageScreen()
-  for i=0,#status.messages do
-    if  status.messages[(status.messageCount + i) % (#status.messages+1)][2] == 4 then
-      lcd.setColor(CUSTOM_COLOR,lcd.RGB(255,255,0))
-    elseif status.messages[(status.messageCount + i) % (#status.messages+1)][2] < 4 then
-      --lcd.setColor(CUSTOM_COLOR,0xF800)
-      lcd.setColor(CUSTOM_COLOR,lcd.RGB(255,70,0))  
-    else
-      lcd.setColor(CUSTOM_COLOR,0xFFFF)
-    end
-    lcd.drawText(0,2+13*i, status.messages[(status.messageCount + i) % (#status.messages+1)][1],SMLSIZE+CUSTOM_COLOR)
+  local row = 0
+  local offsetStart = status.messageOffset
+  local offsetEnd = math.min(status.messageCount-1, status.messageOffset + 20 - 1)
+
+  for i=offsetStart,offsetEnd  do
+    lcd.setColor(CUSTOM_COLOR,utils.mavSeverity[status.messages[i % 200][2]][2])
+    lcd.drawText(0,4+12*row, status.messages[i % 200][1],SMLSIZE+CUSTOM_COLOR)
+    row = row+1
   end
-  
   lcd.setColor(CUSTOM_COLOR,0x0AB1)
   lcd.drawFilledRectangle(405,0,75,272,CUSTOM_COLOR)
-  
+
   lcd.setColor(CUSTOM_COLOR,0xFFFF)
   -- print info on the right
   -- CELL
@@ -1350,10 +1686,13 @@ local function drawMessageScreen()
   lcd.drawText(410+50, 1, status.battsource, SMLSIZE+CUSTOM_COLOR)
   lcd.drawText(410+50, 11, "V", SMLSIZE+CUSTOM_COLOR)
   -- ALT
+  local altPrefix = status.terrainEnabled == 1 and "HAT(" or "Alt("
+  local alt = status.terrainEnabled == 1 and telemetry.heightAboveTerrain or telemetry.homeAlt
+
   lcd.setColor(CUSTOM_COLOR,0x0000)
-  lcd.drawText(410, 25, "Alt("..unitLabel..")", SMLSIZE+0+CUSTOM_COLOR)
+  lcd.drawText(410, 25, altPrefix..unitLabel..")", SMLSIZE+0+CUSTOM_COLOR)
   lcd.setColor(CUSTOM_COLOR,0xFFFF)
-  lcd.drawNumber(410,37,telemetry.homeAlt*unitScale,MIDSIZE+CUSTOM_COLOR+0)
+  lcd.drawNumber(410,37,alt*unitScale,MIDSIZE+CUSTOM_COLOR+0)
   -- SPEED
   lcd.setColor(CUSTOM_COLOR,0x0000)
   lcd.drawText(410, 60, "Spd("..conf.horSpeedLabel..")", SMLSIZE+0+CUSTOM_COLOR)
@@ -1377,6 +1716,24 @@ local function drawMessageScreen()
   -- HOMEDIR
   lcd.setColor(CUSTOM_COLOR,0xFE60)
   drawLib.drawRArrow(442,235,22,math.floor(telemetry.homeAngle - telemetry.yaw),CUSTOM_COLOR)--HomeDirection(telemetry)
+  -- AUTOSCROLL
+  if status.messageAutoScroll == true then
+    lcd.setColor(CUSTOM_COLOR,0xFFFF)
+  else
+    lcd.setColor(CUSTOM_COLOR,0xFE60)
+  end
+  local maxPages = tonumber(math.ceil((#status.messages+1)/20))
+  local currentPage = 1+tonumber(maxPages - (status.messageCount - status.messageOffset)/20)
+
+  lcd.drawText(LCD_W-2, LCD_H-16, string.format("%d/%d",currentPage,maxPages), SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.setColor(CUSTOM_COLOR,0x7BCF)
+  lcd.drawLine(0,LCD_H-20,405,LCD_H-20,SOLID,CUSTOM_COLOR)
+
+  lcd.setColor(CUSTOM_COLOR,0xFFFF)
+  if status.strFlightMode ~= nil then
+    lcd.drawText(0,LCD_H-20,status.strFlightMode,CUSTOM_COLOR)
+  end
+  lcd.drawTimer(402, LCD_H-20, model.getTimer(2).value, CUSTOM_COLOR+RIGHT)
 end
 
 ---------------------------------
@@ -1387,9 +1744,9 @@ utils.checkAlarm = function(level,value,idx,sign,sound,delay)
   -- once landed reset all alarms except battery alerts
   if status.timerRunning == 0 then
     if alarms[idx][4] == 0 then
-      alarms[idx] = { false, 0, false, 0, 0, false, 0} 
-    elseif alarms[idx][4] == 1  then
-      alarms[idx] = { false, 0, true, 1 , 0, false, 0}
+      alarms[idx] = { false, 0, false, 0, 0, false, 0}
+    elseif alarms[idx][4] == 1 then
+      alarms[idx] = { false, 0, true, 1, 0, false, 0}
     elseif  alarms[idx][4] == 2 then
       alarms[idx] = { false, 0, true, 2, 0, false, 0}
     elseif  alarms[idx][4] == 3 then
@@ -1400,14 +1757,14 @@ utils.checkAlarm = function(level,value,idx,sign,sound,delay)
     -- reset done
     return
   end
-  -- if needed arm the alarm only after value has reached level  
+  -- if needed arm the alarm only after value has reached level
   if alarms[idx][3] == false and level > 0 and -1 * sign*value > -1 * sign*level then
     alarms[idx][3] = true
   end
 
   if alarms[idx][4] == 2 then
     if status.flightTime > 0 and math.floor(status.flightTime) %  delay == 0 then
-      if alarms[idx][1] == false then 
+      if alarms[idx][1] == false then
         alarms[idx][1] = true
         utils.playSound(sound)
         playDuration(status.flightTime,(status.flightTime > 3600 and 1 or 0)) -- minutes,seconds
@@ -1418,7 +1775,7 @@ utils.checkAlarm = function(level,value,idx,sign,sound,delay)
   else
     if alarms[idx][3] == true then
       if level > 0 and sign*value > sign*level then
-        -- value is outside level 
+        -- value is outside level
         if alarms[idx][2] == 0 then
           -- first time outside level after last reset
           alarms[idx][2] = status.flightTime
@@ -1437,7 +1794,7 @@ utils.checkAlarm = function(level,value,idx,sign,sound,delay)
         -- status: READY
       end
 
-      if alarms[idx][6] == true and alarms[idx][1] == false then 
+      if alarms[idx][6] == true and alarms[idx][1] == false then
         utils.playSound(sound)
         alarms[idx][1] = true
         alarms[idx][7] = status.flightTime
@@ -1465,10 +1822,9 @@ local function loadFlightModes()
       frame = utils.doLibrary(conf.enablePX4Modes and "plane_px4" or "plane")
     elseif frameTypes[telemetry.frameType] == "r" or frameTypes[telemetry.frameType] == "b" then
       frame = utils.doLibrary("rover")
+    elseif frameTypes[telemetry.frameType] == "a" then
+      frame = utils.doLibrary("blimp")
     end
-    collectgarbage()
-    collectgarbage()
-    maxmem = 0
   end
 end
 
@@ -1478,7 +1834,7 @@ end
 ---------------------------------
 local function checkTransition(idx,value)
   if value ~= transitions[idx][1] then
-    -- value has changed 
+    -- value has changed
     transitions[idx][1] = value
     transitions[idx][2] = getTime()
     transitions[idx][3] = false
@@ -1495,32 +1851,37 @@ end
 
 local function checkEvents(celm)
   loadFlightModes()
-  
+
   -- silence alarms when showing min/max values
   if status.showMinMaxValues == false then
-    utils.checkAlarm(conf.minAltitudeAlert,telemetry.homeAlt,1,-1,"minalt",conf.repeatAlertsPeriod)
-    utils.checkAlarm(conf.maxAltitudeAlert,telemetry.homeAlt,2,1,"maxalt",conf.repeatAlertsPeriod)  
-    utils.checkAlarm(conf.maxDistanceAlert,telemetry.homeDist,3,1,"maxdist",conf.repeatAlertsPeriod)  
-    utils.checkAlarm(1,2*telemetry.ekfFailsafe,4,1,"ekf",conf.repeatAlertsPeriod)  
-    utils.checkAlarm(1,2*telemetry.battFailsafe,5,1,"lowbat",conf.repeatAlertsPeriod)  
+    local alt = status.terrainEnabled == 1 and telemetry.heightAboveTerrain or telemetry.homeAlt
+    utils.checkAlarm(conf.minAltitudeAlert,alt,1,-1,"minalt",conf.repeatAlertsPeriod)
+    utils.checkAlarm(conf.maxAltitudeAlert,alt,2,1,"maxalt",conf.repeatAlertsPeriod)
+    utils.checkAlarm(conf.maxDistanceAlert,telemetry.homeDist,3,1,"maxdist",conf.repeatAlertsPeriod)
+    utils.checkAlarm(1,2*telemetry.ekfFailsafe,4,1,"ekf",conf.repeatAlertsPeriod)
+    utils.checkAlarm(1,2*telemetry.battFailsafe,5,1,"lowbat",conf.repeatAlertsPeriod)
+    utils.checkAlarm(1,2*telemetry.failsafe,9,1,"failsafe",conf.repeatAlertsPeriod)
+    utils.checkAlarm(1,2*telemetry.fenceBreached,10,1,"fencebreach",conf.repeatAlertsPeriod)
+    utils.checkAlarm(1,2*telemetry.terrainUnhealthy,11,1,"terrainko",conf.repeatAlertsPeriod)
     utils.checkAlarm(conf.timerAlert,status.flightTime,6,1,"timealert",conf.timerAlert)
   end
-  
-  -- default is use battery 1
-  local capacity = getBatt1Capacity()
-  local mah = telemetry.batt1mah
-  -- only if dual battery has been detected use battery 2
-  if (status.batt2sources.fc or status.batt2sources.vs) and conf.battConf == 1 then
-      capacity = capacity + getBatt2Capacity()
-      mah = mah  + telemetry.batt2mah
-  end
-  
-  if (capacity > 0) then
-    status.batLevel = (1 - (mah/capacity))*100
+
+  if conf.enableBattPercByVoltage == true then
+  -- discharge curve is based on battery under load, when motors are disarmed
+  -- cellvoltage needs to be corrected by subtracting the "under load" voltage drop
+    if telemetry.statusArmed then
+      status.batLevel = utils.getBattPercByCell(celm*0.01)
+    else
+      status.batLevel = utils.getBattPercByCell((celm*0.01)-0.15)
+    end
+  else
+  if (battery[13] > 0) then
+    status.batLevel = (1 - (battery[10]/battery[13]))*100
   else
     status.batLevel = 99
   end
-  
+  end
+
   for l=1,13 do
     -- trigger alarm as as soon as it falls below level + 1 (i.e 91%,81%,71%,...)
     if status.batLevel <= batLevels[l] + 1 and l < status.lastBattLevel then
@@ -1529,10 +1890,13 @@ local function checkEvents(celm)
       break
     end
   end
-  
+
   if telemetry.statusArmed == 1 and status.lastStatusArmed == 0 then
     status.lastStatusArmed = telemetry.statusArmed
     utils.playSound("armed")
+    if telemetry.fencePresent == 1 then
+      utils.playSound("fence")
+    end
     -- reset home on arming
     telemetry.homeLat = nil
     telemetry.homeLon = nil
@@ -1548,14 +1912,14 @@ local function checkEvents(celm)
     status.lastGpsStatus = telemetry.gpsStatus
     utils.playSound("gpsnofix")
   end
-  
+
   -- home detecting code
   if telemetry.homeLat == nil then
     if telemetry.gpsStatus > 2 and telemetry.homeAngle ~= -1 then
       telemetry.homeLat, telemetry.homeLon = utils.getHomeFromAngleAndDistance(telemetry)
     end
   end
-   
+
   -- flightmode transitions have a grace period to prevent unwanted flightmode call out
   -- on quick radio mode switches
   if telemetry.frameType ~= -1 and checkTransition(1,telemetry.flightMode) then
@@ -1580,58 +1944,137 @@ local function checkCellVoltage(celm)
   if status.battLevel1 == false then status.battLevel1 = alarms[7][1] end
   if status.battLevel2 == false then status.battLevel2 = alarms[8][1] end
 end
-
-local function cycleBatteryInfo()
-  if status.showDualBattery == false and (status.batt2sources.fc or status.batt2sources.vs) and conf.battConf ~= 2 then
-    status.showDualBattery = true
-    return
-  end
-  status.battsource = status.battsource == "vs" and "fc" or "vs" 
-end
 --------------------------------------------------------------------------------
 -- MAIN LOOP
 --------------------------------------------------------------------------------
 --
 local bgclock = 0
 
+
+
+-- telemetry pop function, either SPort or CRSF
+local telemetryPop = nil
+
+local function crossfirePop()
+    local now = getTime()
+    local command, data = crossfireTelemetryPop()
+    if (command == 0x80 or command == 0x7F) and data ~= nil then
+      -- actual payload starts at data[2]
+      if #data >= 7 and data[1] == 0xF0 then
+        local app_id = bit32.lshift(data[3],8) + data[2]
+        local value =  bit32.lshift(data[7],24) + bit32.lshift(data[6],16) + bit32.lshift(data[5],8) + data[4]
+        return 0x00, 0x10, app_id, value
+      elseif #data > 4 and data[1] == 0xF1 then
+        local severity = data[2]
+        -- copy the terminator as well
+        for i=3,#data
+        do
+          status.msgBuffer = status.msgBuffer .. string.char(data[i])
+          -- hash support
+          updateHash(data[i])
+        end
+        utils.pushMessage(severity, status.msgBuffer)
+        -- hash audio support
+        playHash()
+        -- hash reset
+        resetHash()
+        status.msgBuffer = nil
+        status.msgBuffer = ""
+      elseif #data > 48 and data[1] == 0xF2 then
+        -- passthrough array
+        local app_id, value
+        for i=0,data[2]-1
+        do
+          app_id = bit32.lshift(data[4+(6*i)],8) + data[3+(6*i)]
+          value =  bit32.lshift(data[8+(6*i)],24) + bit32.lshift(data[7+(6*i)],16) + bit32.lshift(data[6+(6*i)],8) + data[5+(6*i)]
+          --utils.pushMessage(7,string.format("CRSF:%d - %04X:%08X",i, app_id, value), true)
+          processTelemetry(app_id, value, now)
+        end
+        status.noTelemetryData = 0
+        status.hideNoTelemetry = true
+      end
+    end
+    return nil, nil ,nil ,nil
+end
+
+local function loadConfig(init)
+  -- load menu library
+  local menuLib = utils.doLibrary("../"..menuLibFile)
+  menuLib.loadConfig(conf)
+  -- get a reference to the plotSources table
+  status.plotSources = menuLib.plotSources
+  -- ok configuration loaded
+  status.battsource = conf.defaultBattSource
+  -- CRSF or SPORT?
+  telemetryPop = sportTelemetryPop
+  utils.drawRssi = drawRssi
+  if conf.enableCRSF then
+    telemetryPop = crossfirePop
+    utils.drawRssi = drawRssiCRSF
+  end
+  -- do not reset layout on boot
+  if init == nil then
+    resetLayoutPending = true
+    resetLayoutPhase = -1
+  end
+  status.mapZoomLevel=conf.mapProvider == 1 and conf.mapZoomMin or conf.mapZoomMax
+
+  loadConfigPending = false
+end
+
 -------------------------------
 -- running at 20Hz (every 50ms)
 -------------------------------
-local timer2Hz = getTime()
+local timerPage = getTime()
+local timerWheel = getTime()
+
 local function backgroundTasks(myWidget,telemetryLoops)
-  -- FAST: this runs at 60Hz (every 16ms)
-  for i=1,telemetryLoops
-  do
-    local sensor_id,frame_id,data_id,value = sportTelemetryPop()
-    
-    if frame_id == 0x10 then
-      status.noTelemetryData = 0
-      -- no telemetry dialog only shown once
-      status.hideNoTelemetry = true
-      processTelemetry(data_id,value)
+  local now = getTime()
+  -- don't process telemetry while resetting to prevent CPU kill
+  if resetPending == false and resetLayoutPending == false and loadConfigPending == false then
+    for i=1,telemetryLoops
+    do
+      local success, sensor_id,frame_id,data_id,value = pcall(telemetryPop)
+
+      if success and frame_id == 0x10 then
+        status.noTelemetryData = 0
+        -- no telemetry dialog only shown once
+        status.hideNoTelemetry = true
+        processTelemetry(data_id,value,now)
+      end
     end
   end
+
   -- SLOW: this runs around 2.5Hz
   if bgclock % 2 == 1 then
+
     calcFlightTime()
     -- update gps telemetry data
     local gpsData = getValue("GPS")
-    
+
     if type(gpsData) == "table" and gpsData.lat ~= nil and gpsData.lon ~= nil then
       telemetry.lat = gpsData.lat
       telemetry.lon = gpsData.lon
     end
-    --export OpenTX sensor values
+    -- export OpenTX sensor values
     setSensorValues()
     -- update total distance as often as po
     utils.updateTotalDist()
-    
-    if getTime() - timer2Hz > 50 then
+
+    -- handle page emulation
+    if now - timerPage > 50 then
+      local chValue = getValue(conf.screenWheelChannelId)
+      status.mapZoomLevel = utils.getMapZoomLevel(myWidget,conf,status,chValue)
+      status.messageOffset = utils.getMessageOffset(myWidget,conf,status,chValue)
       status.screenTogglePage = utils.getScreenTogglePage(myWidget,conf,status)
-      status.mapZoomLevel = utils.getMapZoomLevel(myWidget,conf,status)
-      timer2Hz = getTime()
+      timerPage = now
     end
-    
+    --[[
+    -- handle wheel emulation
+    if getTime() - timerWheel > 200 then
+      timerWheel = getTime()
+    end
+    --]]
     -- flight mode
     if frame.flightModes then
       status.strFlightMode = frame.flightModes[telemetry.flightMode]
@@ -1640,7 +2083,7 @@ local function backgroundTasks(myWidget,telemetryLoops)
         status.strFlightMode = string.format("%s%s",status.strFlightMode,strSimpleMode)
       end
     end
-    
+
     -- top bar model frame and name
     if status.modelString == nil then
       -- frametype and model name
@@ -1649,40 +2092,71 @@ local function backgroundTasks(myWidget,telemetryLoops)
       local strmodel = info.name
       if fn ~= nil then
         status.modelString = fn..": "..info.name
-      end      
+      end
     end
- end
-  
+  end
+
   -- SLOWER: this runs around 1.25Hz but not when the previous block runs
-  -- because bgclock%4 == 0 is always different than bgclock%2==1
   if bgclock % 4 == 0 then
+    -- update RSSI
+    if conf.enableCRSF then
+      -- apply same algo used by ardupilot to estimate a 0-100 rssi value
+      -- rssi = roundf((1.0f - (rssi_dbm - 50.0f) / 70.0f) * 255.0f);
+      local rssi_dbm = math.abs(getValue("1RSS"))
+      if getValue("ANT") ~= 0 then
+        math.abs(getValue("2RSS"))
+      end
+      telemetry.rssiCRSF = math.min(100, math.floor(0.5 + ((1-(rssi_dbm - 50)/70)*100)))
+    end
+    telemetry.rssi = getRSSI()
     -- update battery
     calcBattery()
+    -- if we do not see terrain data for more than 5 sec we assume TERRAIN_ENABLE = 0
+    if status.terrainEnabled == 1 and now - status.terrainLastData > 500 then
+      status.terrainEnabled = 0
+      telemetry.terrainUnhealthy = 0
+    end
     -- prepare celm based on status.battsource
     local count1,count2 = calcCellCount()
     local cellVoltage = 0
-    
-    if conf.battConf ==  3 then
-      -- alarms are based on battery 1
+
+    if conf.battConf == 3 or conf.battConf == 5 then
+      -- voltage alarms are based on battery 1
       cellVoltage = 100*(status.battsource == "vs" and status.cell1min or status.cell1sumFC/count1)
+    elseif conf.battConf == 4 or conf.battConf == 6 then
+      -- voltage alarms are based on battery 2
+      cellVoltage = 100*(status.battsource == "vs" and status.cell2min or status.cell2sumFC/count2)
     else
       -- alarms are based on battery 1 and battery 2
       cellVoltage = 100*(status.battsource == "vs" and getNonZeroMin(status.cell1min,status.cell2min) or getNonZeroMin(status.cell1sumFC/count1,status.cell2sumFC/count2))
     end
-    
+
     checkEvents(cellVoltage)
     checkLandingStatus()
     -- no need for alarms if reported voltage is 0
     if cellVoltage > 0 then
       checkCellVoltage(cellVoltage)
     end
+
+    local batcurrent = 0
+
+    if conf.battConf == 1 then
+      batcurrent = telemetry.batt1current + telemetry.batt2current
+    elseif conf.battConf == 2 or conf.battConf == 3 or conf.battConf == 5 then
+      batcurrent = telemetry.batt1current
+    elseif conf.battConf == 4 or conf.battConf == 6 then
+      batcurrent = telemetry.batt2current
+    end
     -- aggregate value
-    minmaxValues[7] = math.max((conf.battConf ==  3 and telemetry.batt1current or telemetry.batt1current+telemetry.batt2current), minmaxValues[7])
-    
+    minmaxValues[7] = math.max(batcurrent, minmaxValues[7])
+
     -- indipendent values
     minmaxValues[8] = math.max(telemetry.batt1current,minmaxValues[8])
     minmaxValues[9] = math.max(telemetry.batt2current,minmaxValues[9])
-    
+  end
+
+  -- SLOWER: this runs around 1.25Hz but not when the previous block runs
+  if bgclock % 4 == 2 then
     -- reset backlight panel
     if (model.getGlobalVariable(8,0) > 0 and getTime()/100 - backlightLastTime > 5) then
       model.setGlobalVariable(8,0,0)
@@ -1691,54 +2165,69 @@ local function backgroundTasks(myWidget,telemetryLoops)
     if (model.getGlobalVariable(8,8) > 0) then
       loadConfig()
       model.setGlobalVariable(8,8,0)
-    end    
-    -- call custom panel background functions
-    if leftPanel ~= nil then
-      leftPanel.background(myWidget,conf,telemetry,status,utils)
     end
-    if centerPanel ~= nil then
-      centerPanel.background(myWidget,conf,telemetry,status,utils)
+
+    if telemetry.lat ~= nil then
+      if conf.gpsFormat == 1 then
+        -- DMS
+        telemetry.strLat = utils.decToDMSFull(telemetry.lat)
+        telemetry.strLon = utils.decToDMSFull(telemetry.lon, telemetry.lat)
+      else
+        -- decimal
+        telemetry.strLat = string.format("%.06f", telemetry.lat)
+        telemetry.strLon = string.format("%.06f", telemetry.lon)
+      end
     end
-    if rightPanel ~= nil then
-      rightPanel.background(myWidget,conf,telemetry,status,utils)
+
+    -- map background function
+    if status.screenTogglePage ~= 5 then
+      if mapLayout ~= nil then
+        mapLayout.background(myWidget,conf,telemetry,status,utils,drawLib)
+      end
     end
-        
-    bgclock = 0
   end
-  bgclock = bgclock+1
+
+  bgclock = (bgclock%4)+1
+
   -- blinking support
-  if (getTime() - blinktime) > 65 then
+  if now - blinktime > 65 then
     blinkon = not blinkon
-    blinktime = getTime()
+    blinktime = now
   end
-  collectgarbage()
-  collectgarbage()
   return 0
 end
-
-local showSensorPage = false
-local showMessages = false
 
 local function init()
   -- initialize flight timer
   model.setTimer(2,{mode=0})
   model.setTimer(2,{value=0})
--- load configuration at boot and only refresh if GV(8,8) = 1
-  loadConfig()
+  -- load configuration at boot and only refresh if GV(8,8) = 1
+  loadConfig(true)
+  -- ok configuration loaded
+  status.mapZoomLevel = conf.mapZoomLevel
+
+  status.battsource = conf.defaultBattSource
   -- load draw library
   drawLib = utils.doLibrary(drawLibFile)
-    
   currentModel = model.getInfo().name
   -- load custom sensors
-  utils.loadCustomSensors()
+  customSensors = utils.loadCustomSensors()
+  -- load battery config
+  utils.loadBatteryConfigFile()
   -- ok done
-  utils.pushMessage(7,"Yaapu Telemetry Widget 1.8.1")
+  utils.pushMessage(7,"Yaapu Telemetry Widget 1.9.5".." ("..'c47a1df'..")")
   utils.playSound("yaapu")
   -- fix for generalsettings lazy loading...
   unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
   unitLabel = getGeneralSettings().imperial == 0 and "m" or "ft"
   unitLongScale = getGeneralSettings().imperial == 0 and 1/1000 or 1/1609.34
   unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
+  -- unit conversion helper
+  status.unitConversion[1] = unitScale
+  status.unitConversion[2] = unitScale
+  status.unitConversion[3] = conf.horSpeedMultiplier
+  status.unitConversion[4] = conf.vertSpeedMultiplier
+  status.unitConversion[5] = 1
 end
 
 --------------------------------------------------------------------------------
@@ -1748,8 +2237,9 @@ end
 -- page 3 min max
 -- page 4 dual battery view
 -- page 5 map view
+-- page 6 plot view
 local options = {
-  { "page", VALUE, 1, 1, 5},
+  { "page", VALUE, 1, 1, 6},
 }
 -- shared init flag
 local initDone = 0
@@ -1761,7 +2251,7 @@ local function create(zone, options)
   -- all local vars are shared between widget instances
   -- init() needs to be called only once!
   if initDone == 0 then
-    init()
+    init(zone)
     initDone = 1
   end
   --
@@ -1774,22 +2264,15 @@ local function update(myWidget, options)
   loadConfig()
 end
 
-local function fullScreenRequired(myWidget)
-  lcd.setColor(CUSTOM_COLOR,lcd.RGB(255, 0, 0))
-  lcd.drawText(myWidget.zone.x,myWidget.zone.y,"Yaapu requires",SMLSIZE+CUSTOM_COLOR)
-  lcd.drawText(myWidget.zone.x,myWidget.zone.y+16,"full screen",SMLSIZE+CUSTOM_COLOR)
-end
-
-
 utils.getScreenTogglePage = function(myWidget,conf,status)
   local screenChValue = status.hideNoTelemetry == false and 0 or getValue(conf.screenToggleChannelId)
-  
+
   if conf.screenToggleChannelId > -1 then
     if screenChValue < -600 then
       -- message history
       return 2
     end
-    
+
     if screenChValue > 600 then
       -- map view
       return 5
@@ -1798,27 +2281,89 @@ utils.getScreenTogglePage = function(myWidget,conf,status)
   return myWidget.options.page
 end
 
-utils.getMapZoomLevel = function(myWidget,conf,status)
-  local chValue = getValue(conf.mapToggleChannelId)
-  
-  if conf.mapToggleChannelId > -1 then
-    if chValue >= 600 then
-      return conf.mapZoomLevel + 2
-    end
-    
-    if chValue > - 600 and chValue < 600 then
-      return conf.mapZoomLevel + 1
-    end
+
+local zoomDelayStart = getTime()
+
+utils.getMessageOffset = function(myWidget,conf,status,chValue)
+  if currentPage ~= 2 and status.screenTogglePage ~= 2 then
+    return status.messageOffset
   end
-  return conf.mapZoomLevel
+
+  local now = getTime()
+  if now - zoomDelayStart < conf.screenWheelChannelDelay*10 then
+    return status.messageOffset
+  end
+
+  zoomDelayStart = now
+
+  if conf.screenWheelChannelId > -1 then
+    -- SW up
+    if chValue < -600 then
+      local offset = math.min(status.messageOffset + 20, math.max(0,status.messageCount - 20))
+      if offset >= (status.messageCount - 20) then
+        status.messageAutoScroll = true
+      else
+        status.messageAutoScroll = false
+      end
+      return offset
+    end
+    -- SW down
+    if chValue > 600 then
+      status.messageAutoScroll = false
+      return math.max(0,math.max(status.messageCount - 200,status.messageOffset - 20))
+    end
+    -- switch is idle, force timer expire
+    zoomDelayStart = now - conf.screenWheelChannelDelay*10
+  end
+  return status.messageOffset
+end
+
+utils.getMapZoomLevel = function(myWidget,conf,status,chValue)
+  if currentPage ~= 5 and status.screenTogglePage ~= 5 then
+    return status.mapZoomLevel
+  end
+
+  local now = getTime()
+
+  if now - zoomDelayStart < conf.screenWheelChannelDelay*10 then
+    return status.mapZoomLevel
+  end
+
+  zoomDelayStart = now
+
+  if conf.screenWheelChannelId > -1 then
+    -- SW up (increase zoom level)
+    if chValue < -600 then
+      if conf.mapProvider == 1 then
+        return status.mapZoomLevel > conf.mapZoomMin and status.mapZoomLevel - 1 or status.mapZoomLevel
+      end
+      return status.mapZoomLevel < conf.mapZoomMax and status.mapZoomLevel + 1 or status.mapZoomLevel
+    end
+    -- SW down (decrease zoom level)
+    if chValue > 600 then
+      if conf.mapProvider == 1 then
+        return status.mapZoomLevel < conf.mapZoomMax and status.mapZoomLevel + 1 or status.mapZoomLevel
+      end
+      return status.mapZoomLevel > conf.mapZoomMin and status.mapZoomLevel - 1 or status.mapZoomLevel
+    end
+    -- switch is idle, force timer expire
+    zoomDelayStart = now - conf.screenWheelChannelDelay*10
+  end
+  -- SW mid
+  return status.mapZoomLevel
 end
 
 -- called when widget instance page changes
 local function onChangePage(myWidget)
+  if myWidget.options.page == 3 then
+    -- when page 3 goes to foreground show minmax values
+    status.showMinMaxValues = true
+  elseif myWidget.options.page == 4 then
+    -- when page 4 goes to foreground show dual battery view
+    status.showDualBattery = true
+  end
   -- reset HUD counters
   myWidget.vars.hudcounter = 0
-  collectgarbage()
-  collectgarbage()
 end
 
 -- Called when script is hidden @20Hz
@@ -1826,7 +2371,17 @@ local function background(myWidget)
   -- when page 1 goes to background run bg tasks
   if myWidget.options.page == 1 then
     -- run bg tasks
-    backgroundTasks(myWidget,12)
+    backgroundTasks(myWidget,15)
+    -- call custom panel background functions
+    if leftPanel ~= nil then
+      leftPanel.background(myWidget,conf,telemetry,status,utils,drawLib)
+    end
+    if centerPanel ~= nil then
+      centerPanel.background(myWidget,conf,telemetry,status,utils,drawLib)
+    end
+    if rightPanel ~= nil then
+      rightPanel.background(myWidget,conf,telemetry,status,utils,drawLib)
+    end
     return
   end
   -- when page 3 goes to background hide minmax values
@@ -1839,134 +2394,200 @@ local function background(myWidget)
     status.showDualBattery = false
     return
   end
+  -- when page 5 goes to background
+  if myWidget.options.page == 5 then
+    if mapLayout ~= nil then
+      mapLayout.background(myWidget,conf,telemetry,status,utils,drawLib)
+    end
+    return
+  end
+  -- when page 6 goes to background
+  if myWidget.options.page == 6 then
+    if plotLayout ~= nil then
+      plotLayout.background(myWidget,conf,telemetry,status,utils,drawLib)
+    end
+    return
+  end
 end
 
 local slowTimer = getTime()
+local fastTimer = getTime()
+
+local function fullScreenRequired(myWidget)
+  lcd.setColor(CUSTOM_COLOR,lcd.RGB(255, 0, 0))
+  lcd.drawText(myWidget.zone.x,myWidget.zone.y,"full screen",SMLSIZE+CUSTOM_COLOR)
+  lcd.drawText(myWidget.zone.x,myWidget.zone.y+16,"required",SMLSIZE+CUSTOM_COLOR)
+end
+
+
+local function loadLayout()
+  -- Layout start
+  if leftPanel == nil and loadCycle == 1 then
+    leftPanel = utils.doLibrary(conf.leftPanelFilename)
+  end
+
+  if centerPanel == nil and loadCycle == 2 then
+    centerPanel = utils.doLibrary(conf.centerPanelFilename)
+  end
+
+  if rightPanel == nil and loadCycle == 4 then
+    rightPanel = utils.doLibrary(conf.rightPanelFilename)
+  end
+
+  if layout == nil and loadCycle == 6 and leftPanel ~= nil and centerPanel ~= nil and rightPanel ~= nil then
+    layout = utils.doLibrary(conf.widgetLayoutFilename)
+  end
+
+  lcd.setColor(CUSTOM_COLOR,0xFFFF)
+  lcd.drawFilledRectangle(88,74, 304, 84, CUSTOM_COLOR)
+  lcd.setColor(CUSTOM_COLOR,0x10A3)
+  lcd.drawFilledRectangle(90,76, 300, 80, CUSTOM_COLOR)
+  lcd.setColor(CUSTOM_COLOR,0xFFFF)
+  lcd.drawText(120, 95, "loading layout...", DBLSIZE+CUSTOM_COLOR)
+end
+
+local function loadMapLayout()
+  -- Layout start
+  if loadCycle == 3 then
+    mapLayout = utils.doLibrary("layout_map")
+  end
+end
+
+local function loadPlotLayout()
+  -- Layout start
+  if loadCycle == 3 then
+    plotLayout = utils.doLibrary("layout_plot")
+  end
+end
+
+local function drawInitialingMsg()
+  lcd.clear(CUSTOM_COLOR)
+  lcd.setColor(CUSTOM_COLOR,0xFFFF)
+  lcd.drawFilledRectangle(88,74, 304, 84, CUSTOM_COLOR)
+  lcd.setColor(CUSTOM_COLOR,0x10A3)
+  lcd.drawFilledRectangle(90,76, 300, 80, CUSTOM_COLOR)
+  lcd.setColor(CUSTOM_COLOR,0xFFFF)
+  lcd.drawText(155, 95, "initializing...", DBLSIZE+CUSTOM_COLOR)
+end
+
+local fgclock = 0
 
 -- Called when script is visible
 local function drawFullScreen(myWidget)
-  if getTime() - slowTimer > 50 then
-    -- reset phase 2 if reset pending
-    if resetPending == true then
-      reset()
+  -- when page 1 goes to foreground run bg tasks
+  if myWidget.options.page == 1 then
+    -- run bg tasks only if we are not resetting, this prevent cpu limit kill
+    if not (resetPending or resetLayoutPending) then
+      backgroundTasks(myWidget,15)
+    end
+  end
+  lcd.setColor(CUSTOM_COLOR, 0x0AB1)
+
+  if not (resetPending or resetLayoutPending or loadConfigPending) then
+    if myWidget.options.page == 2 or status.screenTogglePage == 2 then
+      ------------------------------------
+      -- Widget Page 2: MESSAGES
+      ------------------------------------
+      -- message history has black background
+      lcd.setColor(CUSTOM_COLOR, 0x0000)
+      lcd.clear(CUSTOM_COLOR)
+
+      drawMessageScreen()
+    elseif myWidget.options.page == 5 or status.screenTogglePage == 5 then
+      ------------------------------------
+      -- Widget Page 5: MAP
+      ------------------------------------
+      lcd.clear(CUSTOM_COLOR)
+
+      if mapLayout ~= nil then
+        mapLayout.draw(myWidget,drawLib,conf,telemetry,status,battery,alarms,frame,utils,customSensors,leftPanel,centerPanel,rightPanel)
+      else
+        loadMapLayout()
+      end
+    elseif myWidget.options.page == 6 or status.screenTogglePage == 6 then
+      ------------------------------------
+      -- Widget Page 6: Plotting screen
+      ------------------------------------
+      lcd.clear(CUSTOM_COLOR)
+
+      if plotLayout ~= nil then
+        plotLayout.draw(myWidget,drawLib,conf,telemetry,status,battery,alarms,frame,utils,customSensors,leftPanel,centerPanel,rightPanel)
+      else
+        loadPlotLayout()
+      end
     else
-      -- frametype and model name
-      local info = model.getInfo()
-      -- model change event
-      if currentModel ~= info.name then
-        currentModel = info.name
-        -- trigger reset phase 1
-        reset()
+      ------------------------------------
+      -- Widget Page 1: HUD
+      ------------------------------------
+      lcd.clear(CUSTOM_COLOR)
+      if layout ~= nil then
+        layout.draw(myWidget,drawLib,conf,telemetry,status,battery,alarms,frame,utils,customSensors,leftPanel,centerPanel,rightPanel)
+      else
+        loadLayout();
       end
     end
-    
-    if myWidget.options.page == 3 then
-      -- when page 3 goes to foreground show minmax values
-      status.showMinMaxValues = true
-    elseif myWidget.options.page == 4 then
-      -- when page 4 goes to foreground show dual battery view
-      status.showDualBattery = true
+  else
+    -- not ready to draw yet
+    drawInitialingMsg()
+  end
+
+  if fgclock % 2 == 1 then
+    -- reset phase 2 if reset pending
+    if resetLayoutPending == true then
+      resetLayouts()
+    elseif resetPending == true then
+      reset()
     end
-    
-    -- check if current widget page changed
+  end
+
+  if fgclock % 4 == 0 then
     if currentPage ~= myWidget.options.page then
       currentPage = myWidget.options.page
       onChangePage(myWidget)
     end
-    
-    slowTimer = getTime()
   end
-  
-  -- when page 1 goes to foreground run bg tasks
-  if myWidget.options.page == 1 then
-    -- run bg tasks only if we are not resetting, this prevent cpu limit kill
-    if resetPending == false then
-      backgroundTasks(myWidget,12)
+
+  if fgclock % 8 == 2 then
+    -- frametype and model name
+    local info = model.getInfo()
+    -- model change event
+    if currentModel ~= info.name then
+      currentModel = info.name
+      -- trigger reset
+      triggerReset()
     end
   end
-  --
-  
-  lcd.setColor(CUSTOM_COLOR, 0x0AB1)
-  if myWidget.options.page == 2 or status.screenTogglePage == 2 then
-    ------------------------------------
-    -- Widget Page 2 is message history
-    ------------------------------------
-    -- message history has black background
-    lcd.setColor(CUSTOM_COLOR, 0x0000)
-    lcd.clear(CUSTOM_COLOR)
-    
-    drawMessageScreen()
-  elseif myWidget.options.page == 5 or status.screenTogglePage == 5 then
-    ------------------------------------
-    -- Widget Page 5 is map
-    ------------------------------------
-    lcd.clear(CUSTOM_COLOR)
-    
-    if mapLayout ~= nil then
-      mapLayout.draw(myWidget,drawLib,conf,telemetry,status,battery,alarms,frame,utils,customSensors,gpsStatuses,leftPanel,centerPanel,rightPanel)
-    else
-    -- Layout start
-      if loadCycle == 3 then
-        mapLayout = utils.doLibrary("layout_map")
-      end
-    end
-  else
-    lcd.clear(CUSTOM_COLOR)
-    
-    if layout ~= nil then
-      layout.draw(myWidget,drawLib,conf,telemetry,status,battery,alarms,frame,utils,customSensors,gpsStatuses,leftPanel,centerPanel,rightPanel)
-    else
-      -- Layout start
-      if leftPanel == nil and loadCycle == 1 then
-        leftPanel = utils.doLibrary(conf.leftPanelFilename)
-      end
-      
-      if centerPanel == nil and loadCycle == 2 then
-        centerPanel = utils.doLibrary(conf.centerPanelFilename)
-      end
-      
-      if rightPanel == nil and loadCycle == 4 then
-        rightPanel = utils.doLibrary(conf.rightPanelFilename)
-      end
-      
-      if layout == nil and loadCycle == 6 and leftPanel ~= nil and centerPanel ~= nil and rightPanel ~= nil then
-        layout = utils.doLibrary(conf.widgetLayoutFilename)
-      end
-      
-      lcd.setColor(CUSTOM_COLOR,0xFFFF)
-      lcd.drawFilledRectangle(88,74, 304, 84, CUSTOM_COLOR)
-      lcd.setColor(CUSTOM_COLOR,0x10A3)
-      lcd.drawFilledRectangle(90,76, 300, 80, CUSTOM_COLOR)
-      lcd.setColor(CUSTOM_COLOR,0xFFFF)
-      lcd.drawText(155, 95, "loading...", DBLSIZE+CUSTOM_COLOR)
-    end
-  -- Layout END
-  end  
+  fgclock = (fgclock % 8) + 1
+
   -- no telemetry/minmax outer box
   if telemetryEnabled() == false then
     -- no telemetry inner box
     if not status.hideNoTelemetry then
       drawLib.drawNoTelemetryData(status,telemetry,utils,telemetryEnabled)
     end
-    utils.drawBlinkBitmap("warn",0,0)  
+    utils.drawBlinkBitmap("warn",0,0)
   else
     if status.showMinMaxValues == true then
-      utils.drawBlinkBitmap("minmax",0,0)  
+      utils.drawBlinkBitmap("minmax",0,0)
     end
   end
-  drawLib.drawFailsafe(telemetry,utils)
-  
+
+  drawLib.drawFailsafe(telemetry,utils);
+
   loadCycle=(loadCycle+1)%8
-  collectgarbage()
-  collectgarbage()
+end
+
+-- are we full screen? if
+local function drawScreen(myWidget)
+    if myWidget.zone.h < 250 then
+      fullScreenRequired(myWidget)
+      return
+    end
+    drawFullScreen(myWidget)
 end
 
 function refresh(myWidget)
-  if myWidget.zone.h < 250 then 
-    fullScreenRequired(myWidget)
-    return
-  end
-  drawFullScreen(myWidget)
+  drawScreen(myWidget)
 end
 
 return { name="Yaapu", options=options, create=create, update=update, background=background, refresh=refresh }

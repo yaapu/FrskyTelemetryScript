@@ -1,8 +1,8 @@
 --
--- An FRSKY S.Port <passthrough protocol> based Telemetry script for the Horus X10 and X12 radios
+-- A FRSKY SPort/FPort/FPort2 and TBS CRSF telemetry widget for the Horus class radios
+-- based on ArduPilot's passthrough telemetry protocol
 --
--- Copyright (C) 2018-2019. Alessandro Apostoli
--- https://github.com/yaapu
+-- Author: Alessandro Apostoli, https://github.com/yaapu
 --
 -- This program is free software; you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -17,192 +17,10 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program; if not, see <http://www.gnu.org/licenses>.
 --
-
----------------------
--- MAIN CONFIG
--- 480x272 LCD_W x LCD_H
----------------------
-
----------------------
--- VERSION
----------------------
--- load and compile of lua files
--- uncomment to force compile of all chunks, comment for release
---#define COMPILE
--- fix for issue OpenTX 2.2.1 on X10/X10S - https://github.com/opentx/opentx/issues/5764
-
----------------------
--- FEATURE CONFIG
----------------------
--- enable splash screen for no telemetry data
---#define SPLASH
--- enable code to draw a compass rose vs a compass ribbon
---#define COMPASS_ROSE
-
----------------------
--- DEV FEATURE CONFIG
----------------------
--- enable memory debuging 
---#define MEMDEBUG
--- enable dev code
---#define DEV
--- uncomment haversine calculation routine
---#define HAVERSINE
--- enable telemetry logging to file (experimental)
---#define LOGTELEMETRY
--- use radio channels imputs to generate fake telemetry data
---#define TESTMODE
--- enable debug of generated hash or short hash string
---#define HASHDEBUG
-
----------------------
--- DEBUG REFRESH RATES
----------------------
--- calc and show hud refresh rate
---#define HUDRATE
--- calc and show telemetry process rate
---#define BGTELERATE
-
----------------------
--- SENSOR IDS
----------------------
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
--- Throttle and RC use RPM sensor IDs
-
----------------------
--- BATTERY DEFAULTS
----------------------
----------------------------------
--- BACKLIGHT SUPPORT
--- GV is zero based, GV 8 = GV 9 in OpenTX
----------------------------------
----------------------------------
--- CONF REFRESH GV
----------------------------------
-
----------------------------------
--- ALARMS
----------------------------------
---[[
- ALARM_TYPE_MIN needs arming (min has to be reached first), value below level for grace, once armed is periodic, reset on landing
- ALARM_TYPE_MAX no arming, value above level for grace, once armed is periodic, reset on landing
- ALARM_TYPE_TIMER no arming, fired periodically, spoken time, reset on landing
- ALARM_TYPE_BATT needs arming (min has to be reached first), value below level for grace, no reset on landing
-{ 
-  1 = notified, 
-  2 = alarm start, 
-  3 = armed, 
-  4 = type(0=min,1=max,2=timer,3=batt), 
-  5 = grace duration
-  6 = ready
-  7 = last alarm
-}  
---]]--
---
---
-
---
-
-----------------------
--- COMMON LAYOUT
-----------------------
--- enable vertical bars HUD drawing (same as taranis)
---#define HUD_ALGO1
--- enable optimized hor bars HUD drawing
---#define HUD_ALGO2
--- enable hor bars HUD drawing
-
-
-
-
-
-
---------------------------------------------------------------------------------
--- MENU VALUE,COMBO
---------------------------------------------------------------------------------
-
---------------------------
--- UNIT OF MEASURE
---------------------------
 local unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
 local unitLabel = getGeneralSettings().imperial == 0 and "m" or "ft"
 local unitLongScale = getGeneralSettings().imperial == 0 and 1/1000 or 1/1609.34
 local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
-
-
------------------------
--- BATTERY 
------------------------
--- offsets are: 1 celm, 4 batt, 7 curr, 10 mah, 13 cap, indexing starts at 1
--- 
-
------------------------
--- LIBRARY LOADING
------------------------
-
-----------------------
---- COLORS
-----------------------
-
---#define COLOR_LABEL 0x7BCF
---#define COLOR_BG 0x0169
---#define COLOR_BARSEX 0x10A3
-
-
---#define COLOR_SENSORS 0x0169
-
------------------------------------
--- STATE TRANSITION ENGINE SUPPORT
------------------------------------
-
-
---------------------------
--- CLIPPING ALGO DEFINES
---------------------------
-
-
-
-
-
-
-
-
----------------------------------
--- LAYOUT
----------------------------------
-
-
-
-
-
-
-
-
-
-
-
-
-
------------------------
--- COMPASS RIBBON
------------------------
-
-
 
 -- model and opentx version
 local ver, radio, maj, minor, rev = getVersion()
@@ -210,7 +28,7 @@ local ver, radio, maj, minor, rev = getVersion()
 local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)
 
   local r = -telemetry.roll
-  local cx,cy,dx,dy,ccx,ccy,cccx,cccy
+  local cx,cy,dx,dy--,ccx,ccy,cccx,cccy
   local yPos = 0 + 20 + 8
   -----------------------
   -- artificial horizon
@@ -221,10 +39,10 @@ local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)
     dy=telemetry.pitch
     cx=0
     cy=12
-    ccx=0
-    ccy=2*12
-    cccx=0
-    cccy=3*12
+    --ccx=0
+    --ccy=2*12
+    --cccx=0
+    --cccy=3*12
   else
     -- center line offsets
     dx = math.cos(math.rad(90 - r)) * -telemetry.pitch
@@ -233,11 +51,11 @@ local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)
     cx = math.cos(math.rad(90 - r)) * 12
     cy = math.sin(math.rad(90 - r)) * 12
     -- 2nd line offsets
-    ccx = math.cos(math.rad(90 - r)) * 2 * 12
-    ccy = math.sin(math.rad(90 - r)) * 2 * 12
+    --ccx = math.cos(math.rad(90 - r)) * 2 * 12
+    --ccy = math.sin(math.rad(90 - r)) * 2 * 12
     -- 3rd line offsets
-    cccx = math.cos(math.rad(90 - r)) * 3 * 12
-    cccy = math.sin(math.rad(90 - r)) * 3 * 12
+    --cccx = math.cos(math.rad(90 - r)) * 3 * 12
+    --cccy = math.sin(math.rad(90 - r)) * 3 * 12
   end
   local rollX = math.floor((LCD_W-160)/2 + 160/2)
   -----------------------
@@ -246,14 +64,14 @@ local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)
   -- 140x90
   local minY = 24
   local maxY = 24 + 90
-  
+
   local minX = (LCD_W-160)/2
   local maxX = (LCD_W-160)/2 + 160
-  
+
   local ox = (LCD_W-160)/2 + 160/2 + dx
   local oy = 69 + dy
   local yy = 0
-  
+
   --lcd.setColor(CUSTOM_COLOR,lcd.RGB(0x0d, 0x68, 0xb1)) -- bighud blue
   lcd.setColor(CUSTOM_COLOR,lcd.RGB(0x7b, 0x9d, 0xff)) -- default blue
   lcd.drawFilledRectangle(minX,minY,maxX-minX,maxY - minY,CUSTOM_COLOR)
@@ -331,11 +149,11 @@ local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)
   local endY = maxY - 10
   local step = 18
   lcd.setColor(CUSTOM_COLOR,lcd.RGB(120,120,120))
-  -- hSpeed 
+  -- hSpeed
   local roundHSpeed = math.floor((telemetry.hSpeed*conf.horSpeedMultiplier*0.1/5)+0.5)*5;
   local offset = math.floor((telemetry.hSpeed*conf.horSpeedMultiplier*0.1-roundHSpeed)*0.2*step);
-  local ii = 0;  
-  local yy = 0  
+  local ii = 0;
+  local yy = 0
   for j=roundHSpeed+10,roundHSpeed-10,-5
   do
       yy = startY + (ii*step) + offset
@@ -345,10 +163,10 @@ local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)
       end
       ii=ii+1;
   end
-  -- altitude 
+  -- altitude
   local roundAlt = math.floor((telemetry.homeAlt*unitScale/5)+0.5)*5;
   offset = math.floor((telemetry.homeAlt*unitScale-roundAlt)*0.2*step);
-  ii = 0;  
+  ii = 0;
   yy = 0
   for j=roundAlt+10,roundAlt-10,-5
   do
@@ -379,13 +197,13 @@ local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)
   lcd.setColor(CUSTOM_COLOR,lcd.RGB(255, 0xce, 0)) --yellow
   -- lcd.setColor(CUSTOM_COLOR,lcd.RGB(00, 0xED, 0x32)) --green
   -- lcd.setColor(CUSTOM_COLOR,lcd.RGB(50, 50, 50)) --dark grey
-  lcd.drawFilledRectangle(310, varioY, 10, varioH, CUSTOM_COLOR, 0)  
-  
+  lcd.drawFilledRectangle(310, varioY, 10, varioH, CUSTOM_COLOR, 0)
+
   -------------------------------------
   -- left and right indicators on HUD
   -------------------------------------
   -- DATA
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)  
+  lcd.setColor(CUSTOM_COLOR,0xFFFF)
   -- altitude
   local alt = utils.getMaxValue(telemetry.homeAlt,11) * unitScale
   if math.abs(alt) > 999 then
