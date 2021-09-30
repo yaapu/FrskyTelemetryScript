@@ -126,3 +126,12 @@ Horus version 1.9.4 beta1
 - improved status text colors
 - added altitude graph in map page of last 20 secs
 
+Horus version 1.9.5
+
+- fixed terrain error in CRSF RF Mode 1
+- added support for TURTLE flight mode
+- added support for BLIMP vehicle
+- added WIND rendering
+- added airspeed option on the hud above groundspeed FRSKY_OPTION = current value + 1
+- added plotting page with selectable sensors to plot (configure as widget page 6)
+

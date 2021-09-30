@@ -12,49 +12,23 @@ S6:Status,Tmp2,0,C,1,-,1
 local sensors = {
   -- Sensor 1
 [1]=  {
-    "Pump",   -- label
-    "A4",     -- OpenTX sensor name
+    "Batt",   -- label
+    "VFAS",     -- OpenTX sensor name
     2,          -- precision: number of decimals 0,1,2
     "V",         -- label for unit of measure
     1,          -- multiplier if < 1 than divides
     "+",        -- "+" track max values, "-" track min values with
-    1,          -- font size 1=small, 2=big
+    2,          -- font size 1=small, 2=big
     5,        -- warning level (nil is do not use feature)
     10,        -- critical level (nil is do not use feature)
   },
 
   -- Sensor 2
 [2]=  {
-    "Fuel", -- label
-    "Fuel", -- OpenTX sensor name
-    0,      -- precision: number of decimals 0,1,2
-    "mL",   -- label for unit of measure
-    1,      -- multiplier if < 1 than divides
-    "+",    -- "+" track max values, "-" track min values
-    1,      -- font size 1=small, 2=big
-    1000,     -- warning level
-    2000,     -- critical level
-  },
-
-  -- Sensor 3
-[3]=  {
-    "ENG",    -- label
-    "RPM",    -- OpenTX sensor name
-    1,        -- precision: number of decimals 0,1,2
-    "krpm",   -- label for unit of measure
-    0.001,    -- multiplier if < 1 than divides
-    "+",      -- "+" track max values, "-" track min values with
-    2,        -- font size 1=small, 2=big
-    100000,     -- warning level
-    120000,     -- critical value
-  },
-
-  -- Sensor 4
-[4]=  {
-    "EGT", -- label
-    "Tmp1", -- OpenTX sensor name
-    0,      -- precision: number of decimals 0,1,2
-    "C",   -- label for unit of measure
+    "Curr", -- label
+    "CURR", -- OpenTX sensor name
+    1,      -- precision: number of decimals 0,1,2
+    "A",   -- label for unit of measure
     1,      -- multiplier if < 1 than divides
     "+",    -- "+" track max values, "-" track min values with
     2,      -- font size 1=small, 2=big
@@ -62,30 +36,56 @@ local sensors = {
     200,     -- critical level
   },
 
+  -- Sensor 3
+[3]=  {
+    "Fuel", -- label
+    "Fuel", -- OpenTX sensor name
+    0,      -- precision: number of decimals 0,1,2
+    "%",    -- label for unit of measure
+    1,      -- multiplier if < 1 than divides
+    "-",    -- "+" track max values, "-" track min values
+    2,      -- font size 1=small, 2=big
+    50,     -- warning level
+    25     -- critical level
+  },
+
+  -- Sensor 4
+[4]=  {
+    "ENG",    -- label
+    "RPM1",    -- OpenTX sensor name
+    0,        -- precision: number of decimals 0,1,2
+    "rpm",   -- label for unit of measure
+    1,    -- multiplier if < 1 than divides
+    "+",      -- "+" track max values, "-" track min values with
+    1,        -- font size 1=small, 2=big
+    2500,     -- warning level
+    4000,     -- critical value
+  },
+
   -- Sensor 5
 [5]=  {
-    "THRO", -- label
-    "Thro", -- OpenTX sensor name
+    "THR", -- label
+    "Thr", -- OpenTX sensor name
     0,      -- precision: number of decimals 0,1,2
     "%",   -- label for unit of measure
     1,      -- multiplier if < 1 than divides
     "+",    -- "+" track max values, "-" track min values with
     2,      -- font size 1=small, 2=big
-    90,     -- warning level
-    100,     -- critical level
+    30,     -- warning level
+    50,     -- critical level
   },
 
   -- Sensor 6
 [6]=  {
-    "Status", -- label
-    "Tmp2", -- OpenTX sensor name
-    0,      -- precision: number of decimals 0,1,2
-    "",   -- label for unit of measure
+    "Spd", -- label
+    "GSpd", -- OpenTX sensor name
+    1,      -- precision: number of decimals 0,1,2
+    "m/s",   -- label for unit of measure
     1,      -- multiplier if < 1 than divides
     "+",    -- "+" track max values, "-" track min values with
     2,      -- font size 1=small, 2=big
-    100,     -- warning level
-    100,     -- critical level
+    nil,     -- warning level
+    nil,     -- critical level
   },
 }
 ------------------------------------------------------
