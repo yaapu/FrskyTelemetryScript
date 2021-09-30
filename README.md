@@ -8,8 +8,7 @@ This is the home of the Yaapu Telemetry Script project, a [LUA](https://www.lua.
 
 ### please read the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki) for more info
 
-
-![X10](https://github.com/yaapu/FrskyTelemetryScript/raw/master/HORUS/IMAGES/x10.png)
+![image](https://user-images.githubusercontent.com/30294218/135524984-f732af4a-490b-4ce2-b4dc-9c8bfe1f6d4c.png)
 
 ![X9D](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9d.png)
 
