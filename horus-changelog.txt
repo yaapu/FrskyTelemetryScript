@@ -95,4 +95,34 @@ Horus version 1.8.1
 - fix for custom sensor min/max nil support
 
 
+Horus version 1.9.1 (beta)
+
+- added support for crossfire
+- added new dual battery modes
+- added new right pane layouts
+- added support for THERMAL flight mode
+- fixed boat flight modes
+- fixed PX4 flight modes
+
+Horus version 1.9.3 (beta)
+
+- added support for google maps downloaded via MissionPlanner
+- new tiles resize tool for google maps supporting sat and hybrid maps
+- new zoom control using a switch as up/down wheel emulator
+- added scrollable status message history (up to 200 messages) using the emulated wheel
+- added flight time to message history
+- added a status bar in message view with flight mode and flight time
+- improved mini HUD in maps view
+- many memory and speed optimizations
+
+Horus version 1.9.4 beta1
+
+- added git hash to version string
+- added support for fence status and alarms
+- added support for height above terrain
+- added no terrain data alarms
+- added generic failsafe alarm
+- added support for RPM1 and RPM2 (enable in the config menu)
+- improved status text colors
+- added altitude graph in map page of last 20 secs
 

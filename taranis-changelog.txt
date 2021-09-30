@@ -115,3 +115,27 @@ Taranis version 1.8.0
 - added new message alert silencing options
 - fix for quick flight mode switch
 - fix for rover modes vocal playback
+
+Taranis version 1.9.1
+
+- added support for crossfire
+- added support for THERMAL flight mode
+- fixed boat flight modes
+- fixed PX4 flight modes
+
+Taranis version 1.9.4 beta1
+
+- added git hash to version string
+- added support for fence status and alarms
+- added support for height above terrain
+- added no terrain data alarms
+- added generic failsafe alarm
+- added new low memory hud and right panel (select "min" in the config menu)
+- added support for RPM1 and RPM2 telemetry exported as sensors
+- added heli specific right panel (select "heli" in the config menu)
+
+Taranis version 1.9.5
+- fix terrain error in CRSF RF Mode 1
+- fix altitude repoting with unhealthy terrain data
+- added support for TURTLE flight mode
+- added support for BLIMP vehicle

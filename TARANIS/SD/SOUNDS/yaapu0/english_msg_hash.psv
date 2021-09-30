@@ -16,15 +16,23 @@
 /SOUNDS/yaapu0/en|3417557720|Transition VTOL done
 /SOUNDS/yaapu0/en|1204090832|Land descend started
 /SOUNDS/yaapu0/en|2890289840|Land final started
-/SOUNDS/yaapu0/en|1535290648|Soaring: forcing RTL
-/SOUNDS/yaapu0/en|3602501704|Soaring: Thermal detected
-/SOUNDS/yaapu0/en|3721120084|Soaring: Thermal ended
-/SOUNDS/yaapu0/en|956150328|Soaring: Thermal ended
-/SOUNDS/yaapu0/en|3879875148|Soaring: Thermal ended
-/SOUNDS/yaapu0/en|4091124880|reached command: 
+/SOUNDS/yaapu0/en|1883944664|Soaring: Outside max radius
+/SOUNDS/yaapu0/en|4175833240|Soaring: Disabled.
+/SOUNDS/yaapu0/en|2599859119|Soaring: not climbing
+/SOUNDS/yaapu0/en|636067590|Soaring: drifted too far
+/SOUNDS/yaapu0/en|2730864352|Soaring: Too high
+/SOUNDS/yaapu0/en|1698465616|Soaring: Too low
+/SOUNDS/yaapu0/en|981284144|Soaring: Thermal ended
+/SOUNDS/yaapu0/en|2913564252|Soaring: Drifted too far
+/SOUNDS/yaapu0/en|1746499976|Soaring: Exit via RC switch
+/SOUNDS/yaapu0/en|883458048|Soaring: Enabled.
+/SOUNDS/yaapu0/en|2139150204|Soaring: thermal weak
+/SOUNDS/yaapu0/en|1352994600|Soaring: reached upper altitude
+/SOUNDS/yaapu0/en|4026147344|Soaring: reached lower altitude
+/SOUNDS/yaapu0/en|4091124880|reached command:
 /SOUNDS/yaapu0/en|3311875476|reached waypoint:
-/SOUNDS/yaapu0/en|1997782032|Passed waypoint
+/SOUNDS/yaapu0/en|1997782032|Passed waypoint:
 /SOUNDS/yaapu0/en|554623408|Takeoff complete
 /SOUNDS/yaapu0/en|3025044912|Smart RTL deactivated
 /SOUNDS/yaapu0/en|3956583920|GPS home acquired
-/SOUNDS/yaapu0/en|1309405592|GPS home acquired
+/SOUNDS/yaapu0/en|1309405592|GPS home acquired
