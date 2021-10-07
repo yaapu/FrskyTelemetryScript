@@ -139,3 +139,6 @@ Taranis version 1.9.5
 - fix altitude repoting with unhealthy terrain data
 - added support for TURTLE flight mode
 - added support for BLIMP vehicle
+
+Taranis version 1.9.6-dev
+- new release folder structure with versions dedicated to X9D,X9D-2019 and QX7
