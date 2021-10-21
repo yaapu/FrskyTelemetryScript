@@ -126,13 +126,13 @@ local plotSources = {
   {"HDOP", "gpsHdopC", 5, 0.1},
   {"Num Sats", "numSats", 5, 1},
   {"Pitch", "pitch", 5, 1 },
-  {"Rangefinder", "range", 5, 1 }, --cm
+  {"Rangefinder", "range", 5, 1 },
   {"Roll", "roll", 5, 1 },
   {"RPM[1]", "rpm1", 5, 1 },
   {"RPM[2]", "rpm2", 5, 1 },
   {"RSSI", "rssi", 5, 1 },
   {"RSSI CRSF", "rssiCRSF", 5, 1 },
-  {"Sonar", "range", 5, 1 }, --cm
+  {"Sonar", "range", 5, 1 },
   {"Throttle", "throttle", 5, 1 },
   {"Vertical Speed", "vSpeed", 4, 0.1},   -- dm
   {"Wind Speed", "trueWindSpeed", 3, 0.1 },
@@ -499,14 +499,14 @@ local function saveConfig(conf)
 end
 
 local function drawConfigMenuBars()
-  lcd.setColor(CUSTOM_COLOR,0x0000)
+  lcd.setColor(CUSTOM_COLOR,lcd.RGB(16,20,25))
   local itemIdx = string.format("%d/%d",menu.selectedItem,#menuItems)
   lcd.drawFilledRectangle(0,0, LCD_W, 20, CUSTOM_COLOR)
   lcd.drawRectangle(0, 0, LCD_W, 20, CUSTOM_COLOR)
   lcd.drawFilledRectangle(0,LCD_H-20, LCD_W, 20, CUSTOM_COLOR)
   lcd.drawRectangle(0, LCD_H-20, LCD_W, 20, CUSTOM_COLOR)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
-  lcd.drawText(2,0,"Yaapu Telemetry Widget 1.9.5".." ("..'c47a1df'..")",CUSTOM_COLOR)
+  lcd.setColor(CUSTOM_COLOR,WHITE)
+  lcd.drawText(2,0,"Yaapu Telemetry Widget 1.9.6 dev".." ("..'4265d2f'..")",CUSTOM_COLOR)
   lcd.drawText(2,LCD_H-20+1,getConfigFilename(),CUSTOM_COLOR)
   lcd.drawText(LCD_W,LCD_H-20+1,itemIdx,CUSTOM_COLOR+RIGHT)
 end
@@ -540,7 +540,7 @@ local function decMenuItem(idx)
 end
 
 local function drawItem(idx,flags)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
+  lcd.setColor(CUSTOM_COLOR,WHITE)
   if type(menuItems[idx][4]) == "table" then
     lcd.drawText(280,25 + (idx-menu.offset-1)*20, menuItems[idx][4][menuItems[idx][3]],flags+CUSTOM_COLOR)
   else
@@ -590,7 +590,7 @@ local function drawConfigMenu(event)
   end
   --
   for m=1+menu.offset,math.min(#menuItems,11+menu.offset) do
-    lcd.setColor(CUSTOM_COLOR,0xFFFF)
+    lcd.setColor(CUSTOM_COLOR,WHITE)
     lcd.drawText(2,25 + (m-menu.offset-1)*20, menuItems[m][1],CUSTOM_COLOR)
     if m == menu.selectedItem then
       if menu.editSelected then
@@ -609,7 +609,7 @@ end
 -- RUN
 --------------------------
 local function run(event)
-  lcd.setColor(CUSTOM_COLOR, 0x0AB1) -- hex 0x084c7b -- 073f66
+  lcd.setColor(CUSTOM_COLOR, lcd.RGB(8,84,136)) -- hex 0x084c7b -- 073f66
   lcd.clear(CUSTOM_COLOR)
   ---------------------
   -- CONFIG MENU

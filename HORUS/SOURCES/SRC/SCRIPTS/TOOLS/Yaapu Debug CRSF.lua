@@ -45,10 +45,10 @@ local function crossfirePop()
         return 0x00, 0x10, app_id, value
       elseif #data > 4 and data[1] == CRSF_CUSTOM_TELEM_STATUS_TEXT then
         return 0x00, 0x10, 0x5000, 0x00000000
-      elseif #data > 48 and data[1] == CRSF_CUSTOM_TELEM_PASSTHROUGH_ARRAY then
+      elseif #data >= 8 and data[1] == CRSF_CUSTOM_TELEM_PASSTHROUGH_ARRAY then
         -- passthrough array
         local app_id, value
-        for i=0,data[2]-1
+        for i=0,math.min(data[2]-1, 9)
         do
           app_id = bit32.lshift(data[4+(6*i)],8) + data[3+(6*i)]
           value =  bit32.lshift(data[8+(6*i)],24) + bit32.lshift(data[7+(6*i)],16) + bit32.lshift(data[6+(6*i)],8) + data[5+(6*i)]
