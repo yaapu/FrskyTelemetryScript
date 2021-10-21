@@ -126,28 +126,19 @@ utils.gpsStatuses[4]="DGPS"
 utils.gpsStatuses[5]="RTKFlt"
 utils.gpsStatuses[6]="RTKFxd"
 
---[[
-0	MAV_SEVERITY_EMERGENCY	System is unusable. This is a "panic" condition.
-1	MAV_SEVERITY_ALERT	Action should be taken immediately. Indicates error in non-critical systems.
-2	MAV_SEVERITY_CRITICAL	Action must be taken immediately. Indicates failure in a primary system.
-3	MAV_SEVERITY_ERROR	Indicates an error in secondary/redundant systems.
-4	MAV_SEVERITY_WARNING	Indicates about a possible future error if this is not resolved within a given timeframe. Example would be a low battery warning.
-5	MAV_SEVERITY_NOTICE	An unusual event has occured, though not an error condition. This should be investigated for the root cause.
-6	MAV_SEVERITY_INFO	Normal operational messages. Useful for logging. No action is required for these messages.
-7	MAV_SEVERITY_DEBUG	Useful non-operational messages that can assist in debugging. These should not occur during normal operation.
---]]
-
+utils.colors = {}
 utils.mavSeverity = {}
-
-utils.mavSeverity[0] = {"EMR", 0xFB60}
-utils.mavSeverity[1] = {"ALR", 0xFB60}
-utils.mavSeverity[2] = {"CRT", 0xFB60}
-utils.mavSeverity[3] = {"ERR", 0xFB60}
-utils.mavSeverity[4] = {"WRN", 0xFFE0}
-utils.mavSeverity[5] = {"NTC", 0x1FEA}
-utils.mavSeverity[6] = {"INF", 0xFFFF}
-utils.mavSeverity[7] = {"DBG", 0xFFFF}
-
+utils.wpEnabledModeList = {
+  ['AUTO'] = 1,
+  ['GUIDED'] = 1,
+  ['LOITER'] = 1,
+  ['RTL'] = 1,
+  ['QRTL'] = 1,
+  ['QLOITER'] = 1,
+  ['QLAND'] = 1,
+  ['FOLLOW'] = 1,
+  ['ZIGZAG'] = 1,
+}
 ------------------------------
 -- TELEMETRY DATA
 ------------------------------
@@ -205,6 +196,7 @@ telemetry.wpDistance = 0
 telemetry.wpXTError = 0
 telemetry.wpBearing = 0
 telemetry.wpCommands = 0
+telemetry.wpOffsetFromCog = 0
 -- RC channels
 telemetry.rcchannels = {}
 -- VFR
@@ -307,6 +299,12 @@ status.airspeedEnabled = 0
 status.plotSources = nil
 -- UNIT CONVERSION
 status.unitConversion = {}
+-- WAYPOINTS
+status.cog = nil
+status.lastLat = nil
+status.lastLon = nil
+status.wpEnabled = 0
+status.wpEnabledMode = 0
 
 ---------------------------
 -- BATTERY TABLE
@@ -404,7 +402,6 @@ local blinkon = false
 
 local minmaxValues = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
 
-
 -- model and opentx version
 local ver, radio, maj, minor, rev = getVersion()
 
@@ -495,6 +492,69 @@ local hashByteIndex = 0
 local hash = 2166136261
 
 
+--[[
+ for better performance we cache lcd.RGB()
+--]]
+utils.initColors = function()
+  -- check if we have lcd.RGB() at init time
+  local color = lcd.RGB(0,0,0)
+  if color == nil then
+    print("luaDebug: OpenTX")
+    utils.colors.black = BLACK
+    utils.colors.white = WHITE
+    utils.colors.green = 0x1FEA
+    utils.colors.blue = BLUE
+    utils.colors.darkblue = 0x0AB1
+    utils.colors.darkyellow = 0xFE60
+    utils.colors.yellow = 0xFFE0
+    utils.colors.orange = 0xFB60
+    utils.colors.red = 0xF800
+    utils.colors.lightgrey = 0x8C71
+    utils.colors.grey = 0x7BCF
+    utils.colors.darkgrey = 0x5AEB
+    utils.colors.lightred = 0xF9A0
+    utils.colors.bars2 = 0x10A3
+  else
+    -- EdgeTX
+    print("luaDebug: EdgeTX")
+    utils.colors.black = BLACK
+    utils.colors.white = WHITE
+    utils.colors.green = lcd.RGB(00, 0xED, 0x32)
+    utils.colors.blue = BLUE
+    utils.colors.darkblue = lcd.RGB(8,84,136)
+    utils.colors.darkyellow = lcd.RGB(255,206,0)
+    utils.colors.yellow = lcd.RGB(255, 0xCE, 0)
+    utils.colors.orange = lcd.RGB(248,109,0)
+    utils.colors.red = RED
+    utils.colors.lightgrey = lcd.RGB(138,138,138)
+    utils.colors.grey = lcd.RGB(120,120,120)
+    utils.colors.darkgrey = lcd.RGB(90,90,90)
+    utils.colors.lightred = lcd.RGB(255,53,0)
+    utils.colors.bars2 = lcd.RGB(16,20,25)
+  end
+
+  --[[
+  0	MAV_SEVERITY_EMERGENCY	System is unusable. This is a "panic" condition.
+  1	MAV_SEVERITY_ALERT	Action should be taken immediately. Indicates error in non-critical systems.
+  2	MAV_SEVERITY_CRITICAL	Action must be taken immediately. Indicates failure in a primary system.
+  3	MAV_SEVERITY_ERROR	Indicates an error in secondary/redundant systems.
+  4	MAV_SEVERITY_WARNING	Indicates about a possible future error if this is not resolved within a given timeframe. Example would be a low battery warning.
+  5	MAV_SEVERITY_NOTICE	An unusual event has occured, though not an error condition. This should be investigated for the root cause.
+  6	MAV_SEVERITY_INFO	Normal operational messages. Useful for logging. No action is required for these messages.
+  7	MAV_SEVERITY_DEBUG	Useful non-operational messages that can assist in debugging. These should not occur during normal operation.
+  --]]
+  utils.mavSeverity[0] = {"EMR", utils.colors.orange}
+  utils.mavSeverity[1] = {"ALR", utils.colors.orange}
+  utils.mavSeverity[2] = {"CRT", utils.colors.orange}
+  utils.mavSeverity[3] = {"ERR", utils.colors.orange}
+  utils.mavSeverity[4] = {"WRN", utils.colors.orange}
+  utils.mavSeverity[5] = {"NTC", utils.colors.green}
+  utils.mavSeverity[6] = {"INF", WHITE}
+  utils.mavSeverity[7] = {"DBG", WHITE}
+end
+
+local telemetryPopLoops = 15
+
 local function triggerReset()
   resetPending = true
   modelChangePending = true
@@ -531,13 +591,6 @@ local function calcCellCount()
   return c1,c2
 end
 
---[[
-  Example data based on a 18 minutes flight for quad, battery:5200mAh LiPO 10C, hover @15A
-  Notes:
-  - when motors are armed VOLTAGE_DROP offset is applied!
-  - number of samples is fixed at 11 but percentage values can be anything and are not restricted to multiples of 10
-  - voltage between samples is assumed to be linear
---]]
 local battPercByVoltage = {}
 
 utils.getBattPercByCell = function(voltage)
@@ -682,7 +735,6 @@ utils.playSoundByFlightMode = function(flightMode)
   end
 end
 
-
 local function formatMessage(severity,msg)
   local clippedMsg = msg
 
@@ -734,7 +786,20 @@ utils.pushMessage = function(severity, msg)
 end
 
 
-utils.getHomeFromAngleAndDistance = function(telemetry)
+utils.getAngleFromLatLon = function(lat1, lon1, lat2, lon2)
+  local la1 = math.rad(lat1)
+  local lo1 = math.rad(lon1)
+  local la2 = math.rad(lat2)
+  local lo2 = math.rad(lon2)
+
+  local y = math.sin(lo2-lo1) * math.cos(la2);
+  local x = math.cos(la1)*math.sin(la2) - math.sin(la1)*math.cos(la2)*math.cos(lo2-lo1);
+  local a = math.atan2(y, x);
+
+  return (a*180/math.pi + 360) % 360 -- in degrees
+end
+
+utils.getLatLonFromAngleAndDistance = function(telemetry, angle, distance)
 --[[
   la1,lo1 coordinates of first point
   d be distance (m),
@@ -748,12 +813,11 @@ utils.getHomeFromAngleAndDistance = function(telemetry)
   if telemetry.lat == nil or telemetry.lon == nil then
     return nil,nil
   end
-
   local lat1 = math.rad(telemetry.lat)
   local lon1 = math.rad(telemetry.lon)
-  local Ad = telemetry.homeDist/(6371000) --meters
-  local lat2 = math.asin( math.sin(lat1) * math.cos(Ad) + math.cos(lat1) * math.sin(Ad) * math.cos( math.rad(telemetry.homeAngle)) )
-  local lon2 = lon1 + math.atan2( math.sin( math.rad(telemetry.homeAngle) ) * math.sin(Ad) * math.cos(lat1) , math.cos(Ad) - math.sin(lat1) * math.sin(lat2))
+  local Ad = distance/(6371000) --meters
+  local lat2 = math.asin( math.sin(lat1) * math.cos(Ad) + math.cos(lat1) * math.sin(Ad) * math.cos( math.rad(angle)) )
+  local lon2 = lon1 + math.atan2( math.sin( math.rad(angle) ) * math.sin(Ad) * math.cos(lat1) , math.cos(Ad) - math.sin(lat1) * math.sin(lat2))
   return math.deg(lat2), math.deg(lon2)
 end
 
@@ -796,7 +860,6 @@ local function getSensorsConfigFilename(panel)
   local info = model.getInfo()
   local strPanel = panel == nil and "" or "_"..panel
   local cfg = "/SCRIPTS/YAAPU/CFG/" .. string.lower(string.gsub(info.name, "[%c%p%s%z]", "")..strPanel.."_sensors.lua")
-  print("luaDebug:",cfg)
   local file = io.open(cfg,"r")
 
   if file == nil then
@@ -874,6 +937,14 @@ end
 -----------------------------------------------------------------
 -- TELEMETRY
 -----------------------------------------------------------------
+local function wrap360(angle)
+    local res = angle % 360
+    if res < 0 then
+        res = res + 360
+    end
+    return res
+end
+
 local function updateHash(c)
   hash = bit32.bxor(hash, c)
   hash = (hash * 16777619) % 2^32
@@ -905,7 +976,6 @@ local function resetHash()
   hash = 2166136261
   hashByteIndex = 0
 end
-
 
 local function processTelemetry(DATA_ID,VALUE,now)
   if DATA_ID == 0x5006 then -- ROLLPITCH
@@ -976,17 +1046,20 @@ local function processTelemetry(DATA_ID,VALUE,now)
       status.lastMsgValue = VALUE
       local c
       local msgEnd = false
+      local chunk = {}
       for i=3,0,-1
       do
         c = bit32.extract(VALUE,i*8,7)
         if c ~= 0 then
-          status.msgBuffer = status.msgBuffer .. string.char(c)
+          --status.msgBuffer = status.msgBuffer .. string.char(c)
+          chunk[4-i] = string.char(c)
           updateHash(c)
         else
           msgEnd = true;
           break;
         end
       end
+      status.msgBuffer = status.msgBuffer..table.concat(chunk)
       if msgEnd then
         local severity = (bit32.extract(VALUE,7,1) * 1) + (bit32.extract(VALUE,15,1) * 2) + (bit32.extract(VALUE,23,1) * 4)
         utils.pushMessage( severity, status.msgBuffer)
@@ -1012,7 +1085,7 @@ local function processTelemetry(DATA_ID,VALUE,now)
     telemetry.wpNumber = bit32.extract(VALUE,0,10) -- wp index
     telemetry.wpDistance = bit32.extract(VALUE,12,10) * (10^bit32.extract(VALUE,10,2)) -- meters
     telemetry.wpXTError = bit32.extract(VALUE,23,4) * (10^bit32.extract(VALUE,22,1)) * (bit32.extract(VALUE,27,1) == 1 and -1 or 1)-- meters
-    telemetry.wpBearing = bit32.extract(VALUE,29,3) -- offset from cog with 45° resolution
+    telemetry.wpOffsetFromCog = bit32.extract(VALUE,29,3) -- offset from cog with 45° resolution
   elseif DATA_ID == 0x500A then -- RPM 1 and 2
     -- rpm1 and rpm2 are int16_t
     local rpm1 = bit32.extract(VALUE,0,16)
@@ -1029,6 +1102,14 @@ local function processTelemetry(DATA_ID,VALUE,now)
     telemetry.trueWindAngle = bit32.extract(VALUE, 0, 7) * 3 -- degrees
     telemetry.apparentWindSpeed = bit32.extract(VALUE,23,7) * (10^bit32.extract(VALUE,22,1)) -- dm/s
     telemetry.apparentWindAngle = bit32.extract(VALUE, 16, 6) * (bit32.extract(VALUE,15,1) == 1 and -1 or 1) * 3 -- degrees
+  elseif DATA_ID == 0x500D then -- WAYPOINTS @1Hz
+    telemetry.wpNumber = bit32.extract(VALUE,0,11) -- wp index
+    telemetry.wpDistance = bit32.extract(VALUE,13,10) * (10^bit32.extract(VALUE,11,2)) -- meters
+    telemetry.wpBearing = bit32.extract(VALUE, 23,  7) * 3
+    if status.cog ~= nil then
+      telemetry.wpOffsetFromCog = wrap360(telemetry.wpBearing - status.cog)
+    end
+    status.wpEnabled = 1
   --[[
   elseif DATA_ID == 0x50F1 then -- RC CHANNELS
     -- channels 1 - 32
@@ -1265,26 +1346,22 @@ local function calcBattery()
   if conf.enableBattPercByVoltage == true then
     for battId=0,2
     do
-      if telemetry.statusArmed then
-        battery[16+battId] = utils.getBattPercByCell(0.01*battery[1+battId])
-      else
-        battery[16+battId] = utils.getBattPercByCell((0.01*battery[1+battId])-0.15)
-      end
+      battery[16+battId] = utils.getBattPercByCell(0.01*battery[1+battId])
     end
   else
-  for battId=0,2
-  do
-    if (battery[13+battId] > 0) then
-      battery[16+battId] = (1 - (battery[10+battId]/battery[13+battId]))*100
-      if battery[16+battId] > 99 then
+    for battId=0,2
+    do
+      if (battery[13+battId] > 0) then
+        battery[16+battId] = (1 - (battery[10+battId]/battery[13+battId]))*100
+        if battery[16+battId] > 99 then
+          battery[16+battId] = 99
+        elseif battery[16+battId] < 0 then
+          battery[16+battId] = 0
+        end
+      else
         battery[16+battId] = 99
-      elseif battery[16+battId] < 0 then
-        battery[16+battId] = 0
       end
-    else
-      battery[16+battId] = 99
     end
-  end
   end
 
   if status.showDualBattery == true and conf.battConf ==  1 then
@@ -1349,7 +1426,7 @@ local function drawRssi()
 end
 
 local function drawRssiCRSF()
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
+  lcd.setColor(CUSTOM_COLOR,utils.colors.white)
   -- RSSI
   lcd.drawText(323 - 128, 0, "RTP:", 0+CUSTOM_COLOR+SMLSIZE)
   lcd.drawText(323, 0, "RS:", 0+CUSTOM_COLOR+SMLSIZE)
@@ -1408,7 +1485,10 @@ local function resetTelemetry()
   telemetry.wpDistance = 0
   telemetry.wpXTError = 0
   telemetry.wpBearing = 0
+  telemetry.wpOffsetFromCog = 0
   telemetry.wpCommands = 0
+  telemetry.wpLat = 0
+  telemetry.wpLon = 0
   -- RC channels
   telemetry.rcchannels = {}
   -- VFR
@@ -1563,7 +1643,7 @@ local function reset()
       -- done
       resetPhase = 7
     elseif resetPhase == 7 then
-      utils.pushMessage(7,"Yaapu Telemetry Widget 1.9.5")
+      utils.pushMessage(7,"Yaapu Telemetry Widget 1.9.6 dev")
       utils.playSound("yaapu")
       -- on model change reload config!
       if modelChangePending == true then
@@ -1636,11 +1716,11 @@ local function setSensorValues()
 end
 
 utils.drawTopBar = function()
-  lcd.setColor(CUSTOM_COLOR,0x0000)
+  lcd.setColor(CUSTOM_COLOR,utils.colors.black)
   -- black bar
   lcd.drawFilledRectangle(0,0, LCD_W, 18, CUSTOM_COLOR)
   -- frametype and model name
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
+  lcd.setColor(CUSTOM_COLOR,utils.colors.white)
   if status.modelString ~= nil then
     lcd.drawText(2, 0, status.modelString, CUSTOM_COLOR)
   end
@@ -1651,12 +1731,12 @@ utils.drawTopBar = function()
   -- RSSI
   -- RSSI
   if telemetryEnabled() == false then
-    lcd.setColor(CUSTOM_COLOR,0xF800)
+    lcd.setColor(CUSTOM_COLOR,utils.colors.red)
     lcd.drawText(323-23, 0, "NO TELEM", 0+CUSTOM_COLOR)
   else
     utils.drawRssi()
   end
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
+  lcd.setColor(CUSTOM_COLOR,utils.colors.white)
   -- tx voltage
   local vtx = string.format("%.1fv",getValue(getFieldInfo("tx-voltage").id))
   lcd.drawText(391,0, vtx, 0+CUSTOM_COLOR+SMLSIZE)
@@ -1672,10 +1752,10 @@ local function drawMessageScreen()
     lcd.drawText(0,4+12*row, status.messages[i % 200][1],SMLSIZE+CUSTOM_COLOR)
     row = row+1
   end
-  lcd.setColor(CUSTOM_COLOR,0x0AB1)
+  lcd.setColor(CUSTOM_COLOR,utils.colors.darkblue)
   lcd.drawFilledRectangle(405,0,75,272,CUSTOM_COLOR)
 
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
+  lcd.setColor(CUSTOM_COLOR,utils.colors.white)
   -- print info on the right
   -- CELL
   if battery[1] * 0.01 < 10 then
@@ -1689,47 +1769,47 @@ local function drawMessageScreen()
   local altPrefix = status.terrainEnabled == 1 and "HAT(" or "Alt("
   local alt = status.terrainEnabled == 1 and telemetry.heightAboveTerrain or telemetry.homeAlt
 
-  lcd.setColor(CUSTOM_COLOR,0x0000)
+  lcd.setColor(CUSTOM_COLOR,utils.colors.black)
   lcd.drawText(410, 25, altPrefix..unitLabel..")", SMLSIZE+0+CUSTOM_COLOR)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
+  lcd.setColor(CUSTOM_COLOR,utils.colors.white)
   lcd.drawNumber(410,37,alt*unitScale,MIDSIZE+CUSTOM_COLOR+0)
   -- SPEED
-  lcd.setColor(CUSTOM_COLOR,0x0000)
+  lcd.setColor(CUSTOM_COLOR,utils.colors.black)
   lcd.drawText(410, 60, "Spd("..conf.horSpeedLabel..")", SMLSIZE+0+CUSTOM_COLOR)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
+  lcd.setColor(CUSTOM_COLOR,utils.colors.white)
   lcd.drawNumber(410,72,telemetry.hSpeed*0.1* conf.horSpeedMultiplier,MIDSIZE+CUSTOM_COLOR+0)
   -- VSPEED
-  lcd.setColor(CUSTOM_COLOR,0x0000)
+  lcd.setColor(CUSTOM_COLOR,utils.colors.black)
   lcd.drawText(410, 95, "VSI("..conf.vertSpeedLabel..")", SMLSIZE+0+CUSTOM_COLOR)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
+  lcd.setColor(CUSTOM_COLOR,utils.colors.white)
   lcd.drawNumber(410,107, telemetry.vSpeed*0.1*conf.vertSpeedMultiplier, MIDSIZE+CUSTOM_COLOR+0)
   -- DIST
-  lcd.setColor(CUSTOM_COLOR,0x0000)
+  lcd.setColor(CUSTOM_COLOR,utils.colors.black)
   lcd.drawText(410, 130, "Dist("..unitLabel..")", SMLSIZE+0+CUSTOM_COLOR)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
+  lcd.setColor(CUSTOM_COLOR,utils.colors.white)
   lcd.drawNumber(410, 142, telemetry.homeDist*unitScale, MIDSIZE+0+CUSTOM_COLOR)
   -- HDG
-  lcd.setColor(CUSTOM_COLOR,0x0000)
+  lcd.setColor(CUSTOM_COLOR,utils.colors.black)
   lcd.drawText(410, 165, "Heading", SMLSIZE+0+CUSTOM_COLOR)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
+  lcd.setColor(CUSTOM_COLOR,utils.colors.white)
   lcd.drawNumber(410, 177, telemetry.yaw, MIDSIZE+0+CUSTOM_COLOR)
   -- HOMEDIR
-  lcd.setColor(CUSTOM_COLOR,0xFE60)
+  lcd.setColor(CUSTOM_COLOR,utils.colors.darkyellow)
   drawLib.drawRArrow(442,235,22,math.floor(telemetry.homeAngle - telemetry.yaw),CUSTOM_COLOR)--HomeDirection(telemetry)
   -- AUTOSCROLL
   if status.messageAutoScroll == true then
-    lcd.setColor(CUSTOM_COLOR,0xFFFF)
+    lcd.setColor(CUSTOM_COLOR,WHITE)
   else
-    lcd.setColor(CUSTOM_COLOR,0xFE60)
+    lcd.setColor(CUSTOM_COLOR,utils.colors.darkyellow)
   end
   local maxPages = tonumber(math.ceil((#status.messages+1)/20))
   local currentPage = 1+tonumber(maxPages - (status.messageCount - status.messageOffset)/20)
 
   lcd.drawText(LCD_W-2, LCD_H-16, string.format("%d/%d",currentPage,maxPages), SMLSIZE+CUSTOM_COLOR+RIGHT)
-  lcd.setColor(CUSTOM_COLOR,0x7BCF)
+  lcd.setColor(CUSTOM_COLOR,utils.colors.grey)
   lcd.drawLine(0,LCD_H-20,405,LCD_H-20,SOLID,CUSTOM_COLOR)
 
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
+  lcd.setColor(CUSTOM_COLOR,WHITE)
   if status.strFlightMode ~= nil then
     lcd.drawText(0,LCD_H-20,status.strFlightMode,CUSTOM_COLOR)
   end
@@ -1867,19 +1947,13 @@ local function checkEvents(celm)
   end
 
   if conf.enableBattPercByVoltage == true then
-  -- discharge curve is based on battery under load, when motors are disarmed
-  -- cellvoltage needs to be corrected by subtracting the "under load" voltage drop
-    if telemetry.statusArmed then
-      status.batLevel = utils.getBattPercByCell(celm*0.01)
+    status.batLevel = utils.getBattPercByCell(celm*0.01)
+  else
+    if (battery[13] > 0) then
+      status.batLevel = (1 - (battery[10]/battery[13]))*100
     else
-      status.batLevel = utils.getBattPercByCell((celm*0.01)-0.15)
+      status.batLevel = 99
     end
-  else
-  if (battery[13] > 0) then
-    status.batLevel = (1 - (battery[10]/battery[13]))*100
-  else
-    status.batLevel = 99
-  end
   end
 
   for l=1,13 do
@@ -1916,7 +1990,7 @@ local function checkEvents(celm)
   -- home detecting code
   if telemetry.homeLat == nil then
     if telemetry.gpsStatus > 2 and telemetry.homeAngle ~= -1 then
-      telemetry.homeLat, telemetry.homeLon = utils.getHomeFromAngleAndDistance(telemetry)
+      telemetry.homeLat, telemetry.homeLon = utils.getLatLonFromAngleAndDistance(telemetry, telemetry.homeAngle, telemetry.homeDist)
     end
   end
 
@@ -1924,6 +1998,15 @@ local function checkEvents(celm)
   -- on quick radio mode switches
   if telemetry.frameType ~= -1 and checkTransition(1,telemetry.flightMode) then
     utils.playSoundByFlightMode(telemetry.flightMode)
+    -- check if we should enable waypoint plotting for this flight mode
+    -- supported modes are AUTO, GUIDED, LOITER, RTL, QRTL, QLOITER, QLAND, FOLLOW, ZIGZAG
+    -- see /MAVProxy/modules/mavproxy_map/__init__.py
+    if utils.wpEnabledModeList[string.upper(frame.flightModes[telemetry.flightMode])] == 1 then
+      status.wpEnabledMode = 1
+    else
+      status.wpEnabledMode = 0
+    end
+    --print('luaDebug', status.wpEnabledMode)
   end
 
   if telemetry.simpleMode ~= status.lastSimpleMode then
@@ -1965,14 +2048,17 @@ local function crossfirePop()
         local value =  bit32.lshift(data[7],24) + bit32.lshift(data[6],16) + bit32.lshift(data[5],8) + data[4]
         return 0x00, 0x10, app_id, value
       elseif #data > 4 and data[1] == 0xF1 then
+        local msg = {}
         local severity = data[2]
         -- copy the terminator as well
         for i=3,#data
         do
-          status.msgBuffer = status.msgBuffer .. string.char(data[i])
+          -- avoid string concatenation which is slow!
+          msg[i-2] = string.char(data[i])
           -- hash support
           updateHash(data[i])
         end
+        status.msgBuffer = table.concat(msg)
         utils.pushMessage(severity, status.msgBuffer)
         -- hash audio support
         playHash()
@@ -1980,10 +2066,10 @@ local function crossfirePop()
         resetHash()
         status.msgBuffer = nil
         status.msgBuffer = ""
-      elseif #data > 48 and data[1] == 0xF2 then
+      elseif #data >= 8 and data[1] == 0xF2 then
         -- passthrough array
         local app_id, value
-        for i=0,data[2]-1
+        for i=0,math.min(data[2]-1, 9)
         do
           app_id = bit32.lshift(data[4+(6*i)],8) + data[3+(6*i)]
           value =  bit32.lshift(data[8+(6*i)],24) + bit32.lshift(data[7+(6*i)],16) + bit32.lshift(data[6+(6*i)],8) + data[5+(6*i)]
@@ -2011,13 +2097,16 @@ local function loadConfig(init)
   if conf.enableCRSF then
     telemetryPop = crossfirePop
     utils.drawRssi = drawRssiCRSF
+    -- we need a lower value here to prevent CPU Kill
+    -- when decoding multiple packet frames
+    telemetryPopLoops = 8
   end
   -- do not reset layout on boot
   if init == nil then
     resetLayoutPending = true
     resetLayoutPhase = -1
   end
-  status.mapZoomLevel=conf.mapProvider == 1 and conf.mapZoomMin or conf.mapZoomMax
+  status.mapZoomLevel = conf.mapProvider == 1 and conf.mapZoomMin or conf.mapZoomMax
 
   loadConfigPending = false
 end
@@ -2027,6 +2116,7 @@ end
 -------------------------------
 local timerPage = getTime()
 local timerWheel = getTime()
+local updateCog = 0
 
 local function backgroundTasks(myWidget,telemetryLoops)
   local now = getTime()
@@ -2055,6 +2145,23 @@ local function backgroundTasks(myWidget,telemetryLoops)
     if type(gpsData) == "table" and gpsData.lat ~= nil and gpsData.lon ~= nil then
       telemetry.lat = gpsData.lat
       telemetry.lon = gpsData.lon
+      if updateCog == 1 then
+        -- update COG
+        if status.lastLat ~= nil and status.lastLon ~= nil and status.lastLat ~= telemetry.lat and status.lastLon ~= telemetry.lon then
+          local cog = utils.getAngleFromLatLon(status.lastLat, status.lastLon, telemetry.lat, telemetry.lon)
+          status.cog = cog ~= nil and cog or status.cog
+        end
+        updateCog = 0
+      else
+        -- update last GPS coords
+        status.lastLat = telemetry.lat
+        status.lastLon = telemetry.lon
+        -- process wpLat and wpLon updates
+        if status.wpEnabled == 1 then
+          status.wpLat, status.wpLon = utils.getLatLonFromAngleAndDistance(telemetry, telemetry.wpBearing, telemetry.wpDistance)
+        end
+        updateCog = 1
+      end
     end
     -- export OpenTX sensor values
     setSensorValues()
@@ -2069,12 +2176,7 @@ local function backgroundTasks(myWidget,telemetryLoops)
       status.screenTogglePage = utils.getScreenTogglePage(myWidget,conf,status)
       timerPage = now
     end
-    --[[
-    -- handle wheel emulation
-    if getTime() - timerWheel > 200 then
-      timerWheel = getTime()
-    end
-    --]]
+
     -- flight mode
     if frame.flightModes then
       status.strFlightMode = frame.flightModes[telemetry.flightMode]
@@ -2098,13 +2200,13 @@ local function backgroundTasks(myWidget,telemetryLoops)
 
   -- SLOWER: this runs around 1.25Hz but not when the previous block runs
   if bgclock % 4 == 0 then
-    -- update RSSI
+    -- rssi
     if conf.enableCRSF then
       -- apply same algo used by ardupilot to estimate a 0-100 rssi value
       -- rssi = roundf((1.0f - (rssi_dbm - 50.0f) / 70.0f) * 255.0f);
       local rssi_dbm = math.abs(getValue("1RSS"))
       if getValue("ANT") ~= 0 then
-        math.abs(getValue("2RSS"))
+        rssi_dbm = math.abs(getValue("2RSS"))
       end
       telemetry.rssiCRSF = math.min(100, math.floor(0.5 + ((1-(rssi_dbm - 50)/70)*100)))
     end
@@ -2201,6 +2303,8 @@ local function init()
   -- initialize flight timer
   model.setTimer(2,{mode=0})
   model.setTimer(2,{value=0})
+  -- color init
+  utils.initColors()
   -- load configuration at boot and only refresh if GV(8,8) = 1
   loadConfig(true)
   -- ok configuration loaded
@@ -2215,7 +2319,7 @@ local function init()
   -- load battery config
   utils.loadBatteryConfigFile()
   -- ok done
-  utils.pushMessage(7,"Yaapu Telemetry Widget 1.9.5".." ("..'c47a1df'..")")
+  utils.pushMessage(7,"Yaapu Telemetry Widget 1.9.6 dev".." ("..'4265d2f'..")")
   utils.playSound("yaapu")
   -- fix for generalsettings lazy loading...
   unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
@@ -2371,7 +2475,7 @@ local function background(myWidget)
   -- when page 1 goes to background run bg tasks
   if myWidget.options.page == 1 then
     -- run bg tasks
-    backgroundTasks(myWidget,15)
+    backgroundTasks(myWidget,telemetryPopLoops)
     -- call custom panel background functions
     if leftPanel ~= nil then
       leftPanel.background(myWidget,conf,telemetry,status,utils,drawLib)
@@ -2438,11 +2542,11 @@ local function loadLayout()
     layout = utils.doLibrary(conf.widgetLayoutFilename)
   end
 
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
+  lcd.setColor(CUSTOM_COLOR,WHITE)
   lcd.drawFilledRectangle(88,74, 304, 84, CUSTOM_COLOR)
-  lcd.setColor(CUSTOM_COLOR,0x10A3)
+  lcd.setColor(CUSTOM_COLOR,utils.colors.bars2)
   lcd.drawFilledRectangle(90,76, 300, 80, CUSTOM_COLOR)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
+  lcd.setColor(CUSTOM_COLOR,utils.colors.white)
   lcd.drawText(120, 95, "loading layout...", DBLSIZE+CUSTOM_COLOR)
 end
 
@@ -2462,11 +2566,11 @@ end
 
 local function drawInitialingMsg()
   lcd.clear(CUSTOM_COLOR)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
+  lcd.setColor(CUSTOM_COLOR,WHITE)
   lcd.drawFilledRectangle(88,74, 304, 84, CUSTOM_COLOR)
-  lcd.setColor(CUSTOM_COLOR,0x10A3)
+  lcd.setColor(CUSTOM_COLOR,utils.colors.bars2)
   lcd.drawFilledRectangle(90,76, 300, 80, CUSTOM_COLOR)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)
+  lcd.setColor(CUSTOM_COLOR,utils.colors.white)
   lcd.drawText(155, 95, "initializing...", DBLSIZE+CUSTOM_COLOR)
 end
 
@@ -2481,7 +2585,7 @@ local function drawFullScreen(myWidget)
       backgroundTasks(myWidget,15)
     end
   end
-  lcd.setColor(CUSTOM_COLOR, 0x0AB1)
+  lcd.setColor(CUSTOM_COLOR, utils.colors.darkblue)
 
   if not (resetPending or resetLayoutPending or loadConfigPending) then
     if myWidget.options.page == 2 or status.screenTogglePage == 2 then
@@ -2489,7 +2593,7 @@ local function drawFullScreen(myWidget)
       -- Widget Page 2: MESSAGES
       ------------------------------------
       -- message history has black background
-      lcd.setColor(CUSTOM_COLOR, 0x0000)
+      lcd.setColor(CUSTOM_COLOR, utils.colors.black)
       lcd.clear(CUSTOM_COLOR)
 
       drawMessageScreen()

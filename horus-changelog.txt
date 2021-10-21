@@ -135,3 +135,8 @@ Horus version 1.9.5
 - added airspeed option on the hud above groundspeed FRSKY_OPTION = current value + 1
 - added plotting page with selectable sensors to plot (configure as widget page 6)
 
+Horus version 1.9.6 - dev
+
+- better handling of status text messages
+- added support for CRSF telemetry packets with variable size
+- tuned script for lower cpu with CRSF
