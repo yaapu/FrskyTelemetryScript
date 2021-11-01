@@ -142,3 +142,4 @@ Taranis version 1.9.5
 
 Taranis version 1.9.6-dev
 - new release folder structure with versions dedicated to X9D,X9D-2019 and QX7
+- added support for CRSF telemetry packets with variable size

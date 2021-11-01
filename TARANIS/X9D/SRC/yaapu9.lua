@@ -772,10 +772,10 @@ local function crossfirePop()
         collectgarbage()
         collectgarbage()
         msgBuffer = ""
-      elseif #data > 48 and data[1] == 0xF2 then
+      elseif #data >= 8 and data[1] == 0xF2 then
         -- passthrough array
         local app_id, value
-        for i=0,data[2]-1
+        for i=0,math.min(data[2]-1, 9)
         do
           app_id = bit32.lshift(data[4+(6*i)],8) + data[3+(6*i)]
           value =  bit32.lshift(data[8+(6*i)],24) + bit32.lshift(data[7+(6*i)],16) + bit32.lshift(data[6+(6*i)],8) + data[5+(6*i)]
@@ -1575,7 +1575,7 @@ local function init()
   clearTable(menuLib)
   menuLib = nil
 
-  pushMessage(7,"Yaapu 1.9.6-dev".." ("..'c438bb8'..")")
+  pushMessage(7,"Yaapu 1.9.6-dev".." ("..'40041ae'..")")
   collectgarbage()
   collectgarbage()
   playSound("yaapu")
