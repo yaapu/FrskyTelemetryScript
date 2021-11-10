@@ -1,7 +1,15 @@
 # Yaapu Frsky Telemetry Script
 
-This is the home of the Yaapu Telemetry Script project, a [LUA](https://www.lua.org/about.html) telemetry script for radios running [OpenTX](https://www.open-tx.org/)
+This is the home of the Yaapu Telemetry Script project, an [ArduPilot](http://ardupilot.org/ardupilot/index.html) [LUA](https://www.lua.org/about.html) telemetry script for radios running [OpenTX](https://www.open-tx.org/) and [EdgeTX](http://www.edgetx.org)
 
+Supports:
+ - [OpenTX](https://www.open-tx.org)
+ - [EdgeTX](http://www.edgetx.org) with Widget version 1.9.6 or later
+ - FRSKY S.Port (setup info [here](https://ardupilot.org/copter/docs/common-connecting-sport-fport.html))
+ - TBS Crossfire (setup info [here](https://github.com/yaapu/FrskyTelemetryScript/wiki/Passthrough-over-CRSF-and-ExpressLRS))
+ - [ExpressLRS](https://www.expresslrs.org/) (setup info [here](https://github.com/yaapu/FrskyTelemetryScript/wiki/Passthrough-over-CRSF-and-ExpressLRS))
+ - [MavToPT](https://github.com/zs6buj/MavlinkToPassthru) project
+ - 
 **Downloading**
 - **the latest release versions are downloadable from the [releases](https://github.com/yaapu/FrskyTelemetryScript/releases) section or from the [clone/download](https://github.com/yaapu/FrskyTelemetryScript/archive/master.zip) button** 
 - **the latest dev versions are downloadable from the [clone/download of the DEV branch](https://github.com/yaapu/FrskyTelemetryScript/archive/refs/heads/dev.zip) button** 
