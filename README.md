@@ -11,8 +11,8 @@ Supports:
  - [MavToPT](https://github.com/zs6buj/MavlinkToPassthru) project
 
 **Downloading**
-- **the latest release versions are downloadable from the [releases](https://github.com/yaapu/FrskyTelemetryScript/releases) section or from the [clone/download](https://github.com/yaapu/FrskyTelemetryScript/archive/master.zip) button** 
-- **the latest dev versions are downloadable from the [clone/download of the DEV branch](https://github.com/yaapu/FrskyTelemetryScript/archive/refs/heads/dev.zip) button** 
+- **the latest release versions are downloadable from the [releases](https://github.com/yaapu/FrskyTelemetryScript/releases) section or from the [clone/download](https://github.com/yaapu/FrskyTelemetryScript/archive/master.zip) button of the [master branch](https://github.com/yaapu/FrskyTelemetryScript/tree/master)** 
+- **the latest dev versions are downloadable from the [clone/download](https://github.com/yaapu/FrskyTelemetryScript/archive/dev.zip) button of the [dev branch](https://github.com/yaapu/FrskyTelemetryScript/tree/dev)** 
 
 ### please read the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki) for more info
 
