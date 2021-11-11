@@ -1,4 +1,4 @@
-# Yaapu Frsky Telemetry Script (DEVELOPMENT BRANCH)
+# Yaapu Telemetry Script and Widget (DEV BRANCH)
 
 This is the home of the Yaapu Telemetry Script project, an [ArduPilot](http://ardupilot.org/ardupilot/index.html) [LUA](https://www.lua.org/about.html) telemetry script for radios running [OpenTX](https://www.open-tx.org/) and [EdgeTX](http://www.edgetx.org)
 
