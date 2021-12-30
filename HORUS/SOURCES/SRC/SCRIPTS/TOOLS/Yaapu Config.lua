@@ -589,14 +589,26 @@ end
 
 local function drawItem(idx,flags)
   if type(menuItems[idx][4]) == "table" then
-    lcd.drawText(280,25 + (idx-menu.offset-1)*20, menuItems[idx][4][menuItems[idx][3]],flags+COLOR_THEME_PRIMARY1)
+    lcd.drawText(280, 25 + (idx-menu.offset-1)*20, menuItems[idx][4][menuItems[idx][3]], flags+COLOR_THEME_PRIMARY1)
   else
     if menuItems[idx][3] == 0 and menuItems[idx][4] >= 0 then
       lcd.drawText(280,25 + (idx-menu.offset-1)*20, "---",flags+COLOR_THEME_PRIMARY1)
     else
-      lcd.drawNumber(280,25 + (idx-menu.offset-1)*20, menuItems[idx][3],flags+menuItems[idx][7]+COLOR_THEME_PRIMARY1)
       if menuItems[idx][6] ~= nil then
-        lcd.drawText(280 + 50,25 + (idx-menu.offset-1)*20, menuItems[idx][6],flags+COLOR_THEME_PRIMARY1)
+	    if (menuItems[idx][7] == PREC1) then
+		  -- str = tostring(menuItems[idx][3]/10)
+		  str = string.format("%.2f",menuItems[idx][3]/10)
+		else
+          if (menuItems[idx][7] == PREC2) then 		
+		    -- str = tostring(menuItems[idx][3]/100)
+            str = string.format("%.2f",menuItems[idx][3]/100)
+		  else
+		    str = tostring(menuItems[idx][3])
+		  end	
+		end
+		lcd.drawText(280, 25 + (idx-menu.offset-1)*20, str .. " " .. tostring(menuItems[idx][6]), flags+COLOR_THEME_PRIMARY1)
+	  else
+	    lcd.drawNumber(280, 25 + (idx-menu.offset-1)*20, menuItems[idx][3], flags+menuItems[idx][7]+COLOR_THEME_PRIMARY1)
       end
     end
   end
