@@ -549,16 +549,14 @@ local function saveConfig(conf)
 end
 
 local function drawConfigMenuBars()
-  lcd.setColor(CUSTOM_COLOR,0x0000)
   local itemIdx = string.format("%d/%d",menu.selectedItem,#menuItems)
-  lcd.drawFilledRectangle(0,0, LCD_W, 20, CUSTOM_COLOR)
-  lcd.drawRectangle(0, 0, LCD_W, 20, CUSTOM_COLOR)
-  lcd.drawFilledRectangle(0,LCD_H-20, LCD_W, 20, CUSTOM_COLOR)
-  lcd.drawRectangle(0, LCD_H-20, LCD_W, 20, CUSTOM_COLOR)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)  
-  lcd.drawText(2,0,"Yaapu v1.9.3b4 (OlliW MavSDK support by Risto)",CUSTOM_COLOR)
-  lcd.drawText(2,LCD_H-20+1,getConfigFilename(),CUSTOM_COLOR)
-  lcd.drawText(LCD_W,LCD_H-20+1,itemIdx,CUSTOM_COLOR+RIGHT)
+  lcd.drawFilledRectangle(0,0, LCD_W, 20, BLACK)
+  lcd.drawRectangle(0, 0, LCD_W, 20, BLACK)
+  lcd.drawFilledRectangle(0,LCD_H-20, LCD_W, 20, BLACK)
+  lcd.drawRectangle(0, LCD_H-20, LCD_W, 20, BLACK)
+  lcd.drawText(2,0,"Yaapu v1.9.3b4 (OlliW MavSDK support by Risto)",WHITE)
+  lcd.drawText(2,LCD_H-20+1,getConfigFilename(),WHITE)
+  lcd.drawText(LCD_W,LCD_H-20+1,itemIdx,WHITE+RIGHT)
 end
 
 local function incMenuItem(idx)
@@ -590,16 +588,15 @@ local function decMenuItem(idx)
 end
 
 local function drawItem(idx,flags)
-  lcd.setColor(CUSTOM_COLOR,0xFFFF)    
   if type(menuItems[idx][4]) == "table" then
-    lcd.drawText(280,25 + (idx-menu.offset-1)*20, menuItems[idx][4][menuItems[idx][3]],flags+CUSTOM_COLOR)
+    lcd.drawText(280,25 + (idx-menu.offset-1)*20, menuItems[idx][4][menuItems[idx][3]],flags+WHITE)
   else
     if menuItems[idx][3] == 0 and menuItems[idx][4] >= 0 then
-      lcd.drawText(280,25 + (idx-menu.offset-1)*20, "---",flags+CUSTOM_COLOR)
+      lcd.drawText(280,25 + (idx-menu.offset-1)*20, "---",flags+WHITE)
     else
-      lcd.drawNumber(280,25 + (idx-menu.offset-1)*20, menuItems[idx][3],flags+menuItems[idx][7]+CUSTOM_COLOR)
+      lcd.drawNumber(280,25 + (idx-menu.offset-1)*20, menuItems[idx][3],flags+menuItems[idx][7]+WHITE)
       if menuItems[idx][6] ~= nil then
-        lcd.drawText(280 + 50,25 + (idx-menu.offset-1)*20, menuItems[idx][6],flags+CUSTOM_COLOR)
+        lcd.drawText(280 + 50,25 + (idx-menu.offset-1)*20, menuItems[idx][6],flags+WHITE)
       end
     end
   end
@@ -640,8 +637,7 @@ local function drawConfigMenu(event)
   end
   --
   for m=1+menu.offset,math.min(#menuItems,11+menu.offset) do
-    lcd.setColor(CUSTOM_COLOR,0xFFFF)   
-    lcd.drawText(2,25 + (m-menu.offset-1)*20, menuItems[m][1],CUSTOM_COLOR)
+    lcd.drawText(2,25 + (m-menu.offset-1)*20, menuItems[m][1],WHITE)
     if m == menu.selectedItem then
       if menu.editSelected then
         drawItem(m,INVERS+BLINK)
@@ -659,8 +655,7 @@ end
 -- RUN
 --------------------------
 local function run(event)
-  lcd.setColor(CUSTOM_COLOR, 0x0AB1) -- hex 0x084c7b -- 073f66
-  lcd.clear(CUSTOM_COLOR)
+  lcd.clear(lcd.RGB(0x08,0x4c,0x7b))
   ---------------------
   -- CONFIG MENU
   ---------------------  
