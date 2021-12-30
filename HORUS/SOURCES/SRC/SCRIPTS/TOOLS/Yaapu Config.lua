@@ -5,7 +5,7 @@
 -- https://github.com/yaapu
 -- OlliW MavSDK additions by Risto Kõiva
 -- https://github.com/rotorman
--- 
+--
 -- This program is free software; you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
 -- the Free Software Foundation; either version 3 of the License, or
@@ -550,13 +550,13 @@ end
 
 local function drawConfigMenuBars()
   local itemIdx = string.format("%d/%d",menu.selectedItem,#menuItems)
-  lcd.drawFilledRectangle(0,0, LCD_W, 20, BLACK)
-  lcd.drawRectangle(0, 0, LCD_W, 20, BLACK)
-  lcd.drawFilledRectangle(0,LCD_H-20, LCD_W, 20, BLACK)
-  lcd.drawRectangle(0, LCD_H-20, LCD_W, 20, BLACK)
-  lcd.drawText(2,0,"Yaapu v1.9.3b4 (OlliW MavSDK support by Risto)",WHITE)
-  lcd.drawText(2,LCD_H-20+1,getConfigFilename(),WHITE)
-  lcd.drawText(LCD_W,LCD_H-20+1,itemIdx,WHITE+RIGHT)
+  lcd.drawFilledRectangle(0,0, LCD_W, 20, COLOR_THEME_SECONDARY1)
+  lcd.drawRectangle(0, 0, LCD_W, 20, COLOR_THEME_SECONDARY1)
+  lcd.drawFilledRectangle(0,LCD_H-20, LCD_W, 20, COLOR_THEME_SECONDARY1)
+  lcd.drawRectangle(0, LCD_H-20, LCD_W, 20, COLOR_THEME_SECONDARY1)
+  lcd.drawText(2,0,"Yaapu v1.9.3b4 (OlliW MavSDK support by Risto)",COLOR_THEME_PRIMARY2)
+  lcd.drawText(2,LCD_H-20+1,getConfigFilename(),COLOR_THEME_PRIMARY2)
+  lcd.drawText(LCD_W,LCD_H-20+1,itemIdx,COLOR_THEME_PRIMARY2+RIGHT)
 end
 
 local function incMenuItem(idx)
@@ -589,14 +589,14 @@ end
 
 local function drawItem(idx,flags)
   if type(menuItems[idx][4]) == "table" then
-    lcd.drawText(280,25 + (idx-menu.offset-1)*20, menuItems[idx][4][menuItems[idx][3]],flags+WHITE)
+    lcd.drawText(280,25 + (idx-menu.offset-1)*20, menuItems[idx][4][menuItems[idx][3]],flags+COLOR_THEME_PRIMARY1)
   else
     if menuItems[idx][3] == 0 and menuItems[idx][4] >= 0 then
-      lcd.drawText(280,25 + (idx-menu.offset-1)*20, "---",flags+WHITE)
+      lcd.drawText(280,25 + (idx-menu.offset-1)*20, "---",flags+COLOR_THEME_PRIMARY1)
     else
-      lcd.drawNumber(280,25 + (idx-menu.offset-1)*20, menuItems[idx][3],flags+menuItems[idx][7]+WHITE)
+      lcd.drawNumber(280,25 + (idx-menu.offset-1)*20, menuItems[idx][3],flags+menuItems[idx][7]+COLOR_THEME_PRIMARY1)
       if menuItems[idx][6] ~= nil then
-        lcd.drawText(280 + 50,25 + (idx-menu.offset-1)*20, menuItems[idx][6],flags+WHITE)
+        lcd.drawText(280 + 50,25 + (idx-menu.offset-1)*20, menuItems[idx][6],flags+COLOR_THEME_PRIMARY1)
       end
     end
   end
@@ -637,7 +637,7 @@ local function drawConfigMenu(event)
   end
   --
   for m=1+menu.offset,math.min(#menuItems,11+menu.offset) do
-    lcd.drawText(2,25 + (m-menu.offset-1)*20, menuItems[m][1],WHITE)
+    lcd.drawText(2,25 + (m-menu.offset-1)*20, menuItems[m][1],COLOR_THEME_PRIMARY1)
     if m == menu.selectedItem then
       if menu.editSelected then
         drawItem(m,INVERS+BLINK)
@@ -655,7 +655,7 @@ end
 -- RUN
 --------------------------
 local function run(event)
-  lcd.clear(lcd.RGB(0x08,0x4c,0x7b))
+  lcd.clear(COLOR_THEME_SECONDARY2)
   ---------------------
   -- CONFIG MENU
   ---------------------  
