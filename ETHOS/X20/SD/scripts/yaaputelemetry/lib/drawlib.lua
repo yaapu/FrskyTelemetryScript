@@ -1,0 +1,625 @@
+--
+-- A FRSKY SPort/FPort/FPort2 and TBS CRSF telemetry widget for the Ethos OS
+-- based on ArduPilot's passthrough telemetry protocol
+--
+-- Author: Alessandro Apostoli, https://github.com/yaapu
+--
+-- This program is free software; you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation; either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY, without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program; if not, see <http://www.gnu.org/licenses>.
+
+local function getTime()
+  -- os.clock() resolution is 0.01 secs
+  return os.clock()*100 -- 1/100th
+end
+
+
+local status = nil
+local libs = nil
+
+local drawLib = {}
+local bitmaps = {}
+
+local yawRibbonPoints = {"N",nil,"NE",nil,"E",nil,"SE",nil,"S",nil,"SW",nil,"W",nil,"NW",nil}
+
+function drawLib.drawTopBar(widget)
+  lcd.color(status.colors.barBackground)
+  lcd.pen(SOLID)
+  lcd.drawFilledRectangle(0,0,784,36)
+
+  -- flight time
+  local seconds = model.getTimer("Yaapu"):value()
+  local hh = math.floor(seconds/3600)
+  local mm = math.floor((seconds%3600)/60)
+  local ss = (seconds%3600)%60
+  drawLib.drawText(784, 0, string.format("%02.0f:%02.0f:%02.0f",hh,mm,ss), FONT_XL, status.colors.barText, RIGHT)
+  -- flight mode
+  if status.strFlightMode ~= nil then
+    drawLib.drawText(0, 0, status.strFlightMode, FONT_XL, status.colors.barText, LEFT)
+  end
+
+  -- gps status, draw coordinatyes if good at least once
+  if status.telemetry.lon ~= nil and status.telemetry.lat ~= nil then
+    drawLib.drawText(630, -4, status.telemetry.strLat, FONT_STD, status.colors.barText, RIGHT)
+    drawLib.drawText(630, 14, status.telemetry.strLon, FONT_STD, status.colors.barText, RIGHT)
+  end
+  -- gps status
+  local hdop = status.telemetry.gpsHdopC
+  local strStatus = status.gpsStatuses[status.telemetry.gpsStatus]
+  local prec = 0
+  local blink = true
+  local flags = BLINK
+  local mult = 0.1
+
+  if status.telemetry.gpsStatus  > 2 then
+    blink = false
+    if status.telemetry.homeAngle ~= -1 then
+      prec = 1
+    end
+    if hdop > 999 then
+      hdop = 999
+    end
+    drawLib.drawNumber(450,0, hdop*mult, prec, FONT_XL, status.colors.barText, LEFT, blink)
+    -- SATS
+    drawLib.drawText(448,10, strStatus, FONT_STD, status.colors.barText, RIGHT)
+
+    if status.telemetry.numSats == 15 then
+      drawLib.drawNumber(300,0, status.telemetry.numSats, 0, FONT_XL, status.colors.barText)
+      drawLib.drawText(320,0, "+", FONT_STD, status.colors.white)
+    else
+      drawLib.drawNumber(300,0, status.telemetry.numSats, 0, FONT_XL, status.colors.barText)
+    end
+    drawLib.drawBitmap(270,0, "gpsicon")
+  elseif status.telemetry.gpsStatus == 0 then
+    drawLib.drawBlinkBitmap(322,0, "nogpsicon")
+  else
+    drawLib.drawBlinkBitmap(322,0, "nolockicon")
+  end
+end
+
+function drawLib.drawStatusBar(widget,maxRows)
+  local yDelta = 2+maxRows*20
+  lcd.color(status.colors.barBackground)
+  lcd.pen(SOLID)
+  lcd.drawFilledRectangle(0,316-yDelta,784, yDelta)
+  -- messages
+  lcd.font(FONT_STD)
+  local offset = math.min(maxRows,#status.messages+1)
+  for i=0,offset-1 do
+    local msg = status.messages[(status.messageCount + i - offset) % (#status.messages+1)]
+    lcd.color(status.mavSeverity[msg[2]][2])
+    lcd.drawText(1,316 - yDelta + (19*i), msg[1])
+  end
+end
+
+function drawLib.drawFailsafe(widget)
+  if status.telemetry.ekfFailsafe > 0 then
+    drawLib.drawBlinkBitmap(244, 120, "ekffailsafe")
+  elseif status.telemetry.battFailsafe > 0 then
+    drawLib.drawBlinkBitmap(244, 120, "battfailsafe")
+  elseif status.telemetry.failsafe > 0 then
+    drawLib.drawBlinkBitmap(244, 120, "failsafe")
+  end
+end
+
+function drawLib.drawNoTelemetryData(widget)
+  if not libs.utils.telemetryEnabled() then
+    lcd.color(RED)
+    lcd.drawFilledRectangle(92,98, 600, 140)
+    lcd.color(WHITE)
+    lcd.drawRectangle(92,98, 600, 140,3)
+    lcd.font(FONT_XL)
+    lcd.drawText(392, 115, "NO TELEMETRY", CENTERED)
+    lcd.font(FONT_STD)
+    lcd.drawText(392, 180, "Yaapu Telemetry Widget 1.0.0 dev".."("..'49615e8'..")", CENTERED)
+  end
+end
+
+function drawLib.drawFenceStatus(x,y)
+  if status.telemetry.fencePresent == 0 then
+    return x
+  end
+  if status.telemetry.fenceBreached == 1 then
+    drawLib.drawBlinkBitmap(x,y,"fence_breach")
+    return x+34
+  end
+  drawLib.drawBitmap(x,y,"fence_ok")
+  return x+34
+end
+
+function drawLib.drawTerrainStatus(x,y)
+  if status.terrainEnabled == 0 then
+    return x
+  end
+  if status.telemetry.terrainUnhealthy == 1 then
+    drawLib.drawBlinkBitmap(x,y,"terrain_error")
+    return x+34
+  end
+  drawLib.drawBitmap(x,y,"terrain_ok")
+  return x+34
+end
+
+function drawLib.drawText(x, y, txt, font, color, flags, blink)
+  lcd.font(font)
+  lcd.color(color)
+  if status.blinkon == true or blink == nil or blink == false then
+    lcd.drawText(x, y, txt, flags)
+  end
+end
+
+function drawLib.drawNumber(x, y, num, precision, font, color, flags, blink)
+  lcd.font(font)
+  lcd.color(color)
+  if status.blinkon == true or blink == nil or blink == false then
+    lcd.drawNumber(x, y, num, nil, precision, flags)
+  end
+end
+
+--[[
+  based on olliw's improved version over mine :-)
+  https://github.com/olliw42/otxtelemetry
+--]]
+function drawLib.drawCompassRibbon(y,widget,width,xMin,xMax)
+  local minY = y+1
+  local heading = status.telemetry.yaw
+  local minX = xMin
+  local maxX = xMax
+  local midX = (xMax + xMin)/2
+  local tickNo = 4 --number of ticks on one side
+  local stepCount = (maxX - minX -24)/(2*tickNo)
+  local closestHeading = math.floor(heading/22.5) * 22.5
+  local closestHeadingX = midX + (closestHeading - heading)/22.5 * stepCount
+  local tickIdx = (closestHeading/22.5 - tickNo) % 16
+  local tickX = closestHeadingX - tickNo*stepCount
+  lcd.pen(SOLID)
+  lcd.color(status.colors.white)
+  lcd.font(FONT_BOLD)
+  for i = 1,10 do
+      if tickX >= minX and tickX < maxX then
+          if yawRibbonPoints[tickIdx+1] == nil then
+              --lcd.drawLine(tickX, minY, tickX, y+10)
+              lcd.drawFilledRectangle(tickX-1,minY, 2, 10)
+          else
+              lcd.drawText(tickX, minY-3, yawRibbonPoints[tickIdx+1], CENTERED)
+          end
+      end
+      tickIdx = (tickIdx + 1) % 16
+      tickX = tickX + stepCount
+  end
+  -- home icon
+  local homeOffset = 0
+  local angle = status.telemetry.homeAngle - status.telemetry.yaw
+  if angle < 0 then angle = angle + 360 end
+  if angle > 270 or angle < 90 then
+    homeOffset = ((angle + 90) % 180)/180  * width * 0.9
+  elseif angle >= 90 and angle < 180 then
+    homeOffset = width * 0.9
+  end
+  drawLib.drawHomeIcon(xMin + homeOffset -5,minY + 27)
+  -- text box
+  lcd.color(status.colors.black)
+  lcd.drawFilledRectangle(midX - 31, minY-1, 60, 32)
+  drawLib.drawNumber(midX,minY-2,heading,0,FONT_XL,status.colors.white,CENTERED)
+end
+
+function drawLib.drawRArrow(x,y,r,angle,color)
+  local ang = math.rad(angle - 90)
+  local x1 = x + r * math.cos(ang)
+  local y1 = y + r * math.sin(ang)
+
+  ang = math.rad(angle - 90 + 150)
+  local x2 = x + r * math.cos(ang)
+  local y2 = y + r * math.sin(ang)
+
+  ang = math.rad(angle - 90 - 150)
+  local x3 = x + r * math.cos(ang)
+  local y3 = y + r * math.sin(ang)
+  ang = math.rad(angle - 270)
+  local x4 = x + r * 0.5 * math.cos(ang)
+  local y4 = y + r * 0.5 *math.sin(ang)
+  --
+  lcd.pen(SOLID)
+  lcd.color(color)
+  lcd.drawLine(x1,y1,x2,y2)
+  lcd.drawLine(x1,y1,x3,y3)
+  lcd.drawLine(x2,y2,x4,y4)
+  lcd.drawLine(x3,y3,x4,y4)
+end
+
+-- initialize up to 5 bars
+local barMaxValues = {}
+local barAvgValues = {}
+local barSampleCounts = {}
+
+local function initMap(map,name)
+  if map[name] == nil then
+    map[name] = 0
+  end
+end
+
+function drawLib.updateBar(name, value)
+  -- init
+  initMap(barSampleCounts,name)
+  initMap(barMaxValues,name)
+  initMap(barAvgValues,name)
+
+  -- update metadata
+  barSampleCounts[name] = barSampleCounts[name]+1
+  barMaxValues[name] = math.max(value,barMaxValues[name])
+  -- weighted average on 10 samples
+  barAvgValues[name] = barAvgValues[name]*0.9 + value*0.1
+end
+
+-- draw an horizontal dynamic bar with an average red pointer of the last 5 samples
+function drawLib.drawBar(name, x, y, w, h, color, value, font)
+  drawLib.updateBar(name, value)
+
+  lcd.color(status.colors.white)
+  lcd.pen(SOLID)
+  lcd.drawFilledRectangle(x,y,w,h)
+
+  -- normalize percentage relative to MAX
+  local perc = 0
+  local avgPerc = 0
+  if barMaxValues[name] > 0 then
+    perc = value/barMaxValues[name]
+    avgPerc = barAvgValues[name]/barMaxValues[name]
+  end
+  lcd.color(color)
+  lcd.drawFilledRectangle(math.max(x,x+w-perc*w),y+1,math.min(w,perc*w),h-2)
+  lcd.color(status.colors.red)
+
+  lcd.drawLine(x+w-avgPerc*(w-2),y+1,x+w-avgPerc*(w-2),y+h-2)
+  lcd.drawLine(1+x+w-avgPerc*(w-2),y+1,1+x+w-avgPerc*(w-2),y+h-2)
+  drawLib.drawNumber(x+w-2,y,value,0,font,status.colors.black,RIGHT)
+  -- border
+  lcd.drawRectangle(x,y,w,h)
+end
+
+function drawLib.drawMessages(widget, y, maxScreenMessages)
+  -- each new message scrolls all messages to the end (offset is absolute)
+  if status.messageAutoScroll == true then
+    status.messageOffset = math.max(0, status.messageCount - maxScreenMessages)
+  end
+  local row = 0
+  local offsetStart = status.messageOffset
+  local offsetEnd = math.min(status.messageCount-1, status.messageOffset + maxScreenMessages - 1)
+  --print("MSG",status.messageCount,offsetStart,offsetEnd,maxScreenMessages )
+  lcd.font(FONT_STD)
+  for i=offsetStart,offsetEnd  do
+    lcd.color(status.mavSeverity[status.messages[i % 200][2]][2])
+    lcd.drawText(0, y + 18*row, status.messages[i % 200][1])
+    row = row + 1
+  end
+end
+
+function drawLib.resetBacklightTimeout()
+  system.resetBacklightTimeout()
+end
+
+function drawLib.getBitmap(name)
+  if bitmaps[name] == nil then
+    bitmaps[name] = lcd.loadBitmap("/bitmaps/yaapu/"..name..".png")
+  end
+  return bitmaps[name]
+end
+
+function drawLib.unloadBitmap(name)
+  if bitmaps[name] ~= nil then
+    bitmaps[name] = nil
+    -- force call to luaDestroyBitmap()
+    collectgarbage()
+    collectgarbage()
+  end
+end
+
+function drawLib.drawBlinkRectangle(x,y,w,h,t)
+  if status.blinkon == true then
+      lcd.drawRectangle(x,y,w,h,t)
+  end
+end
+
+function drawLib.drawBitmap(x, y, bitmap, w, h)
+  lcd.drawBitmap(x, y, drawLib.getBitmap(bitmap), w, h)
+end
+
+function drawLib.drawBlinkBitmap(x, y, bitmap, w, h)
+  if status.blinkon == true then
+      lcd.drawBitmap(x, y, drawLib.getBitmap(bitmap), w, h)
+  end
+end
+
+function drawLib.drawMinMaxBar(x, y, w, h, color, val, min, max, showValue)
+  local range = max - min
+  local value = math.min(math.max(val,min),max) - min
+  local perc = value/range
+  lcd.color(status.colors.white)
+  lcd.pen(SOLID)
+  lcd.drawFilledRectangle(x,y,w,h)
+  lcd.color(color)
+  lcd.pen(SOLID)
+  lcd.drawRectangle(x,y,w,h,2)
+  lcd.drawFilledRectangle(x,y,w*perc,h)
+  lcd.color(status.colors.black)
+  lcd.font(XL)
+  if showValue == true then
+    local strperc = string.format("%02d%%",math.floor(val+0.5))
+    lcd.drawText(x+w/2, y, strperc, CENTERED)
+  end
+end
+
+
+local CS_INSIDE = 0
+local CS_LEFT = 1
+local CS_RIGHT = 2
+local CS_BOTTOM = 4
+local CS_TOP = 8
+
+function drawLib.computeOutCode(x,y,xmin,ymin,xmax,ymax)
+    local code = CS_INSIDE; --initialised as being inside of hud
+    if x < xmin then --to the left of hud
+        code = code | CS_LEFT
+    elseif x > xmax then --to the right of hud
+        code = code | CS_RIGHT
+    end
+    if y < ymin then --below the hud
+        code = code | CS_TOP
+    elseif y > ymax then --above the hud
+        code = code | CS_BOTTOM
+    end
+    return code
+end
+
+function drawLib.isInside(x,y,xmin,ymin,xmax,ymax)
+  --print("INSIDE",x,y,xmin,ymin,xmax,ymax)
+  return drawLib.computeOutCode(x,y,xmin,ymin,xmax,ymax) == CS_INSIDE
+end
+
+--[[
+-- Cohen–Sutherland clipping algorithm
+-- https://en.wikipedia.org/wiki/Cohen%E2%80%93Sutherland_algorithm
+function drawLib.drawLineWithClippingXY(x0, y0, x1, y1, xmin, ymin, xmax, ymax)
+  -- compute outcodes for P0, P1, and whatever point lies outside the clip rectangle
+  local outcode0 = computeOutCode(x0, y0, xmin, ymin, xmax, ymax);
+  local outcode1 = computeOutCode(x1, y1, xmin, ymin, xmax, ymax);
+  local accept = false;
+  while (true) do
+    if (outcode0 | outcode1) == CS_INSIDE then
+      -- bitwise OR is 0: both points inside window; trivially accept and exit loop
+      accept = true;
+      break;
+    elseif (outcode0 & outcode1) ~= CS_INSIDE then
+      -- bitwise AND is not 0: both points share an outside zone (LEFT, RIGHT, TOP, BOTTOM)
+      -- both must be outside window; exit loop (accept is false)
+      break;
+    else
+      -- failed both tests, so calculate the line segment to clip
+      -- from an outside point to an intersection with clip edge
+      local x = 0
+      local y = 0
+      -- At least one endpoint is outside the clip rectangle; pick it.
+      local outcodeOut = outcode0 ~= CS_INSIDE and outcode0 or outcode1
+      -- No need to worry about divide-by-zero because, in each case, the
+      -- outcode bit being tested guarantees the denominator is non-zero
+      if outcodeOut & CS_BOTTOM  ~= CS_INSIDE then --point is above the clip window
+        x = x0 + (x1 - x0) * (ymax - y0) / (y1 - y0)
+        y = ymax
+      elseif outcodeOut & CS_TOP  ~= CS_INSIDE then --point is below the clip window
+        x = x0 + (x1 - x0) * (ymin - y0) / (y1 - y0)
+        y = ymin
+      elseif outcodeOut & CS_RIGHT  ~= CS_INSIDE then --point is to the right of clip window
+        y = y0 + (y1 - y0) * (xmax - x0) / (x1 - x0)
+        x = xmax
+      elseif outcodeOut & CS_LEFT  ~= CS_INSIDE then --point is to the left of clip window
+        y = y0 + (y1 - y0) * (xmin - x0) / (x1 - x0)
+        x = xmin
+      end
+      -- Now we move outside point to intersection point to clip
+      -- and get ready for next pass.
+      if outcodeOut == outcode0 then
+        x0 = x
+        y0 = y
+        outcode0 = computeOutCode(x0, y0, xmin, ymin, xmax, ymax)
+      else
+        x1 = x
+        y1 = y
+        outcode1 = computeOutCode(x1, y1, xmin, ymin, xmax, ymax)
+      end
+    end
+  end
+  if accept then
+    lcd.drawLine(x0,y0,x1,y1)
+  end
+end
+--]]
+
+function drawLib.drawLineWithClipping(x0, y0, x1, y1, xmin, ymin, xmax, ymax)
+  lcd.setClipping(xmin, ymin, xmax-xmin, ymax-ymin)
+  lcd.drawLine(x0,y0,x1,y1)
+  lcd.setClipping()
+end
+
+-- draw a line centered on (ox,oy) with angle and len, clipped
+function drawLib.drawLineByOriginAndAngle(ox, oy, angle, len, xmin, ymin, xmax, ymax, drawDiameter)
+  local xx = math.cos(math.rad(angle)) * len * 0.5
+  local yy = math.sin(math.rad(angle)) * len * 0.5
+
+  local x0 = ox - xx
+  local x1 = ox + xx
+  local y0 = oy - yy
+  local y1 = oy + yy
+
+  if drawDiameter == nil then
+    drawLib.drawLineWithClipping(x0,y0,x1,y1,xmin,ymin,xmax,ymax)
+  else
+    drawLib.drawLineWithClipping(ox,oy,x1,y1,xmin,ymin,xmax,ymax)
+  end
+end
+
+function drawLib.drawArmingStatus(widget)
+  -- armstatus
+  if not libs.utils.failsafeActive(widget) and status.timerRunning == 0 then
+    if status.telemetry.statusArmed == 1 then
+      drawLib.drawBitmap( 244, 120, "armed")
+    else
+      drawLib.drawBlinkBitmap(244, 120, "disarmed")
+    end
+  end
+end
+
+function drawLib.drawHomeIcon(x,y)
+  drawLib.drawBitmap(x,y,"minihomeorange")
+end
+
+function drawLib.drawWindArrow(x,y,r1,r2,arrow_angle, angle, skew, color)
+  local a = math.rad(angle - 90)
+  local ap = math.rad(angle + arrow_angle/2 - 90)
+  local am = math.rad(angle - arrow_angle/2 - 90)
+
+  local x1 = x + r1 * math.cos(a) * skew
+  local y1 = y + r1 * math.sin(a)
+  local x2 = x + r2 * math.cos(ap) * skew
+  local y2 = y + r2 * math.sin(ap)
+  local x3 = x + r2 * math.cos(am) * skew
+  local y3 = y + r2 * math.sin(am)
+
+  lcd.color(color)
+  lcd.pen(SOLID)
+  lcd.drawLine(x1,y1,x2,y2)
+  lcd.drawLine(x1,y1,x3,y3)
+end
+
+local function drawFilledRectangle(x,y,w,h)
+    if w > 0 and h > 0 then
+      lcd.drawFilledRectangle(x,y,w,h)
+    end
+end
+
+function drawLib.drawArtificialHorizon(x, y, w, h, colorSky, colorTerrain, lineCount, lineOffset)
+  local r = -status.telemetry.roll
+  local cx,cy,dx,dy
+  local scale = 1.85 -- 1.85
+  -----------------------
+  -- artificial horizon
+  -----------------------
+  -- no roll ==> segments are vertical, offsets are multiples of R2
+  if ( status.telemetry.roll == 0 or math.abs(status.telemetry.roll) == 180) then
+    dx=0
+    dy=status.telemetry.pitch * scale
+    cx=0
+    cy=lineOffset
+  else
+    -- center line offsets
+    dx = math.cos(math.rad(90 - r)) * -status.telemetry.pitch
+    dy = math.sin(math.rad(90 - r)) * status.telemetry.pitch * scale
+    -- 1st line offsets
+    cx = math.cos(math.rad(90 - r)) * lineOffset
+    cy = math.sin(math.rad(90 - r)) * lineOffset
+  end
+
+  local rollX = math.floor(x+w/2) -- math.floor(HUD_X + HUD_WIDTH/2)
+  -----------------------
+  -- dark color for "ground"
+  -----------------------
+  local minX = x
+  local minY = y
+
+  local maxX = x + w
+  local maxY = y + h
+
+
+  local ox = x + w/2 + dx
+  local oy = y + h/2 + dy
+
+  -- background
+  lcd.color(colorSky)
+  lcd.pen(SOLID)
+  lcd.drawFilledRectangle(x, y, w, h)
+
+  -- HUD
+  lcd.color(colorTerrain)
+  lcd.pen(SOLID)
+
+  -- angle of the line passing on point(ox,oy)
+  local angle = math.tan(math.rad(-status.telemetry.roll))
+  -- prevent divide by zero
+  if status.telemetry.roll == 0 then
+    drawFilledRectangle(minX,math.max(minY,dy+minY+(maxY-minY)/2),maxX-minX,math.min(maxY-minY,(maxY-minY)/2-dy+(math.abs(dy) > 0 and 1 or 0)))
+  elseif math.abs(status.telemetry.roll) >= 180 then
+    drawFilledRectangle(minX,minY,maxX-minX,math.min(maxY-minY,(maxY-minY)/2+dy))
+  else
+    -- HUD drawn using horizontal bars of height 2
+    -- true if flying inverted
+    local inverted = math.abs(status.telemetry.roll) > 90
+    -- true if part of the hud can be filled in one pass with a rectangle
+    local fillNeeded = false
+    local yRect = inverted and 0 or 784
+
+    local step = 2
+    local steps = (maxY - minY)/step - 1
+    local yy = 0
+
+    if 0 < status.telemetry.roll and status.telemetry.roll < 180 then
+      for s=0,steps
+      do
+        yy = minY + s*step
+        xx = ox + (yy-oy)/angle
+        if xx >= minX and xx <= maxX then
+          lcd.drawFilledRectangle(xx, yy, maxX-xx+1, step)
+        elseif xx < minX then
+          yRect = inverted and math.max(yy,yRect)+step or math.min(yy,yRect)
+          fillNeeded = true
+        end
+      end
+    elseif -180 < status.telemetry.roll and status.telemetry.roll < 0 then
+      for s=0,steps
+      do
+        yy = minY + s*step
+        xx = ox + (yy-oy)/angle
+        if xx >= minX and xx <= maxX then
+          lcd.drawFilledRectangle(minX, yy, xx-minX, step)
+        elseif xx > maxX then
+          yRect = inverted and math.max(yy,yRect)+step or math.min(yy,yRect)
+          fillNeeded = true
+        end
+      end
+    end
+
+    if fillNeeded then
+      local yMin = inverted and minY or yRect
+      local height = inverted and yRect - minY or maxY-yRect
+      lcd.drawFilledRectangle(minX, yMin, maxX-minX, height)
+    end
+  end
+
+  lcd.color(status.colors.hudLines)
+  lcd.pen(SOLID)
+  for dist=1,lineCount
+  do
+    libs.drawLib.drawLineByOriginAndAngle(rollX + dx - dist*cx, dy + y + h/2 + dist*cy, r, (dist%2==0 and 80 or 40), minX+2, minY+2, maxX-2, maxY-2)
+    libs.drawLib.drawLineByOriginAndAngle(rollX + dx + dist*cx, dy + y + h/2 - dist*cy, r, (dist%2==0 and 80 or 40), minX+2, minY+2, maxX-2, maxY-2)
+  end
+  --[[
+  -- horizon line
+  lcd.color(160,160,160)
+  lcd.pen(SOLID)
+  libs.drawLib.drawLineByOriginAndAngle(rollX + dx,dy + HUD_MID_Y,r,200,HUD_MIN_X,linesMinY,HUD_MAX_X,linesMaxY)
+  --]]
+end
+
+function drawLib.init(param_status, param_libs)
+  status = param_status
+  libs = param_libs
+  return drawLib
+end
+
+return drawLib
