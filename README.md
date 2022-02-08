@@ -4,7 +4,7 @@ This is the home of the Yaapu Telemetry Script project, an [ArduPilot](http://ar
 
 Supports:
  - [OpenTX](https://www.open-tx.org)
- - [EdgeTX](http://www.edgetx.org) with Widget version 1.9.6 or later
+ - [EdgeTX](http://www.edgetx.org) with Widget [version 1.9.6 or later](https://github.com/yaapu/FrskyTelemetryScript/archive/dev.zip)
  - [Ethos](https://ethos.frsky-rc.com/) download widget [here](https://github.com/yaapu/FrskyTelemetryScript/tree/dev/ETHOS) 
  - FRSKY S.Port (setup info [here](https://ardupilot.org/copter/docs/common-connecting-sport-fport.html))
  - TBS Crossfire (setup info [here](https://github.com/yaapu/FrskyTelemetryScript/wiki/Passthrough-over-CRSF-and-ExpressLRS))
