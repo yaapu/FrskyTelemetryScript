@@ -98,6 +98,7 @@ local menuItems = {
   {"GPS coordinates format:", "GPS", 1, { "DMS", "decimal" }, { 1, 2 } },
   {"map provider:", "MAPP", 1, { "GMapCatcher", "Google" }, { 1, 2 } },
   {"map type:", "MAPT", 1, { "satellite", "map", "terrain" }, { "sat_tiles", "tiles", "ter_tiles" } },
+  {"map emulated wheel mode:", "MAPWM", 1, { "incremental", "absolute" }, { 1, 2 } },
   {"map zoom level default value:", "MAPZ", -2, -2, 17,nil,0,1 },
   {"map zoom level min value:", "MAPmZ", -2, -2, 17,nil,0,1 },
   {"map zoom level max value:", "MAPMZ", 17, -2, 17,nil,0,1 },
@@ -402,6 +403,7 @@ local function applyConfigValues(conf)
   conf.enableRPM = getMenuItemByName(menuItems,"RPM")
   conf.enableWIND = getMenuItemByName(menuItems,"WIND")
 
+  conf.mapWheelMode = getMenuItemByName(menuItems,"MAPWM")
   conf.mapZoomLevel = getMenuItemByName(menuItems,"MAPZ")
   conf.mapZoomMin = getMenuItemByName(menuItems,"MAPmZ")
   conf.mapZoomMax = getMenuItemByName(menuItems,"MAPMZ")

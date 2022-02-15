@@ -2436,19 +2436,35 @@ utils.getMapZoomLevel = function(myWidget,conf,status,chValue)
   zoomDelayStart = now
 
   if conf.screenWheelChannelId > -1 then
-    -- SW up (increase zoom level)
-    if chValue < -600 then
-      if conf.mapProvider == 1 then
-        return status.mapZoomLevel > conf.mapZoomMin and status.mapZoomLevel - 1 or status.mapZoomLevel
-      end
-      return status.mapZoomLevel < conf.mapZoomMax and status.mapZoomLevel + 1 or status.mapZoomLevel
-    end
-    -- SW down (decrease zoom level)
-    if chValue > 600 then
-      if conf.mapProvider == 1 then
+    -- Incremental wheel mode (default) 
+    if conf.mapWheelMode == 1 then
+      -- SW up (increase zoom level)
+      if chValue < -600 then
+        if conf.mapProvider == 1 then
+          return status.mapZoomLevel > conf.mapZoomMin and status.mapZoomLevel - 1 or status.mapZoomLevel
+        end
         return status.mapZoomLevel < conf.mapZoomMax and status.mapZoomLevel + 1 or status.mapZoomLevel
       end
-      return status.mapZoomLevel > conf.mapZoomMin and status.mapZoomLevel - 1 or status.mapZoomLevel
+      -- SW down (decrease zoom level)
+      if chValue > 600 then
+        if conf.mapProvider == 1 then
+          return status.mapZoomLevel < conf.mapZoomMax and status.mapZoomLevel + 1 or status.mapZoomLevel
+        end
+        return status.mapZoomLevel > conf.mapZoomMin and status.mapZoomLevel - 1 or status.mapZoomLevel
+      end
+    end
+
+    -- Absolute wheel mode (default) 
+    -- Devide the channel width to N steps where N is the number of zoom levels
+    -- between minimum and maximum zoom.
+    -- Set the zoom level according to the respective step the channel falls into
+    if conf.mapWheelMode == 2 then
+      local levels = conf.mapZoomMax - conf.mapZoomMin
+      local step = math.floor(2000 / levels)
+      local normChannel = 1000 + chValue
+      local zoomOffset = math.floor(normChannel / step)
+
+      return conf.mapZoomMin + zoomOffset
     end
     -- switch is idle, force timer expire
     zoomDelayStart = now - conf.screenWheelChannelDelay*10
