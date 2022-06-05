@@ -489,13 +489,13 @@ local function pushMessage(severity, msg)
   if conf.enableHaptic then
     playHaptic(12,0)
   end
-  if conf.disableAllSounds  == false then
-    if ( severity < 5 and conf.disableMsgBeep < 3 ) then
-      playSound("../err",true)
-    else
-      if conf.disableMsgBeep < 2 then
-          playSound("../inf",true)
-      end
+  if conf.disableAllSounds == false and conf.disableMsgBeep < 3 then
+    if severity < 5 then
+      utils.playSound("../err",true)
+    elseif severity < 6 then
+      utils.playSound("../not",true)
+    elseif conf.disableMsgBeep < 2 then
+      utils.playSound("../inf",true)
     end
   end
   if msg == lastMessage then

@@ -702,13 +702,14 @@ utils.pushMessage = function(severity, msg)
   if conf.enableHaptic then
     playHaptic(15,0)
   end
-  if conf.disableAllSounds == false then
-    if ( severity < 5 and conf.disableMsgBeep < 3) then
+
+  if conf.disableAllSounds == false and conf.disableMsgBeep < 3 then
+    if severity < 5 then
       utils.playSound("../err",true)
-    else
-      if conf.disableMsgBeep < 2 then
-        utils.playSound("../inf",true)
-      end
+    elseif severity < 6 then
+      utils.playSound("../not",true)
+    elseif conf.disableMsgBeep < 2 then
+      utils.playSound("../inf",true)
     end
   end
 
