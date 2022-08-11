@@ -1,5 +1,6 @@
 SOUNDS/yaapu0/en|acro|Acro flight mode
 SOUNDS/yaapu0/en|acro_r|Acro mode
+SOUNDS/yaapu0/en|alt|Altitude
 SOUNDS/yaapu0/en|althold|Altitude hold flight mode
 SOUNDS/yaapu0/en|armed|Motors armed
 SOUNDS/yaapu0/en|auto|Auto flight mode
@@ -26,6 +27,7 @@ SOUNDS/yaapu0/en|brake|Brake flight mode
 SOUNDS/yaapu0/en|circle|Circle flight mode
 SOUNDS/yaapu0/en|cruise|Cruise flight mode
 SOUNDS/yaapu0/en|disarmed|Motors disarmed
+SOUNDS/yaapu0/en|dist|Distance
 SOUNDS/yaapu0/en|drift|Drift flight mode
 SOUNDS/yaapu0/en|ekf|E K F failsafe
 SOUNDS/yaapu0/en|failsafe|failsafe
@@ -82,8 +84,8 @@ SOUNDS/yaapu0/en|timealert|Timer alert
 SOUNDS/yaapu0/en|training|Training flight mode
 SOUNDS/yaapu0/en|turtle|turtle mode
 SOUNDS/yaapu0/en|zigzag|Zigzag flight mode
-SOUNDS/yaapu0/en|takeoff|takeoff flight mode
+SOUNDS/yaapu0/en|takeofffm|takeoff flight mode
 SOUNDS/yaapu0/en|systemid|System I D flight mode
 SOUNDS/yaapu0/en|autorotate|autorotate flight mode
 SOUNDS/yaapu0/en|velocity|velocity flight mode
-SOUNDS/yaapu0/en|yaapu|Yaa-pu telemetry ready
+SOUNDS/yaapu0/en|yaapu|Yaa-pu telemetry ready
