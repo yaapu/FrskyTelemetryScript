@@ -257,7 +257,7 @@ function mapLib.getScreenCoordinates(minX,minY,tile_x,tile_y,offset_x,offset_y,l
     end
   end
   -- force offscreen up
-  return 800/2, -10
+  return 480/2, -10
 end
 
 function mapLib.drawMap(widget, x, y, level, tiles_x, tiles_y, heading)

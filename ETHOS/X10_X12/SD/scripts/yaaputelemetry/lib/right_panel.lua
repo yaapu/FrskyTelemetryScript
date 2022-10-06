@@ -39,7 +39,7 @@ local libs = nil
 
 
 function panel.draw(widget,x)
-  local x_right = 800 - 10
+  local x_right = 480 - 10
   local x_left = x
   local perc = status.battery[16]
   --  battery min cell
@@ -50,50 +50,50 @@ function panel.draw(widget,x)
   if status.showMinMaxValues == false then
     if status.battLevel2 == false and status.alarms[8][2] > 0 then
       lcd.color(status.colors.red)
-      libs.drawLib.drawBlinkRectangle(x+83,64,115,46,3)
+      libs.drawLib.drawBlinkRectangle(x+30,28,90,34,3)
       libs.drawLib.resetBacklightTimeout()
     elseif status.battLevel2 == true then
       lcd.color(status.colors.red)
-      lcd.drawFilledRectangle(x+83,64,115,46,3)
+      lcd.drawFilledRectangle(x+30,28,90,34,3)
       libs.drawLib.resetBacklightTimeout()
     elseif status.battLevel1 == false and status.alarms[7][2] > 0 then
       lcd.color(status.colors.yellow)
-      libs.drawLib.drawBlinkRectangle(x+83,64,115,46,3)
+      libs.drawLib.drawBlinkRectangle(x+30,28,90,34,3)
       libs.drawLib.resetBacklightTimeout()
     elseif status.battLevel1 == true then
       color = status.colors.black
       lcd.color(status.colors.yellow)
-      lcd.drawFilledRectangle(x+83,64,115,46,3)
+      lcd.drawFilledRectangle(x+30,28,90,34,3)
       libs.drawLib.resetBacklightTimeout()
     end
   end
 
   -- cell voltage
-  libs.drawLib.drawText(x+195, 40, string.upper(status.battsource).."-CELL", FONT_STD, status.colors.panelLabel, RIGHT)
+  libs.drawLib.drawText(x+117, 17, string.upper(status.battsource).."-CELL", FONT_S, status.colors.panelLabel, RIGHT)
   if status.battery[1] * 0.01 < 10 then
-    libs.drawLib.drawNumber(x + 177, 66, status.battery[1]*0.01,2, FONT_XXL, color, RIGHT)
+    libs.drawLib.drawNumber(x + 107, 28, status.battery[1]*0.01,2, FONT_XXL, color, RIGHT)
   else
-    libs.drawLib.drawNumber(x + 177, 66, status.battery[1]*0.01, 1, FONT_XXL, color, RIGHT)
+    libs.drawLib.drawNumber(x + 107, 28, status.battery[1]*0.01, 1, FONT_XXL, color, RIGHT)
   end
   lcd.font(FONT_STD)
-  lcd.drawText(x + 177, 82, "V")
+  lcd.drawText(x + 107, 44, "V")
 
   color = status.colors.white
   -- battery voltage
-  libs.drawLib.drawText(x+82, 118, "BATT", FONT_STD, status.colors.panelLabel, RIGHT)
-  libs.drawLib.drawNumber(x + 70, 144, status.battery[4]*0.1, 1, FONT_XL, color, RIGHT)
+  libs.drawLib.drawText(x+44, 64, "BATT", FONT_S, status.colors.panelLabel, RIGHT)
+  libs.drawLib.drawNumber(x + 42, 85, status.battery[4]*0.1, 1, FONT_L, color, RIGHT)
   lcd.font(FONT_STD)
-  lcd.drawText(x + 70, 154, "v")
+  lcd.drawText(x + 42, 87, "v")
 
 -- battery current
-  libs.drawLib.drawText(x+195, 118, "CURR", FONT_STD, status.colors.panelLabel,RIGHT)
+  libs.drawLib.drawText(x+118, 64, "CURR", FONT_S, status.colors.panelLabel,RIGHT)
   if status.battery[7]*0.1 < 10 then
-    libs.drawLib.drawNumber(x + 177, 136, status.battery[7]*0.1, 1, FONT_XXL, color, RIGHT)
+    libs.drawLib.drawNumber(x + 108, 73, status.battery[7]*0.1, 1, FONT_XXL, color, RIGHT)
   else
-    libs.drawLib.drawNumber(x + 177, 136, status.battery[7]*0.1, 0, FONT_XXL, color, RIGHT)
+    libs.drawLib.drawNumber(x + 108, 73, status.battery[7]*0.1, 0, FONT_XXL, color, RIGHT)
   end
   lcd.font(FONT_STD)
-  lcd.drawText(x + 177, 154, "A")
+  lcd.drawText(x + 108, 90, "A")
 
   -- display capacity bar %
   color = status.colors.red
@@ -103,15 +103,15 @@ function panel.draw(widget,x)
     color = status.colors.yellow-- yellow
   end
 
-  libs.drawLib.drawMinMaxBar(x+10, 185, 180, 45, color, perc, 0, 99, false)
-  libs.drawLib.drawText(x+118, 197, "%", FONT_XL, status.colors.black, LEFT)
-  libs.drawLib.drawText(x+118, 187, string.format("%02d", math.floor(perc+0.5)), FONT_XXL, status.colors.black, RIGHT)
+  libs.drawLib.drawMinMaxBar(x+5, 105, 110, 27, color, perc, 0, 99, false)
+  libs.drawLib.drawText(x+78, 116, "%", FONT_XL, status.colors.black, LEFT)
+  libs.drawLib.drawText(x+78, 102, string.format("%02d", math.floor(perc+0.5)), FONT_XXL, status.colors.black, RIGHT)
 
   -- battery mah
   lcd.color(status.colors.white)
   lcd.font(FONT_L)
   local strmah = string.format("%.02f/%.01fAh",status.battery[10]/1000,status.battery[13]/1000)
-  lcd.drawText(x+180, 238, strmah, RIGHT)
+  lcd.drawText(x+117, 135, strmah, RIGHT)
 
   libs.drawLib.drawText(546, 37, "R1", FONT_XS, lcd.RGB(100,100,100), LEFT)
 end

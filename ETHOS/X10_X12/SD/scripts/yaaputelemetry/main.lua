@@ -689,12 +689,12 @@ end
 local function loadLayout(widget)
   lcd.pen(SOLID)
   lcd.color(lcd.RGB(20, 20, 20))
-  lcd.drawFilledRectangle(198, 98, 400, 140)
+  lcd.drawFilledRectangle(40, 70, 400, 140)
   lcd.color(status.colors.white)
-  lcd.drawRectangle(198, 98, 400, 140,3)
+  lcd.drawRectangle(40, 70, 400, 140,3)
   lcd.color(status.colors.white)
-  lcd.font(FONT_XXL)
-  lcd.drawText(260, 145, "loading layout...", CENTERED)
+  lcd.font(FONT_L)
+  lcd.drawText(240, 100, "loading layout...", CENTERED)
 
   if widget.screen == 1 then
     if widget.leftPanel == nil then
@@ -1124,7 +1124,7 @@ local fg_timer = 0
 local function paint(widget)
     lcd.color(status.colors.background)
     lcd.pen(SOLID)
-    lcd.drawFilledRectangle(0,0,800,480)
+    lcd.drawFilledRectangle(0,0,480,272)
 
     local now = getTime()
     if status.lastScreen ~= widget.screen then
@@ -1155,7 +1155,7 @@ local function paint(widget)
         libs.drawLib.drawNoTelemetryData(widget)
       end
       lcd.color(RED)
-      libs.drawLib.drawBlinkRectangle(0,0,800,480,3)
+      libs.drawLib.drawBlinkRectangle(0,0,480,272,3)
     else
       -- arming status
       libs.drawLib.drawArmingStatus(widget)
@@ -1163,7 +1163,7 @@ local function paint(widget)
 
       if status.showMinMaxValues == true then
         lcd.color(status.colors.yellow)
-        libs.drawLib.drawBlinkRectangle(0,0,800,480,3)
+        libs.drawLib.drawBlinkRectangle(0,0,480,272,3)
       end
     end
 
@@ -1199,7 +1199,7 @@ local function event(widget, category, value, x, y)
       if widget.screen == 1 and value == 16641 then
         kill = true
         -- main view
-        if y < 480*0.73 then
+        if y < 272*0.73 then
           -- process the event and activate the context menu
           kill = false
         else
@@ -1211,9 +1211,9 @@ local function event(widget, category, value, x, y)
         end
       elseif widget.screen == 2 and value == 16641 then
         kill = true
-        if libs.drawLib.isInside(x, y, 800*0.625, 0,800, 480/2) == true then
+        if libs.drawLib.isInside(x, y, 480*0.625, 0,480, 272/2) == true then
           status.mapZoomLevel = math.min(status.conf.mapZoomMax, status.mapZoomLevel+1)
-        elseif libs.drawLib.isInside(x, y, 800*0.625, 480/2, 800,480) == true then
+        elseif libs.drawLib.isInside(x, y, 480*0.625, 272/2, 480,272) == true then
           status.mapZoomLevel = math.max(status.conf.mapZoomMin, status.mapZoomLevel-1)
         else
           kill = false
@@ -1240,7 +1240,7 @@ end
 
 local HUD_W = 292 --340
 local HUD_H = 198 --160
-local HUD_MIN_X = (800 - HUD_W)/2
+local HUD_MIN_X = (480 - HUD_W)/2
 local HUD_MIN_Y = 36
 
 -- always called @10Hz even when in system menus
@@ -1353,6 +1353,7 @@ local function configure(widget)
         {"default",1},
         {"maps", 2},
         {"plot",3},
+        {"messages",4},
       }, function() return widget.screen end,
     function(value)
       widget.screen = value

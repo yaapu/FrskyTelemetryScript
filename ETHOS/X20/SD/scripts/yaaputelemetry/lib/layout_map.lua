@@ -28,34 +28,28 @@ local status = nil
 local libs = nil
 
 function panel.draw(widget)
-  local w2, h2 = lcd.getWindowSize()
-  local bitmap = lcd.loadBitmap("/bitmaps/system/default_glider.png")
-  lcd.drawBitmap(10, 25, bitmap, w2 - 20, h2 - 35)
-
-  libs.mapLib.drawMap(widget, 0, 0, status.mapZoomLevel, 8,3, status.telemetry.yaw)
-  --libs.drawLib.drawStatusBar(widget,1)
+  libs.mapLib.drawMap(widget, 0, 0, status.mapZoomLevel, 8, 4, status.telemetry.yaw)
   local alpha = 0.3
   lcd.color(lcd.RGB(0,0,0,alpha))
   lcd.pen(SOLID)
-  lcd.drawFilledRectangle(0, 0, 784, 22)
-  --lcd.drawFilledRectangle(0, 22, 100, 316-22)
+  lcd.drawFilledRectangle(0, 0, 800, 22)
 
   lcd.color(BLACK)
   lcd.pen(SOLID)
-  lcd.drawFilledRectangle(0, 316-22, 784, 22)
-  libs.drawLib.drawMessages(widget, 316-23, 1)
+  lcd.drawFilledRectangle(0, 480-22, 800, 22)
+  libs.drawLib.drawStatusBar(widget,nil,2)
 
   lcd.font(FONT_STD)
   lcd.color(status.colors.white)
-  lcd.drawText(784, 0, status.telemetry.strLat.."  "..status.telemetry.strLon, RIGHT)
+  lcd.drawText(800, 0, status.telemetry.strLat.."  "..status.telemetry.strLon, RIGHT)
 
   lcd.font(FONT_STD)
   lcd.drawText(0, 0, string.format("zoom: %d", status.mapZoomLevel))
-  lcd.drawText(0, 20, string.format("cog: %.0f", status.cog == nil and 0 or status.cog))
+  --lcd.drawText(0, 20, string.format("cog: %.0f", status.cog == nil and 0 or status.cog))
 
   lcd.font(FONT_XS)
   lcd.color(status.colors.green)
-  lcd.drawText(784, 302, "map", RIGHT)
+  lcd.drawText(800, 302, "map", RIGHT)
 end
 
 function panel.background(widget)

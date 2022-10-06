@@ -57,9 +57,9 @@ function panel.draw(widget,x)
   if status.conf.rangeFinderMax > 0 then
     local rng = libs.utils.getMaxValue(status.telemetry.range, 16)
     if rng*0.01*status.conf.distUnitScale < 10 then
-      libs.drawLib.drawPanelSensor(170, 40, rng*0.01*status.conf.distUnitScale, 1, "RNG", status.conf.distUnitLabel, FONT_XXL, FONT_STD, FONT_STD, status.colors.panelText, status.colors.panelLabel,true)
+      libs.drawLib.drawPanelSensor(106, 17, rng*0.01*status.conf.distUnitScale, 1, "RNG", status.conf.distUnitLabel, FONT_XXL, FONT_S, FONT_STD, status.colors.panelText, status.colors.panelLabel,true)
     else
-      libs.drawLib.drawPanelSensor(170, 40, rng*0.01*status.conf.distUnitScale, 0, "RNG", status.conf.distUnitLabel,FONT_XXL, FONT_STD, FONT_STD, status.colors.panelText, status.colors.panelLabel,true)
+      libs.drawLib.drawPanelSensor(106, 17, rng*0.01*status.conf.distUnitScale, 0, "RNG", status.conf.distUnitLabel,FONT_XXL, FONT_S, FONT_STD, status.colors.panelText, status.colors.panelLabel,true)
     end
   else
     local blink = true
@@ -69,7 +69,7 @@ function panel.draw(widget,x)
       alt = libs.utils.getMaxValue(alt,12)
       blink = false
     end
-    libs.drawLib.drawPanelSensor(170, 40, status.telemetry.gpsStatus > 2 and alt*status.conf.distUnitScale or nil, 0, "GALT", status.conf.distUnitLabel, FONT_XXL, FONT_STD, FONT_STD, status.colors.panelText, status.colors.panelLabel, true, blink)
+    libs.drawLib.drawPanelSensor(106, 17, status.telemetry.gpsStatus > 2 and alt*status.conf.distUnitScale or nil, 0, "GALT", status.conf.distUnitLabel, FONT_XXL, FONT_S, FONT_STD, status.colors.panelText, status.colors.panelLabel, true, blink)
   end
 
   -- home distance
@@ -79,12 +79,12 @@ function panel.draw(widget,x)
   end
   local dist = libs.utils.getMaxValue(status.telemetry.homeDist,15)
   if dist*status.conf.distUnitScale > 999 then
-    libs.drawLib.drawPanelSensor(170, 125, dist*status.conf.distUnitLongScale, 2,"HOME",status.conf.distUnitLongLabel, FONT_XXL, FONT_STD, FONT_STD, status.colors.panelText, status.colors.panelLabel,true, blink)
+    libs.drawLib.drawPanelSensor(106, 63, dist*status.conf.distUnitLongScale, 2,"HOME",status.conf.distUnitLongLabel, FONT_XXL, FONT_S, FONT_STD, status.colors.panelText, status.colors.panelLabel,true, blink)
   else
-    libs.drawLib.drawPanelSensor(170, 125, dist*status.conf.distUnitScale, 0,"HOME",status.conf.distUnitLabel, FONT_XXL, FONT_STD, FONT_STD, status.colors.panelText, status.colors.panelLabel,true, blink)
+    libs.drawLib.drawPanelSensor(106, 63, dist*status.conf.distUnitScale, 0,"HOME",status.conf.distUnitLabel, FONT_XXL, FONT_S, FONT_STD, status.colors.panelText, status.colors.panelLabel,true, blink)
   end
   -- travel distance
-  libs.drawLib.drawPanelSensor(170, 210, status.telemetry.totalDist*status.conf.distUnitLongScale, 2,"TRAVEL",status.conf.distUnitLongLabel, FONT_XXL, FONT_STD, FONT_STD, status.colors.panelText, status.colors.panelLabel,true)
+  libs.drawLib.drawPanelSensor(106, 109, status.telemetry.totalDist*status.conf.distUnitLongScale, 2,"TRAVEL",status.conf.distUnitLongLabel, FONT_XXL, FONT_S, FONT_STD, status.colors.panelText, status.colors.panelLabel,true)
 end
 
 function panel.background(widget)

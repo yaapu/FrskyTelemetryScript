@@ -49,12 +49,12 @@ function drawLib.drawPanelSensor(x,y,value,prec,label,unit,font,lfont,ufont,colo
 
   if rightAlign == true then
     drawLib.drawText(x,y, label, lfont, lcolor, RIGHT)
-    drawLib.drawText(x,y+0.85*lh+0.9*h-uh, unit, ufont, color, RIGHT)
-    drawLib.drawNumber(x-uw,y+0.85*lh, value, prec, font, color, RIGHT, blink)
+    drawLib.drawText(x,y+0.7*lh+0.85*h-uh, unit, ufont, color, RIGHT)
+    drawLib.drawNumber(x-uw,y+0.7*lh, value, prec, font, color, RIGHT, blink)
   else
     drawLib.drawText(x,y, label, lfont, lcolor, LEFT)
-    drawLib.drawNumber(x,y+0.85*lh, value, prec, font, color, LEFT, blink)
-    drawLib.drawText(x+w,y+0.85*lh+0.9*h-uh, unit, ufont, color, LEFT)
+    drawLib.drawNumber(x,y+0.7*lh, value, prec, font, color, LEFT, blink)
+    drawLib.drawText(x+w,y+0.7*lh+0.85*h-uh, unit, ufont, color, LEFT)
   end
 end
 
@@ -64,13 +64,13 @@ function drawLib.drawTopBarSensor(widget,x,sensor,label)
   if sensor ~= nil then
     lcd.font(FONT_L)
     local w,h = lcd.getTextSize(sensor:stringValue())
-    drawLib.drawText(x-w-4, 16, label == nil and sensor:name() or label, FONT_S, status.colors.barText, RIGHT)
-    drawLib.drawText(x-w, 8, sensor:stringValue(), FONT_L, status.colors.barText, LEFT)
-    lcd.font(FONT_S)
+    drawLib.drawText(x-w-4, 6, label == nil and sensor:name() or label, FONT_XS, status.colors.barText, RIGHT)
+    drawLib.drawText(x-w, 0, sensor:stringValue(), FONT_L, status.colors.barText, LEFT)
+    lcd.font(FONT_XS)
     local w2,h2 = lcd.getTextSize(sensor:name())
     return w + w2 + 4
   else
-    drawLib.drawText(x, 8, "---", FONT_L, status.colors.barText, RIGHT)
+    drawLib.drawText(x, 0, "---", FONT_L, status.colors.barText, RIGHT)
     return 100
   end
 end
@@ -78,36 +78,35 @@ end
 function drawLib.drawTopBar(widget)
   lcd.color(status.colors.barBackground)
   lcd.pen(SOLID)
-  lcd.drawFilledRectangle(0, 0, 800,36)
-  drawLib.drawText(0, 4, status.modelString ~= nil and status.modelString or model.name(), FONT_L, status.colors.barText, LEFT)
-  local offset = drawLib.drawTopBarSensor(widget, 800, status.conf.linkQualitySource) + 10
-  offset = drawLib.drawTopBarSensor(widget, 800-offset, system.getSource({category=CATEGORY_SYSTEM, member=MAIN_VOLTAGE,options=0}), "TX")
+  lcd.drawFilledRectangle(0, 0, 480,18)
+  drawLib.drawText(0, -2, status.modelString ~= nil and status.modelString or model.name(), FONT_L, status.colors.barText, LEFT)
+  local offset = drawLib.drawTopBarSensor(widget, 480, status.conf.linkQualitySource) + 4
+  offset = drawLib.drawTopBarSensor(widget, 480-offset, system.getSource({category=CATEGORY_SYSTEM, member=MAIN_VOLTAGE,options=0}), "TX")
 end
 
 
 function drawLib.drawStatusBar(widget, y, maxRows)
   if maxRows ~= nil then
-    y = drawLib.drawMessagesBar(widget, maxRows) - 48
+    y = drawLib.drawMessagesBar(widget, maxRows) - 27
   end
   lcd.color(status.colors.barBackground)
   lcd.pen(SOLID)
-  lcd.drawFilledRectangle(0,y,800,48)
+  lcd.drawFilledRectangle(0,y,480,27)
 
   -- flight time
   local seconds = model.getTimer("Yaapu"):value()
   local ss = (seconds%3600)%60
-  local hh = math.floor(seconds/3600)
-  local mm = math.floor((seconds%3600)/60)
-  drawLib.drawText(800, y-0, string.format("%02.0f:%02.0f:%02.0f",hh,mm,ss), FONT_XXL, status.colors.barText, RIGHT)
+  local mm = math.floor(seconds/60)
+  drawLib.drawText(480, y-3, string.format("%02.0f:%02.0f",mm,ss), FONT_XXL, status.colors.barText, RIGHT)
   -- flight mode
   if status.strFlightMode ~= nil then
-    drawLib.drawText(0, y-0, status.strFlightMode, FONT_XXL, status.colors.barText, LEFT)
+    drawLib.drawText(0, y-3, status.strFlightMode, FONT_XXL, status.colors.barText, LEFT)
   end
 
   -- gps status, draw coordinatyes if good at least once
   if status.telemetry.lon ~= nil and status.telemetry.lat ~= nil then
-    drawLib.drawText(620, y, status.telemetry.strLat, FONT_STD, status.colors.barText, RIGHT)
-    drawLib.drawText(620, y+20, status.telemetry.strLon, FONT_STD, status.colors.barText, RIGHT)
+    drawLib.drawText(380, y, status.telemetry.strLat, FONT_STD, status.colors.barText, RIGHT)
+    drawLib.drawText(380, y+12, status.telemetry.strLon, FONT_STD, status.colors.barText, RIGHT)
   end
   -- gps status
   local hdop = status.telemetry.gpsHdopC
@@ -125,39 +124,38 @@ function drawLib.drawStatusBar(widget, y, maxRows)
     if hdop > 999 then
       hdop = 999
     end
-    drawLib.drawNumber(435,y-0, hdop*mult, prec, FONT_XXL, status.colors.barText, LEFT, blink)
+    drawLib.drawNumber(255,y-3, hdop*mult, prec, FONT_XXL, status.colors.barText, LEFT, blink)
     -- SATS
-    drawLib.drawText(430,y-0+20, strStatus, FONT_STD, status.colors.barText, RIGHT)
+    drawLib.drawText(250,y-3+14, strStatus, FONT_STD, status.colors.barText, RIGHT)
 
     if status.telemetry.numSats == 15 then
-      drawLib.drawNumber(300,y-0, status.telemetry.numSats, 0, FONT_XXL, status.colors.barText)
-      drawLib.drawText(340,y-0, "+", FONT_STD, status.colors.white)
+      drawLib.drawNumber(160,y-3, status.telemetry.numSats, 0, FONT_XXL, status.colors.barText)
+      drawLib.drawText(190,y-3, "+", FONT_STD, status.colors.white)
     else
-      drawLib.drawNumber(300,y-0, status.telemetry.numSats, 0, FONT_XXL, status.colors.barText)
+      drawLib.drawNumber(160,y-3, status.telemetry.numSats, 0, FONT_XXL, status.colors.barText)
     end
-    drawLib.drawBitmap(270,y-0+5, "gpsicon")
   elseif status.telemetry.gpsStatus == 0 then
-    drawLib.drawBlinkBitmap(322,y-0+5, "nogpsicon")
+    drawLib.drawBlinkBitmap(150,y-3+0, "nogpsicon")
   else
-    drawLib.drawBlinkBitmap(322,y-0+5, "nolockicon")
+    drawLib.drawBlinkBitmap(150,y-3+0, "nolockicon")
   end
 end
 
 
 function drawLib.drawMessagesBar(widget,maxRows)
-  local yDelta = 2 + maxRows*20
+  local yDelta = 2 + maxRows*12
   lcd.color(status.colors.barBackground)
   lcd.pen(SOLID)
-  lcd.drawFilledRectangle(0,480-yDelta,800, yDelta)
+  lcd.drawFilledRectangle(0,320-yDelta,480, yDelta)
   -- messages
   lcd.font(FONT_STD)
   local offset = math.min(maxRows,#status.messages+1)
   for i=0,offset-1 do
     local msg = status.messages[(status.messageCount + i - offset) % (#status.messages+1)]
     lcd.color(status.mavSeverity[msg[2]][2])
-    lcd.drawText(1,480 - yDelta + (19*i), msg[1])
+    lcd.drawText(1,320 - yDelta + (12*i), msg[1])
   end
-  return 480 - yDelta
+  return 320 - yDelta
 end
 
 function drawLib.drawFailsafe(widget)
@@ -174,13 +172,13 @@ end
 function drawLib.drawNoTelemetryData(widget)
   if not libs.utils.telemetryEnabled() then
     lcd.color(RED)
-    lcd.drawFilledRectangle(92,98, 600, 140)
+    lcd.drawFilledRectangle(40,70, 400, 140)
     lcd.color(WHITE)
-    lcd.drawRectangle(92,98, 600, 140,3)
+    lcd.drawRectangle(40,70, 400, 140,3)
     lcd.font(FONT_XXL)
-    lcd.drawText(392, 115, "NO TELEMETRY", CENTERED)
+    lcd.drawText(240, 87, "NO TELEMETRY", CENTERED)
     lcd.font(FONT_STD)
-    lcd.drawText(392, 180, "Yaapu Telemetry Widget 1.0.0c dev".."("..'3d42cde'..")", CENTERED)
+    lcd.drawText(240, 152, "Yaapu Telemetry Widget 1.0.0c dev".."("..'3d42cde'..")", CENTERED)
   end
 end
 
@@ -190,10 +188,10 @@ function drawLib.drawFenceStatus(x,y)
   end
   if status.telemetry.fenceBreached == 1 then
     drawLib.drawBlinkBitmap(x,y,"fence_breach")
-    return x+34
+    return x+20
   end
   drawLib.drawBitmap(x,y,"fence_ok")
-  return x+34
+  return x+20
 end
 
 function drawLib.drawTerrainStatus(x,y)
@@ -202,10 +200,10 @@ function drawLib.drawTerrainStatus(x,y)
   end
   if status.telemetry.terrainUnhealthy == 1 then
     drawLib.drawBlinkBitmap(x,y,"terrain_error")
-    return x+34
+    return x+20
   end
   drawLib.drawBitmap(x,y,"terrain_ok")
-  return x+34
+  return x+20
 end
 
 function drawLib.drawText(x, y, txt, font, color, flags, blink)
@@ -341,7 +339,7 @@ function drawLib.drawBar(name, x, y, w, h, color, value, font)
 
   lcd.drawLine(x+w-avgPerc*(w-2),y+1,x+w-avgPerc*(w-2),y+h-2)
   lcd.drawLine(1+x+w-avgPerc*(w-2),y+1,1+x+w-avgPerc*(w-2),y+h-2)
-  drawLib.drawNumber(x+w-2,y-0,value,0,font,status.colors.black,RIGHT)
+  drawLib.drawNumber(x+w-2,y-2,value,0,font,status.colors.black,RIGHT)
   -- border
   lcd.drawRectangle(x,y,w,h)
 end
@@ -472,9 +470,9 @@ function drawLib.drawArmingStatus(widget)
   -- armstatus
   if not libs.utils.failsafeActive(widget) and status.timerRunning == 0 then
     if status.telemetry.statusArmed == 1 then
-      drawLib.drawBitmap( 248, 80, "armed")
+      drawLib.drawBitmap( 150, 48, "armed")
     else
-      drawLib.drawBlinkBitmap(248, 80, "disarmed")
+      drawLib.drawBlinkBitmap(150, 48, "disarmed")
     end
   end
 end
@@ -565,7 +563,7 @@ function drawLib.drawArtificialHorizon(x, y, w, h, colorSky, colorTerrain, lineC
     local inverted = math.abs(status.telemetry.roll) > 90
     -- true if part of the hud can be filled in one pass with a rectangle
     local fillNeeded = false
-    local yRect = inverted and 0 or 800
+    local yRect = inverted and 0 or 480
 
     local step = 2
     local steps = (maxY - minY)/step - 1

@@ -36,7 +36,7 @@ function panel.draw(widget)
 
   lcd.font(FONT_XS)
   lcd.color(status.colors.green)
-  lcd.drawText(800, 302, "plot", RIGHT)
+  lcd.drawText(480, 302, "plot", RIGHT)
 end
 
 function panel.background(widget)

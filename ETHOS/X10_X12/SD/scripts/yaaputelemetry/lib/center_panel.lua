@@ -27,16 +27,13 @@ local panel = {}
 local status = nil
 local libs = nil
 
+local HUD_W = 240
+local HUD_H = 130
+local HUD_X = (480 - HUD_W)/2
+local HUD_Y = 18
+
 function panel.draw(widget)
-  lcd.color(status.colors.white)
-  local mask = lcd.loadMask("/bitmaps/system/mask_usb.png")
-  lcd.drawMask(0, 37, mask)
-
-  libs.drawLib.drawMessagesBar(widget,1)
-
-  lcd.font(FONT_XS)
-  lcd.color(status.colors.green)
-  lcd.drawText(800, 302, "plot", RIGHT)
+  libs.hudLib.drawHud(widget, HUD_X, HUD_Y, HUD_W, HUD_H)
 end
 
 function panel.background(widget)

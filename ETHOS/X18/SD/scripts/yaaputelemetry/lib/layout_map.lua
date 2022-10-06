@@ -28,15 +28,28 @@ local status = nil
 local libs = nil
 
 function panel.draw(widget)
-  lcd.color(status.colors.white)
-  local mask = lcd.loadMask("/bitmaps/system/mask_usb.png")
-  lcd.drawMask(0, 37, mask)
+  libs.mapLib.drawMap(widget, 0, 0, status.mapZoomLevel, 5, 3, status.telemetry.yaw)
+  local alpha = 0.3
+  lcd.color(lcd.RGB(0,0,0,alpha))
+  lcd.pen(SOLID)
+  lcd.drawFilledRectangle(0, 0, 480, 22)
 
-  libs.drawLib.drawMessagesBar(widget,1)
+  lcd.color(BLACK)
+  lcd.pen(SOLID)
+  lcd.drawFilledRectangle(0, 320-22, 480, 22)
+  libs.drawLib.drawStatusBar(widget,nil,2)
+
+  lcd.font(FONT_STD)
+  lcd.color(status.colors.white)
+  lcd.drawText(480, 0, status.telemetry.strLat.."  "..status.telemetry.strLon, RIGHT)
+
+  lcd.font(FONT_STD)
+  lcd.drawText(0, 0, string.format("zoom: %d", status.mapZoomLevel))
+  --lcd.drawText(0, 20, string.format("cog: %.0f", status.cog == nil and 0 or status.cog))
 
   lcd.font(FONT_XS)
   lcd.color(status.colors.green)
-  lcd.drawText(800, 302, "plot", RIGHT)
+  lcd.drawText(480, 302, "map", RIGHT)
 end
 
 function panel.background(widget)
