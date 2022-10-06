@@ -17,13 +17,32 @@ Supports:
 
 ### please read the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki) for more info
 
+OpenTX/EdgeTX Color LCD 480x272
+
 ![image](https://user-images.githubusercontent.com/30294218/135524984-f732af4a-490b-4ce2-b4dc-9c8bfe1f6d4c.png)
+
+OpenTX/EdgeTX BW LCD 212x64
 
 ![X9D](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9d.png)
 
+OpenTX/EdgeTX BW LCD 128x64
+
 ![X7](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7.png)
 
-![image](https://user-images.githubusercontent.com/30294218/152306452-db1f2e03-d042-4311-a7ba-818a198d84c6.png)
+Ethos Color LCD 480x272 (X10/X12)
+
+![Ethos_X10](https://user-images.githubusercontent.com/30294218/194421471-38b308cf-d0d0-4500-af52-6647e6d993a0.png)
+
+Ethos Color LCD 480x320 (X18)
+
+![Ethos X18](https://user-images.githubusercontent.com/30294218/194421562-4ea6b2dd-ed01-4585-95f1-6b09313b8d3d.png)
+
+Ethos Color LCD 800x480 (X20)
+
+![Ethos X20](https://user-images.githubusercontent.com/30294218/194421598-be8c3dbd-9ac4-494a-bad9-9bd668f105ce.png)
+
+
+
 
 ## Donation
 
