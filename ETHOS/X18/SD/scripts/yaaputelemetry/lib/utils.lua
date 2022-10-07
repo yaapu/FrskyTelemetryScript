@@ -28,9 +28,6 @@ local utils = {}
 local status = nil
 local libs = nil
 
-local alwaysOn = system.getSource({category=CATEGORY_ALWAYS_ON, member=1, options=0})
-local alwaysOff = system.getSource({category=CATEGORY_NONE})
-
 local bitmaskCache = {}
 local sources = {}
 local passthroughSensor = sport.getSensor({appIdStart=0x800, appIdEnd=0x51FF})
@@ -66,26 +63,24 @@ function utils.getRSSI()
 end
 
 function utils.resetTimer()
-  --print("TIMER RESET")
+  print("TIMER RESET")
   local timer = model.getTimer("Yaapu")
-  timer:activeCondition( alwaysOff )
-  timer:resetCondition( alwaysOn )
+  timer:activeCondition( system.getSource(nil) )
+  timer:value(0)
 end
 
 function utils.startTimer()
-  --print("TIMER START")
+  print("TIMER START")
   status.lastTimerStart = getTime()/100
   local timer = model.getTimer("Yaapu")
-  timer:activeCondition( alwaysOn )
-  timer:resetCondition( alwaysOff )
+  timer:activeCondition( {category=CATEGORY_ALWAYS_ON, member=1, options=0} )
 end
 
 function utils.stopTimer()
-  --print("TIMER STOP")
+  print("TIMER STOP")
   status.lastTimerStart = 0
   local timer = model.getTimer("Yaapu")
-  timer:activeCondition( alwaysOff )
-  timer:resetCondition( alwaysOff )
+  timer:activeCondition(  system.getSource(nil))
 end
 
 function utils.telemetryEnabled(widget)

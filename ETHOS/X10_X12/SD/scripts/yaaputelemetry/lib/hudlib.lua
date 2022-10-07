@@ -145,17 +145,17 @@ function hudLib.drawHud(widget,x,y,w,h)
   if math.abs(alt) > 999 or alt < -99 then
     libs.drawLib.drawNumber(maxX-1, 64, alt, 0, FONT_XXL, status.colors.hudSideText, RIGHT)
     if status.terrainEnabled == 1 then
-      libs.drawLib.drawNumber(maxX-12, 95, alt, 0, FONT_L, status.colors.white, RIGHT)
+      libs.drawLib.drawNumber(maxX-12, 95, homeAlt, 0, FONT_L, status.colors.white, RIGHT)
     end
   elseif math.abs(alt) >= 10 then
     libs.drawLib.drawNumber(maxX-1, 64, alt, 0, FONT_XXL, status.colors.hudSideText, RIGHT)
     if status.terrainEnabled == 1 then
-      libs.drawLib.drawNumber(maxX-12, 95, alt, 0, FONT_L, status.colors.white, RIGHT)
+      libs.drawLib.drawNumber(maxX-12, 95, homeAlt, 0, FONT_L, status.colors.white, RIGHT)
     end
   else
     libs.drawLib.drawNumber(maxX-1, 64, alt, 1, FONT_XXL, status.colors.hudSideText, RIGHT)
     if status.terrainEnabled == 1 then
-      libs.drawLib.drawNumber(maxX-12, 95, alt, 1, FONT_L, status.colors.white, RIGHT)
+      libs.drawLib.drawNumber(maxX-12, 95, homeAlt, 1, FONT_L, status.colors.white, RIGHT)
     end
   end
 

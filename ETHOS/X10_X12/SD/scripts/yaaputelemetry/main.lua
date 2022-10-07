@@ -202,6 +202,7 @@ local status = {
     "layout_default",
     "layout_map",
     "layout_plot",
+    "layout_messages",
   },
   centerPanelFilenames = {
     "center_panel"
@@ -614,7 +615,7 @@ local function createOnce(widget)
   -- only this widget instance will run bg tasks
   widget.runBgTasks = true
   libs.utils.playSound("yaapu")
-  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.0.0c dev".. " ("..'3d42cde'..")")
+  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.0.0c dev".. " ("..'6da5bbe'..")")
   -- create the YaapuTimer if missing
   if model.getTimer("Yaapu") == nil then
     local timer = model.createTimer()
@@ -934,7 +935,7 @@ end
 local function playHash()
   -- try to play the hash sound file without checking for existence
   local soundfile = tostring(status.shortHash == nil and status.hash or status.shortHash)
-  print("playHash()", status.msgBuffer, status.hash, soundfile..".wav")
+  -- print("playHash()", status.msgBuffer, status.hash, soundfile..".wav")
   libs.utils.playSound(soundfile,true)
   -- if required parse parameter and play it!
   if status.parseShortHash == true then
@@ -998,9 +999,9 @@ function processTelemetry(appId, data, now)
   elseif appId == 0x5003 then -- BATT
     status.telemetry.batt1volt = libs.utils.bitExtract(data,0,9)
     -- telemetry max is 51.1V, 51.2 is reported as 0.0, 52.3 is 0.1...60 is 88
-    -- if 12S and V > 51.1 ==> Vreal = 51.2 +status.telemetry.batt1volt
-    if status.conf.cell1Count == 12 and status.telemetry.batt1volt < 240 then
-      -- assume a 2Vx12 as minimum acceptable "real" voltage
+    -- if >= 12s ==> Vreal = 51.2 + status.telemetry.batt1volt
+    if status.conf.cell1Count >= 12 and status.telemetry.batt1volt < status.conf.cell1Count*20 then
+      -- assume a 2V as minimum acceptable "real" voltage
       status.telemetry.batt1volt = 512 +status.telemetry.batt1volt
     end
     status.telemetry.batt1current = libs.utils.bitExtract(data,10,7) * (10^libs.utils.bitExtract(data,9,1))
@@ -1122,9 +1123,7 @@ local fg_timer = 0
 
 -- called only when visible
 local function paint(widget)
-    lcd.color(status.colors.background)
     lcd.pen(SOLID)
-    lcd.drawFilledRectangle(0,0,480,272)
 
     local now = getTime()
     if status.lastScreen ~= widget.screen then
@@ -1136,18 +1135,19 @@ local function paint(widget)
       return
     end
 
-    --libs.drawLib.drawStatusBar(widget,370)
-
     if status.showMessages then
-      libs.drawLib.drawMessages(widget, 36, 15)
+      lcd.color(status.colors.black)
+      lcd.drawFilledRectangle(0,0,480,272)
     else
-      if not widget.ready then
+      lcd.color(status.colors.background)
+      lcd.drawFilledRectangle(0,0,480,272)
+      if not widget.ready or status.layout[widget.screen] == nil then
           loadLayout(widget);
       else
         status.layout[widget.screen].draw(widget)
       end
     end
-    --
+
     -- no telemetry/minmax outer box
     if libs.utils.telemetryEnabled() == false then
       -- no telemetry inner box
@@ -1283,7 +1283,6 @@ local function create()
     end
 
     initLibs()
-    print("*********** CREATE **************")
     return {
       ------------------
       -- shared config
@@ -1420,10 +1419,10 @@ local function configure(widget)
   form.addChoiceField(line, form.getFieldSlots(line)[0], {{"Parallel", 1}, {"Series", 2}, {"Dual with alerts on B1", 3}, {"Dual with alerts on B2", 4}, {"Volts from B1, Curr from B2",5}, {"Volts from B2, Curr from B1",6}}, function() return status.conf.battConf end, function(value) status.conf.battConf = value end)
 
   line = form.addLine("Battery 1 cell count override")
-  f = form.addNumberField(line, nil, 0, 12, function() return status.conf.cell1Count end, function(value) status.conf.cell1Count = value end )
+  f = form.addNumberField(line, nil, 0, 16, function() return status.conf.cell1Count end, function(value) status.conf.cell1Count = value end )
   f:suffix("s")
   line = form.addLine("Battery 2 cell count override")
-  f = form.addNumberField(line, nil, 0, 12, function() return status.conf.cell2Count end, function(value) status.conf.cell2Count = value end )
+  f = form.addNumberField(line, nil, 0, 16, function() return status.conf.cell2Count end, function(value) status.conf.cell2Count = value end )
   f:suffix("s")
 
   line = form.addLine("Battery 1 capacity override")
