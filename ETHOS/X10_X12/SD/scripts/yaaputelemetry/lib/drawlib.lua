@@ -110,7 +110,8 @@ function drawLib.drawStatusBar(widget, y, maxRows)
   end
   -- gps status
   local hdop = status.telemetry.gpsHdopC
-  local strStatus = status.gpsStatuses[status.telemetry.gpsStatus]
+  local strStatus1 = status.gpsStatuses[status.telemetry.gpsStatus][1]
+  local strStatus2 = status.gpsStatuses[status.telemetry.gpsStatus][2]
   local prec = 0
   local blink = true
   local flags = BLINK
@@ -126,13 +127,14 @@ function drawLib.drawStatusBar(widget, y, maxRows)
     end
     drawLib.drawNumber(255,y-4, hdop*mult, prec, FONT_XXL, status.colors.barText, LEFT, blink)
     -- SATS
-    drawLib.drawText(250,y-4+14, strStatus, FONT_STD, status.colors.barText, RIGHT)
+    drawLib.drawText(227,y-4+3, strStatus1, FONT_STD, status.colors.barText, LEFT)
+    drawLib.drawText(227,y-4+16, strStatus2, FONT_STD, status.colors.barText, LEFT)
 
     if status.telemetry.numSats == 15 then
-      drawLib.drawNumber(160,y-4, status.telemetry.numSats, 0, FONT_XXL, status.colors.barText)
-      drawLib.drawText(190,y-4, "+", FONT_STD, status.colors.white)
+      drawLib.drawNumber(186,y-4, status.telemetry.numSats, 0, FONT_XXL, status.colors.barText)
+      drawLib.drawText(226,y-4, "+", FONT_STD, status.colors.white, RIGHT)
     else
-      drawLib.drawNumber(160,y-4, status.telemetry.numSats, 0, FONT_XXL, status.colors.barText)
+      drawLib.drawNumber(186,y-4, status.telemetry.numSats, 0, FONT_XXL, status.colors.barText)
     end
   elseif status.telemetry.gpsStatus == 0 then
     drawLib.drawBlinkBitmap(150,y-4+0, "nogpsicon")
@@ -178,7 +180,7 @@ function drawLib.drawNoTelemetryData(widget)
     lcd.font(FONT_XXL)
     lcd.drawText(240, 87, "NO TELEMETRY", CENTERED)
     lcd.font(FONT_STD)
-    lcd.drawText(240, 152, "Yaapu Telemetry Widget 1.0.0c dev".."("..'6da5bbe'..")", CENTERED)
+    lcd.drawText(240, 152, "Yaapu Telemetry Widget 1.0.0c dev".."("..'1e4d6a8'..")", CENTERED)
   end
 end
 

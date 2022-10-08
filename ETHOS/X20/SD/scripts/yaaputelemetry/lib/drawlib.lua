@@ -111,7 +111,8 @@ function drawLib.drawStatusBar(widget, y, maxRows)
   end
   -- gps status
   local hdop = status.telemetry.gpsHdopC
-  local strStatus = status.gpsStatuses[status.telemetry.gpsStatus]
+  local strStatus1 = status.gpsStatuses[status.telemetry.gpsStatus][1]
+  local strStatus2 = status.gpsStatuses[status.telemetry.gpsStatus][2]
   local prec = 0
   local blink = true
   local flags = BLINK
@@ -125,17 +126,18 @@ function drawLib.drawStatusBar(widget, y, maxRows)
     if hdop > 999 then
       hdop = 999
     end
-    drawLib.drawNumber(435,y-0, hdop*mult, prec, FONT_XXL, status.colors.barText, LEFT, blink)
+    drawLib.drawNumber(425,y-0, hdop*mult, prec, FONT_XXL, status.colors.barText, LEFT, blink)
     -- SATS
-    drawLib.drawText(430,y-0+20, strStatus, FONT_STD, status.colors.barText, RIGHT)
+    drawLib.drawText(380,y-0+2, strStatus1, FONT_STD, status.colors.barText, LEFT)
+    drawLib.drawText(380,y-0+20, strStatus2, FONT_STD, status.colors.barText, LEFT)
 
     if status.telemetry.numSats == 15 then
-      drawLib.drawNumber(300,y-0, status.telemetry.numSats, 0, FONT_XXL, status.colors.barText)
-      drawLib.drawText(340,y-0, "+", FONT_STD, status.colors.white)
+      drawLib.drawNumber(325,y-0, status.telemetry.numSats, 0, FONT_XXL, status.colors.barText)
+      drawLib.drawText(340,y-0, "+", FONT_STD, status.colors.white, RIGHT)
     else
-      drawLib.drawNumber(300,y-0, status.telemetry.numSats, 0, FONT_XXL, status.colors.barText)
+      drawLib.drawNumber(325,y-0, status.telemetry.numSats, 0, FONT_XXL, status.colors.barText)
     end
-    drawLib.drawBitmap(270,y-0+5, "gpsicon")
+    drawLib.drawBitmap(295,y-0+5, "gpsicon")
   elseif status.telemetry.gpsStatus == 0 then
     drawLib.drawBlinkBitmap(322,y-0+5, "nogpsicon")
   else
@@ -180,7 +182,7 @@ function drawLib.drawNoTelemetryData(widget)
     lcd.font(FONT_XXL)
     lcd.drawText(392, 115, "NO TELEMETRY", CENTERED)
     lcd.font(FONT_STD)
-    lcd.drawText(392, 180, "Yaapu Telemetry Widget 1.0.0c dev".."("..'6da5bbe'..")", CENTERED)
+    lcd.drawText(392, 180, "Yaapu Telemetry Widget 1.0.0c dev".."("..'1e4d6a8'..")", CENTERED)
   end
 end
 

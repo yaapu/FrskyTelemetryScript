@@ -574,14 +574,14 @@ function utils.decToDMS(dec,lat)
   local D = math.floor(math.abs(dec))
   local M = (math.abs(dec) - D)*60
   local S = (math.abs((math.abs(dec) - D)*60) - M)*60
-	return D .. string.format(" %04.2f", M) .. (lat and (dec >= 0 and "E" or "W") or (dec >= 0 and "N" or "S"))
+	return D .. string.format("°%04.2f", M) .. (lat and (dec >= 0 and "E" or "W") or (dec >= 0 and "N" or "S"))
 end
 
 function utils.decToDMSFull(dec,lat)
   local D = math.floor(math.abs(dec))
   local M = math.floor((math.abs(dec) - D)*60)
   local S = (math.abs((math.abs(dec) - D)*60) - M)*60
-	return D .. string.format(" %d'%04.1f", M, S) .. (lat and (dec >= 0 and "E" or "W") or (dec >= 0 and "N" or "S"))
+	return D .. string.format("°%d'%04.1f", M, S) .. (lat and (dec >= 0 and "E" or "W") or (dec >= 0 and "N" or "S"))
 end
 
 function utils.updateTotalDist()

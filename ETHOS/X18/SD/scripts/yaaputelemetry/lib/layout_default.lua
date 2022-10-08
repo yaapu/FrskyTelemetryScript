@@ -110,4 +110,7 @@ function panel.init(param_status, param_libs)
   return panel
 end
 
+panel.showArmingStatus = true
+panel.showFailsafe = true
+
 return panel

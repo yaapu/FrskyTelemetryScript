@@ -47,9 +47,11 @@ function panel.draw(widget)
   lcd.drawText(0, 0, string.format("zoom: %d", status.mapZoomLevel))
   --lcd.drawText(0, 20, string.format("cog: %.0f", status.cog == nil and 0 or status.cog))
 
+  --[[
   lcd.font(FONT_XS)
   lcd.color(status.colors.green)
-  lcd.drawText(480, 302, "map", RIGHT)
+  lcd.drawText(LCD_W, 302, "map", RIGHT)
+  --]]
 end
 
 function panel.background(widget)
@@ -60,5 +62,8 @@ function panel.init(param_status, param_libs)
   libs = param_libs
   return panel
 end
+
+panel.showArmingStatus = false
+panel.showFailsafe = false
 
 return panel

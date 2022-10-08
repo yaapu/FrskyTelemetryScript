@@ -177,13 +177,13 @@ local status = {
 
   -- gps fix status
   gpsStatuses = {
-    [0]="NoGPS",
-    [1]="NoLock",
-    [2]="2D",
-    [3]="3D",
-    [4]="DGPS",
-    [5]="RTKFlt",
-    [6]="RTKFxd",
+    [0]={"No", "GPS"},
+    [1]={"No", "Lock"},
+    [2]={"2D", ""},
+    [3]={"3D", ""},
+    [4]={"DGPS",""},
+    [5]={"RTK", "Flt"},
+    [6]={"RTK", "Fxd"},
   },
 
   -- mavlink severity
@@ -615,7 +615,7 @@ local function createOnce(widget)
   -- only this widget instance will run bg tasks
   widget.runBgTasks = true
   libs.utils.playSound("yaapu")
-  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.0.0c dev".. " ("..'6da5bbe'..")")
+  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.0.0c dev".. " ("..'1e4d6a8'..")")
   -- create the YaapuTimer if missing
   if model.getTimer("Yaapu") == nil then
     local timer = model.createTimer()
@@ -694,7 +694,7 @@ local function loadLayout(widget)
   lcd.color(status.colors.white)
   lcd.drawRectangle(40, 70, 400, 140,3)
   lcd.color(status.colors.white)
-  lcd.font(FONT_L)
+  lcd.font(FONT_XXL)
   lcd.drawText(240, 100, "loading layout...", CENTERED)
 
   if widget.screen == 1 then
@@ -1145,6 +1145,14 @@ local function paint(widget)
           loadLayout(widget);
       else
         status.layout[widget.screen].draw(widget)
+        
+        if status.layout[widget.screen].showArmingStatus == true then
+          libs.drawLib.drawArmingStatus(widget)
+        end
+        
+        if status.layout[widget.screen].showFailsafe == true then
+          libs.drawLib.drawFailsafe(widget)
+        end
       end
     end
 
@@ -1157,10 +1165,6 @@ local function paint(widget)
       lcd.color(RED)
       libs.drawLib.drawBlinkRectangle(0,0,480,272,3)
     else
-      -- arming status
-      libs.drawLib.drawArmingStatus(widget)
-      libs.drawLib.drawFailsafe(widget)
-
       if status.showMinMaxValues == true then
         lcd.color(status.colors.yellow)
         libs.drawLib.drawBlinkRectangle(0,0,480,272,3)
