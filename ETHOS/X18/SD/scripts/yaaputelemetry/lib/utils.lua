@@ -33,7 +33,7 @@ local sources = {}
 local passthroughSensor = sport.getSensor({appIdStart=0x800, appIdEnd=0x51FF})
 
 local function loadLib(name)
-  local lib = dofile("lib/"..name..".lua")
+  local lib = dofile("/scripts/yaaputelemetry/lib/"..name..".lua")
   if lib.init ~= nil then
     lib.init(status, libs)
   end

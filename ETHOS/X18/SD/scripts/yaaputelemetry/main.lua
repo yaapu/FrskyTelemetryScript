@@ -451,7 +451,7 @@ end
 --]]
 
 local function loadLib(name)
-  local lib = dofile("lib/"..name..".lua")
+  local lib = dofile("/scripts/yaaputelemetry/lib/"..name..".lua")
   if lib.init ~= nil then
     lib.init(status, libs)
   end
@@ -614,7 +614,7 @@ local function createOnce(widget)
   -- only this widget instance will run bg tasks
   widget.runBgTasks = true
   libs.utils.playSound("yaapu")
-  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.0.0c dev".. " ("..'1e4d6a8'..")")
+  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.0.0c dev".. " ("..'0bcca0b'..")")
   -- create the YaapuTimer if missing
   if model.getTimer("Yaapu") == nil then
     local timer = model.createTimer()
@@ -628,7 +628,6 @@ local function createOnce(widget)
 end
 
 local function reset(widget)
-  print("RESET")
   if status.telemetry.statusArmed == 1 then
     libs.utils.pushMessage(1,"Reset ignored while armed")
     return
@@ -687,6 +686,7 @@ end
 
 
 local function loadLayout(widget)
+
   lcd.pen(SOLID)
   lcd.color(lcd.RGB(20, 20, 20))
   lcd.drawFilledRectangle(40, 70, 400, 140)
@@ -741,6 +741,7 @@ local sportPacket = {
 }
 
 local function bgtasks(widget)
+
   -- background rate calculator
   -- skip first iteration
   if bg_rate == 0 then
@@ -1122,6 +1123,7 @@ local fg_timer = 0
 
 -- called only when visible
 local function paint(widget)
+
     lcd.pen(SOLID)
 
     local now = getTime()
@@ -1145,11 +1147,11 @@ local function paint(widget)
           loadLayout(widget);
       else
         status.layout[widget.screen].draw(widget)
-        
+
         if status.layout[widget.screen].showArmingStatus == true then
           libs.drawLib.drawArmingStatus(widget)
         end
-        
+
         if status.layout[widget.screen].showFailsafe == true then
           libs.drawLib.drawFailsafe(widget)
         end
@@ -1193,10 +1195,12 @@ end
 
 -- called when event is passed to the widget
 local function event(widget, category, value, x, y)
+--[[
     print("EVT:")
     print("   cat:", category)
     print("   val:", value)
     print("   x,y:",x,y)
+--]]
     local kill = false
     if category == EVT_TOUCH then
       --and value == TOUCH_ENTER
@@ -1236,6 +1240,7 @@ end
 
 -- widget custom context menu
 local function menu(widget)
+
   return {
     { "Yaapu Reset",function() reset(widget) end },
   }
@@ -1738,8 +1743,8 @@ local function write(widget)
 end
 
 local function init()
-    -- there's a limit on key size of 7 characters
-    system.registerWidget({key="yaaputl", name="Yaapu Telemetry", paint=paint, event=event, wakeup=wakeup, create=create, configure=configure, menu=menu, read=read, write=write })
+  -- there's a limit on key size of 7 characters
+  system.registerWidget({key="yaaputl", name="Yaapu Telemetry", paint=paint, event=event, wakeup=wakeup, create=create, configure=configure, menu=menu, read=read, write=write })
 end
 
 return {init=init}

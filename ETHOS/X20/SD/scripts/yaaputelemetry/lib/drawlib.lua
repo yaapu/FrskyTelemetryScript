@@ -182,7 +182,7 @@ function drawLib.drawNoTelemetryData(widget)
     lcd.font(FONT_XXL)
     lcd.drawText(392, 115, "NO TELEMETRY", CENTERED)
     lcd.font(FONT_STD)
-    lcd.drawText(392, 180, "Yaapu Telemetry Widget 1.0.0c dev".."("..'1e4d6a8'..")", CENTERED)
+    lcd.drawText(392, 180, "Yaapu Telemetry Widget 1.0.0c dev".."("..'0bcca0b'..")", CENTERED)
   end
 end
 
