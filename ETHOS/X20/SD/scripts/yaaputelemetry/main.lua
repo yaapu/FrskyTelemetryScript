@@ -17,6 +17,11 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program; if not, see <http://www.gnu.org/licenses>.
 
+local HUD_W = 400
+local HUD_H = 240
+local HUD_X = (800 - HUD_W)/2
+local HUD_Y = 36
+
 local function getTime()
   -- os.clock() resolution is 0.01 secs
   return os.clock()*100 -- 1/100th
@@ -614,7 +619,7 @@ local function createOnce(widget)
   -- only this widget instance will run bg tasks
   widget.runBgTasks = true
   libs.utils.playSound("yaapu")
-  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.0.0c dev".. " ("..'0bcca0b'..")")
+  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.0.0d dev".. " ("..'c222a67'..")")
   -- create the YaapuTimer if missing
   if model.getTimer("Yaapu") == nil then
     local timer = model.createTimer()
@@ -1143,9 +1148,7 @@ local function paint(widget)
     else
       lcd.color(status.colors.background)
       lcd.drawFilledRectangle(0,0,800,480)
-      if not widget.ready or status.layout[widget.screen] == nil then
-          loadLayout(widget);
-      else
+      if widget.ready == true then
         status.layout[widget.screen].draw(widget)
 
         if status.layout[widget.screen].showArmingStatus == true then
@@ -1247,11 +1250,8 @@ local function menu(widget)
 end
 
 
-local HUD_W = 292 --340
-local HUD_H = 198 --160
-local HUD_MIN_X = (800 - HUD_W)/2
-local HUD_MIN_Y = 36
-
+local timer5Hz = getTime()
+local timer10Hz = getTime()
 -- always called @10Hz even when in system menus
 local function wakeup(widget)
   local now = getTime()
@@ -1268,7 +1268,21 @@ local function wakeup(widget)
   end
 
 
-  lcd.invalidate()
+  if not widget.ready or status.layout[widget.screen] == nil then
+    loadLayout(widget);
+  end
+  if now - timer5Hz > 20 then
+    lcd.invalidate()
+    timer5Hz = now
+  else
+    if widget.screen == 1 then
+      -- artificial horizon @10Hz
+      if now - timer10Hz > 10 then
+        lcd.invalidate(HUD_X, HUD_Y, HUD_W, HUD_H)
+        timer10Hz = now
+      end
+    end
+  end
   --[[
   print("=========================")
   local mem = {}
@@ -1351,10 +1365,8 @@ local function configure(widget)
   local f
   local line = form.addLine("Link quality source")
   form.addSourceField(line, nil, function() return status.conf.linkQualitySource end, function(value) status.conf.linkQualitySource = value end)
-  if string.match("X20",system.getVersion().board) or string.match("X18",system.getVersion().board) then
     line = form.addLine("Telemetry source")
     widget.screenField = form.addChoiceField(line, form.getFieldSlots(line)[0],  {{"default",1}, {"external sport", 2}}, function() return status.conf.telemetrySource end, function(value) status.conf.telemetrySource = value end);
-  end
   line = form.addLine("Screen Type")
   widget.screenField = form.addChoiceField(line, form.getFieldSlots(line)[0],
       {

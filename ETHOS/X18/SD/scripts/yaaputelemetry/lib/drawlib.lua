@@ -17,6 +17,11 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program; if not, see <http://www.gnu.org/licenses>.
 
+local HUD_W = 240
+local HUD_H = 150
+local HUD_X = (480 - HUD_W)/2
+local HUD_Y = 18
+
 local function getTime()
   -- os.clock() resolution is 0.01 secs
   return os.clock()*100 -- 1/100th
@@ -180,7 +185,7 @@ function drawLib.drawNoTelemetryData(widget)
     lcd.font(FONT_XXL)
     lcd.drawText(240, 87, "NO TELEMETRY", CENTERED)
     lcd.font(FONT_STD)
-    lcd.drawText(240, 152, "Yaapu Telemetry Widget 1.0.0c dev".."("..'0bcca0b'..")", CENTERED)
+    lcd.drawText(240, 152, "Yaapu Telemetry Widget 1.0.0d dev".."("..'c222a67'..")", CENTERED)
   end
 end
 
