@@ -28,120 +28,20 @@ local ver, radio, maj, minor, rev = getVersion()
 local lastProcessCycle = getTime()
 local processCycle = 0
 
+local layout = {}
 
-local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)--getMaxValue,getBitmap,drawBlinkBitmap)
-  local r = -telemetry.roll
-  local cx,cy,dx,dy
-  local yPos = 0 + 20 + 8
-  local scale = 0.6
-  -----------------------
-  -- artificial horizon
-  -----------------------
-  -- no roll ==> segments are vertical, offsets are multiples of 6.5
-  if ( telemetry.roll == 0) then
-    dx=0
-    dy=telemetry.pitch * scale
-    cx=0
-    cy=6.5
-  else
-    -- center line offsets
-    dx = math.cos(math.rad(90 - r)) * -telemetry.pitch * scale
-    dy = math.sin(math.rad(90 - r)) * telemetry.pitch * scale
-    -- 1st line offsets
-    cx = math.cos(math.rad(90 - r)) * 6.5
-    cy = math.sin(math.rad(90 - r)) * 6.5
-  end
-  -----------------------
-  -- dark color for "ground"
-  -----------------------
-  -- 90x70
-  local minY = 22
-  local maxY = 22+42
-  --
-  local minX = 7
-  local maxX = 7 + 76
-  --
-  local ox = 7 + 76/2 + dx
-  --
-  local oy = 43 + dy
-  local yy = 0
+local conf
+local telemetry
+local status
+local utils
+local libs
 
- --lcd.setColor(CUSTOM_COLOR,lcd.RGB(0x0d, 0x68, 0xb1)) -- bighud blue
-  lcd.setColor(CUSTOM_COLOR,lcd.RGB(0x7b, 0x9d, 0xff)) -- default blue
-  lcd.drawFilledRectangle(minX,minY,maxX-minX,maxY - minY,CUSTOM_COLOR)
- -- HUD
-  --lcd.setColor(CUSTOM_COLOR,lcd.RGB(77, 153, 0))
-  --lcd.setColor(CUSTOM_COLOR,lcd.RGB(0x90, 0x63, 0x20)) --906320 bighud brown
-  lcd.setColor(CUSTOM_COLOR,lcd.RGB(0x63, 0x30, 0x00)) --623000 old brown
-  
-  -- angle of the line passing on point(ox,oy)
-  local angle = math.tan(math.rad(-telemetry.roll))
-  -- prevent divide by zero
-  if telemetry.roll == 0 then
-    drawLib.drawFilledRectangle(minX,math.max(minY,dy+minY+(maxY-minY)/2),maxX-minX,math.min(maxY-minY,(maxY-minY)/2-dy+(math.abs(dy) > 0 and 1 or 0)),CUSTOM_COLOR)
-  elseif math.abs(telemetry.roll) >= 180 then
-    drawLib.drawFilledRectangle(minX,minY,maxX-minX,math.min(maxY-minY,(maxY-minY)/2+dy),CUSTOM_COLOR)
-  else
-    -- HUD drawn using horizontal bars of height 2
-    -- true if flying inverted
-    local inverted = math.abs(telemetry.roll) > 90
-    -- true if part of the hud can be filled in one pass with a rectangle
-    local fillNeeded = false
-    local yRect = inverted and 0 or LCD_H
-    
-    local step = 2
-    local steps = (maxY - minY)/step - 1
-    local yy = 0
-    
-    if 0 < telemetry.roll and telemetry.roll < 180 then
-      for s=0,steps
-      do
-        yy = minY + s*step
-        xx = ox + (yy-oy)/angle
-        if xx >= minX and xx <= maxX then
-          lcd.drawFilledRectangle(xx, yy, maxX-xx+1, step,CUSTOM_COLOR)
-        elseif xx < minX then
-          yRect = inverted and math.max(yy,yRect)+step or math.min(yy,yRect)
-          fillNeeded = true
-        end
-      end
-    elseif -180 < telemetry.roll and telemetry.roll < 0 then
-      for s=0,steps
-      do
-        yy = minY + s*step
-        xx = ox + (yy-oy)/angle
-        if xx >= minX and xx <= maxX then
-          lcd.drawFilledRectangle(minX, yy, xx-minX, step,CUSTOM_COLOR)
-        elseif xx > maxX then
-          yRect = inverted and math.max(yy,yRect)+step or math.min(yy,yRect)
-          fillNeeded = true
-        end
-      end
-    end
-    
-    if fillNeeded then
-      local yMin = inverted and minY or yRect
-      local height = inverted and yRect - minY or maxY-yRect
-      --lcd.setColor(CUSTOM_COLOR,utils.colors.red) --623000 old brown
-      lcd.drawFilledRectangle(minX, yMin, maxX-minX, height ,CUSTOM_COLOR)
-    end
-  end
-
-  -- parallel lines above and below horizon
-  local linesMaxY = maxY-1
-  local linesMinY = minY+1
-  local rollX = math.floor(7 + 76/2)
-  lcd.setColor(CUSTOM_COLOR,utils.colors.white)
-  -- +/- 90 deg
-  for dist=1,6
-  do
-    drawLib.drawLineWithClipping(rollX + dx - dist*cx,dy + 43 + dist*cy,r,(dist%2==0 and 40 or 20),DOTTED,7+2,7+76-2,linesMinY,linesMaxY,CUSTOM_COLOR,radio,rev)
-    drawLib.drawLineWithClipping(rollX + dx + dist*cx,dy + 43 - dist*cy,r,(dist%2==0 and 40 or 20),DOTTED,7+2,7+76-2,linesMinY,linesMaxY,CUSTOM_COLOR,radio,rev)
-  end
-  -------------------------------------
-  -- hud bitmap
-  -------------------------------------
-  lcd.drawBitmap(utils.getBitmap("hud_48x48a"),7-2+13,22-3-4)
+function layout.init(param_status, param_telemetry, param_conf, param_utils, param_libs)
+  status = param_status
+  telemetry = param_telemetry
+  conf = param_conf
+  utils = param_utils
+  libs = param_libs
 end
 
 local val1Max = -math.huge
@@ -150,22 +50,27 @@ local val2Max = -math.huge
 local val2Min = math.huge
 local initialized = false
 
-local function init(myWidget,drawLib,conf,telemetry,status,battery,alarms,frame,utils,customSensors,leftPanel,centerPanel,rightPanel)
+local function drawMiniHud()
+  libs.drawLib.drawArtificialHorizon(22, 22, 48, 36, nil, lcd.RGB(0x7B, 0x9D, 0xFF), lcd.RGB(0x63, 0x30, 0x00), 6, 6.5)
+  lcd.drawBitmap(utils.getBitmap("hud_48x48a"), 22-1, 22-10)
+end
+
+local function setup(widget)
   if not initialized then
     val1Max = -math.huge
     val1Min = math.huge
     val2Max = -math.huge
     val2Min = math.huge
-    drawLib.resetGraph("plot1")
-    drawLib.resetGraph("plot2")
+    libs.drawLib.resetGraph("plot1")
+    libs.drawLib.resetGraph("plot2")
     initialized = true
   end
 end
 
-local function draw(myWidget,drawLib,conf,telemetry,status,battery,alarms,frame,utils,customSensors,leftPanel,centerPanel,rightPanel)
-  init(myWidget,drawLib,conf,telemetry,status,battery,alarms,frame,utils,customSensors,leftPanel,centerPanel,rightPanel)
+function layout.draw(widget, customSensors, leftPanel, centerPanel, rightPanel)
+  setup(widget)
 
-  drawLib.drawLeftRightTelemetry(myWidget,conf,telemetry,status,battery,utils)
+  libs.drawLib.drawLeftRightTelemetry(widget)
   -- plot area
   lcd.setColor(CUSTOM_COLOR, lcd.RGB(100,100,100))
   lcd.drawFilledRectangle(90,54,300,170,SOLID+CUSTOM_COLOR)
@@ -179,7 +84,7 @@ local function draw(myWidget,drawLib,conf,telemetry,status,battery,alarms,frame,
     lcd.drawText(91,38,status.plotSources[conf.plotSource1][1],CUSTOM_COLOR+SMLSIZE)
     lcd.drawText(91,52,string.format("%d", val1Max),CUSTOM_COLOR+SMLSIZE)
     lcd.drawText(91,200,string.format("%d", val1Min),CUSTOM_COLOR+SMLSIZE)
-    y1 = drawLib.drawGraph("plot1", 90, 59, 300, 151, utils.colors.darkyellow, val1, false, false, nil, 50)
+    y1 = libs.drawLib.drawGraph("plot1", 90, 59, 300, 151, utils.colors.darkyellow, val1, false, false, nil, 50)
     if y1 ~= nil then
       lcd.setColor(CUSTOM_COLOR, WHITE)
       lcd.drawText(92,y1-7,string.format("%d", val1),CUSTOM_COLOR+SMLSIZE+INVERS)
@@ -194,33 +99,33 @@ local function draw(myWidget,drawLib,conf,telemetry,status,battery,alarms,frame,
     lcd.drawText(389,38,status.plotSources[conf.plotSource2][1],CUSTOM_COLOR+SMLSIZE+RIGHT)
     lcd.drawText(389,52,string.format("%d", val2Max),CUSTOM_COLOR+SMLSIZE+RIGHT)
     lcd.drawText(389,200,string.format("%d", val2Min),CUSTOM_COLOR+SMLSIZE+RIGHT)
-    y2 = drawLib.drawGraph("plot2", 90, 59, 300, 151, utils.colors.white, val2, false, false, nil, 50)
+    y2 = libs.drawLib.drawGraph("plot2", 90, 59, 300, 151, utils.colors.white, val2, false, false, nil, 50)
     if y2 ~= nil then
       lcd.setColor(CUSTOM_COLOR, WHITE)
       lcd.drawText(388,y2-7,string.format("%d", val2),CUSTOM_COLOR+SMLSIZE+RIGHT+INVERS)
     end
   end
 
-  drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)
+  drawMiniHud()
 
   utils.drawTopBar()
-  drawLib.drawStatusBar(2,conf,telemetry,status,battery,alarms,frame,utils)
-  drawLib.drawArmStatus(status,telemetry,utils)
-  drawLib.drawFailsafe(telemetry,utils)
-  local nextX = drawLib.drawTerrainStatus(utils,status,telemetry,90,20)
-  drawLib.drawFenceStatus(utils,status,telemetry,nextX,20)
+  libs.drawLib.drawStatusBar(2)
+  libs.drawLib.drawArmStatus()
+  libs.drawLib.drawFailsafe()
+  local nextX = libs.drawLib.drawTerrainStatus(90,20)
+  libs.drawLib.drawFenceStatus(nextX,20)
 end
 
-local function background(myWidget,conf,telemetry,status,utils,drawLib)
+function layout.background(widget)
   if status.unitConversion ~= nil then
     if conf.plotSource1 > 1 then
-      drawLib.updateGraph("plot1", telemetry[status.plotSources[conf.plotSource1][2]] * status.plotSources[conf.plotSource1][4] * status.unitConversion[status.plotSources[conf.plotSource1][3]], 50)
+      libs.drawLib.updateGraph("plot1", telemetry[status.plotSources[conf.plotSource1][2]] * status.plotSources[conf.plotSource1][4] * status.unitConversion[status.plotSources[conf.plotSource1][3]], 50)
     end
     if conf.plotSource2 > 1 then
-      drawLib.updateGraph("plot2", telemetry[status.plotSources[conf.plotSource2][2]] * status.plotSources[conf.plotSource2][4] * status.unitConversion[status.plotSources[conf.plotSource2][3]], 50)
+      libs.drawLib.updateGraph("plot2", telemetry[status.plotSources[conf.plotSource2][2]] * status.plotSources[conf.plotSource2][4] * status.unitConversion[status.plotSources[conf.plotSource2][3]], 50)
     end
   end
 end
 
-return {draw=draw, background=background}
+return layout
 

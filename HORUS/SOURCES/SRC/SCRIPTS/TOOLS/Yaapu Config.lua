@@ -63,13 +63,14 @@ local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 --
 local menuItems = {
   {"voice language:", "L1", 1, { "english", "italian", "french", "german" } , {"en","it","fr","de"} },
+  {"color theme:", "TH", 1, { "default", "ethos" } , { 1, 2} },
   {"batt alert level 1:", "V1", 375, 0,5000,"V",PREC2,5 },
   {"batt alert level 2:", "V2", 350, 0,5000,"V",PREC2,5 },
   {"batt[1] capacity override:", "B1", 0, 0,5000,"Ah",PREC2,10 },
   {"batt[2] capacity override:", "B2", 0, 0,5000,"Ah",PREC2,10 },
-  {"batt[1] cell count override:", "CC", 0, 0,12," cells",0,1 },
-  {"batt[2] cell count override:", "CC2", 0, 0,12," cells",0,1 },
-  {"dual battery config:", "BC", 1, { "parallel", "series", "dual with alert on B1", "dual with alert on B2", "volts on B1, curr on B2", "volts on B2, curr on B1" }, { 1, 2, 3, 4, 5, 6 } },
+  {"batt[1] cell count override:", "CC", 0, 0,16," cells",0,1 },
+  {"batt[2] cell count override:", "CC2", 0, 0,16," cells",0,1 },
+  {"dual battery config:", "BC", 1, { "parallel", "series", "dual with alert on B1", "dual with alert on B2", "volts on B1, % on B2", "volts on B2, % on B1" }, { 1, 2, 3, 4, 5, 6 } },
   {"enable battery % by voltage:", "BPBV", 1, { "no", "yes" }, { false, true } },
   {"default voltage source:", "VS", 1, { "auto", "FLVSS", "fc" }, { nil, "vs", "fc" } },
   {"disable all sounds:", "S1", 1, { "no", "yes" }, { false, true } },
@@ -83,11 +84,16 @@ local menuItems = {
   {"rangefinder max:", "RM", 0, 0,10000," cm",0,10 },
   {"air/groundspeed unit:", "HSPD", 1, { "m/s", "km/h", "mph", "kn" }, { 1, 3.6, 2.23694, 1.94384} },
   {"vertical speed unit:", "VSPD", 1, { "m/s", "ft/s", "ft/min" }, { 1, 3.28084, 196.85} },
-  {"widget layout:", "WL", 1, { "default","legacy"}, { 1, 2 } },
-  -- allow up to 10 options to be defined by updateMenuItems()
-  {"center panel:", "CPANE", 1, { "","","","","","","","","","" }, { 1, 2, 3, 4, 5, 6, 7, 8 ,9 ,10 } },
-  {"right panel:", "RPANE", 1,  { "","","","","","","","","","" }, { 1, 2, 3, 4, 5, 6, 7, 8 ,9 ,10 } },
-  {"left panel:", "LPANE", 1,   { "","","","","","","","","","" }, { 1, 2, 3, 4, 5, 6, 7, 8 ,9 ,10 } },
+  {"widget layout:", "WL", 1, { "default"}, { 1 } },
+  {"main screen center panel:", "CPANE", 1, { "","","","","","","","","","" }, { 1, 2, 3, 4, 5, 6, 7, 8 ,9 ,10 } },
+  {"main screen  right panel:", "RPANE", 1,  { "","","","","","","","","","" }, { 1, 2, 3, 4, 5, 6, 7, 8 ,9 ,10 } },
+  {"main screen  left panel:", "LPANE", 1,   { "","","","","","","","","","" }, { 1, 2, 3, 4, 5, 6, 7, 8 ,9 ,10 } },
+  {"screen [2]: center panel:", "CPANE2", 1, { "","","","","","","","","","" }, { 1, 2, 3, 4, 5, 6, 7, 8 ,9 ,10 } },
+  {"screen [2]: right panel:", "RPANE2", 1,  { "","","","","","","","","","" }, { 1, 2, 3, 4, 5, 6, 7, 8 ,9 ,10 } },
+  {"screen [2]: left panel:", "LPANE2", 1,   { "","","","","","","","","","" }, { 1, 2, 3, 4, 5, 6, 7, 8 ,9 ,10 } },
+  {"screen [3]: center panel:", "CPANE3", 1, { "","","","","","","","","","" }, { 1, 2, 3, 4, 5, 6, 7, 8 ,9 ,10 } },
+  {"screen [3]: right panel:", "RPANE3", 1,  { "","","","","","","","","","" }, { 1, 2, 3, 4, 5, 6, 7, 8 ,9 ,10 } },
+  {"screen [3]: left panel:", "LPANE3", 1,   { "","","","","","","","","","" }, { 1, 2, 3, 4, 5, 6, 7, 8 ,9 ,10 } },
   {"enable PX4 flightmodes:", "PX4", 1, { "no", "yes" }, { false, true } },
   {"enable CRSF support:", "CRSF", 1, { "no", "yes" }, { false, true } },
   {"enable RPM support:", "RPM", 1, { "no", "rpm1", "rpm1+rpm2" }, { 1, 2, 3 } },
@@ -145,6 +151,7 @@ local mapNewToOldItemCfg = {
   ["SWC"] = "ZTC" -- ZTC was replaced by SWC
 }
 
+local utils = {}
 local menuItemsByName = {}
 
 local menu  = {
@@ -155,14 +162,24 @@ local menu  = {
   wrapOffset = 0, -- changes according to enabled/disabled features and panels
 }
 
-local basePath = "/SCRIPTS/YAAPU/"
-local libBasePath = basePath.."LIB/"
-
-local widgetLayoutFiles = {"layout_1","layout_2"}
+local widgetLayoutFiles = { "layout_def" }
 
 local centerPanelFiles = {}
 local rightPanelFiles = {}
 local leftPanelFiles = {}
+
+---------------------------
+-- LIBRARY LOADING
+---------------------------
+local basePath = "/SCRIPTS/YAAPU/"
+local libBasePath = basePath.."LIB/"
+
+utils.doLibrary = function(filename)
+  local f = assert(loadScript(libBasePath..filename..".lua"))
+  return f()
+end
+
+local panels = utils.doLibrary("panels").panels
 
 ------------------------------------------
 -- returns item's VALUE,LABEL,IDX
@@ -196,81 +213,43 @@ end
 
 local function updateMenuItems()
   if menu.updated == true then
-    local value, name, idx = getMenuItemByName(menuItems,"WL")
-    if value == 1 then
+    local layout, layout_name, layout_idx = getMenuItemByName(menuItems,"WL")
+    for screen=1,3
+    do
+      local screen_suffix = screen == 1 and "" or tostring(screen)
       ---------------------
       -- large hud layout
       ---------------------
-
-      --{"center panel layout:", "CPANE", 1, { "def","small","russian","dev" }, { 1, 2, 3, 4 } },
-      value, name, idx = getMenuItemByName(menuItems,"CPANE")
-      menuItems[idx][4] = { "default"};
-      menuItems[idx][5] = { 1 };
+      value, name, idx = getMenuItemByName(menuItems,"CPANE"..screen_suffix)
+      menuItems[idx][4] = panels.default.center.labels
+      menuItems[idx][5] = panels.default.center.options;
 
       if menuItems[idx][3] > #menuItems[idx][4] then
         menuItems[idx][3] = 1
       end
 
-      --{"right panel layout:", "RPANE", 1, { "def", "custom", "empty","dev"}, { 1, 2, 3, 4 } },
-      value, name, idx = getMenuItemByName(menuItems,"RPANE")
-      menuItems[idx][4] = { "default", "batt% by voltage", "tether", "hybrid", "custom sensors"};
-      menuItems[idx][5] = { 1, 2, 3, 4, 5 };
+      value, name, idx = getMenuItemByName(menuItems,"RPANE"..screen_suffix)
+      menuItems[idx][4] = panels.default.right.labels
+      menuItems[idx][5] = panels.default.right.options
 
       if menuItems[idx][3] > #menuItems[idx][4] then
         menuItems[idx][3] = 1
       end
 
-      --{"left panel layout:", "LPANE", 1, { "def","mav2frsky", "empty", "dev" }, { 1 , 2, 3, 4 } },
-      value, name, idx = getMenuItemByName(menuItems,"LPANE")
-      menuItems[idx][4] = { "default","mav2passthru"};
-      menuItems[idx][5] = { 1, 2 };
+      value, name, idx = getMenuItemByName(menuItems,"LPANE"..screen_suffix)
+      menuItems[idx][4] = panels.default.left.labels
+      menuItems[idx][5] = panels.default.left.options
 
       if menuItems[idx][3] > #menuItems[idx][4] then
         menuItems[idx][3] = 1
       end
 
-      centerPanelFiles = {"hud_1", "hud_nav_1", "hud_radar_1"}
-      rightPanelFiles = {"right_1", "right_battperc_1", "right_tether_1", "right_hybrid_1", "right_custom_1"}
-      leftPanelFiles = {"left_1", "left_m2f_1"}
-
-    elseif value == 2 then
-      ---------------------
-      -- legacy layout
-      ---------------------
-
-      --{"center panel layout:", "CPANE", 1, { "def","small","russian","dev" }, { 1, 2, 3, 4 } },
-      value, name, idx = getMenuItemByName(menuItems,"CPANE")
-      menuItems[idx][4] = { "default", "russian hud", "compact hud "};
-      menuItems[idx][5] = { 1, 2, 3 };
-
-      if menuItems[idx][3] > #menuItems[idx][4] then
-        menuItems[idx][3] = 1
-      end
-
-      --{"right panel layout:", "RPANE", 1, { "def", "custom", "empty","dev"}, { 1, 2, 3, 4 } },
-      value, name, idx = getMenuItemByName(menuItems,"RPANE")
-      menuItems[idx][4] = { "default", "custom sensors"};
-      menuItems[idx][5] = { 1, 2 };
-
-      if menuItems[idx][3] > #menuItems[idx][4] then
-        menuItems[idx][3] = 1
-      end
-
-      --{"left panel layout:", "LPANE", 1, { "def","mav2frsky", "empty", "dev" }, { 1 , 2, 3, 4 } },
-      value, name, idx = getMenuItemByName(menuItems,"LPANE")
-      menuItems[idx][4] = { "default","mav2passthru"};
-      menuItems[idx][5] = { 1, 2 };
-
-      if menuItems[idx][3] > #menuItems[idx][4] then
-        menuItems[idx][3] = 1
-      end
-
-      centerPanelFiles = {"hud_2", "hud_russian_2", "hud_small_2"}
-      rightPanelFiles = {"right_2", "right_custom_2"}
-      leftPanelFiles = {"left_2", "left_m2f_2"}
+      centerPanelFiles = panels.default.center.files
+      rightPanelFiles = panels.default.right.files
+      leftPanelFiles = panels.default.left.files
     end
 
-    value, name, idx = getMenuItemByName(menuItems,"MAPP")
+    local value, name, idx = getMenuItemByName(menuItems,"MAPP")
 
     if value == nil then
       return
@@ -388,15 +367,19 @@ local function applyConfigValues(conf)
   -- Layout configuration
   conf.widgetLayout = getMenuItemByName(menuItems,"WL")
   conf.widgetLayoutFilename = widgetLayoutFiles[conf.widgetLayout]
+  -- multiple screens setup
+  for screen=1,3
+  do
+    local screen_suffix = screen == 1 and "" or tostring(screen)
 
-  conf.centerPanel = getMenuItemByName(menuItems,"CPANE")
-  conf.centerPanelFilename = centerPanelFiles[conf.centerPanel]
+    conf.centerPanel[screen] = getMenuItemByName(menuItems,"CPANE"..screen_suffix)
+    conf.centerPanelFilename[screen] = centerPanelFiles[conf.centerPanel[screen]]
+    conf.rightPanel[screen] = getMenuItemByName(menuItems,"RPANE"..screen_suffix)
+    conf.rightPanelFilename[screen] = rightPanelFiles[conf.rightPanel[screen]]
+    conf.leftPanel[screen] = getMenuItemByName(menuItems,"LPANE"..screen_suffix)
+    conf.leftPanelFilename[screen] = leftPanelFiles[conf.leftPanel[screen]]
+  end
 
-  conf.rightPanel = getMenuItemByName(menuItems,"RPANE")
-  conf.rightPanelFilename = rightPanelFiles[conf.rightPanel]
-
-  conf.leftPanel = getMenuItemByName(menuItems,"LPANE")
-  conf.leftPanelFilename = leftPanelFiles[conf.leftPanel]
   conf.enablePX4Modes = getMenuItemByName(menuItems,"PX4")
   conf.enableCRSF = getMenuItemByName(menuItems,"CRSF")
   conf.enableRPM = getMenuItemByName(menuItems,"RPM")
@@ -429,6 +412,8 @@ local function applyConfigValues(conf)
   conf.plotSource1 = getMenuItemByName(menuItems,"PLT1")
   conf.plotSource2 = getMenuItemByName(menuItems,"PLT2")
 
+  conf.theme = getMenuItemByName(menuItems,"TH")
+  
   menu.editSelected = false
 end
 
@@ -495,7 +480,7 @@ local function saveConfig(conf)
   if conf ~= nil then
     applyConfigValues(conf)
   end
-  model.setGlobalVariable(8,8,1)
+  model.setGlobalVariable(8,8, 99)
 end
 
 local function drawConfigMenuBars()
@@ -506,7 +491,7 @@ local function drawConfigMenuBars()
   lcd.drawFilledRectangle(0,LCD_H-20, LCD_W, 20, CUSTOM_COLOR)
   lcd.drawRectangle(0, LCD_H-20, LCD_W, 20, CUSTOM_COLOR)
   lcd.setColor(CUSTOM_COLOR,WHITE)
-  lcd.drawText(2,0,"Yaapu Telemetry Widget 1.9.6 dev".." ("..'4265d2f'..")",CUSTOM_COLOR)
+  lcd.drawText(2,0,"Yaapu Telemetry Widget 2.0.0 dev".." ("..'a054cfc'..")",CUSTOM_COLOR)
   lcd.drawText(2,LCD_H-20+1,getConfigFilename(),CUSTOM_COLOR)
   lcd.drawText(LCD_W,LCD_H-20+1,itemIdx,CUSTOM_COLOR+RIGHT)
 end
@@ -621,7 +606,6 @@ end
 local function init()
   loadConfig()
 end
-
 --------------------------------------------------------------------------------
 -- SCRIPT END
 --------------------------------------------------------------------------------

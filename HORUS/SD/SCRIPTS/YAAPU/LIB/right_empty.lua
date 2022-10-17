@@ -22,10 +22,26 @@ local unitLabel = getGeneralSettings().imperial == 0 and "m" or "ft"
 local unitLongScale = getGeneralSettings().imperial == 0 and 1/1000 or 1/1609.34
 local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 
-local function drawPane(x,drawLib,conf,telemetry,status,alarms,battery,battId,utils)
+local panel = {}
+
+local conf
+local telemetry
+local status
+local utils
+local libs
+
+function panel.init(param_status, param_telemetry, param_conf, param_utils, param_libs)
+  status = param_status
+  telemetry = param_telemetry
+  conf = param_conf
+  utils = param_utils
+  libs = param_libs
 end
 
-local function background(myWidget,conf,telemetry,status,utils)
+function panel.draw(widget, x, battId)
 end
 
-return {drawPane=drawPane,background=background}
+function panel.background(widget)
+end
+
+return panel

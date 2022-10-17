@@ -27,11 +27,27 @@ local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 local ver, radio, maj, minor, rev = getVersion()
 
 
-local function drawHud(myWidget,drawLib,conf,telemetry,status,battery,utils)
+local panel = {}
+
+local conf
+local telemetry
+local status
+local utils
+local libs
+
+function panel.init(param_status, param_telemetry, param_conf, param_utils, param_libs)
+  status = param_status
+  telemetry = param_telemetry
+  conf = param_conf
+  utils = param_utils
+  libs = param_libs
+end
+
+function panel.draw(widget)
 
 end
 
-local function background(myWidget,conf,telemetry,status,utils)
+function panel.background(widget)
 end
 
-return {drawHud=drawHud,background=background}
+return panel
