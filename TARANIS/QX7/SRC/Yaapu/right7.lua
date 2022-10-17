@@ -70,7 +70,7 @@ local function drawPane(x,drawLib,conf,telemetry,status,battery,battId,getMaxVal
   lcd.drawNumber(lcd.getLastLeftPos(), 19, battery[4+battId],SMLSIZE+PREC1+RIGHT)
   -- battery current
   lcd.drawText(x+30, 26, "A", SMLSIZE+RIGHT)
-  lcd.drawNumber(lcd.getLastLeftPos(), 26, battery[7+battId],PREC1+SMLSIZE+RIGHT)
+  lcd.drawNumber(lcd.getLastLeftPos(), 26, getMaxValue(battery[7+battId],7+battId),PREC1+SMLSIZE+RIGHT)
   -- battery percentage
   lcd.drawNumber(x+1, 32, perc, MIDSIZE)
   lcd.drawText(lcd.getLastRightPos()+1, 36, "%", SMLSIZE)

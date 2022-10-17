@@ -194,6 +194,7 @@ local lastMessage
 local lastMessageSeverity = 0
 local lastMessageCount = 1
 local messageCount = 0
+local messageRow = 0
 local messages = {}
 -- EVENTS
 local lastStatusArmed = 0
@@ -444,26 +445,11 @@ local function playFlightMode(flightMode)
   end
 end
 
-local function formatMessage(severity,msg)
-  local shortMsg = msg
+local function formatMessage(severity, msg)
   if lastMessageCount > 1 then
-    if #msg > 16 then
-      shortMsg = string.sub(msg,1,16)
-      collectgarbage()
-    end
-    local pmsg = string.format("%d:%s %s (x%d)", messageCount, mavSeverity[severity], shortMsg, lastMessageCount)
-    msg=nil
-    collectgarbage()
-    return pmsg
+    return string.format("%d:%s (x%d) %s", messageCount, mavSeverity[severity], lastMessageCount, msg)
   else
-    if #msg > 23 then
-      shortMsg = string.sub(msg,1,23)
-      collectgarbage()
-    end
-    local pmsg = string.format("%d:%s %s", messageCount, mavSeverity[severity], shortMsg)
-    msg=nil
-    collectgarbage()
-    return pmsg
+    return string.format("%d:%s %s", messageCount, mavSeverity[severity], msg)
   end
 end
 
@@ -482,29 +468,51 @@ end
 --]]
 
 
+local lastMsgTime = getTime()
+
 local function pushMessage(severity, msg)
   if conf.enableHaptic then
     playHaptic(12,0)
   end
-  if conf.disableAllSounds  == false then
-    if ( severity < 5 and conf.disableMsgBeep < 3 ) then
-      playSound("../err",true)
-    else
-      if conf.disableMsgBeep < 2 then
-          playSound("../inf",true)
+  local now = getTime()
+  -- keep the queue small and allow 2 msg/sec
+  if now - lastMsgTime > 50 then
+    if conf.disableAllSounds  == false then
+      if ( severity < 5 and conf.disableMsgBeep < 3 ) then
+        playSound("../err",true)
+      else
+        if conf.disableMsgBeep < 2 then
+            playSound("../inf",true)
+        end
       end
     end
+    lastMsgTime = now
   end
+
   if msg == lastMessage then
     lastMessageCount = lastMessageCount + 1
   else
+    messageCount = messageCount + lastMessageCount
     lastMessageCount = 1
-    messageCount = messageCount + 1
+    messageRow = messageRow + 1
   end
-  messages[(messageCount-1) % 9] = formatMessage(severity,msg)
-  --print("count=",messageCount,"pos=%",(messageCount-1) % 9,msg,"#messages",#messages)
+  local longMsg = formatMessage(severity,msg)
+  collectgarbage()
+  collectgarbage()
+
+  if #longMsg > 28 then
+    if msg == lastMessage then
+      messageRow = messageRow - 1
+    end
+    messages[(messageRow-1) % 9] = string.sub(longMsg, 1, 28)
+    messageRow = messageRow + 1
+    messages[(messageRow-1) % 9] = "    "..string.sub(longMsg, 28+1, 60)
+  else
+    messages[(messageRow-1) % 9] = longMsg
+  end
   lastMessage = msg
   lastMessageSeverity = severity
+  msg = nil
   collectgarbage()
   collectgarbage()
 end
@@ -553,6 +561,7 @@ local function reset()
   lastMessageSeverity = 0
   lastMessageCount = 1
   messageCount = 0
+  messageRow = 0
   clearTable(messages)
   messages = {}
   ---------------
@@ -600,8 +609,10 @@ local function updateHash(c)
   hashByteIndex = hashByteIndex+1
   -- check if this hash matches any 16bytes prefix hash
   if hashByteIndex == 16 then
-     parseShortHash = shortHashes[hash]
-     shortHash = hash
+  parseShortHash = shortHashes[hash]
+    if parseShortHash ~= nil then
+      shortHash = hash
+    end
   end
 end
 
@@ -670,9 +681,9 @@ local function processTelemetry(DATA_ID, VALUE,now)
   elseif DATA_ID == 0x5003 then -- BATT
     telemetry.batt1volt = bit32.extract(VALUE,0,9) -- dV
     -- telemetry max is 51.1V, 51.2 is reported as 0.0, 52.3 is 0.1...60 is 88
-    -- if 12S and V > 51.1 ==> Vreal = 51.2 + telemetry.batt1volt
-    if conf.cell1Count == 12 and telemetry.batt1volt < 240 then
-      -- assume a 2Vx12 as minimum acceptable "real" voltage
+    -- if >= 12S and V > 51.1 ==> Vreal = 51.2 + telemetry.batt1volt
+    if conf.cell1Count >= 12 and telemetry.batt1volt < conf.cell1Count*20 then
+      -- assume a 2V as minimum acceptable "real" voltage
       telemetry.batt1volt = 512 + telemetry.batt1volt
     end
     telemetry.batt1current = bit32.extract(VALUE,10,7) * (10^bit32.extract(VALUE,9,1)) --dA
@@ -680,8 +691,8 @@ local function processTelemetry(DATA_ID, VALUE,now)
   elseif DATA_ID == 0x5008 then -- BATT2
     telemetry.batt2volt = bit32.extract(VALUE,0,9)
     -- telemetry max is 51.1V, 51.2 is reported as 0.0, 52.3 is 0.1...60 is 88
-    -- if 12S and V > 51.1 ==> Vreal = 51.2 + telemetry.batt1volt
-    if conf.cell2Count == 12 and telemetry.batt2volt < 240 then
+    -- if >= 12S and V > 51.1 ==> Vreal = 51.2 + telemetry.batt1volt
+    if conf.cell2Count >= 12 and telemetry.batt2volt < conf.cell2Count*20 then
       -- assume a 2Vx12 as minimum acceptable "real" voltage
       telemetry.batt2volt = 512 + telemetry.batt2volt
     end
@@ -821,6 +832,7 @@ end
 
 local function getMaxValue(value,idx)
   minmaxValues[idx] = math.max(value,minmaxValues[idx])
+  print("luaDebug MINMAX", value, minmaxValues[idx], idx)
   return status.showMinMaxValues and minmaxValues[idx] or value
 end
 
@@ -984,8 +996,8 @@ local function calcBattery()
   battery[4+1] = getMinVoltageBySource(status.battsource, cell1sum, cell1sumFC, 1)*10 --batt1
   battery[4+2] = getMinVoltageBySource(status.battsource, cell2sum, cell2sumFC, 2)*10 --batt2
 
-  battery[7+1] = getMaxValue(telemetry.batt1current,8) --curr1
-  battery[7+2] = getMaxValue(telemetry.batt2current,9) --curr2
+  battery[7+1] = telemetry.batt1current --curr1
+  battery[7+2] = telemetry.batt2current --curr2
 
   battery[10+1] = telemetry.batt1mah --mah1
   battery[10+2] = telemetry.batt2mah --mah2
@@ -1003,25 +1015,25 @@ local function calcBattery()
   if (conf.battConf == 1) then
     battery[1] = getNonZeroMin(battery[2], battery[3])
     battery[4] = getNonZeroMin(battery[5],battery[6])
-    battery[7] = getMaxValue(telemetry.batt1current + telemetry.batt2current, 7)
+    battery[7] = telemetry.batt1current + telemetry.batt2current
     battery[10] = telemetry.batt1mah + telemetry.batt2mah
     battery[13] = getBatt2Capacity() + getBatt1Capacity()
   elseif (conf.battConf == 2) then
     battery[1] = getNonZeroMin(battery[2], battery[3])
     battery[4] = battery[5] + battery[6]
-    battery[7] = getMaxValue(telemetry.batt1current,7)
+    battery[7] = telemetry.batt1current
     battery[10] = telemetry.batt1mah
     battery[13] = getBatt1Capacity()
   elseif (conf.battConf == 3) then
     battery[1] = battery[2]
     battery[4] = battery[5]
-    battery[7] = getMaxValue(telemetry.batt1current,7)
+    battery[7] = telemetry.batt1current
     battery[10] = telemetry.batt1mah
     battery[13] = getBatt1Capacity()
   else
     battery[1] = battery[3]
     battery[4] = battery[6]
-    battery[7] = getMaxValue(telemetry.batt2current,7)
+    battery[7] = telemetry.batt2current
     battery[10] = telemetry.batt2mah
     battery[13] = getBatt2Capacity()
   end
@@ -1054,6 +1066,13 @@ local function calcBattery()
       battery[13+2] = battery[13+1]     --cap2
     end
   end
+
+  -- aggregate value
+  minmaxValues[7] = math.max(battery[7], minmaxValues[7])
+  -- indipendent values
+  minmaxValues[8] = math.max(telemetry.batt1current, minmaxValues[8])
+  minmaxValues[9] = math.max(telemetry.batt2current, minmaxValues[9])
+  --print("luaDebug: CURR",battery[7],minmaxValues[7])
 end
 
 local function checkLandingStatus()
@@ -1115,11 +1134,12 @@ local function setSensorValues()
   setTelemetryValue(0x050F, 0, 0, telemetry.rpm2, 18 , 0 , "RPM1")
   --setTelemetryValue(0x070F, 0, 0, telemetry.roll, 20 , 0 , "ROLL")
   --setTelemetryValue(0x071F, 0, 0, telemetry.pitch, 20 , 0 , "PTCH")
+  --setTelemetryValue(0x0400, 0, 0, telemetry.flightMode, 0 , 0 , "FM")
 end
 
 local function drawAllMessages()
   for i=0,#messages do
-    lcd.drawText(1,1+7*i, messages[(messageCount + i) % (#messages+1)],SMLSIZE)
+    lcd.drawText(1,1+7*i, messages[(messageRow + i) % (#messages+1)],SMLSIZE)
   end
 end
 ---------------------------------
@@ -1249,7 +1269,7 @@ local function checkTransition(idx,value)
   end
 end
 
-local function checkEvents(cellVoltage)
+local function checkEvents()
   loadFlightModes()
   local alt = status.terrainEnabled == 1 and telemetry.heightAboveTerrain or telemetry.homeAlt
   checkAlarm(conf.minAltitudeAlert,alt,1,-1,"minalt",conf.repeatAlertsPeriod)
@@ -1310,10 +1330,13 @@ local function checkEvents(cellVoltage)
   end
 end
 
-local function checkCellVoltage(celm)
+local function checkCellVoltage()
+  if battery[1] <= 0 then
+    return
+  end
   -- check alarms
-  checkAlarm(conf.battAlertLevel1,celm,7,-1,"batalert1",conf.repeatAlertsPeriod)
-  checkAlarm(conf.battAlertLevel2,celm,8,-1,"batalert2",conf.repeatAlertsPeriod)
+  checkAlarm(conf.battAlertLevel1,battery[1],7,-1,"batalert1",conf.repeatAlertsPeriod)
+  checkAlarm(conf.battAlertLevel2,battery[1],8,-1,"batalert2",conf.repeatAlertsPeriod)
 
   if status.battAlertLevel1 == false then status.battAlertLevel1 = alarms[7][1] end
   if status.battAlertLevel2 == false then status.battAlertLevel2 = alarms[8][1] end
@@ -1358,37 +1381,14 @@ local function background()
     setSensorValues()
     updateTotalDist()
   end
+
   -- SLOWER: this runs at 2Hz (every 500ms)
   if (bgclock % 8 == 0) then
     calcBattery()
     calcFlightTime()
-    -- prepare celm based on status.battsource
-    local count1,count2 = calcCellCount()
-    local cellVoltage = 0
-
-    if conf.battConf == 3 then
-      -- alarms are based on battery 1
-      cellVoltage = 100*(status.battsource == "vs" and cell1min or cell1sumFC/count1)
-    elseif conf.battConf == 4 then
-      -- alarms are based on battery 1
-      cellVoltage = 100*(status.battsource == "vs" and cell2min or cell2sumFC/count2)
-    else
-      -- alarms are based on battery 1 and battery 2
-      cellVoltage = 100*(status.battsource == "vs" and getNonZeroMin(cell1min,cell2min) or getNonZeroMin(cell1sumFC/count1,cell2sumFC/count2))
-    end
-    --
-    checkEvents(cellVoltage)
+    checkEvents()
     checkLandingStatus()
-    -- no need for alarms if reported voltage is 0
-    if cellVoltage > 0 then
-      checkCellVoltage(cellVoltage)
-    end
-    -- aggregate value
-    minmaxValues[7] = math.max((conf.battConf ==  3 and telemetry.batt1current or (conf.battConf ==  4 and telemetry.batt2current or telemetry.batt1current+telemetry.batt2current)), minmaxValues[7])
-
-    -- indipendent values
-    minmaxValues[8] = math.max(telemetry.batt1current,minmaxValues[8])
-    minmaxValues[9] = math.max(telemetry.batt2current,minmaxValues[9])
+    checkCellVoltage()
 
 
     if conf.enableCRSF then
@@ -1564,7 +1564,7 @@ local function run(event)
 
     if drawLib ~= nil then
       drawLib.drawTopBar(getFlightMode(), telemetry.simpleMode, status.flightTime, telemetryEnabled, conf.enableCRSF and rssiCRSF or getRSSI())
-      drawLib.drawBottomBar(messages[(messageCount + #messages) % (#messages+1)],lastMsgTime)
+      drawLib.drawBottomBar(messages[(messageRow + #messages) % (#messages+1)],lastMsgTime)
       drawLib.drawNoTelemetry(telemetryEnabled, hideNoTelemetry)
     end
 
@@ -1617,7 +1617,7 @@ local function init()
   clearTable(menuLib)
   menuLib = nil
 
-  pushMessage(7,"Yaapu 1.9.6-dev".." ("..'40041ae'..")")
+  pushMessage(7,"Yaapu 2.0.0-dev".." ("..'d5cce31'..")")
   collectgarbage()
   collectgarbage()
   playSound("yaapu")
