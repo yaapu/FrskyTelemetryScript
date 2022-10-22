@@ -17,6 +17,7 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program; if not, see <http://www.gnu.org/licenses>.
 
+
 local HUD_W = 240
 local HUD_H = 150
 local HUD_X = (480 - HUD_W)/2
@@ -306,6 +307,9 @@ local status = {
   blinkon = false,
   -- top bar
   linkQualitySource = nil,
+  linkStatusSource2 = nil,
+  linkStatusSource3 = nil,
+  linkStatusSource4 = nil,
   -- traveled distance support
   avgSpeed = 0,
   lastUpdateTotDist = 0,
@@ -321,6 +325,8 @@ local status = {
   hash = 0,
   hash_a = 0,
   hash_b = 0,
+
+  currentModel = model.name(),
 
   -- fletcher24 bytes hashes
   shortHashes = {
@@ -617,9 +623,10 @@ end
 
 local function createOnce(widget)
   -- only this widget instance will run bg tasks
+  status.currentModel = model.name()
   widget.runBgTasks = true
   libs.utils.playSound("yaapu")
-  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.0.0d dev".. " ("..'c222a67'..")")
+  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.0.0e dev".. " ("..'3263288'..")")
   -- create the YaapuTimer if missing
   if model.getTimer("Yaapu") == nil then
     local timer = model.createTimer()
@@ -769,12 +776,12 @@ local function bgtasks(widget)
   if status.conf.telemetrySource == 1 then
     for i=1,10
     do
-      local physId, primId, appId, data = libs.utils.passthroughTelemetryPop()
+      local physId, primId, appId, data = libs.utils.telemetryPop()
       if primId == 0x10 then
         status.noTelemetryData = 0
         -- no telemetry dialog only shown once
         status.hideNoTelemetry = true
-        processTelemetry(appId, data, now)
+        libs.utils.processTelemetry(appId, data, now)
       end
     end
   elseif status.conf.telemetrySource == 2 then
@@ -796,7 +803,7 @@ local function bgtasks(widget)
             print("packet.appId", string.format("%04X",sportPacket.appId))
             print("packet.data", string.format("%08X",sportPacket.data))
             --]]
-            processTelemetry(sportPacket.appId, sportPacket.data, now)
+            libs.utils.processTelemetry(sportPacket.appId, sportPacket.data, now)
           end
         end
       end
@@ -847,6 +854,11 @@ local function bgtasks(widget)
       if fn ~= nil then
         status.modelString = model.name()
       end
+    else
+      if model.name() ~= status.modelString then
+        print("*********** modelChange *************")
+        libs.resetLib.reset()
+      end
     end
   end
 
@@ -870,6 +882,12 @@ local function bgtasks(widget)
       status.terrainEnabled = 0
       status.telemetry.terrainUnhealthy = 0
     end
+
+    if status.currentModel ~=  model.name() then
+      status.currentModel = model.name()
+      libs.resetLib.reset()
+    end
+
     checkEvents()
     checkLandingStatus()
     checkCellVoltage()
@@ -919,207 +937,6 @@ end
 
 local function onScreenChange(widget)
   status.showMessages = false
-end
-
-local function updateHash(c)
-  status.hash_a = ( status.hash_a + c ) % 4095
-  status.hash_b = ( status.hash_a + status.hash_b ) % 4095
-
-  status.hash = status.hash_b * 4096 + status.hash_a
-
-  status.hashByteIndex = status.hashByteIndex+1
-  -- check if this hash matches any 16bytes prefix hash
-  if status.hashByteIndex == 16 then
-    status.parseShortHash = status.shortHashes[status.hash]
-    if status.parseShortHash ~= nil then
-      status.shortHash = status.hash
-    end
-  end
-end
-
-local function playHash()
-  -- try to play the hash sound file without checking for existence
-  local soundfile = tostring(status.shortHash == nil and status.hash or status.shortHash)
-  -- print("playHash()", status.msgBuffer, status.hash, soundfile..".wav")
-  libs.utils.playSound(soundfile,true)
-  -- if required parse parameter and play it!
-  if status.parseShortHash == true then
-    local param = string.match(status.msgBuffer, ".*#(%d+).*")
-    if param ~= nil then
-      system.playNumber(tonumber(param))
-    end
-  end
-end
-
-local function resetHash()
-  -- reset hash for next string
-  status.parseShortHash = false
-  status.shortHash = nil
-  status.hash = 0
-  status.hash_a = 0
-  status.hash_b = 0
-  status.hashByteIndex = 0
-end
-
-function processTelemetry(appId, data, now)
-  if appId == 0x5006 then -- ROLLPITCH
-    -- roll [0,1800] ==> [-180,180]
-    status.telemetry.roll = (math.min(libs.utils.bitExtract(data,0,11),1800) - 900) * 0.2
-    -- pitch [0,900] ==> [-90,90]
-    status.telemetry.pitch = (math.min(libs.utils.bitExtract(data,11,10),900) - 450) * 0.2
-    -- number encoded on 11 bits: 10 bits for digits + 1 for 10^power
-    status.telemetry.range = libs.utils.bitExtract(data,22,10) * (10^libs.utils.bitExtract(data,21,1)) -- cm
-  elseif appId == 0x5005 then -- VELANDYAW
-    status.telemetry.vSpeed = libs.utils.bitExtract(data,1,7) * (10^libs.utils.bitExtract(data,0,1)) * (libs.utils.bitExtract(data,8,1) == 1 and -1 or 1)-- dm/s
-    status.telemetry.yaw = libs.utils.bitExtract(data,17,11) * 0.2
-    -- once detected it's sticky
-    if libs.utils.bitExtract(data,28,1) == 1 then
-      status.telemetry.airspeed = libs.utils.bitExtract(data,10,7) * (10^libs.utils.bitExtract(data,9,1)) -- dm/s
-    else
-      status.telemetry.hSpeed = libs.utils.bitExtract(data,10,7) * (10^libs.utils.bitExtract(data,9,1)) -- dm/s
-    end
-    if status.airspeedEnabled == 0 then
-      status.airspeedEnabled = libs.utils.bitExtract(data,28,1)
-    end
-  elseif appId == 0x5001 then -- AP STATUS
-    status.telemetry.flightMode = libs.utils.bitExtract(data,0,5)
-    status.telemetry.simpleMode = libs.utils.bitExtract(data,5,2)
-    status.telemetry.landComplete = libs.utils.bitExtract(data,7,1)
-    status.telemetry.statusArmed = libs.utils.bitExtract(data,8,1)
-    status.telemetry.battFailsafe = libs.utils.bitExtract(data,9,1)
-    status.telemetry.ekfFailsafe = libs.utils.bitExtract(data,10,2)
-    status.telemetry.failsafe = libs.utils.bitExtract(data,12,1)
-    status.telemetry.fencePresent = libs.utils.bitExtract(data,13,1)
-    status.telemetry.fenceBreached = status.telemetry.fencePresent == 1 and libs.utils.bitExtract(data,14,1) or 0 -- ignore if fence is disabled
-    status.telemetry.throttle = math.floor(0.5 + (libs.utils.bitExtract(data,19,6) * (libs.utils.bitExtract(data,25,1) == 1 and -1 or 1) * 1.58)) -- signed throttle [-63,63] -> [-100,100]
-    -- IMU temperature: 0 means temp =< 19°, 63 means temp => 82°
-    status.telemetry.imuTemp = libs.utils.bitExtract(data,26,6) + 19 -- C°
-  elseif appId == 0x5002 then -- GPS STATUS
-    status.telemetry.numSats = libs.utils.bitExtract(data,0,4)
-    -- offset  4: NO_GPS = 0, NO_FIX = 1, GPS_OK_FIX_2D = 2, GPS_OK_FIX_3D or GPS_OK_FIX_3D_DGPS or GPS_OK_FIX_3D_RTK_FLOAT or GPS_OK_FIX_3D_RTK_FIXED = 3
-    -- offset 14: 0: no advanced fix, 1: GPS_OK_FIX_3D_DGPS, 2: GPS_OK_FIX_3D_RTK_FLOAT, 3: GPS_OK_FIX_3D_RTK_FIXED
-    status.telemetry.gpsStatus = libs.utils.bitExtract(data,4,2) + libs.utils.bitExtract(data,14,2)
-    status.telemetry.gpsHdopC = libs.utils.bitExtract(data,7,7) * (10^libs.utils.bitExtract(data,6,1)) -- dm
-    status.telemetry.gpsAlt = libs.utils.bitExtract(data,24,7) * (10^libs.utils.bitExtract(data,22,2)) * (libs.utils.bitExtract(data,31,1) == 1 and -1 or 1)-- dm
-  elseif appId == 0x5003 then -- BATT
-    status.telemetry.batt1volt = libs.utils.bitExtract(data,0,9)
-    -- telemetry max is 51.1V, 51.2 is reported as 0.0, 52.3 is 0.1...60 is 88
-    -- if >= 12s ==> Vreal = 51.2 + status.telemetry.batt1volt
-    if status.conf.cell1Count >= 12 and status.telemetry.batt1volt < status.conf.cell1Count*20 then
-      -- assume a 2V as minimum acceptable "real" voltage
-      status.telemetry.batt1volt = 512 +status.telemetry.batt1volt
-    end
-    status.telemetry.batt1current = libs.utils.bitExtract(data,10,7) * (10^libs.utils.bitExtract(data,9,1))
-    status.telemetry.batt1mah = libs.utils.bitExtract(data,17,15)
-  elseif appId == 0x5008 then -- BATT2
-    status.telemetry.batt2volt = libs.utils.bitExtract(data,0,9)
-    -- telemetry max is 51.1V, 51.2 is reported as 0.0, 52.3 is 0.1...60 is 88
-    -- if 12S and V > 51.1 ==> Vreal = 51.2 +status.telemetry.batt1volt
-    if status.conf.cell2Count == 12 and status.telemetry.batt2volt < 240 then
-      -- assume a 2Vx12 as minimum acceptable "real" voltage
-      status.telemetry.batt2volt = 512 +status.telemetry.batt2volt
-    end
-    status.telemetry.batt2current = libs.utils.bitExtract(data,10,7) * (10^libs.utils.bitExtract(data,9,1))
-    status.telemetry.batt2mah = libs.utils.bitExtract(data,17,15)
-  elseif appId == 0x5004 then -- HOME
-    status.telemetry.homeDist = libs.utils.bitExtract(data,2,10) * (10^libs.utils.bitExtract(data,0,2))
-    status.telemetry.homeAlt = libs.utils.bitExtract(data,14,10) * (10^libs.utils.bitExtract(data,12,2)) * 0.1 * (libs.utils.bitExtract(data,24,1) == 1 and -1 or 1)
-    status.telemetry.homeAngle = libs.utils.bitExtract(data, 25,  7) * 3
-  elseif appId == 0x5000 then -- MESSAGES
-    if data ~= status.lastMsgValue then
-      status.lastMsgValue = data
-      local c
-      local msgEnd = false
-      local chunk = {}
-      for i=3,0,-1
-      do
-        c = libs.utils.bitExtract(data,i*8,7)
-        if c ~= 0 then
-          --status.msgBuffer = status.msgBuffer .. string.char(c)
-          chunk[4-i] = string.char(c)
-          updateHash(c)
-        else
-          msgEnd = true;
-          break;
-        end
-      end
-      status.msgBuffer = status.msgBuffer..table.concat(chunk)
-      if msgEnd then
-        local severity = (libs.utils.bitExtract(data,7,1) * 1) + (libs.utils.bitExtract(data,15,1) * 2) + (libs.utils.bitExtract(data,23,1) * 4)
-        libs.utils.pushMessage( severity, status.msgBuffer)
-        playHash()
-        resetHash()
-        status.msgBuffer = nil
-        status.msgBuffer = ""
-      end
-    end
-  elseif appId == 0x5007 then -- PARAMS
-    paramId = libs.utils.bitExtract(data,24,4)
-    paramValue = libs.utils.bitExtract(data,0,24)
-    if paramId == 1 then
-      status.telemetry.frameType = paramValue
-    elseif paramId == 4 then
-      status.telemetry.batt1Capacity = paramValue
-    elseif paramId == 5 then
-      status.telemetry.batt2Capacity = paramValue
-    elseif paramId == 6 then
-      status.telemetry.wpCommands = paramValue
-    end
-  elseif appId == 0x5009 then -- WAYPOINTS @1Hz
-    status.telemetry.wpNumber = libs.utils.bitExtract(data,0,10) -- wp index
-    status.telemetry.wpDistance = libs.utils.bitExtract(data,12,10) * (10^libs.utils.bitExtract(data,10,2)) -- meters
-    status.telemetry.wpXTError = libs.utils.bitExtract(data,23,4) * (10^libs.utils.bitExtract(data,22,1)) * (libs.utils.bitExtract(data,27,1) == 1 and -1 or 1)-- meters
-    status.telemetry.wpOffsetFromCog = libs.utils.bitExtract(data,29,3) -- offset from cog with 45° resolution
-  elseif appId == 0x500A then -- RPM 1 and 2
-    -- rpm1 and rpm2 are int16_t
-    local rpm1 = libs.utils.bitExtract(data,0,16)
-    local rpm2 = libs.utils.bitExtract(data,16,16)
-    status.telemetry.rpm1 = 10*(libs.utils.bitExtract(data,15,1) == 0 and rpm1 or -1*(1 + 0x0000FFFF & ~rpm1)) -- 2 complement if negative
-    status.telemetry.rpm2 = 10*(libs.utils.bitExtract(data,31,1) == 0 and rpm2 or -1*(1 + 0x0000FFFF & ~rpm2)) -- 2 complement if negative
-  elseif appId == 0x500B then -- TERRAIN
-    status.telemetry.heightAboveTerrain = libs.utils.bitExtract(data,2,10) * (10^libs.utils.bitExtract(data,0,2)) * 0.1 * (libs.utils.bitExtract(data,12,1) == 1 and -1 or 1) -- dm to meters
-    status.telemetry.terrainUnhealthy = libs.utils.bitExtract(data,13,1)
-    status.terrainLastData = now
-    status.terrainEnabled = 1
-  elseif appId == 0x500C then -- WIND
-    status.telemetry.trueWindSpeed = libs.utils.bitExtract(data,8,7) * (10^libs.utils.bitExtract(data,7,1)) -- dm/s
-    status.telemetry.trueWindAngle = libs.utils.bitExtract(data, 0, 7) * 3 -- degrees
-    status.telemetry.apparentWindSpeed = libs.utils.bitExtract(data,23,7) * (10^libs.utils.bitExtract(data,22,1)) -- dm/s
-    status.telemetry.apparentWindAngle = libs.utils.bitExtract(data, 16, 6) * (libs.utils.bitExtract(data,15,1) == 1 and -1 or 1) * 3 -- degrees
-  elseif appId == 0x500D then -- WAYPOINTS @1Hz
-    status.telemetry.wpNumber = libs.utils.bitExtract(data,0,11) -- wp index
-    status.telemetry.wpDistance = libs.utils.bitExtract(data,13,10) * (10^libs.utils.bitExtract(data,11,2)) -- meters
-    status.telemetry.wpBearing = libs.utils.bitExtract(data, 23,  7) * 3
-    if status.cog ~= nil then
-      status.telemetry.wpOffsetFromCog = libs.utils.wrap360(status.telemetry.wpBearing - status.cog)
-    end
-    status.wpEnabled = 1
-  --[[
-  elseif appId == 0x50F1 then -- RC CHANNELS
-    -- channels 1 - 32
-    local offset = libs.utils.bitExtract(data,0,4) * 4
-    rcchannels[1 + offset] = 100 * (libs.utils.bitExtract(data,4,6)/63) * (libs.utils.bitExtract(data,10,1) == 1 and -1 or 1)
-    rcchannels[2 + offset] = 100 * (libs.utils.bitExtract(data,11,6)/63) * (libs.utils.bitExtract(data,17,1) == 1 and -1 or 1)
-    rcchannels[3 + offset] = 100 * (libs.utils.bitExtract(data,18,6)/63) * (libs.utils.bitExtract(data,24,1) == 1 and -1 or 1)
-    rcchannels[4 + offset] = 100 * (libs.utils.bitExtract(data,25,6)/63) * (libs.utils.bitExtract(data,31,1) == 1 and -1 or 1)
-  --]]
-  elseif appId == 0x50F2 then -- VFR
-    status.telemetry.airspeed = libs.utils.bitExtract(data,1,7) * (10^libs.utils.bitExtract(data,0,1)) -- dm/s
-    status.telemetry.throttle = libs.utils.bitExtract(data,8,7) -- unsigned throttle
-    status.telemetry.baroAlt = libs.utils.bitExtract(data,17,10) * (10^libs.utils.bitExtract(data,15,2)) * 0.1 * (libs.utils.bitExtract(data,27,1) == 1 and -1 or 1)
-    status.airspeedEnabled = 1
-  elseif appId == 0x800 then
-    local value = data & 0x3fffffff
-    if data & (1 << 30) == (1 << 30) then
-      value = -value
-    end
-    value = (value * 5) / 3;
-    if data & (1 << 31) == (1 << 31) then
-      status.telemetry.lon = value*0.000001
-    else
-      status.telemetry.lat = value*0.000001
-    end
-  end
 end
 
 local fg_counter = 0
@@ -1365,6 +1182,15 @@ local function configure(widget)
   local f
   local line = form.addLine("Link quality source")
   form.addSourceField(line, nil, function() return status.conf.linkQualitySource end, function(value) status.conf.linkQualitySource = value end)
+
+  line = form.addLine("Link status source 2")
+  form.addSourceField(line, nil, function() return status.conf.linkStatusSource2 end, function(value) status.conf.linkStatusSource2 = value end)
+
+  line = form.addLine("Link status source 3")
+  form.addSourceField(line, nil, function() return status.conf.linkStatusSource3 end, function(value) status.conf.linkStatusSource3 = value end)
+
+  line = form.addLine("Link status source 4")
+  form.addSourceField(line, nil, function() return status.conf.linkStatusSource4 end, function(value) status.conf.linkStatusSource4 = value end)
     line = form.addLine("Telemetry source")
     widget.screenField = form.addChoiceField(line, form.getFieldSlots(line)[0],  {{"default",1}, {"external sport", 2}}, function() return status.conf.telemetrySource end, function(value) status.conf.telemetrySource = value end);
   line = form.addLine("Screen Type")
@@ -1513,7 +1339,7 @@ local function configure(widget)
 
   line = form.addLine("Enable CRSF support")
   f = form.addBooleanField(line, nil, function() return status.conf.enableCRSF end, function(value) status.conf.enableCRSF = value end)
-  f:enable(false)
+  f:enable(true)
 
   line = form.addLine("Display RPM data")
   form.addChoiceField(line, form.getFieldSlots(line)[0], {{"no", 1}, {"RPM 1", 2}, {"RPM 1 + RPM 2", 3}}, function() return status.conf.enableRPM end, function(value) status.conf.enableRPM = value end)
@@ -1636,18 +1462,17 @@ local function applyConfig()
     status.conf.mapZoomMax = status.conf.googleZoomMax
   end
 
-  --[[
   -- CRSF or SPORT?
-  -- telemetryPop = sportTelemetryPop
   -- utils.drawRssi = drawRssi
+  libs.utils.telemetryPop = libs.utils.passthroughTelemetryPop
+
   if status.conf.enableCRSF then
-    telemetryPop = crossfirePop
-    utils.drawRssi = drawRssiCRSF
+    libs.utils.telemetryPop = libs.utils.crossfireTelemetryPop
+    --utils.drawRssi = drawRssiCRSF
     -- we need a lower value here to prevent CPU Kill
     -- when decoding multiple packet frames
-    telemetryPopLoops = 8
+    -- telemetryPopLoops = 8
   end
-  --]]
 end
 --------------------------------------------------------------------
 -- configuration read/write
@@ -1698,6 +1523,9 @@ local function read(widget)
   status.conf.battery2Source = storageToConfig("battery2Source", nil)
   status.conf.linkQualitySource = storageToConfig("linkQualitySource", nil)
   status.conf.telemetrySource = storageToConfig("telemetrySource", nil)
+  status.conf.linkStatusSource2 = storageToConfig("linkStatusSource2", nil)
+  status.conf.linkStatusSource3 = storageToConfig("linkStatusSource3", nil)
+  status.conf.linkStatusSource4 = storageToConfig("linkStatusSource4", nil)
   -- apply config
   applyConfig()
 end
@@ -1747,6 +1575,9 @@ local function write(widget)
   storage.write("battery2Source", status.conf.battery2Source)
   storage.write("linkQualitySource", status.conf.linkQualitySource)
   storage.write("telemetrySource", status.conf.telemetrySource)
+  storage.write("linkStatusSource2", status.conf.linkStatusSource2)
+  storage.write("linkStatusSource3", status.conf.linkStatusSource3)
+  storage.write("linkStatusSource4", status.conf.linkStatusSource4)
   -- apply config
   applyConfig()
 

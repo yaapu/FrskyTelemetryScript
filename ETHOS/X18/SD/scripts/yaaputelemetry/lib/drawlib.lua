@@ -17,6 +17,7 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program; if not, see <http://www.gnu.org/licenses>.
 
+
 local HUD_W = 240
 local HUD_H = 150
 local HUD_X = (480 - HUD_W)/2
@@ -69,7 +70,7 @@ function drawLib.drawTopBarSensor(widget,x,sensor,label)
   if sensor ~= nil then
     lcd.font(FONT_L)
     local w,h = lcd.getTextSize(sensor:stringValue())
-    drawLib.drawText(x-w-4, 6, label == nil and sensor:name() or label, FONT_XS, status.colors.barText, RIGHT)
+    drawLib.drawText(x-w-2, 6, label == nil and sensor:name() or label, FONT_XS, status.colors.barText, RIGHT)
     drawLib.drawText(x-w, 0, sensor:stringValue(), FONT_L, status.colors.barText, LEFT)
     lcd.font(FONT_XS)
     local w2,h2 = lcd.getTextSize(sensor:name())
@@ -85,8 +86,18 @@ function drawLib.drawTopBar(widget)
   lcd.pen(SOLID)
   lcd.drawFilledRectangle(0, 0, 480,18)
   drawLib.drawText(0, -2, status.modelString ~= nil and status.modelString or model.name(), FONT_L, status.colors.barText, LEFT)
-  local offset = drawLib.drawTopBarSensor(widget, 480, status.conf.linkQualitySource) + 4
-  offset = drawLib.drawTopBarSensor(widget, 480-offset, system.getSource({category=CATEGORY_SYSTEM, member=MAIN_VOLTAGE,options=0}), "TX")
+  local offset = drawLib.drawTopBarSensor(widget, 480, system.getSource({category=CATEGORY_SYSTEM, member=MAIN_VOLTAGE,options=0}), "TX") + -50
+  offset = offset + drawLib.drawTopBarSensor(widget, 480 - offset, status.conf.linkQualitySource) + 3
+  if status.conf.linkStatusSource2 ~= nil and status.conf.linkStatusSource2:name()  ~= "---" then
+    source = status.conf.linkStatusSource2
+    offset = offset + drawLib.drawTopBarSensor(widget, 480-offset, status.conf.linkStatusSource2) + 3
+  end
+  if status.conf.linkStatusSource3 ~= nil  and status.conf.linkStatusSource3:name() ~= "---" then
+    offset = offset + drawLib.drawTopBarSensor(widget, 480-offset, status.conf.linkStatusSource3) + 3
+  end
+  if status.conf.linkStatusSource4 ~= nil and status.conf.linkStatusSource4:name() ~= "---" then
+    offset = offset + drawLib.drawTopBarSensor(widget, 480-offset, status.conf.linkStatusSource4) + 3
+  end
 end
 
 
@@ -185,7 +196,7 @@ function drawLib.drawNoTelemetryData(widget)
     lcd.font(FONT_XXL)
     lcd.drawText(240, 87, "NO TELEMETRY", CENTERED)
     lcd.font(FONT_STD)
-    lcd.drawText(240, 152, "Yaapu Telemetry Widget 1.0.0d dev".."("..'c222a67'..")", CENTERED)
+    lcd.drawText(240, 152, "Yaapu Telemetry Widget 1.0.0e dev".."("..'3263288'..")", CENTERED)
   end
 end
 
