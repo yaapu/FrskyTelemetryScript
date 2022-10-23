@@ -327,6 +327,7 @@ local status = {
   hash_b = 0,
 
   currentModel = model.name(),
+  pauseTelemetry = false,
 
   -- fletcher24 bytes hashes
   shortHashes = {
@@ -626,7 +627,7 @@ local function createOnce(widget)
   status.currentModel = model.name()
   widget.runBgTasks = true
   libs.utils.playSound("yaapu")
-  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.0.0e dev".. " ("..'3263288'..")")
+  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.0.0f dev".. " ("..'355026f'..")")
   -- create the YaapuTimer if missing
   if model.getTimer("Yaapu") == nil then
     local timer = model.createTimer()
@@ -773,7 +774,7 @@ local function bgtasks(widget)
   local now = getTime()
   status.counter = status.counter + 1
   ------------------------------
-  if status.conf.telemetrySource == 1 then
+  if status.conf.telemetrySource == 1 and status.pauseTelemetry == false then
     for i=1,10
     do
       local physId, primId, appId, data = libs.utils.telemetryPop()
@@ -979,20 +980,26 @@ local function paint(widget)
     end
 
     -- no telemetry/minmax outer box
-    if libs.utils.telemetryEnabled() == false then
-      -- no telemetry inner box
-      if not status.hideNoTelemetry then
-        libs.drawLib.drawNoTelemetryData(widget)
-      end
-      lcd.color(RED)
+    if status.pauseTelemetry then
+      lcd.color(status.colors.yellow)
       libs.drawLib.drawBlinkRectangle(0,0,800,480,3)
+      libs.drawLib.drawWidgetPaused()      
     else
-      if status.showMinMaxValues == true then
-        lcd.color(status.colors.yellow)
+      if libs.utils.telemetryEnabled() == false then
+        -- no telemetry inner box
+        if not status.hideNoTelemetry then
+          libs.drawLib.drawNoTelemetryData(widget)
+        end
+        lcd.color(RED)
         libs.drawLib.drawBlinkRectangle(0,0,800,480,3)
+      else
+        if status.showMinMaxValues == true then
+          lcd.color(status.colors.yellow)
+          libs.drawLib.drawBlinkRectangle(0,0,800,480,3)
+        end
       end
     end
-
+  
     -- skip first iteration
     if fg_rate == 0 then
       fg_rate = fg_counter
@@ -1060,9 +1067,14 @@ end
 
 -- widget custom context menu
 local function menu(widget)
-
+  local startStopLabel = "Yaapu: "..(status.pauseTelemetry == false and "Pause widget" or "Start widget")
   return {
-    { "Yaapu Reset",function() reset(widget) end },
+    { startStopLabel, 
+      function()
+        status.pauseTelemetry = not status.pauseTelemetry
+      end
+    },
+    { "Yaapu: Reset widget", function() reset(widget) end },
   }
 end
 

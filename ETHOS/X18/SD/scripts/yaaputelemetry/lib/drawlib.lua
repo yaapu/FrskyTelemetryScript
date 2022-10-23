@@ -196,8 +196,19 @@ function drawLib.drawNoTelemetryData(widget)
     lcd.font(FONT_XXL)
     lcd.drawText(240, 87, "NO TELEMETRY", CENTERED)
     lcd.font(FONT_STD)
-    lcd.drawText(240, 152, "Yaapu Telemetry Widget 1.0.0e dev".."("..'3263288'..")", CENTERED)
+    lcd.drawText(240, 152, "Yaapu Telemetry Widget 1.0.0f dev".."("..'355026f'..")", CENTERED)
   end
+end
+
+function drawLib.drawWidgetPaused(widget)
+  lcd.color(status.colors.yellow)
+  lcd.drawFilledRectangle(40,70, 400, 140)
+  lcd.color(BLACK)
+  lcd.drawRectangle(40,70, 400, 140,3)
+  lcd.font(FONT_XXL)
+  lcd.drawText(240, 87, "WIDGET PAUSED", CENTERED)
+  lcd.font(FONT_STD)
+  lcd.drawText(240, 152, "Yaapu Telemetry Widget 1.0.0f dev".."("..'355026f'..")", CENTERED)
 end
 
 function drawLib.drawFenceStatus(x,y)
