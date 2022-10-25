@@ -282,7 +282,7 @@ function resetLib.reset(widget)
   resetLib.resetStatus(widget)
   libs.utils.resetTimer()
   libs.utils.playSound("yaapu")
-  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.0.0f dev".. " ("..'355026f'..")")
+  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.0.0e dev".. " ("..'74ba71d'..")")
   collectgarbage()
   collectgarbage()
 end

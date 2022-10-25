@@ -627,7 +627,7 @@ local function createOnce(widget)
   status.currentModel = model.name()
   widget.runBgTasks = true
   libs.utils.playSound("yaapu")
-  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.0.0f dev".. " ("..'355026f'..")")
+  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.0.0e dev".. " ("..'74ba71d'..")")
   -- create the YaapuTimer if missing
   if model.getTimer("Yaapu") == nil then
     local timer = model.createTimer()
@@ -896,14 +896,6 @@ local function bgtasks(widget)
 
   -- SLOWER
   if bgclock % 4 == 2 then
-    -- on model switch
-    --[[
-    -- reload config
-    if (model.getGlobalVariable(CONF_GV,CONF_FM_GV) > 0) then
-      loadConfig()
-      model.setGlobalVariable(CONF_GV,CONF_FM_GV,0)
-    end
-    --]]
     if status.telemetry.lat ~= nil and status.telemetry.lon ~= nil then
       if status.conf.gpsFormat == 1 then
         -- DMS
@@ -916,14 +908,13 @@ local function bgtasks(widget)
       end
     end
 
-    --[[
-    -- map background function
-    if status.screenTogglePage ~= 5 then
-      if mapLayout ~= nil then
-        mapLayout.background(myWidget,conf,telemetry,status,utils,drawLib)
+    -- layout background callback
+    for screen=1,4
+    do
+      if status.layout[screen] ~= nil and status.layout[screen].background  ~= nil then
+        status.layout[screen].background(widget)
       end
     end
-    --]]
   end
 
   ------------------------------
@@ -983,7 +974,7 @@ local function paint(widget)
     if status.pauseTelemetry then
       lcd.color(status.colors.yellow)
       libs.drawLib.drawBlinkRectangle(0,0,800,480,3)
-      libs.drawLib.drawWidgetPaused()      
+      libs.drawLib.drawWidgetPaused()
     else
       if libs.utils.telemetryEnabled() == false then
         -- no telemetry inner box
@@ -999,7 +990,7 @@ local function paint(widget)
         end
       end
     end
-  
+
     -- skip first iteration
     if fg_rate == 0 then
       fg_rate = fg_counter
@@ -1012,12 +1003,6 @@ local function paint(widget)
       fg_counter = 0
       fg_timer = now
     end
-    --[[
-    lcd.font(FONT_S)
-    lcd.color(status.colors.white)
-    lcd.drawText(LCD_W,LCD_H-45,string.format("F %.01fHz",fg_rate),RIGHT)
-    lcd.drawText(LCD_W,LCD_H-30,string.format("B %.01fHz",bg_rate),RIGHT)
-    --]]
 end
 
 -- called when event is passed to the widget
@@ -1058,24 +1043,28 @@ local function event(widget, category, value, x, y)
     end
     if kill then
       system.killEvents(value)
-      print("   kill", category, value)
       return true
     end
-    print("   pass", category, value)
     return false
 end
 
 -- widget custom context menu
 local function menu(widget)
   local startStopLabel = "Yaapu: "..(status.pauseTelemetry == false and "Pause widget" or "Start widget")
-  return {
-    { startStopLabel, 
-      function()
-        status.pauseTelemetry = not status.pauseTelemetry
-      end
-    },
-    { "Yaapu: Reset widget", function() reset(widget) end },
-  }
+
+  if widget.screen == 2 then
+    return {
+      { "Yaapu: Zoom in", function() status.mapZoomLevel = math.min(status.conf.mapZoomMax, status.mapZoomLevel+1) end},
+      { "Yaapu: Zoom out", function() status.mapZoomLevel = math.max(status.conf.mapZoomMin, status.mapZoomLevel-1) end},
+      { startStopLabel, function() status.pauseTelemetry = not status.pauseTelemetry end},
+      { "Yaapu: Reset widget", function() reset(widget) end },
+    }
+  else
+    return {
+      { startStopLabel, function() status.pauseTelemetry = not status.pauseTelemetry end},
+      { "Yaapu: Reset widget", function() reset(widget) end },
+    }
+  end
 end
 
 
@@ -1210,7 +1199,7 @@ local function configure(widget)
       {
         {"default",1},
         {"maps", 2},
-        {"plot",3},
+        --{"plot",3},
       }, function() return widget.screen end,
     function(value)
       widget.screen = value
