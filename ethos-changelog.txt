@@ -1,2 +1,43 @@
 X20 version 1.0.0dev
 - initial public release
+
+Ethos Version 1.0.0c-dev, all radios
+
+- added support for Ethos on X10/X12
+- full screen layout for X10,X12,X18 and X20
+- external serial port support on x18 and x20 (MavToPT)
+- maps support
+
+Ethos version 1.0.0c dev, all radios
+
+- fixed timer
+- fixed widget reset
+- fixed x10 messages screen
+- fixed alt display when terrain enabled
+- added 16s (cells) support
+
+Ethos version 1.0.0c-dev, all radios
+
+- fixed incompatibility with external protocol lua scripts (Ghost,MultiModule)
+
+Ethos version 1.0.0c dev, all radios
+
+- hide arming status on messages and map
+- fixed gps status layout
+
+Ethos version 1.0.0d dev - all radios
+
+- fixed telemetry source selection
+- better lcd handling, should yield lower cpu load
+
+Ethos Widget version 1.0.0e dev
+
+- new CRSF and ELRS support, requires Ethos >= 1.4.1
+- fix reset widget on model change
+- up to 4 link status sensors on the top bar
+
+Ethos Widget version 1.0.0f dev
+- added context menu option to pause widget to allow use of other scripts (crsf, elrs,...)
+
+Ethos Widget version 1.0.0f dev
+- added context menu for zoom control
