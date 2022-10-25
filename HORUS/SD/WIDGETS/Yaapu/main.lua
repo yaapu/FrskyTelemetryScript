@@ -59,9 +59,9 @@ local conf = {
   centerPanel = {1,1,1},
   rightPanel = {1,1,1},
   leftPanel = {1,1,1},
-  centerPanelFilename = {"hud_def","hud_def","hud_def"},
-  rightPanelFilename = {"right_def","right_def","right_def"},
-  leftPanelFilename = {"left_def","left_def","left_def"},
+  centerPanelFilename = {"hud_1","hud_1","hud_1"},
+  rightPanelFilename = {"right_1","right_1","right_1"},
+  leftPanelFilename = {"left_1","left_1","left_1"},
   -- map support
   mapType = "sat_tiles", -- applies to gmapcacther only
   mapZoomLevel = 2,
@@ -79,6 +79,7 @@ local conf = {
   plotSource2 = 1,
   degSymbol = "@",
   theme = 1,
+  pauseTelemetry = false,
 }
 
 ------------------------------
@@ -349,7 +350,7 @@ status.currentScreen = 1
 status.hidePower = 0
 status.hideEfficiency = 0
 status.currentModel = nil
-
+status.pauseTelemetry = false
 ---------------------------
 -- BATTERY TABLE
 ---------------------------
@@ -2151,7 +2152,7 @@ local updateCog = 0
 local function backgroundTasks(widget,telemetryLoops)
   local now = getTime()
   -- don't process telemetry while resetting to prevent CPU kill
-  if resetPending == false and resetLayoutPending == false and loadConfigPending == false then
+  if conf.pauseTelemetry == false and resetPending == false and resetLayoutPending == false and loadConfigPending == false then
     for i=1,telemetryLoops
     do
       local success, sensor_id,frame_id,data_id,value = pcall(telemetryPop)
@@ -2323,7 +2324,7 @@ local function init()
   -- load battery config
   utils.loadBatteryConfigFile()
   -- ok done
-  utils.pushMessage(7,"Yaapu Telemetry Widget 2.0.0 dev".." ("..'704225c'..")")
+  utils.pushMessage(7,"Yaapu Telemetry Widget 2.0.0 dev".." ("..'b2eca21'..")")
   utils.playSound("yaapu")
   -- fix for generalsettings lazy loading...
   unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
@@ -2354,15 +2355,16 @@ local function init()
 end
 
 --------------------------------------------------------------------------------
--- 4 pages
 -- page 1 single battery view
 -- page 2 message history
 -- page 3 min max
 -- page 4 dual battery view
 -- page 5 map view
 -- page 6 plot view
+-- check if EdgeTx >= 2.8
+local ver, radio, maj, minor, rev, osname = getVersion()
 local options = {
-  { "page", VALUE, 1, 1, 8},
+  { "Screen Type", VALUE, 1, 1, 8},
 }
 -- shared init flag
 local initDone = 0
@@ -2404,7 +2406,7 @@ utils.getScreenTogglePage = function(widget,conf,status)
       return 5
     end
   end
-  return widget.options.page
+  return widget.options["Screen Type"]
 end
 
 
@@ -2481,10 +2483,10 @@ end
 
 -- called when widget instance page changes
 local function onChangePage(widget)
-  if widget.options.page == 3 then
+  if widget.options["Screen Type"] == 3 then
     -- when page 3 goes to foreground show minmax values
     status.showMinMaxValues = true
-  elseif widget.options.page == 4 then
+  elseif widget.options["Screen Type"] == 4 then
     -- when page 4 goes to foreground show dual battery view
     status.showDualBattery = true
   end
@@ -2495,7 +2497,7 @@ end
 -- Called when script is hidden @20Hz
 local function background(widget)
   -- when page 1 goes to background run bg tasks
-  if widget.options.page == 1 then
+  if widget.options["Screen Type"] == 1 then
     -- run bg tasks
     backgroundTasks(widget,telemetryPopLoops)
     -- call custom panel background functions
@@ -2511,24 +2513,24 @@ local function background(widget)
     return
   end
   -- when page 3 goes to background hide minmax values
-  if widget.options.page == 3 then
+  if widget.options["Screen Type"] == 3 then
     status.showMinMaxValues = false
     return
   end
   -- when page 4 goes to background hide dual battery view
-  if widget.options.page == 4 then
+  if widget.options["Screen Type"] == 4 then
     status.showDualBattery = false
     return
   end
   -- when page 5 goes to background
-  if widget.options.page == 5 then
+  if widget.options["Screen Type"] == 5 then
     if mapLayout ~= nil then
       mapLayout.background(widget)
     end
     return
   end
   -- when page 6 goes to background
-  if widget.options.page == 6 then
+  if widget.options["Screen Type"] == 6 then
     if plotLayout ~= nil then
       plotLayout.background(widget)
     end
@@ -2622,18 +2624,18 @@ local screenByPageMapping = {1,1,1,1,1,1,2,3}
 local function drawFullScreen(widget)
   calcHudRate(widget)
   -- when page 1 goes to foreground run bg tasks
-  if math.max(1,widget.options.page) == 1 then
+  if math.max(1,widget.options["Screen Type"]) == 1 then
     -- run bg tasks only if we are not resetting, this prevent cpu limit kill
     if not (resetPending or resetLayoutPending) then
       backgroundTasks(widget,15)
     end
   end
   -- map pages to multiple screens
-  status.currentScreen = screenByPageMapping[math.max(1,widget.options.page)]
+  status.currentScreen = screenByPageMapping[math.max(1,widget.options["Screen Type"])]
   lcd.setColor(CUSTOM_COLOR, utils.colors.bg)
 
   if not (resetPending or resetLayoutPending or loadConfigPending) then
-    if widget.options.page == 2 or status.screenTogglePage == 2 then
+    if widget.options["Screen Type"] == 2 or status.screenTogglePage == 2 then
       ------------------------------------
       -- Widget Page 2: MESSAGES
       ------------------------------------
@@ -2642,7 +2644,7 @@ local function drawFullScreen(widget)
       lcd.clear(CUSTOM_COLOR)
 
       drawMessageScreen()
-    elseif widget.options.page == 5 or status.screenTogglePage == 5 then
+    elseif widget.options["Screen Type"] == 5 or status.screenTogglePage == 5 then
       ------------------------------------
       -- Widget Page 5: MAP
       ------------------------------------
@@ -2653,7 +2655,7 @@ local function drawFullScreen(widget)
       else
         loadMapLayout()
       end
-    elseif widget.options.page == 6 or status.screenTogglePage == 6 then
+    elseif widget.options["Screen Type"] == 6 or status.screenTogglePage == 6 then
       ------------------------------------
       -- Widget Page 6: Plotting screen
       ------------------------------------
@@ -2690,8 +2692,8 @@ local function drawFullScreen(widget)
   end
 
   if fgclock % 4 == 0 then
-    if currentPage ~= widget.options.page then
-      currentPage = widget.options.page
+    if currentPage ~= widget.options["Screen Type"] then
+      currentPage = widget.options["Screen Type"]
       onChangePage(widget)
     end
   end
@@ -2708,16 +2710,20 @@ local function drawFullScreen(widget)
   end
   fgclock = (fgclock % 8) + 1
 
-  -- no telemetry/minmax outer box
-  if telemetryEnabled() == false then
-    -- no telemetry inner box
-    if not status.hideNoTelemetry then
-      libs.drawLib.drawNoTelemetryData(telemetryEnabled)
-    end
-    utils.drawBlinkBitmap("warn",0,0)
+  if conf.pauseTelemetry == true then
+    libs.drawLib.drawWidgetPaused()
   else
-    if status.showMinMaxValues == true then
-      utils.drawBlinkBitmap("minmax",0,0)
+    -- no telemetry/minmax outer box
+    if telemetryEnabled() == false then
+      -- no telemetry inner box
+      if not status.hideNoTelemetry then
+        libs.drawLib.drawNoTelemetryData(telemetryEnabled)
+      end
+      utils.drawBlinkBitmap("warn",0,0)
+    else
+      if status.showMinMaxValues == true then
+        utils.drawBlinkBitmap("minmax",0,0)
+      end
     end
   end
 

@@ -451,11 +451,23 @@ function drawLib.drawNoTelemetryData(telemetryEnabled)
     lcd.drawFilledRectangle(90,76, 300, 80, CUSTOM_COLOR)
     lcd.setColor(CUSTOM_COLOR,utils.colors.white)
     lcd.drawText(110, 85, "no telemetry data", DBLSIZE+CUSTOM_COLOR)
-    lcd.drawText(95, 125, "Yaapu Telemetry Widget 2.0.0 dev".."("..'704225c'..")", SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(95, 125, "Yaapu Telemetry Widget 2.0.0 dev".."("..'b2eca21'..")", SMLSIZE+CUSTOM_COLOR)
     utils.drawTopBar()
     local info = model.getInfo()
     lcd.setColor(CUSTOM_COLOR,WHITE)
     lcd.drawText(0,0,info.name,CUSTOM_COLOR)
+  end
+end
+
+function drawLib.drawWidgetPaused()
+  if conf.pauseTelemetry == true then
+    lcd.setColor(CUSTOM_COLOR,BLACK)
+    lcd.drawFilledRectangle(88,74, 304, 84, CUSTOM_COLOR)
+    lcd.setColor(CUSTOM_COLOR,utils.colors.darkyellow)
+    lcd.drawFilledRectangle(90,76, 300, 80, CUSTOM_COLOR)
+    lcd.setColor(CUSTOM_COLOR,BLACK)
+    lcd.drawText(110, 85, "WIDGET PAUSED", DBLSIZE+CUSTOM_COLOR)
+    lcd.drawText(95, 125, "Yaapu Telemetry Widget 2.0.0 dev".."("..'b2eca21'..")", SMLSIZE+CUSTOM_COLOR)
   end
 end
 
@@ -558,18 +570,18 @@ function drawLib.drawStatusBar(maxRows)
       flags = 0
       mult=0.1
     end
-    lcd.drawNumber(244,226-yDelta, hdop*mult,DBLSIZE+flags+CUSTOM_COLOR)
+    lcd.drawNumber(246,226-yDelta, hdop*mult,DBLSIZE+flags+CUSTOM_COLOR)
     -- SATS
     lcd.setColor(CUSTOM_COLOR,utils.colors.white)
-    lcd.drawText(206,230-yDelta, utils.gpsStatuses[telemetry.gpsStatus][1], SMLSIZE+CUSTOM_COLOR)
-    lcd.drawText(206,240-yDelta, utils.gpsStatuses[telemetry.gpsStatus][2], SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(212,230-yDelta, utils.gpsStatuses[telemetry.gpsStatus][1], SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(212,240-yDelta, utils.gpsStatuses[telemetry.gpsStatus][2], SMLSIZE+CUSTOM_COLOR)
 
     lcd.setColor(CUSTOM_COLOR,utils.colors.white)
     if telemetry.numSats == 15 then
-      lcd.drawNumber(198,226-yDelta, telemetry.numSats, DBLSIZE+CUSTOM_COLOR+RIGHT)
-      lcd.drawText(198,234-yDelta, "+", SMLSIZE+CUSTOM_COLOR)
+      lcd.drawNumber(202,226-yDelta, telemetry.numSats, DBLSIZE+CUSTOM_COLOR+RIGHT)
+      lcd.drawText(202,234-yDelta, "+", SMLSIZE+CUSTOM_COLOR)
     else
-      lcd.drawNumber(198,226-yDelta,telemetry.numSats, DBLSIZE+CUSTOM_COLOR+RIGHT)
+      lcd.drawNumber(202,226-yDelta,telemetry.numSats, DBLSIZE+CUSTOM_COLOR+RIGHT)
     end
   elseif telemetry.gpsStatus == 0 then
     utils.drawBlinkBitmap("nogpsicon",150,227-yDelta)

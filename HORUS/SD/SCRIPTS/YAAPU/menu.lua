@@ -62,6 +62,7 @@ local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 --]]
 --
 local menuItems = {
+  {"pause telemetry processing:", "PTP", 2, { "yes", "no" }, { true, false } },
   {"voice language:", "L1", 1, { "english", "italian", "french", "german" } , {"en","it","fr","de"} },
   {"color theme:", "TH", 1, { "default", "ethos" } , { 1, 2} },
   {"batt alert level 1:", "V1", 375, 0,5000,"V",PREC2,5 },
@@ -345,6 +346,7 @@ local function applyConfigValues(conf)
     updateMenuItems()
     menu.updated = false
   end
+  conf.pauseTelemetry = getMenuItemByName(menuItems,"PTP")
   conf.language = getMenuItemByName(menuItems,"L1")
   conf.battAlertLevel1 = getMenuItemByName(menuItems,"V1")
   conf.battAlertLevel2 = getMenuItemByName(menuItems,"V2")
@@ -491,7 +493,7 @@ local function drawConfigMenuBars()
   lcd.drawFilledRectangle(0,LCD_H-20, LCD_W, 20, CUSTOM_COLOR)
   lcd.drawRectangle(0, LCD_H-20, LCD_W, 20, CUSTOM_COLOR)
   lcd.setColor(CUSTOM_COLOR,WHITE)
-  lcd.drawText(2,0,"Yaapu Telemetry Widget 2.0.0 dev".." ("..'704225c'..")",CUSTOM_COLOR)
+  lcd.drawText(2,0,"Yaapu Telemetry Widget 2.0.0 dev".." ("..'b2eca21'..")",CUSTOM_COLOR)
   lcd.drawText(2,LCD_H-20+1,getConfigFilename(),CUSTOM_COLOR)
   lcd.drawText(LCD_W,LCD_H-20+1,itemIdx,CUSTOM_COLOR+RIGHT)
 end
