@@ -628,7 +628,7 @@ local function createOnce(widget)
   status.currentModel = model.name()
   widget.runBgTasks = true
   libs.utils.playSound("yaapu")
-  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.0.0e dev".. " ("..'74ba71d'..")")
+  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.0.0f dev".. " ("..'1929914'..")")
   -- create the YaapuTimer if missing
   if model.getTimer("Yaapu") == nil then
     local timer = model.createTimer()
