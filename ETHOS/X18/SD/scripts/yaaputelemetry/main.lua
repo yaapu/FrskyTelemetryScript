@@ -440,27 +440,81 @@ local libs = {
 }
 
 --[[
--- config file names
-local function getSensorsConfigFilename(panel)
-  local info = model.getInfo()
-  local strPanel = panel == nil and "" or "_"..panel
-  local cfg = "/SCRIPTS/YAAPU/CFG/" .. string.lower(string.gsub(info.name, "[%c%p%s%z]", "")..strPanel.."_sensors.lua")
-  local file = io.open(cfg,"r")
+UNIT_AMPERE
+UNIT_AMPERE_HOUR
+UNIT_CELSIUS
+UNIT_CENTIMETER
+UNIT_CENTIMETER_PER_SECOND
+UNIT_DB
+UNIT_DBM
+UNIT_DEGREE
+UNIT_FAHRENHEIT
+UNIT_FOOT
+UNIT_FOOT_PER_SECOND
+UNIT_G
+UNIT_HERTZ
+UNIT_HOUR
+UNIT_KILOMETER
+UNIT_KNOT
+UNIT_KPH
+UNIT_METER
+UNIT_METER_PER_SECOND
+UNIT_MICROSECOND
+UNIT_MILLIAMPERE
+UNIT_MILLIAMPERE_HOUR
+UNIT_MILLILITER
+UNIT_MILLILITER_PER_MINUTE
+UNIT_MILLILITER_PER_PULSE
+UNIT_MILLISECOND
+UNIT_MILLIVOLT
+UNIT_MILLIWATT
+UNIT_MINUTE
+UNIT_MPH
+UNIT_PERCENT
+UNIT_RADIAN
+UNIT_RPM
+UNIT_SECOND
+UNIT_VOLT
+UNIT_WATT
+]]
+-- { value, decimals, unit}
+status.luaSourcesConfig = {}
 
-  if file == nil then
-    cfg = "/SCRIPTS/YAAPU/CFG/default_sensors.lua"
-  else
-    io.close(file)
+status.luaSourcesConfig.Voltage =  {0, 1, UNIT_VOLT, nil, 0.1}
+status.luaSourcesConfig.Current =  {0, 1, UNIT_AMPERE, nil, 0.1}
+status.luaSourcesConfig.Battery =  {0, 0, UNIT_PERCENT, nil, 1}
+status.luaSourcesConfig.ArmStatus =   {0, 0, nil, "statusArmed", 1}
+status.luaSourcesConfig.FlightMode =    {0, 0, nil, "flightMode", 1}
+status.luaSourcesConfig.Heading =   {0, 0, UNIT_DEGREE, "yaw", 1}
+status.luaSourcesConfig.Altitude =   {0, 0, UNIT_METER, "homeAlt", 1}
+status.luaSourcesConfig.GPSAltitude =  {0, 0, UNIT_METER, "gpsAlt", 0.1}
+status.luaSourcesConfig.AirSpeed =  {0, 1, UNIT_METER_PER_SECOND, "airspeed", 0.1}
+status.luaSourcesConfig.GroundSpeed =  {0, 1, UNIT_METER_PER_SECOND, "hSpeed", 0.1}
+status.luaSourcesConfig.VSpeed =  {0, 1, UNIT_METER_PER_SECOND, "vSpeed", 0.1}
+status.luaSourcesConfig.Rpm1 =  {0, 0, UNIT_RPM, "rpm1" ,1}
+status.luaSourcesConfig.Rpm2 =  {0, 0, UNIT_RPM, "rpm2", 1}
+status.luaSourcesConfig.Throttle =   {0, 0, UNIT_PERCENT, "throttle", 1}
+status.luaSourcesConfig.Roll =  {0, 0, UNIT_DEGREE, "roll", 1}
+status.luaSourcesConfig.Pitch =  {0, 0, UNIT_DEGREE, "pitch", 1}
+
+local function sourceWakeup(source)
+  if source ~= nil then
+    local v = status.luaSourcesConfig[source:name()]
+    if source:name() == "Voltage" then
+      source:value(status.battery[4] * v[5])
+    elseif source:name() == "Current" then
+      source:value(status.battery[7] * v[5])
+    elseif source:name() == "Battery" then
+      source:value(status.battery[16] * v[5])
+    else
+      if v[2] == 0 then
+        source:value(tonumber(status.telemetry[v[4]])==nil and 0 or math.floor(0.5 + status.telemetry[v[4]] * v[5]))
+      else
+        source:value(tonumber(status.telemetry[v[4]])==nil and 0 or (status.telemetry[v[4]] * v[5]))
+      end
+    end
   end
-
-  return cfg
 end
-
-local function getBattConfigFilename()
-  local info = model.getInfo()
-  return "/SCRIPTS/YAAPU/CFG/" .. string.lower(string.gsub(info.name, "[%c%p%s%z]", "").."_batt.lua")
-end
---]]
 
 local function loadLib(name)
   local lib = dofile("/scripts/yaaputelemetry/lib/"..name..".lua")
@@ -627,7 +681,7 @@ local function createOnce(widget)
   status.currentModel = model.name()
   widget.runBgTasks = true
   libs.utils.playSound("yaapu")
-  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.0.0f dev".. " ("..'1929914'..")")
+  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.0.0 beta1".. " ("..'141293d'..")")
   -- create the YaapuTimer if missing
   if model.getTimer("Yaapu") == nil then
     local timer = model.createTimer()
@@ -646,55 +700,6 @@ local function reset(widget)
     return
   end
   libs.resetLib.reset(widget)
-end
-
-function setSensorValues()
-  --print("setSensorValues()")
-  --[[
-  if (not telemetryEnabled()) then
-    return
-  end
-  local battmah = telemetry.batt1mah
-  local battcapacity = getBatt1Capacity()
-  if telemetry.batt2mah > 0 then
-    battcapacity =  getBatt1Capacity() + getBatt2Capacity()
-    battmah = telemetry.batt1mah + telemetry.batt2mah
-  end
-
-  local perc = 0
-
-  if (battcapacity > 0) then
-    perc = math.min(math.max((1 - (battmah/battcapacity))*100,0),99)
-  end
-
-  -- CRSF
-  if not conf.enableCRSF then
-    setTelemetryValue(Fuel_ID, Fuel_SUBID, Fuel_INSTANCE, perc, 13 , Fuel_PRECISION , Fuel_NAME)
-    setTelemetryValue(CURR_ID, CURR_SUBID, CURR_INSTANCE, telemetry.batt1current+telemetry.batt2current, 2 , CURR_PRECISION , CURR_NAME)
-    setTelemetryValue(Hdg_ID, Hdg_SUBID, Hdg_INSTANCE, math.floor(telemetry.yaw), 20 , Hdg_PRECISION , Hdg_NAME)
-    setTelemetryValue(Alt_ID, Alt_SUBID, Alt_INSTANCE, telemetry.homeAlt*10, 9 , Alt_PRECISION , Alt_NAME)
-    setTelemetryValue(GSpd_ID, GSpd_SUBID, GSpd_INSTANCE, telemetry.hSpeed*0.1, 5 , GSpd_PRECISION , GSpd_NAME)
-  end
-
-  setTelemetryValue(VFAS_ID, VFAS_SUBID, VFAS_INSTANCE, getNonZeroMin(telemetry.batt1volt,telemetry.batt2volt)*10, 1 , VFAS_PRECISION , VFAS_NAME)
-  setTelemetryValue(VSpd_ID, VSpd_SUBID, VSpd_INSTANCE, telemetry.vSpeed, 5 , VSpd_PRECISION , VSpd_NAME)
-  setTelemetryValue(GAlt_ID, GAlt_SUBID, GAlt_INSTANCE, math.floor(telemetry.gpsAlt*0.1), 9 , GAlt_PRECISION , GAlt_NAME)
-  setTelemetryValue(IMUTmp_ID, IMUTmp_SUBID, IMUTmp_INSTANCE, telemetry.imuTemp, 11 , IMUTmp_PRECISION , IMUTmp_NAME)
-  setTelemetryValue(ARM_ID, ARM_SUBID, ARM_INSTANCE, telemetry.statusArmed*100, 0 , ARM_PRECISION , ARM_NAME)
-  setTelemetryValue(Thr_ID, Thr_SUBID, Thr_INSTANCE, telemetry.throttle, 13 , Thr_PRECISION , Thr_NAME)
-
-  if conf.enableRPM == 2  or conf.enableRPM == 3 then
-    setTelemetryValue(RPM0_ID, RPM0_SUBID, RPM0_INSTANCE, telemetry.rpm1, 18 , RPM0_PRECISION , RPM0_NAME)
-  end
-  if conf.enableRPM == 3 then
-    setTelemetryValue(RPM1_ID, RPM1_SUBID, RPM1_INSTANCE, telemetry.rpm2, 18 , RPM1_PRECISION , RPM1_NAME)
-  end
-  if status.airspeedEnabled == 1 then
-    setTelemetryValue(ASpd_ID, ASpd_SUBID, ASpd_INSTANCE, telemetry.airspeed*0.1, 4 , ASpd_PRECISION , ASpd_NAME)
-  end
-  --setTelemetryValue(0x070F, 0, 0, telemetry.roll, 20 , 0 , "ROLL")
-  --setTelemetryValue(0x071F, 0, 0, telemetry.pitch, 20 , 0 , "PTCH")
-  --]]
 end
 
 
@@ -737,12 +742,7 @@ local function loadLayout(widget)
 end
 
 status.blinkTimer = getTime()
-local bgclock = 0
 local updateCog = 0
-
-local bg_counter = 0
-local bg_rate = 0
-local bg_timer = 0
 
 local sportConn = nil
 
@@ -753,8 +753,172 @@ local sportPacket = {
   data = 0,
 }
 
-local function bgtasks(widget)
+-- 5Hz
+local function task1(now)
+  -- update total distance as often as po
+  libs.utils.updateTotalDist()
+end
 
+-- 2Hz
+local function task2(now)
+  -- rssi
+  if status.conf.enableCRSF then
+    -- apply same algo used by ardupilot to estimate a 0-100 rssi value
+    -- rssi = roundf((1.0f - (rssi_dbm - 50.0f) / 70.0f) * 255.0f);
+    local rssi_dbm = math.abs(libs.utils.getSourceValue("1RSS"))
+    if libs.utils.getSourceValue("ANT") ~= 0 then
+      rssi_dbm = math.abs(libs.utils.getSourceValue("2RSS"))
+    end
+    status.telemetry.rssiCRSF = math.min(100, math.floor(0.5 + ((1-(rssi_dbm - 50)/70)*100)))
+  end
+  status.telemetry.rssi = libs.utils.getRSSI()
+  -- update battery
+  libs.utils.calcBattery()
+  checkEvents()
+  checkLandingStatus()
+  checkCellVoltage()
+end
+
+-- 1Hz
+local function task3(now)
+  if status.telemetry.lat ~= nil and status.telemetry.lon ~= nil then
+    if status.conf.gpsFormat == 1 then
+      -- DMS
+      status.telemetry.strLat = libs.utils.decToDMSFull(status.telemetry.lat)
+      status.telemetry.strLon = libs.utils.decToDMSFull(status.telemetry.lon, status.telemetry.lat)
+    else
+      -- decimal
+      status.telemetry.strLat = string.format("%.06f", status.telemetry.lat)
+      status.telemetry.strLon = string.format("%.06f", status.telemetry.lon)
+    end
+  end
+
+  -- if we do not see terrain data for more than 5 sec we assume TERRAIN_ENABLE = 0
+  if status.terrainEnabled == 1 and now - status.terrainLastData > 500 then
+    status.terrainEnabled = 0
+    status.telemetry.terrainUnhealthy = 0
+  end
+
+  if status.currentModel ~=  model.name() then
+    status.currentModel = model.name()
+    libs.resetLib.reset()
+  end
+end
+
+-- 1Hz
+local function task4(now)
+  libs.utils.updateFlightTime()
+
+  if status.telemetry.lat ~= nil and status.telemetry.lon ~= nil then
+    if updateCog == 1 then
+      -- update COG
+      if status.lastLat ~= nil and status.lastLon ~= nil and status.lastLat ~= status.telemetry.lat and status.lastLon ~= status.telemetry.lon then
+        local cog = libs.utils.getAngleFromLatLon(status.lastLat, status.lastLon, status.telemetry.lat, status.telemetry.lon)
+        status.cog = cog ~= nil and cog or status.cog
+      end
+      updateCog = 0
+    else
+      -- update last GPS coords
+      status.lastLat = status.telemetry.lat
+      status.lastLon = status.telemetry.lon
+      -- process wpLat and wpLon updates
+      if status.wpEnabled == 1 then
+        status.wpLat, status.wpLon = libs.utils.getLatLonFromAngleAndDistance(status.telemetry.wpBearing, status.telemetry.wpDistance)
+      end
+      updateCog = 1
+    end
+  end
+  -- lua sources update
+  pcall(sourceWakeup)
+
+  -- flight mode
+  if status.frame.flightModes then
+    status.strFlightMode = status.frame.flightModes[status.telemetry.flightMode]
+    if status.strFlightMode ~= nil and status.telemetry.simpleMode > 0 then
+      local strSimpleMode = status.telemetry.simpleMode == 1 and "(S)" or "(SS)"
+      status.strFlightMode = string.format("%s%s",status.strFlightMode,strSimpleMode)
+    end
+  end
+end
+
+-- 1Hz
+local function task5(now)
+  -- layout background callback
+  for screen=1,4
+  do
+    if status.layout[screen] ~= nil and status.layout[screen].background  ~= nil then
+      status.layout[screen].background(widget)
+    end
+  end
+
+  -- top bar model frame and name
+  if status.modelString == nil then
+    local fn = status.frameNames[status.telemetry.frameType]
+    if fn ~= nil then
+      status.modelString = model.name()
+    end
+  else
+    if model.name() ~= status.modelString then
+      print("*********** modelChange *************")
+      libs.resetLib.reset()
+    end
+  end
+end
+
+-- 0.5Hz
+local function task6(now)
+  -- if we do not see terrain data for more than 5 sec we assume TERRAIN_ENABLE = 0
+  if status.terrainEnabled == 1 and now - status.terrainLastData > 500 then
+    status.terrainEnabled = 0
+    status.telemetry.terrainUnhealthy = 0
+  end
+
+  if status.currentModel ~=  model.name() then
+    status.currentModel = model.name()
+    libs.resetLib.reset()
+  end
+end
+
+
+local tasks = {
+  {0, 20, task1},     -- 5.0Hz
+  {0, 50, task2},     -- 2.0Hz
+  {0, 50, task3},     -- 2.0Hz
+  {0, 50, task4},     -- 2.0Hz
+  {0, 100, task5},    -- 1.0Hz
+  {0, 200, task6},    -- 0.5Hz
+}
+
+local function checkTaskTimeConstraints(now, taskId)
+  return (now - tasks[taskId][1]) >= tasks[taskId][2]
+end
+
+local function runScheduler(tasks)
+  local now = getTime()
+  local maxDelayTaskId = -1
+  local maxDelay = 0
+  local delay = 0
+
+  for taskId=1,#tasks
+  do
+    delay = (now - (tasks[taskId][1]))/tasks[taskId][2]
+    if (delay >= maxDelay and checkTaskTimeConstraints(now, taskId)) then
+      maxDelay = delay
+      maxDelayTaskId = taskId
+    end
+  end
+  if maxDelayTaskId < 0 then
+    return maxDelayTaskId
+  end
+  tasks[maxDelayTaskId][1] = now;
+  tasks[maxDelayTaskId][3](getTime())
+end
+
+local bg_counter = 0
+local bg_rate = 0
+local bg_timer = 0
+
+local function bgtasks(widget)
   -- background rate calculator
   -- skip first iteration
   if bg_rate == 0 then
@@ -811,119 +975,13 @@ local function bgtasks(widget)
     end
   end
 
-  -- SLOW: this runs around 2.5Hz
-  if bgclock % 2 == 1 then
+  runScheduler(tasks)
 
-    libs.utils.updateFlightTime()
-
-    if status.telemetry.lat ~= nil and status.telemetry.lon ~= nil then
-      if updateCog == 1 then
-        -- update COG
-        if status.lastLat ~= nil and status.lastLon ~= nil and status.lastLat ~= status.telemetry.lat and status.lastLon ~= status.telemetry.lon then
-          local cog = libs.utils.getAngleFromLatLon(status.lastLat, status.lastLon, status.telemetry.lat, status.telemetry.lon)
-          status.cog = cog ~= nil and cog or status.cog
-        end
-        updateCog = 0
-      else
-        -- update last GPS coords
-        status.lastLat = status.telemetry.lat
-        status.lastLon = status.telemetry.lon
-        -- process wpLat and wpLon updates
-        if status.wpEnabled == 1 then
-          status.wpLat, status.wpLon = libs.utils.getLatLonFromAngleAndDistance(status.telemetry.wpBearing, status.telemetry.wpDistance)
-        end
-        updateCog = 1
-      end
-    end
-    -- export OpenTX sensor values
-    setSensorValues()
-    -- update total distance as often as po
-    libs.utils.updateTotalDist()
-
-    -- flight mode
-    if status.frame.flightModes then
-      status.strFlightMode = status.frame.flightModes[status.telemetry.flightMode]
-      if status.strFlightMode ~= nil and status.telemetry.simpleMode > 0 then
-        local strSimpleMode = status.telemetry.simpleMode == 1 and "(S)" or "(SS)"
-        status.strFlightMode = string.format("%s%s",status.strFlightMode,strSimpleMode)
-      end
-    end
-
-    -- top bar model frame and name
-    if status.modelString == nil then
-      local fn = status.frameNames[status.telemetry.frameType]
-      if fn ~= nil then
-        status.modelString = model.name()
-      end
-    else
-      if model.name() ~= status.modelString then
-        print("*********** modelChange *************")
-        libs.resetLib.reset()
-      end
-    end
-  end
-
-  -- SLOWER: this runs around 1.25Hz but not when the previous block runs
-  if bgclock % 4 == 0 then
-    -- rssi
-    if status.conf.enableCRSF then
-      -- apply same algo used by ardupilot to estimate a 0-100 rssi value
-      -- rssi = roundf((1.0f - (rssi_dbm - 50.0f) / 70.0f) * 255.0f);
-      local rssi_dbm = math.abs(libs.utils.getSourceValue("1RSS"))
-      if libs.utils.getSourceValue("ANT") ~= 0 then
-        rssi_dbm = math.abs(libs.utils.getSourceValue("2RSS"))
-      end
-      status.telemetry.rssiCRSF = math.min(100, math.floor(0.5 + ((1-(rssi_dbm - 50)/70)*100)))
-    end
-    status.telemetry.rssi = libs.utils.getRSSI()
-    -- update battery
-    libs.utils.calcBattery()
-    -- if we do not see terrain data for more than 5 sec we assume TERRAIN_ENABLE = 0
-    if status.terrainEnabled == 1 and now - status.terrainLastData > 500 then
-      status.terrainEnabled = 0
-      status.telemetry.terrainUnhealthy = 0
-    end
-
-    if status.currentModel ~=  model.name() then
-      status.currentModel = model.name()
-      libs.resetLib.reset()
-    end
-
-    checkEvents()
-    checkLandingStatus()
-    checkCellVoltage()
-  end
-
-  -- SLOWER
-  if bgclock % 4 == 2 then
-    if status.telemetry.lat ~= nil and status.telemetry.lon ~= nil then
-      if status.conf.gpsFormat == 1 then
-        -- DMS
-        status.telemetry.strLat = libs.utils.decToDMSFull(status.telemetry.lat)
-        status.telemetry.strLon = libs.utils.decToDMSFull(status.telemetry.lon, status.telemetry.lat)
-      else
-        -- decimal
-        status.telemetry.strLat = string.format("%.06f", status.telemetry.lat)
-        status.telemetry.strLon = string.format("%.06f", status.telemetry.lon)
-      end
-    end
-
-    -- layout background callback
-    for screen=1,4
-    do
-      if status.layout[screen] ~= nil and status.layout[screen].background  ~= nil then
-        status.layout[screen].background(widget)
-      end
-    end
-  end
-
-  ------------------------------
   if now - status.blinkTimer > 60 then
     status.blinkon = not status.blinkon
     status.blinkTimer = now
   end
   status.loadCycle = (status.loadCycle + 1) % 8
-  bgclock = (bgclock%4)+1
 end
 
 
@@ -1099,6 +1157,9 @@ local function wakeup(widget)
         lcd.invalidate(HUD_X, HUD_Y, HUD_W, HUD_H)
         timer10Hz = now
       end
+    else
+      -- other screens refresh at full speed
+      lcd.invalidate()
     end
   end
   --[[
@@ -1586,9 +1647,35 @@ local function write(widget)
   libs.resetLib.resetLayout(widget)
 end
 
+local function sourceInit(source)
+  source:value(status.luaSourcesConfig[source:name()][1])
+  source:decimals(status.luaSourcesConfig[source:name()][2])
+  source:unit(status.luaSourcesConfig[source:name()][3])
+end
+
+local function registerSources()
+  system.registerSource({key="Y_ARM", name="ArmStatus", init=sourceInit, wakeup=sourceWakeup})
+  system.registerSource({key="Y_FM", name="FlightMode", init=sourceInit, wakeup=sourceWakeup})
+  system.registerSource({key="Y_VOLT", name="Voltage", init=sourceInit, wakeup=sourceWakeup})
+  system.registerSource({key="Y_CURR", name="Current", init=sourceInit, wakeup=sourceWakeup})
+  system.registerSource({key="Y_BATT", name="Battery", init=sourceInit, wakeup=sourceWakeup})
+  system.registerSource({key="Y_HDG", name="Heading", init=sourceInit, wakeup=sourceWakeup})
+  system.registerSource({key="Y_ALT", name="Altitude", init=sourceInit, wakeup=sourceWakeup})
+  system.registerSource({key="Y_GALT", name="GPSAltitude", init=sourceInit, wakeup=sourceWakeup})
+  system.registerSource({key="Y_ASPD", name="AirSpeed", init=sourceInit, wakeup=sourceWakeup})
+  system.registerSource({key="Y_GSPD", name="GroundSpeed", init=sourceInit, wakeup=sourceWakeup})
+  system.registerSource({key="Y_VSPD", name="VSpeed", init=sourceInit, wakeup=sourceWakeup})
+  system.registerSource({key="Y_RPM1", name="Rpm1", init=sourceInit, wakeup=sourceWakeup})
+  system.registerSource({key="Y_RPM2", name="Rpm2", init=sourceInit, wakeup=sourceWakeup})
+  system.registerSource({key="Y_THR", name="Throttle", init=sourceInit, wakeup=sourceWakeup})
+  system.registerSource({key="Y_ROLL", name="Roll", init=sourceInit, wakeup=sourceWakeup})
+  system.registerSource({key="Y_PTCH", name="Pitch", init=sourceInit, wakeup=sourceWakeup})
+end
+
 local function init()
   -- there's a limit on key size of 7 characters
   system.registerWidget({key="yaaputl", name="Yaapu Telemetry", paint=paint, event=event, wakeup=wakeup, create=create, configure=configure, menu=menu, read=read, write=write })
+  registerSources()
 end
 
 return {init=init}
