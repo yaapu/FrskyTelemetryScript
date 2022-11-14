@@ -59,9 +59,9 @@ local conf = {
   centerPanel = {1,1,1},
   rightPanel = {1,1,1},
   leftPanel = {1,1,1},
-  centerPanelFilename = {"hud_1","hud_1","hud_1"},
-  rightPanelFilename = {"right_1","right_1","right_1"},
-  leftPanelFilename = {"left_1","left_1","left_1"},
+  centerPanelFilename = {"hud_def","hud_def","hud_def"},
+  rightPanelFilename = {"right_def","right_def","right_def"},
+  leftPanelFilename = {"left_def","left_def","left_def"},
   -- map support
   mapType = "sat_tiles", -- applies to gmapcacther only
   mapZoomLevel = 2,
@@ -463,9 +463,9 @@ libs.drawLib = {}
 libs.mapLib = {}
 
 -- paths and files
-local soundFileBasePath = "/SOUNDS/yaapu0"
-local basePath = "/SCRIPTS/YAAPU/"
-local libBasePath = basePath.."LIB/"
+local soundFileBasePath = "/WIDGETS/yaapu/sounds"
+local basePath = "/WIDGETS/yaapu/"
+local libBasePath = basePath.."lib/"
 -- telemetry loops
 local telemetryPopLoops = 15
 -- layouts
@@ -477,8 +477,6 @@ local mapLayout = nil
 local plotLayout = nil
 -- user selected sensors
 local customSensors = nil
--- backlight reset
-local backlightLastTime = 0
 -- reset
 local resetPhase = 0
 local resetPending = false
@@ -712,7 +710,7 @@ end
 
 utils.getBitmap = function(name)
   if bitmaps[name] == nil then
-    bitmaps[name] = Bitmap.open("/SCRIPTS/YAAPU/IMAGES/"..name..".png")
+    bitmaps[name] = Bitmap.open("/WIDGETS/yaapu/images/"..name..".png")
   end
   return bitmaps[name],Bitmap.getSize(bitmaps[name])
 end
@@ -728,8 +726,7 @@ utils.unloadBitmap = function(name)
 end
 
 utils.lcdBacklightOn = function()
-  model.setGlobalVariable(8, 0, 99)
-  backlightLastTime = getTime()/100 -- seconds
+  lcd.resetBacklightTimeout()
 end
 
 utils.playSound = function(soundFile,skipHaptic)
@@ -798,6 +795,8 @@ utils.pushMessage = function(severity, msg)
     status.messages[msgIndex] = {}
   end
   status.messages[msgIndex][1] = formatMessage(severity,msg)
+  status.messages[msgIndex][1] = formatMessage(severity,msg) -- workaround to prevent lightfunction exception
+
   status.messages[msgIndex][2] = severity
 
   status.lastMessage = msg
@@ -1665,7 +1664,7 @@ local function reset()
       -- done
       resetPhase = 7
     elseif resetPhase == 7 then
-      utils.pushMessage(7,"Yaapu Telemetry Widget 2.0.0 dev")
+      utils.pushMessage(7,"Yaapu Telemetry Widget 2.0.0 beta1")
       utils.playSound("yaapu")
       -- on model change reload config!
       if modelChangePending == true then
@@ -1695,29 +1694,16 @@ local function setSensorValues()
   if not telemetryEnabled() then
     return
   end
-  local battmah = telemetry.batt1mah
-  local battcapacity = getBatt1Capacity()
-  if telemetry.batt2mah > 0 then
-    battcapacity =  getBatt1Capacity() + getBatt2Capacity()
-    battmah = telemetry.batt1mah + telemetry.batt2mah
-  end
-
-  local perc = 0
-
-  if battcapacity > 0 then
-    perc = math.min(math.max((1 - (battmah/battcapacity))*100,0),99)
-  end
-
   -- CRSF
   if not conf.enableCRSF then
-    setTelemetryValue(0x060F, 0, 0, perc, 13 , 0 , "Fuel")
-    setTelemetryValue(0x020F, 0, 0, telemetry.batt1current+telemetry.batt2current, 2 , 1 , "CURR")
+    setTelemetryValue(0x060F, 0, 0, status.battery[16], 13 , 0 , "Fuel")
+    setTelemetryValue(0x020F, 0, 0, status.battery[7], 2 , 1 , "CURR")
     setTelemetryValue(0x084F, 0, 0, math.floor(telemetry.yaw), 20 , 0 , "Hdg")
     setTelemetryValue(0x010F, 0, 0, telemetry.homeAlt*10, 9 , 1 , "Alt")
     setTelemetryValue(0x083F, 0, 0, telemetry.hSpeed*0.1, 5 , 0 , "GSpd")
   end
 
-  setTelemetryValue(0x021F, 0, 0, getNonZeroMin(telemetry.batt1volt,telemetry.batt2volt)*10, 1 , 2 , "VFAS")
+  setTelemetryValue(0x021F, 0, 0, status.battery[4]*10, 1 , 2 , "VFAS")
   setTelemetryValue(0x011F, 0, 0, telemetry.vSpeed, 5 , 1 , "VSpd")
   setTelemetryValue(0x082F, 0, 0, math.floor(telemetry.gpsAlt*0.1), 9 , 0 , "GAlt")
   setTelemetryValue(0x041F, 0, 0, telemetry.imuTemp, 11 , 0 , "IMUt")
@@ -1751,7 +1737,6 @@ utils.drawTopBar = function()
   local time = getDateTime()
   local strtime = string.format("%02d:%02d:%02d",time.hour,time.min,time.sec)
   lcd.drawText(LCD_W, 0, strtime, SMLSIZE+RIGHT+CUSTOM_COLOR)
-  -- RSSI
   -- RSSI
   if telemetryEnabled() == false then
     lcd.setColor(CUSTOM_COLOR,utils.colors.red)
@@ -2062,7 +2047,6 @@ end
 -- MAIN LOOP
 --------------------------------------------------------------------------------
 --
-local bgclock = 0
 
 
 
@@ -2142,12 +2126,176 @@ local function loadConfig(init)
   loadConfigPending = false
 end
 
--------------------------------
--- running at 20Hz (every 50ms)
--------------------------------
 local timerPage = getTime()
 local timerWheel = getTime()
 local updateCog = 0
+
+
+local function task5HzA(widget, now)
+  -- update total distance as often as po
+  utils.updateTotalDist()
+
+  -- handle page emulation
+  if now - timerPage > 50 then
+    local chValue = getValue(conf.screenWheelChannelId)
+    status.mapZoomLevel = utils.getMapZoomLevel(widget,conf,status,chValue)
+    status.messageOffset = utils.getMessageOffset(widget,conf,status,chValue)
+    status.screenTogglePage = utils.getScreenTogglePage(widget,conf,status)
+    timerPage = now
+  end
+
+  telemetry.rssi = getRSSI()
+end
+
+local function task2HzA(widget, now)
+  if conf.enableCRSF then
+    -- apply same algo used by ardupilot to estimate a 0-100 rssi value
+    -- rssi = roundf((1.0f - (rssi_dbm - 50.0f) / 70.0f) * 255.0f);
+    local rssi_dbm = math.abs(getValue("1RSS"))
+    if getValue("ANT") ~= 0 then
+      rssi_dbm = math.abs(getValue("2RSS"))
+    end
+    telemetry.rssiCRSF = math.min(100, math.floor(0.5 + ((1-(rssi_dbm - 50)/70)*100)))
+
+    if getValue("RFMD") == 1 then
+      -- GPS
+      telemetry.numSats = getValue("Sats")
+      -- BATT 1
+      telemetry.batt1volt = getValue("RxBt") * 10     -- V to dV
+      telemetry.batt1current = getValue("Curr") * 10  -- A to dA
+      telemetry.batt1mah = getValue("Capa")           -- mAh
+      -- VELANDYAW
+      telemetry.hSpeed = getValue("GSpd") * 2.777     -- km/h to dm/s
+      -- ROLLPITCH
+      telemetry.roll = math.deg(getValue("Roll"))     -- rad to deg
+      telemetry.pitch = math.deg(getValue("Ptch"))    -- rad to deg
+      telemetry.yaw = math.deg(getValue("Yaw"))       -- rad to deg
+      -- VFR
+      telemetry.homeAlt = getValue("Alt")             -- m
+    end
+  end
+  checkEvents()
+  checkLandingStatus()
+  checkCellVoltage()
+end
+
+local function task2HzB(widget, now)
+  if telemetry.lat ~= nil and telemetry.lon ~= nil then
+    if updateCog == 1 then
+      -- update COG
+      if status.lastLat ~= nil and status.lastLon ~= nil and status.lastLat ~= telemetry.lat and status.lastLon ~= telemetry.lon then
+        local cog = utils.getAngleFromLatLon(status.lastLat, status.lastLon, telemetry.lat, telemetry.lon)
+        status.cog = cog ~= nil and cog or status.cog
+      end
+      updateCog = 0
+    else
+      -- update last GPS coords
+      status.lastLat = telemetry.lat
+      status.lastLon = telemetry.lon
+      -- process wpLat and wpLon updates
+      if status.wpEnabled == 1 then
+        status.wpLat, status.wpLon = utils.getLatLonFromAngleAndDistance(telemetry, telemetry.wpBearing, telemetry.wpDistance)
+      end
+      updateCog = 1
+    end
+  end
+  setSensorValues()
+  calcFlightTime()
+  -- update gps telemetry data
+  local gpsData = getValue("GPS")
+  if type(gpsData) == "table" and gpsData.lat ~= nil and gpsData.lon ~= nil then
+    telemetry.lat = gpsData.lat
+    telemetry.lon = gpsData.lon
+  end
+end
+
+local function task2HzC(widget, now)
+  calcBattery()
+  -- flight mode
+  if status.currentFrameType.flightModes then
+    status.strFlightMode = status.currentFrameType.flightModes[telemetry.flightMode]
+    if status.strFlightMode ~= nil and telemetry.simpleMode > 0 then
+      local strSimpleMode = telemetry.simpleMode == 1 and "(S)" or "(SS)"
+      status.strFlightMode = string.format("%s%s",status.strFlightMode,strSimpleMode)
+    end
+  end
+
+  if telemetry.lat ~= nil and telemetry.lon ~= nil then
+    if conf.gpsFormat == 1 then
+      -- DMS
+      telemetry.strLat = utils.decToDMSFull(telemetry.lat)
+      telemetry.strLon = utils.decToDMSFull(telemetry.lon, telemetry.lat)
+    else
+      -- decimal
+      telemetry.strLat = string.format("%.06f", telemetry.lat)
+      telemetry.strLon = string.format("%.06f", telemetry.lon)
+    end
+  end
+end
+
+local function task1HzA(widget, now)
+  -- top bar model frame and name
+  if status.modelString == nil then
+    -- frametype and model name
+    local info = model.getInfo()
+    local fn = status.frameNames[telemetry.frameType]
+    local strmodel = info.name
+    if fn ~= nil then
+      status.modelString = fn..": "..info.name
+    end
+  end
+
+  -- reload config
+  if (model.getGlobalVariable(8,8) == 99 ) then
+    loadConfig()
+    model.setGlobalVariable(8,8,0)
+  end
+
+  -- map background function
+  if status.screenTogglePage ~= 5 then
+    if mapLayout ~= nil then
+      mapLayout.background(widget,conf,telemetry,status,utils,libs.drawLib)
+    end
+  end
+  -- if we do not see terrain data for more than 5 sec we assume TERRAIN_ENABLE = 0
+  if status.terrainEnabled == 1 and now - status.terrainLastData > 500 then
+    status.terrainEnabled = 0
+    telemetry.terrainUnhealthy = 0
+  end
+end
+
+local tasks = {
+  {0, 20, task5HzA},     -- 5.0Hz
+  {0, 50, task2HzA},     -- 2.0Hz
+  {0, 50, task2HzB},     -- 2.0Hz
+  {0, 50, task2HzC},     -- 2.0Hz
+  {0, 100, task1HzA},    -- 1.0Hz
+}
+
+local function checkTaskTimeConstraints(now, task_id)
+  return (now - tasks[task_id][1]) >= tasks[task_id][2]
+end
+
+utils.runScheduler = function(widget, tasks)
+  local now = getTime()
+  local maxDelayTaskId = -1
+  local maxDelay = 0
+  local delay = 0
+
+  for taskId=1,#tasks
+  do
+    delay = (now - (tasks[taskId][1]))/tasks[taskId][2]
+    if (delay >= maxDelay and checkTaskTimeConstraints(now, taskId)) then
+      maxDelay = delay
+      maxDelayTaskId = taskId
+    end
+  end
+  if maxDelayTaskId < 0 then
+    return maxDelayTaskId
+  end
+  tasks[maxDelayTaskId][1] = now;
+  tasks[maxDelayTaskId][3](widget, getTime())
+end
 
 local function backgroundTasks(widget,telemetryLoops)
   local now = getTime()
@@ -2166,133 +2314,7 @@ local function backgroundTasks(widget,telemetryLoops)
     end
   end
 
-  -- SLOW: this runs around 2.5Hz
-  if bgclock % 2 == 1 then
-
-    calcFlightTime()
-    -- update gps telemetry data
-    local gpsData = getValue("GPS")
-    if type(gpsData) == "table" and gpsData.lat ~= nil and gpsData.lon ~= nil then
-      telemetry.lat = gpsData.lat
-      telemetry.lon = gpsData.lon
-    end
-    if telemetry.lat ~= nil and telemetry.lon ~= nil then
-      if updateCog == 1 then
-        -- update COG
-        if status.lastLat ~= nil and status.lastLon ~= nil and status.lastLat ~= telemetry.lat and status.lastLon ~= telemetry.lon then
-          local cog = utils.getAngleFromLatLon(status.lastLat, status.lastLon, telemetry.lat, telemetry.lon)
-          status.cog = cog ~= nil and cog or status.cog
-        end
-        updateCog = 0
-      else
-        -- update last GPS coords
-        status.lastLat = telemetry.lat
-        status.lastLon = telemetry.lon
-        -- process wpLat and wpLon updates
-        if status.wpEnabled == 1 then
-          status.wpLat, status.wpLon = utils.getLatLonFromAngleAndDistance(telemetry, telemetry.wpBearing, telemetry.wpDistance)
-        end
-        updateCog = 1
-      end
-    end
-    -- export OpenTX sensor values
-    setSensorValues()
-    -- update total distance as often as po
-    utils.updateTotalDist()
-
-    -- handle page emulation
-    if now - timerPage > 50 then
-      local chValue = getValue(conf.screenWheelChannelId)
-      status.mapZoomLevel = utils.getMapZoomLevel(widget,conf,status,chValue)
-      status.messageOffset = utils.getMessageOffset(widget,conf,status,chValue)
-      status.screenTogglePage = utils.getScreenTogglePage(widget,conf,status)
-      timerPage = now
-    end
-
-    -- flight mode
-    if status.currentFrameType.flightModes then
-      status.strFlightMode = status.currentFrameType.flightModes[telemetry.flightMode]
-      if status.strFlightMode ~= nil and telemetry.simpleMode > 0 then
-        local strSimpleMode = telemetry.simpleMode == 1 and "(S)" or "(SS)"
-        status.strFlightMode = string.format("%s%s",status.strFlightMode,strSimpleMode)
-      end
-    end
-
-    -- top bar model frame and name
-    if status.modelString == nil then
-      -- frametype and model name
-      local info = model.getInfo()
-      local fn = status.frameNames[telemetry.frameType]
-      local strmodel = info.name
-      if fn ~= nil then
-        status.modelString = fn..": "..info.name
-      end
-    end
-  end
-
-  -- SLOWER: this runs around 1.25Hz but not when the previous block runs
-  if bgclock % 4 == 0 then
-    -- rssi
-    if conf.enableCRSF then
-      -- apply same algo used by ardupilot to estimate a 0-100 rssi value
-      -- rssi = roundf((1.0f - (rssi_dbm - 50.0f) / 70.0f) * 255.0f);
-      local rssi_dbm = math.abs(getValue("1RSS"))
-      if getValue("ANT") ~= 0 then
-        rssi_dbm = math.abs(getValue("2RSS"))
-      end
-      telemetry.rssiCRSF = math.min(100, math.floor(0.5 + ((1-(rssi_dbm - 50)/70)*100)))
-    end
-    telemetry.rssi = getRSSI()
-    -- update battery
-    calcBattery()
-    -- if we do not see terrain data for more than 5 sec we assume TERRAIN_ENABLE = 0
-    if status.terrainEnabled == 1 and now - status.terrainLastData > 500 then
-      status.terrainEnabled = 0
-      telemetry.terrainUnhealthy = 0
-    end
-
-    checkEvents()
-    checkLandingStatus()
-    checkCellVoltage()
-  end
-
-  -- SLOWER: this runs around 1.25Hz but not when the previous block runs
-  if bgclock % 4 == 2 then
-    --print('luaDebug', 'GC bl', model.getGlobalVariable(8,0))
-    --print('luaDebug', 'GC cfg', model.getGlobalVariable(8,8))
-
-    -- reset backlight panel
-    if (model.getGlobalVariable(8,0) == 99 and getTime()/100 - backlightLastTime > 5) then
-      model.setGlobalVariable(8,0,0)
-    end
-    -- reload config
-
-    if (model.getGlobalVariable(8,8) == 99 ) then
-      loadConfig()
-      model.setGlobalVariable(8,8,0)
-    end
-
-    if telemetry.lat ~= nil and telemetry.lon ~= nil then
-      if conf.gpsFormat == 1 then
-        -- DMS
-        telemetry.strLat = utils.decToDMSFull(telemetry.lat)
-        telemetry.strLon = utils.decToDMSFull(telemetry.lon, telemetry.lat)
-      else
-        -- decimal
-        telemetry.strLat = string.format("%.06f", telemetry.lat)
-        telemetry.strLon = string.format("%.06f", telemetry.lon)
-      end
-    end
-
-    -- map background function
-    if status.screenTogglePage ~= 5 then
-      if mapLayout ~= nil then
-        mapLayout.background(widget,conf,telemetry,status,utils,libs.drawLib)
-      end
-    end
-  end
-
-  bgclock = (bgclock%4)+1
+  utils.runScheduler(widget, tasks)
 
   -- blinking support
   if now - blinktime > 65 then
@@ -2324,7 +2346,7 @@ local function init()
   -- load battery config
   utils.loadBatteryConfigFile()
   -- ok done
-  utils.pushMessage(7,"Yaapu Telemetry Widget 2.0.0 dev".." ("..'b2eca21'..")")
+  utils.pushMessage(7,"Yaapu Telemetry Widget 2.0.0 beta1".." ("..'ffec73b'..")")
   utils.playSound("yaapu")
   -- fix for generalsettings lazy loading...
   unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084

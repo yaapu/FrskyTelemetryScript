@@ -172,8 +172,8 @@ local leftPanelFiles = {}
 ---------------------------
 -- LIBRARY LOADING
 ---------------------------
-local basePath = "/SCRIPTS/YAAPU/"
-local libBasePath = basePath.."LIB/"
+local basePath = "/WIDGETS/yaapu/"
+local libBasePath = basePath.."lib/"
 
 utils.doLibrary = function(filename)
   local f = assert(loadScript(libBasePath..filename..".lua"))
@@ -338,7 +338,7 @@ end
 
 local function getConfigFilename()
   local info = model.getInfo()
-  return "/SCRIPTS/YAAPU/CFG/" .. string.lower(string.gsub(info.name, "[%c%p%s%z]", "")..".cfg")
+  return "/WIDGETS/yaapu/cfg/" .. string.lower(string.gsub(info.name, "[%c%p%s%z]", "")..".cfg")
 end
 
 local function applyConfigValues(conf)
@@ -415,7 +415,7 @@ local function applyConfigValues(conf)
   conf.plotSource2 = getMenuItemByName(menuItems,"PLT2")
 
   conf.theme = getMenuItemByName(menuItems,"TH")
-  
+
   menu.editSelected = false
 end
 
@@ -486,6 +486,7 @@ local function saveConfig(conf)
 end
 
 local function drawConfigMenuBars()
+  local info = model.getInfo()
   lcd.setColor(CUSTOM_COLOR,lcd.RGB(16,20,25))
   local itemIdx = string.format("%d/%d",menu.selectedItem,#menuItems)
   lcd.drawFilledRectangle(0,0, LCD_W, 20, CUSTOM_COLOR)
@@ -493,8 +494,9 @@ local function drawConfigMenuBars()
   lcd.drawFilledRectangle(0,LCD_H-20, LCD_W, 20, CUSTOM_COLOR)
   lcd.drawRectangle(0, LCD_H-20, LCD_W, 20, CUSTOM_COLOR)
   lcd.setColor(CUSTOM_COLOR,WHITE)
-  lcd.drawText(2,0,"Yaapu Telemetry Widget 2.0.0 dev".." ("..'b2eca21'..")",CUSTOM_COLOR)
-  lcd.drawText(2,LCD_H-20+1,getConfigFilename(),CUSTOM_COLOR)
+  lcd.drawText(LCD_W,3,"Yaapu Telemetry Widget 2.0.0 beta1".." ("..'ffec73b'..")",CUSTOM_COLOR+SMLSIZE+RIGHT)
+  lcd.drawText(0,0,info.name,CUSTOM_COLOR)
+  lcd.drawText(0,LCD_H-20+1,getConfigFilename(),CUSTOM_COLOR)
   lcd.drawText(LCD_W,LCD_H-20+1,itemIdx,CUSTOM_COLOR+RIGHT)
 end
 

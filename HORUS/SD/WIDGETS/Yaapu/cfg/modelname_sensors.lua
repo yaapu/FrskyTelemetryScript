@@ -1,14 +1,8 @@
 ----------------------------------------
 -- custom sensors configuration file
+-- this will be rendered as an horizontal bar above the bottom black status bar
+-- 6 sensors supported
 ----------------------------------------
---[[
-S1:Pump,A4,2,V,1,+,1,
-S2:Fuel,Fuel,0,ml,1,+,1,
-S3:ENG,RPM,0,krpm,100,+,1,
-S4:EGT,Tmp1,0,C,1,+,1,
-S5:THRO,Thro,0,%,1,+,1,
-S6:Status,Tmp2,0,C,1,-,1
---]]
 local sensors = {
   -- Sensor 1
 [1]=  {

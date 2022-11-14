@@ -1,14 +1,9 @@
 ----------------------------------------
 -- custom sensors configuration file
+-- this will be used by the right panel custom sensor layout
+-- 5 sensors supported
 ----------------------------------------
---[[
-S1:Pump,A4,2,V,1,+,1,
-S2:Fuel,Fuel,0,ml,1,+,1,
-S3:ENG,RPM,0,krpm,100,+,1,
-S4:EGT,Tmp1,0,C,1,+,1,
-S5:THRO,Thro,0,%,1,+,1,
-S6:Status,Tmp2,0,C,1,-,1
---]]
+
 local sensors = {
   -- Sensor 1
 [1]=  {
@@ -79,19 +74,6 @@ local sensors = {
     30,     -- warning level
     50,     -- critical level
   },
-
-  -- Sensor 6
-[6]=  {
-    "Spd", -- label
-    "GSpd", -- OpenTX sensor name
-    1,      -- precision: number of decimals 0,1,2
-    "m/s",   -- label for unit of measure
-    1,      -- multiplier if < 1 than divides
-    "+",    -- "+" track max values, "-" track min values with
-    2,      -- font size 1=small, 2=big
-    nil,     -- warning level
-    nil,     -- critical level
-  },
 }
 ------------------------------------------------------
 -- the script can optionally look up values here
@@ -108,7 +90,7 @@ local sensors = {
 -- 
 local lookups = {
   -- lookup 2
-  [6] = {
+  [5] = {
       [-30] = "ERROR",
       [-20] = "OFF",
       [-10] = "COOL",

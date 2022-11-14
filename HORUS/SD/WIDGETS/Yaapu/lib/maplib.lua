@@ -178,7 +178,7 @@ local function gmapcatcher_tiles_to_path(tile_x, tile_y, level)
 end
 
 local function getTileBitmap(tilePath)
-  local fullPath = "/SCRIPTS/YAAPU/MAPS/"..conf.mapType..tilePath
+  local fullPath = "/IMAGES/yaapu/maps/"..conf.mapType..tilePath
   -- check cache
   if mapBitmapByPath[tilePath] ~= nil then
     return mapBitmapByPath[tilePath]
