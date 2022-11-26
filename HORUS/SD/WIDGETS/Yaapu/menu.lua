@@ -611,7 +611,7 @@ end
 -- RUN
 --------------------------
 local function run(event)
-  lcd.setColor(CUSTOM_COLOR, lcd.RGB(8,84,136)) -- hex 0x084c7b -- 073f66
+  lcd.setColor(CUSTOM_COLOR, lcd.RGB(50,50,50)) -- hex 0x084c7b -- 073f66
   lcd.clear(CUSTOM_COLOR)
   ---------------------
   -- CONFIG MENU
