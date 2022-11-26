@@ -128,7 +128,7 @@ local plotSources = {
   {"Batt[2] Voltage", "batt2volt", 5, 0.1 },
   {"Batt[2] Current", "batt2current", 5, 0.1 },
   {"Groundspeed","hSpeed", 3, 0.1},  -- dm
-  {"Height Above Terrain", "heightAboveTerrain", 1, 0.1 },
+  {"Height Above Terrain", "heightAboveTerrain", 1, 1 },
   {"Home Distance", "homeDist", 2, 1 },    -- m
   {"HDOP", "gpsHdopC", 5, 0.1},
   {"Num Sats", "numSats", 5, 1},
@@ -280,13 +280,11 @@ local function updateMenuItems()
       if value == 1 then        -- GMapCatcher
         menuItems[idx2][4] = -2
         menuItems[idx2][5] = 17
-
-        menuItems[idx2][3] = math.max(-2,menuItems[idx2][3])
+        menuItems[idx2][3] = -2
       else                      -- Google
         menuItems[idx2][4] = 1
         menuItems[idx2][5] = 20
-
-        menuItems[idx2][3] = math.max(1,menuItems[idx2][3])
+        menuItems[idx2][3] = 1
       end
     end
 
@@ -298,13 +296,11 @@ local function updateMenuItems()
       if value == 1 then        -- GMapCatcher
         menuItems[idx2][4] = -2
         menuItems[idx2][5] = 17
-
-        menuItems[idx2][3] = math.min(17,menuItems[idx2][3])
+        menuItems[idx2][3] = 17
       else                      -- Google
         menuItems[idx2][4] = 1
         menuItems[idx2][5] = 20
-
-        menuItems[idx2][3] = math.min(20,menuItems[idx2][3])
+        menuItems[idx2][3] = 20
       end
     end
 
@@ -313,7 +309,6 @@ local function updateMenuItems()
     if value2 ~= nil then
       menuItems[idx2][4] = menuItems[idxzmin][3]
       menuItems[idx2][5] = menuItems[idxzmax][3]
-
       menuItems[idx2][3] = math.min(math.max(value2,menuItems[idxzmin][3]),menuItems[idxzmax][3])
     end
 
@@ -338,7 +333,22 @@ end
 
 local function getConfigFilename()
   local info = model.getInfo()
-  return "/WIDGETS/yaapu/cfg/" .. string.lower(string.gsub(info.name, "[%c%p%s%z]", "")..".cfg")
+  return "/WIDGETS/Yaapu/cfg/" .. string.lower(string.gsub(info.name, "[%c%p%s%z]", "")..".cfg")
+end
+
+local function getConfigTriggerFilename()
+  local info = model.getInfo()
+  return "/WIDGETS/Yaapu/cfg/" .. string.lower(string.gsub(info.name, "[%c%p%s%z]", "")..".reload")
+end
+
+local function triggerConfigReload()
+  local cfg = assert(io.open(getConfigTriggerFilename(),"w"))
+  if cfg ~= nil then
+    io.write(cfg, "1")
+    io.close(cfg)
+  end
+  collectgarbage()
+  collectgarbage()
 end
 
 local function applyConfigValues(conf)
@@ -482,7 +492,10 @@ local function saveConfig(conf)
   if conf ~= nil then
     applyConfigValues(conf)
   end
-  model.setGlobalVariable(8,8, 99)
+  triggerConfigReload()
+  --[[
+  model.setGlobalVariable(CONF_GV,CONF_FM_GV, 99)
+  --]]
 end
 
 local function drawConfigMenuBars()
@@ -494,7 +507,7 @@ local function drawConfigMenuBars()
   lcd.drawFilledRectangle(0,LCD_H-20, LCD_W, 20, CUSTOM_COLOR)
   lcd.drawRectangle(0, LCD_H-20, LCD_W, 20, CUSTOM_COLOR)
   lcd.setColor(CUSTOM_COLOR,WHITE)
-  lcd.drawText(LCD_W,3,"Yaapu Telemetry Widget 2.0.0 beta1".." ("..'ffec73b'..")",CUSTOM_COLOR+SMLSIZE+RIGHT)
+  lcd.drawText(LCD_W,3,"Yaapu Telemetry Widget 2.0.0 beta2".." ("..'d23ad61'..")",CUSTOM_COLOR+SMLSIZE+RIGHT)
   lcd.drawText(0,0,info.name,CUSTOM_COLOR)
   lcd.drawText(0,LCD_H-20+1,getConfigFilename(),CUSTOM_COLOR)
   lcd.drawText(LCD_W,LCD_H-20+1,itemIdx,CUSTOM_COLOR+RIGHT)
@@ -554,9 +567,9 @@ local function drawConfigMenu(event)
     end
     menu.editSelected = not menu.editSelected
     menu.updated = true
-  elseif menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_LEFT or event == EVT_PLUS_REPT) then
+  elseif menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT or event == EVT_PLUS_REPT) then
     incMenuItem(menu.selectedItem)
-  elseif menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_RIGHT or event == EVT_MINUS_REPT) then
+  elseif menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_LEFT or event == EVT_MINUS_REPT) then
     decMenuItem(menu.selectedItem)
   elseif not menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_LEFT) then
     menu.selectedItem = (menu.selectedItem - 1)

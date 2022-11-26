@@ -50,9 +50,9 @@ local val2Max = -math.huge
 local val2Min = math.huge
 local initialized = false
 
-local function drawMiniHud()
-  libs.drawLib.drawArtificialHorizon(22, 22, 48, 36, nil, lcd.RGB(0x7B, 0x9D, 0xFF), lcd.RGB(0x63, 0x30, 0x00), 6, 6.5)
-  lcd.drawBitmap(utils.getBitmap("hud_48x48a"), 22-1, 22-10)
+local function drawMiniHud(x,y)
+  libs.drawLib.drawArtificialHorizon(x, y, 48, 36, nil, lcd.RGB(0x7B, 0x9D, 0xFF), lcd.RGB(0x63, 0x30, 0x00), 6, 6.5, 1.3)
+  lcd.drawBitmap(utils.getBitmap("hud_48x48a"), x-1, y-10)
 end
 
 local function setup(widget)
@@ -67,53 +67,139 @@ local function setup(widget)
   end
 end
 
+local function drawRightBar(widget)
+  local yCell = 20
+  local yPERC = 60
+  local yALT = 100
+  local ySPD = 140
+
+  local yDIST = 60
+  local yHOME = 194
+
+  local colorLabel = lcd.RGB(140,140,140)
+  -- CELL
+  lcd.setColor(CUSTOM_COLOR,colorLabel)
+  lcd.drawText(LCD_W-2, yCell-3, string.upper(status.battsource).." V", SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.setColor(CUSTOM_COLOR,WHITE)
+  if status.battery[1] * 0.01 < 10 then
+    lcd.drawNumber(LCD_W-2, yCell+7, status.battery[1] + 0.5, PREC2+0+MIDSIZE+CUSTOM_COLOR+RIGHT)
+  else
+    lcd.drawNumber(LCD_W-2, yCell+7, (status.battery[1] + 0.5)*0.1, PREC1+0+MIDSIZE+CUSTOM_COLOR+RIGHT)
+  end
+  --]]
+  -- aggregate batt %
+  local strperc = string.format("%2d", status.battery[16])
+  lcd.setColor(CUSTOM_COLOR,colorLabel)
+  lcd.drawText(LCD_W-4, yPERC-3, "BATT %", SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.setColor(CUSTOM_COLOR,WHITE)
+  lcd.drawText(LCD_W-4, yPERC+7, strperc, MIDSIZE+CUSTOM_COLOR+RIGHT)
+
+  -- alt
+  local alt = telemetry.homeAlt * unitScale
+  local altLabel = "ALT"
+  if status.terrainEnabled == 1 then
+    alt = telemetry.heightAboveTerrain * unitScale
+    altLabel = "HAT"
+  end
+  lcd.setColor(CUSTOM_COLOR,colorLabel)
+  lcd.drawText(LCD_W-2, yALT-3, string.format("%s %s", altLabel, unitLabel), SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.setColor(CUSTOM_COLOR,WHITE)
+  lcd.drawText(LCD_W-2, yALT+7, string.format("%.0f",alt), MIDSIZE+CUSTOM_COLOR+RIGHT)
+
+  -- speed
+  local speed = telemetry.hSpeed * 0.1 * conf.horSpeedMultiplier
+  local speedLabel = "GSPD"
+  if status.airspeedEnabled == 1 then
+    speed = telemetry.airspeed * 0.1 * conf.horSpeedMultiplier
+    speedLabel = "ASPD"
+  end
+  lcd.setColor(CUSTOM_COLOR,colorLabel)
+  lcd.drawText(LCD_W-2, ySPD-3, string.format("%s %s", speedLabel, conf.horSpeedLabel), SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.setColor(CUSTOM_COLOR,WHITE)
+  lcd.drawText(LCD_W-2, ySPD+7, string.format("%.01f",speed), MIDSIZE+CUSTOM_COLOR+RIGHT)
+
+  -- home distance
+  lcd.setColor(CUSTOM_COLOR,colorLabel)
+  lcd.drawText(6, yDIST-3, string.format("HOME %s", unitLabel), SMLSIZE+CUSTOM_COLOR)
+  lcd.setColor(CUSTOM_COLOR,WHITE)
+  lcd.drawText(6, yDIST+7, string.format("%.0f",telemetry.homeDist*unitScale), MIDSIZE+CUSTOM_COLOR)
+
+  -- home angle
+  lcd.setColor(CUSTOM_COLOR,utils.colors.darkyellow)
+  libs.drawLib.drawRArrow(440,yHOME,18,math.floor(telemetry.homeAngle - telemetry.yaw),CUSTOM_COLOR)
+end
+
 function layout.draw(widget, customSensors, leftPanel, centerPanel, rightPanel)
   setup(widget)
 
-  libs.drawLib.drawLeftRightTelemetry(widget)
+  --libs.drawLib.drawLeftRightTelemetry(widget)
+  drawRightBar(widget)
+
   -- plot area
-  lcd.setColor(CUSTOM_COLOR, lcd.RGB(100,100,100))
-  lcd.drawFilledRectangle(90,54,300,170,SOLID+CUSTOM_COLOR)
-  local y1,y2,val1,val2
-  -- val1
-  if conf.plotSource1 > 1 then
-    val1 = telemetry[status.plotSources[conf.plotSource1][2]] * status.plotSources[conf.plotSource1][4] * status.unitConversion[status.plotSources[conf.plotSource1][3]]
-    val1Min = math.min(val1,val1Min)
-    val1Max = math.max(val1,val1Max)
+  local xPlot = 80
+  local yPlot1 = 22
+  local yPlot2 = 120
+  local wPlot = 320
+  local hPlot = 94
+
+  if conf.plotSource1 <= 1 and conf.plotSource2 <= 1 then
+    lcd.setColor(CUSTOM_COLOR, lcd.RGB(80,80,80))
+    lcd.drawFilledRectangle(xPlot,yPlot1,wPlot,hPlot,SOLID+CUSTOM_COLOR)
+
+    lcd.setColor(CUSTOM_COLOR, lcd.RGB(80,80,80))
+    lcd.drawFilledRectangle(xPlot,yPlot2,wPlot,hPlot,SOLID+CUSTOM_COLOR)
+
     lcd.setColor(CUSTOM_COLOR, WHITE)
-    lcd.drawText(91,38,status.plotSources[conf.plotSource1][1],CUSTOM_COLOR+SMLSIZE)
-    lcd.drawText(91,52,string.format("%d", val1Max),CUSTOM_COLOR+SMLSIZE)
-    lcd.drawText(91,200,string.format("%d", val1Min),CUSTOM_COLOR+SMLSIZE)
-    y1 = libs.drawLib.drawGraph("plot1", 90, 59, 300, 151, utils.colors.darkyellow, val1, false, false, nil, 50)
-    if y1 ~= nil then
+    lcd.drawText(xPlot+wPlot/2,yPlot1+hPlot/2-8,"no source defined for graph 1",CUSTOM_COLOR+MIDSIZE+CENTER)
+    lcd.drawText(xPlot+wPlot/2,yPlot2+hPlot/2-8,"no source defined for graph 2",CUSTOM_COLOR+MIDSIZE+CENTER)
+  else
+    local y1,y2,val1,val2
+    if conf.plotSource1 <= 1 or conf.plotSource2 <= 1 then
+      yPlot1 = 20
+      yPlot2 = 20
+      hPlot = 194
+    end
+    -- val1
+    if conf.plotSource1 > 1 then
+      lcd.setColor(CUSTOM_COLOR, lcd.RGB(80,80,80))
+      lcd.drawFilledRectangle(xPlot,yPlot1,wPlot,hPlot,SOLID+CUSTOM_COLOR)
+      val1 = telemetry[status.plotSources[conf.plotSource1][2]] * status.plotSources[conf.plotSource1][4] * status.unitConversion[status.plotSources[conf.plotSource1][3]]
+      val1Min = libs.drawLib.getGraphMin("plot1")
+      val1Max = libs.drawLib.getGraphMax("plot1")
       lcd.setColor(CUSTOM_COLOR, WHITE)
-      lcd.drawText(92,y1-7,string.format("%d", val1),CUSTOM_COLOR+SMLSIZE+INVERS)
+      lcd.drawText(xPlot+wPlot/2,yPlot1-2,status.plotSources[conf.plotSource1][1],CUSTOM_COLOR+SMLSIZE+CENTER)
+      lcd.drawText(xPlot,yPlot1,string.format("%d", val1Max),CUSTOM_COLOR+SMLSIZE)
+      lcd.drawText(xPlot,yPlot1+hPlot-15,string.format("%d", val1Min),CUSTOM_COLOR+SMLSIZE)
+      y1 = libs.drawLib.drawGraph("plot1", xPlot, yPlot1+4, wPlot, hPlot-8, utils.colors.darkyellow, val1, false, false, nil, 30)
+      if y1 ~= nil then
+        lcd.setColor(CUSTOM_COLOR, WHITE)
+        lcd.drawText(xPlot+wPlot/2,yPlot1+hPlot/2-8,string.format("%d", val1),CUSTOM_COLOR+DBLSIZE+CENTER)
+      end
+    end
+    -- val2
+    if conf.plotSource2 > 1 then
+      lcd.setColor(CUSTOM_COLOR, lcd.RGB(80,80,80))
+      lcd.drawFilledRectangle(xPlot,yPlot2,wPlot,hPlot,SOLID+CUSTOM_COLOR)
+      val2 = telemetry[status.plotSources[conf.plotSource2][2]] * status.plotSources[conf.plotSource2][4] * status.unitConversion[status.plotSources[conf.plotSource2][3]]
+      val2Min = libs.drawLib.getGraphMin("plot2")
+      val2Max = libs.drawLib.getGraphMax("plot2")
+      lcd.setColor(CUSTOM_COLOR, WHITE)
+      lcd.drawText(xPlot+wPlot/2,yPlot2-2,status.plotSources[conf.plotSource2][1],CUSTOM_COLOR+SMLSIZE+CENTER)
+      lcd.drawText(xPlot,yPlot2,string.format("%d", val2Max),CUSTOM_COLOR+SMLSIZE)
+      lcd.drawText(xPlot,yPlot2+hPlot-15,string.format("%d", val2Min),CUSTOM_COLOR+SMLSIZE)
+      y2 = libs.drawLib.drawGraph("plot2", xPlot, yPlot2+4, wPlot, hPlot-8, utils.colors.white, val2, false, false, nil, 30)
+      if y2 ~= nil then
+        lcd.setColor(CUSTOM_COLOR, WHITE)
+        lcd.drawText(xPlot+wPlot/2,yPlot2+hPlot/2-8,string.format("%d", val2),CUSTOM_COLOR+DBLSIZE+CENTER)
+      end
     end
   end
-  -- val2
-  if conf.plotSource2 > 1 then
-    val2 = telemetry[status.plotSources[conf.plotSource2][2]] * status.plotSources[conf.plotSource2][4] * status.unitConversion[status.plotSources[conf.plotSource2][3]]
-    val2Min = math.min(val2,val2Min)
-    val2Max = math.max(val2,val2Max)
-    lcd.setColor(CUSTOM_COLOR, WHITE)
-    lcd.drawText(389,38,status.plotSources[conf.plotSource2][1],CUSTOM_COLOR+SMLSIZE+RIGHT)
-    lcd.drawText(389,52,string.format("%d", val2Max),CUSTOM_COLOR+SMLSIZE+RIGHT)
-    lcd.drawText(389,200,string.format("%d", val2Min),CUSTOM_COLOR+SMLSIZE+RIGHT)
-    y2 = libs.drawLib.drawGraph("plot2", 90, 59, 300, 151, utils.colors.white, val2, false, false, nil, 50)
-    if y2 ~= nil then
-      lcd.setColor(CUSTOM_COLOR, WHITE)
-      lcd.drawText(388,y2-7,string.format("%d", val2),CUSTOM_COLOR+SMLSIZE+RIGHT+INVERS)
-    end
-  end
-
-  drawMiniHud()
-
   utils.drawTopBar()
   libs.drawLib.drawStatusBar(2)
   libs.drawLib.drawArmStatus()
   libs.drawLib.drawFailsafe()
-  local nextX = libs.drawLib.drawTerrainStatus(90,20)
-  libs.drawLib.drawFenceStatus(nextX,20)
+  local nextX = libs.drawLib.drawTerrainStatus(6,22)
+  libs.drawLib.drawFenceStatus(nextX,22)
 end
 
 function layout.background(widget)

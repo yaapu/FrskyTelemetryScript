@@ -298,6 +298,7 @@ function drawLib.resetGraph(name)
 end
 
 function drawLib.updateGraph(name, value, maxSamples)
+  local updated = false
   if maxSamples == nil then
     maxSamples = 20
   end
@@ -313,20 +314,33 @@ function drawLib.updateGraph(name, value, maxSamples)
   end
 
   if getTime() - graphSampleTime[name] > 100 then
-    graphAvgValues[name] = graphAvgValues[name]*0.9 + value*0.1
     graphSampleCounts[name] = graphSampleCounts[name]+1
+    graphAvgValues[name] = graphAvgValues[name]*0.9 + value*0.1
     graphSamples[name][graphSampleCounts[name]%maxSamples] = value -- 0->49
     graphSampleTime[name] = getTime()
-    graphMinValues[name] = math.min(value, graphMinValues[name])
-    graphMaxValues[name] = math.max(value, graphMaxValues[name])
+    updated = true
   end
+
   if graphSampleCounts[name] < 2 then
-    return
+    return updated
   end
+  return updated
+end
+
+function drawLib.getGraphMin(name)
+  return graphMinValues[name] == math.huge and 0 or graphMinValues[name]
+end
+
+function drawLib.getGraphMax(name)
+  return graphMaxValues[name] == -math.huge and 0 or graphMaxValues[name]
+end
+
+function drawLib.getGraphAvg(name)
+  return graphAvgValues[name]
 end
 
 function drawLib.drawGraph(name, x ,y ,w , h, color, value, draw_bg, draw_value, unit, maxSamples)
-  drawLib.updateGraph(name, value, maxSamples)
+  local updateRequired = drawLib.updateGraph(name, value, maxSamples)
 
   if maxSamples == nil then
     maxSamples = 20
@@ -339,36 +353,49 @@ function drawLib.drawGraph(name, x ,y ,w , h, color, value, draw_bg, draw_value,
 
   lcd.setColor(CUSTOM_COLOR, color) -- graph color
 
-  local height = h - 5 -- available height for the graph
+  local height = h - 2 -- available height for the graph
   local step = (w-2)/(maxSamples-1)
-  local maxY = y + h - 3
-
-  local minMaxWindow = graphMaxValues[name] - graphMinValues[name] -- max difference between current window min/max
+  local maxY = y + height
 
   -- scale factor based on current min/max difference
-  local scale = height/minMaxWindow
+  local minMaxWindow = graphMaxValues[name]-graphMinValues[name]-- max difference between current window min/max
+  local scale = minMaxWindow == 0 and 1 or height/minMaxWindow
 
   -- number of samples we can plot
+  local tempMin = math.huge
+  local tempMax = -math.huge
   local sampleWindow = math.min(maxSamples-1,graphSampleCounts[name]-1)
-
   local lastY = nil
-  for i=1,sampleWindow
-  do
-    local prevSample = graphSamples[name][(i-1+graphSampleCounts[name]-sampleWindow)%maxSamples]
-    local curSample =  graphSamples[name][(i+graphSampleCounts[name]-sampleWindow)%maxSamples]
+  if sampleWindow >= 2 then
+    for i=2,sampleWindow
+    do
+      -- copy samples to sorting array
+      local prevSample = graphSamples[name][(i-1+graphSampleCounts[name]-sampleWindow)%maxSamples]
+      local curSample =  graphSamples[name][(i+graphSampleCounts[name]-sampleWindow)%maxSamples]
 
-    local x1 = x + (i-1)*step
-    local x2 = x + i*step
+      local x1 = x + (i-1)*step
+      local x2 = x + i*step
 
-    local y1 = maxY - (prevSample-graphMinValues[name])*scale
-    local y2 = maxY - (curSample-graphMinValues[name])*scale
-    lastY = y2
-    lcd.drawLine(x1,y1,x2,y2,SOLID,CUSTOM_COLOR)
+      local y1 = math.min(maxY,math.max(y,maxY - (prevSample-graphMinValues[name]) * scale))
+      local y2 = math.min(math.max(y,maxY - (curSample-graphMinValues[name]) * scale))
+
+      lastY = y2
+      lcd.drawLine(x1,y1,x2,y2,SOLID,CUSTOM_COLOR)
+
+      tempMin = math.min(tempMin, curSample)
+      tempMax = math.max(tempMax, curSample)
+    end
+    graphMinValues[name] = tempMin
+    graphMaxValues[name] = tempMax
+  end
+
+  if lastY ~= lastY then --nan
+    lastY = nil
   end
 
   if lastY ~= nil then
-    lcd.setColor(CUSTOM_COLOR, lcd.RGB(150,150,150))
-    lcd.drawLine(x, lastY, x+w, lastY ,DOTTED, CUSTOM_COLOR)
+    lcd.setColor(CUSTOM_COLOR, lcd.RGB(180,180,180))
+    lcd.drawLine(x+2, lastY, x+w-2, lastY ,DOTTED, CUSTOM_COLOR)
   end
 
   if draw_bg == true then
@@ -451,7 +478,7 @@ function drawLib.drawNoTelemetryData(telemetryEnabled)
     lcd.drawFilledRectangle(90,76, 300, 80, CUSTOM_COLOR)
     lcd.setColor(CUSTOM_COLOR,utils.colors.white)
     lcd.drawText(110, 85, "no telemetry data", DBLSIZE+CUSTOM_COLOR)
-    lcd.drawText(130, 125, "Yaapu Telemetry Widget 2.0.0 beta1", SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(130, 125, "Yaapu Telemetry Widget 2.0.0 beta2", SMLSIZE+CUSTOM_COLOR)
     utils.drawTopBar()
     local info = model.getInfo()
     lcd.setColor(CUSTOM_COLOR,WHITE)
@@ -467,7 +494,7 @@ function drawLib.drawWidgetPaused()
     lcd.drawFilledRectangle(90,76, 300, 80, CUSTOM_COLOR)
     lcd.setColor(CUSTOM_COLOR,BLACK)
     lcd.drawText(110, 85, "WIDGET PAUSED", DBLSIZE+CUSTOM_COLOR)
-    lcd.drawText(95, 125, "Yaapu Telemetry Widget 2.0.0 beta1".."("..'ffec73b'..")", SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(95, 125, "Yaapu Telemetry Widget 2.0.0 beta2".."("..'d23ad61'..")", SMLSIZE+CUSTOM_COLOR)
   end
 end
 
@@ -730,10 +757,10 @@ function drawLib.drawLeftRightTelemetry(myWidget)
   drawLib.drawRArrow(410+28,15+175,22,math.floor(telemetry.homeAngle - telemetry.yaw),CUSTOM_COLOR)
 end
 
-function drawLib.drawArtificialHorizon(x, y, w, h, bgBitmapName, colorSky, colorTerrain, lineCount, lineOffset)
+function drawLib.drawArtificialHorizon(x, y, w, h, bgBitmapName, colorSky, colorTerrain, lineCount, lineOffset, scale)
   local r = -telemetry.roll
   local cx,cy,dx,dy
-  local scale = 1.85 -- 1.85
+  --local scale = 1.85 -- 1.85
   -- no roll ==> segments are vertical, offsets are multiples of R2
   if telemetry.roll == 0 or math.abs(telemetry.roll) == 180 then
     dx=0

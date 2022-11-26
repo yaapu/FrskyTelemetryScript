@@ -49,9 +49,7 @@ function panel.draw(widget)
   local minX = 120 --HUD_X
   local maxX = 360 --HUD_X + HUD_WIDTH
 
-  --libs.drawLib.drawArtificialHorizon(minX, minY, 240, 130, "hud_bg_240x130", nil, lcd.RGB(0x63, 0x30, 0x00), 5, 18.5)
-  --libs.drawLib.drawArtificialHorizon(minX, minY, 240, 130, "hud_bg_240x130", nil, lcd.RGB(80, 45, 11), 5, 18.5)
-    libs.drawLib.drawArtificialHorizon(minX, minY, 240, 130, "hud_bg_240x130", nil, utils.colors.hudTerrain, 5, 18.5)
+  libs.drawLib.drawArtificialHorizon(minX, minY, 240, 130, "hud_bg_240x130", nil, utils.colors.hudTerrain, 5, 18.5, 1.85)
 
   -- hashmarks
   local startY = minY + 1

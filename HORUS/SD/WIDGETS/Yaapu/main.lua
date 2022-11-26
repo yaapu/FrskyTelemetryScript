@@ -463,8 +463,8 @@ libs.drawLib = {}
 libs.mapLib = {}
 
 -- paths and files
-local soundFileBasePath = "/WIDGETS/yaapu/sounds"
-local basePath = "/WIDGETS/yaapu/"
+local soundFileBasePath = "/WIDGETS/Yaapu/sounds"
+local basePath = "/WIDGETS/Yaapu/"
 local libBasePath = basePath.."lib/"
 -- telemetry loops
 local telemetryPopLoops = 15
@@ -495,7 +495,6 @@ local opentx = tonumber(maj..minor..rev)
 -- battery % by voltage
 local battPercByVoltage = {}
 
-local maxmem = 0
 
 -- for better performance we cache lcd.RGB()
 utils.initColors = function()
@@ -520,7 +519,8 @@ utils.initColors = function()
     utils.colors.bg = conf.theme == 1 and utils.colors.darkblue or 0x3186
     utils.colors.hudTerrain = conf.theme == 1 and 0x6225 or 0x65CB
     utils.colors.hudFgColor = conf.theme == 1 and utils.colors.darkyellow or utils.colors.black
-    utils.colors.bars = conf.theme == 1 and utils.colors.darkgrey or utils.colors.black
+    --utils.colors.bars = conf.theme == 1 and utils.colors.darkgrey or utils.colors.black
+    utils.colors.bars = utils.colors.black
   else
     -- EdgeTX
     utils.colors.black = BLACK
@@ -543,7 +543,8 @@ utils.initColors = function()
     utils.colors.hudSky = lcd.RGB(123,157,255)
     utils.colors.hudTerrain = conf.theme == 1 and lcd.RGB(102, 71, 42) or lcd.RGB(100,185,95)
     utils.colors.hudFgColor = conf.theme == 1 and utils.colors.darkyellow or utils.colors.black
-    utils.colors.bars = conf.theme == 1 and utils.colors.darkgrey or utils.colors.black
+    --utils.colors.bars = conf.theme == 1 and utils.colors.darkgrey or utils.colors.black
+    utils.colors.bars = utils.colors.black
   end
 
   --[[
@@ -663,7 +664,6 @@ utils.clearTable = function(t)
   t = nil
   collectgarbage()
   collectgarbage()
-  maxmem = 0
 end
 
 local function resetLayouts()
@@ -721,7 +721,6 @@ utils.unloadBitmap = function(name)
     -- force call to luaDestroyBitmap()
     collectgarbage()
     collectgarbage()
-    maxmem = 0
   end
 end
 
@@ -1664,7 +1663,7 @@ local function reset()
       -- done
       resetPhase = 7
     elseif resetPhase == 7 then
-      utils.pushMessage(7,"Yaapu Telemetry Widget 2.0.0 beta1")
+      utils.pushMessage(7,"Yaapu Telemetry Widget 2.0.0 beta2")
       utils.playSound("yaapu")
       -- on model change reload config!
       if modelChangePending == true then
@@ -1750,6 +1749,67 @@ utils.drawTopBar = function()
   lcd.drawText(391,0, vtx, 0+CUSTOM_COLOR+SMLSIZE)
 end
 
+local function drawMessagesRightBar()
+  local yCell = 20
+  local yPERC = 60
+  local yALT = 100
+  local ySPD = 140
+  local yDIST = 180
+  local yHOME = 245
+
+  local colorLabel = lcd.RGB(140,140,140)
+  -- CELL
+  lcd.setColor(CUSTOM_COLOR,colorLabel)
+  lcd.drawText(LCD_W-2, yCell-3, string.upper(status.battsource).." V", SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.setColor(CUSTOM_COLOR,WHITE)
+  if status.battery[1] * 0.01 < 10 then
+    lcd.drawNumber(LCD_W-2, yCell+7, status.battery[1] + 0.5, PREC2+0+MIDSIZE+CUSTOM_COLOR+RIGHT)
+  else
+    lcd.drawNumber(LCD_W-2, yCell+7, (status.battery[1] + 0.5)*0.1, PREC1+0+MIDSIZE+CUSTOM_COLOR+RIGHT)
+  end
+
+  -- aggregate batt %
+  local strperc = string.format("%2d", status.battery[16])
+  lcd.setColor(CUSTOM_COLOR,colorLabel)
+  lcd.drawText(LCD_W-4, yPERC-3, "BATT %", SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.setColor(CUSTOM_COLOR,WHITE)
+  lcd.drawText(LCD_W-4, yPERC+7, strperc, MIDSIZE+CUSTOM_COLOR+RIGHT)
+
+  -- alt
+  local alt = telemetry.homeAlt * unitScale
+  local altLabel = "ALT"
+  if status.terrainEnabled == 1 then
+    alt = telemetry.heightAboveTerrain * unitScale
+    altLabel = "HAT"
+  end
+  lcd.setColor(CUSTOM_COLOR,colorLabel)
+  lcd.drawText(LCD_W-2, yALT-3, string.format("%s %s", altLabel, unitLabel), SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.setColor(CUSTOM_COLOR,WHITE)
+  lcd.drawText(LCD_W-2, yALT+7, string.format("%.0f",alt), MIDSIZE+CUSTOM_COLOR+RIGHT)
+
+  -- speed
+  local speed = telemetry.hSpeed * 0.1 * conf.horSpeedMultiplier
+  local speedLabel = "GSPD"
+  if status.airspeedEnabled == 1 then
+    speed = telemetry.airspeed * 0.1 * conf.horSpeedMultiplier
+    speedLabel = "ASPD"
+  end
+  lcd.setColor(CUSTOM_COLOR,colorLabel)
+  lcd.drawText(LCD_W-2, ySPD-3, string.format("%s %s", speedLabel, conf.horSpeedLabel), SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.setColor(CUSTOM_COLOR,WHITE)
+  lcd.drawText(LCD_W-2, ySPD+7, string.format("%.01f",speed), MIDSIZE+CUSTOM_COLOR+RIGHT)
+
+  -- home distance
+  lcd.setColor(CUSTOM_COLOR,colorLabel)
+  lcd.drawText(LCD_W-2, yDIST-3, string.format("HOME %s", unitLabel), SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.setColor(CUSTOM_COLOR,WHITE)
+  lcd.drawText(LCD_W-2, yDIST+7, string.format("%.0f",telemetry.homeDist*unitScale), MIDSIZE+CUSTOM_COLOR+RIGHT)
+
+  -- home angle
+  lcd.setColor(CUSTOM_COLOR,utils.colors.darkyellow)
+  libs.drawLib.drawRArrow(440,yHOME,18,math.floor(telemetry.homeAngle - telemetry.yaw),CUSTOM_COLOR)
+end
+
 local function drawMessageScreen()
   utils.drawTopBar()
   -- each new message scrolls all messages to the end (offset is absolute)
@@ -1766,50 +1826,10 @@ local function drawMessageScreen()
     lcd.drawText(0,16+12*row, status.messages[i % 200][1],SMLSIZE+CUSTOM_COLOR)
     row = row+1
   end
-  lcd.setColor(CUSTOM_COLOR,utils.colors.darkblue)
+  lcd.setColor(CUSTOM_COLOR,utils.colors.bg)
   lcd.drawFilledRectangle(405,16,75,256,CUSTOM_COLOR)
 
-  lcd.setColor(CUSTOM_COLOR,utils.colors.white)
-  -- print info on the right
-  -- CELL
-  if status.battery[1] * 0.01 < 10 then
-    lcd.drawNumber(410, 16, status.battery[1] + 0.5, PREC2+0+MIDSIZE+CUSTOM_COLOR)
-  else
-    lcd.drawNumber(410, 16, (status.battery[1] + 0.5)*0.1, PREC1+0+MIDSIZE+CUSTOM_COLOR)
-  end
-  lcd.drawText(410+50, 17, status.battsource, SMLSIZE+CUSTOM_COLOR)
-  lcd.drawText(410+50, 27, "V", SMLSIZE+CUSTOM_COLOR)
-  -- ALT
-  local altPrefix = status.terrainEnabled == 1 and "HAT(" or "Alt("
-  local alt = status.terrainEnabled == 1 and telemetry.heightAboveTerrain or telemetry.homeAlt
-
-  lcd.setColor(CUSTOM_COLOR,utils.colors.lightgrey)
-  lcd.drawText(410, 41, altPrefix..unitLabel..")", SMLSIZE+0+CUSTOM_COLOR)
-  lcd.setColor(CUSTOM_COLOR,utils.colors.white)
-  lcd.drawNumber(410,53,alt*unitScale,MIDSIZE+CUSTOM_COLOR+0)
-  -- SPEED
-  lcd.setColor(CUSTOM_COLOR,utils.colors.lightgrey)
-  lcd.drawText(410, 76, "Spd("..conf.horSpeedLabel..")", SMLSIZE+0+CUSTOM_COLOR)
-  lcd.setColor(CUSTOM_COLOR,utils.colors.white)
-  lcd.drawNumber(410,88,telemetry.hSpeed*0.1* conf.horSpeedMultiplier,MIDSIZE+CUSTOM_COLOR+0)
-  -- VSPEED
-  lcd.setColor(CUSTOM_COLOR,utils.colors.lightgrey)
-  lcd.drawText(410, 111, "VSI("..conf.vertSpeedLabel..")", SMLSIZE+0+CUSTOM_COLOR)
-  lcd.setColor(CUSTOM_COLOR,utils.colors.white)
-  lcd.drawNumber(410,123, telemetry.vSpeed*0.1*conf.vertSpeedMultiplier, MIDSIZE+CUSTOM_COLOR+0)
-  -- DIST
-  lcd.setColor(CUSTOM_COLOR,utils.colors.lightgrey)
-  lcd.drawText(410, 146, "Dist("..unitLabel..")", SMLSIZE+0+CUSTOM_COLOR)
-  lcd.setColor(CUSTOM_COLOR,utils.colors.white)
-  lcd.drawNumber(410, 158, telemetry.homeDist*unitScale, MIDSIZE+0+CUSTOM_COLOR)
-  -- HDG
-  lcd.setColor(CUSTOM_COLOR,utils.colors.lightgrey)
-  lcd.drawText(410, 181, "Heading", SMLSIZE+0+CUSTOM_COLOR)
-  lcd.setColor(CUSTOM_COLOR,utils.colors.white)
-  lcd.drawNumber(410, 193, telemetry.yaw, MIDSIZE+0+CUSTOM_COLOR)
-  -- HOMEDIR
-  lcd.setColor(CUSTOM_COLOR,utils.colors.darkyellow)
-  libs.drawLib.drawRArrow(442,245,22,math.floor(telemetry.homeAngle - telemetry.yaw),CUSTOM_COLOR)--HomeDirection(telemetry)
+  drawMessagesRightBar()
   -- AUTOSCROLL
   if status.messageAutoScroll == true then
     lcd.setColor(CUSTOM_COLOR,WHITE)
@@ -1820,6 +1840,7 @@ local function drawMessageScreen()
   local maxPages = tonumber(math.ceil((#status.messages+1)/19))
   local currentPage = 1+tonumber(maxPages - (status.messageCount - status.messageOffset)/19)
 
+  lcd.drawText(LCD_W-2, LCD_H-16, string.format("%d/%d",currentPage,maxPages), SMLSIZE+CUSTOM_COLOR+RIGHT)
   lcd.setColor(CUSTOM_COLOR,utils.colors.grey)
   lcd.drawLine(0,LCD_H-20,405,LCD_H-20,SOLID,CUSTOM_COLOR)
 
@@ -2098,6 +2119,11 @@ local function crossfirePop()
     return nil, nil ,nil ,nil
 end
 
+local function getConfigTriggerFilename()
+  local info = model.getInfo()
+  return "/WIDGETS/Yaapu/cfg/" .. string.lower(string.gsub(info.name, "[%c%p%s%z]", "")..".reload")
+end
+
 local function loadConfig(init)
   -- load menu library
   local menuLib = utils.doLibrary("../menu")
@@ -2126,10 +2152,28 @@ local function loadConfig(init)
   loadConfigPending = false
 end
 
+local function checkConfig()
+  local cfg = io.open(getConfigTriggerFilename(),"r")
+  if cfg ~= nil then
+    local str = io.read(cfg,1)
+    io.close(cfg)
+
+    if str == "1" then
+      cfg = io.open(getConfigTriggerFilename(),"w")
+      if cfg ~= nil then
+        io.write(cfg, "0")
+        io.close(cfg)
+      end
+      loadConfig()
+    end
+  end
+  collectgarbage()
+  collectgarbage()
+end
+
 local timerPage = getTime()
 local timerWheel = getTime()
 local updateCog = 0
-
 
 local function task5HzA(widget, now)
   -- update total distance as often as po
@@ -2138,8 +2182,8 @@ local function task5HzA(widget, now)
   -- handle page emulation
   if now - timerPage > 50 then
     local chValue = getValue(conf.screenWheelChannelId)
-    status.mapZoomLevel = utils.getMapZoomLevel(widget,conf,status,chValue)
-    status.messageOffset = utils.getMessageOffset(widget,conf,status,chValue)
+    status.mapZoomLevel = utils.getMapZoomLevel(widget, conf, status, chValue)
+    status.messageOffset = utils.getMessageOffset(widget, conf, status, chValue)
     status.screenTogglePage = utils.getScreenTogglePage(widget,conf,status)
     timerPage = now
   end
@@ -2245,18 +2289,18 @@ local function task1HzA(widget, now)
     end
   end
 
-  -- reload config
-  if (model.getGlobalVariable(8,8) == 99 ) then
-    loadConfig()
-    model.setGlobalVariable(8,8,0)
-  end
-
   -- map background function
   if status.screenTogglePage ~= 5 then
     if mapLayout ~= nil then
       mapLayout.background(widget,conf,telemetry,status,utils,libs.drawLib)
     end
   end
+end
+
+local function task05HzA(widget, now)
+  -- reload config
+  checkConfig()
+
   -- if we do not see terrain data for more than 5 sec we assume TERRAIN_ENABLE = 0
   if status.terrainEnabled == 1 and now - status.terrainLastData > 500 then
     status.terrainEnabled = 0
@@ -2264,12 +2308,14 @@ local function task1HzA(widget, now)
   end
 end
 
+
 local tasks = {
   {0, 20, task5HzA},     -- 5.0Hz
   {0, 50, task2HzA},     -- 2.0Hz
   {0, 50, task2HzB},     -- 2.0Hz
   {0, 50, task2HzC},     -- 2.0Hz
   {0, 100, task1HzA},    -- 1.0Hz
+  {0, 200, task05HzA},   -- 0.5Hz
 }
 
 local function checkTaskTimeConstraints(now, task_id)
@@ -2346,7 +2392,7 @@ local function init()
   -- load battery config
   utils.loadBatteryConfigFile()
   -- ok done
-  utils.pushMessage(7,"Yaapu Telemetry Widget 2.0.0 beta1".." ("..'ffec73b'..")")
+  utils.pushMessage(7,"Yaapu Telemetry Widget 2.0.0 beta2".." ("..'d23ad61'..")")
   utils.playSound("yaapu")
   -- fix for generalsettings lazy loading...
   unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
@@ -2360,15 +2406,16 @@ local function init()
   status.unitConversion[4] = conf.vertSpeedMultiplier
   status.unitConversion[5] = 1
 
-  print('luaDebug BACKLIGHT', type(model.getGlobalVariable(8,0)), model.getGlobalVariable(8,0))
-  if ( not type(model.getGlobalVariable(8,0)) == 'number' ) then
-    model.setGlobalVariable(8, 0, 0)
+  --[[
+  if ( not type(model.getGlobalVariable(BACKLIGHT_GV,0)) == 'number' ) then
+    model.setGlobalVariable(BACKLIGHT_GV, 0, 0)
   end
-  print('luaDebug CFG', type(model.getGlobalVariable(8,8)), model.getGlobalVariable(8,8))
-  if ( not type(model.getGlobalVariable(8,8)) == 'number') then
-    model.setGlobalVariable(8, 8, 0 )
+
+  if ( not type(model.getGlobalVariable(CONF_GV,CONF_FM_GV)) == 'number') then
+    model.setGlobalVariable(CONF_GV, CONF_FM_GV, 0 )
     print('luaDebug CFG')
   end
+  --]]
   -- check if EdgeTx >= 2.8
   local ver, radio, maj, minor, rev, osname = getVersion()
   if osname == 'EdgeTX' and maj >= 2 and minor >= 8 then
@@ -2394,9 +2441,6 @@ local initDone = 0
 local function create(zone, options)
   -- this vars are widget scoped, each instance has its own set
   local vars = {
-    hudcounter = 0,
-    hudrate = 0,
-    hudstart = 0,
   }
   -- all local vars are shared between widget instances
   -- init() needs to be called only once!
@@ -2416,7 +2460,6 @@ end
 
 utils.getScreenTogglePage = function(widget,conf,status)
   local screenChValue = status.hideNoTelemetry == false and 0 or getValue(conf.screenToggleChannelId)
-
   if conf.screenToggleChannelId > -1 then
     if screenChValue < -600 then
       -- message history
@@ -2569,24 +2612,6 @@ local function fullScreenRequired(widget)
   lcd.drawText(widget.zone.x,widget.zone.y+16,"required",SMLSIZE+CUSTOM_COLOR)
 end
 
-------------------------
--- CALC HUD REFRESH RATE
-------------------------
-local function calcHudRate(widget)
-  local hudnow = getTime()
-
-  if widget.vars.hudcounter == 0 then
-    widget.vars.hudstart = hudnow
-  else
-    widget.vars.hudrate = widget.vars.hudrate*0.8 + 100*(widget.vars.hudcounter/(hudnow - widget.vars.hudstart + 1))*0.2
-  end
-  --
-  widget.vars.hudcounter=widget.vars.hudcounter+1
-
-  if hudnow - widget.vars.hudstart + 1 > 1000 then
-    widget.vars.hudcounter = 0
-  end
-end
 
 local function loadLayout()
   -- Layout start
@@ -2644,7 +2669,6 @@ local screenByPageMapping = {1,1,1,1,1,1,2,3}
 
 -- Called when script is visible
 local function drawFullScreen(widget)
-  calcHudRate(widget)
   -- when page 1 goes to foreground run bg tasks
   if math.max(1,widget.options["Screen Type"]) == 1 then
     -- run bg tasks only if we are not resetting, this prevent cpu limit kill
@@ -2661,8 +2685,7 @@ local function drawFullScreen(widget)
       ------------------------------------
       -- Widget Page 2: MESSAGES
       ------------------------------------
-      -- message history has black background
-      lcd.setColor(CUSTOM_COLOR, utils.colors.black)
+      lcd.setColor(CUSTOM_COLOR, BLACK)
       lcd.clear(CUSTOM_COLOR)
 
       drawMessageScreen()
@@ -2670,6 +2693,7 @@ local function drawFullScreen(widget)
       ------------------------------------
       -- Widget Page 5: MAP
       ------------------------------------
+      lcd.setColor(CUSTOM_COLOR, utils.colors.bg)
       lcd.clear(CUSTOM_COLOR)
 
       if mapLayout ~= nil then
@@ -2738,7 +2762,7 @@ local function drawFullScreen(widget)
     -- no telemetry/minmax outer box
     if telemetryEnabled() == false then
       -- no telemetry inner box
-      if not status.hideNoTelemetry then
+      if status.hideNoTelemetry == false then
         libs.drawLib.drawNoTelemetryData(telemetryEnabled)
       end
       utils.drawBlinkBitmap("warn",0,0)
@@ -2752,12 +2776,6 @@ local function drawFullScreen(widget)
   libs.drawLib.drawFailsafe();
 
   loadCycle=(loadCycle+1)%8
-  lcd.setColor(CUSTOM_COLOR,utils.colors.darkyellow)
-  local hudrateTxt = string.format("%.1ffps",widget.vars.hudrate)
-  lcd.drawText(480,LCD_H-28,hudrateTxt,SMLSIZE+CUSTOM_COLOR+RIGHT)
-  lcd.setColor(CUSTOM_COLOR,lcd.RGB(255,0,0))
-  maxmem = math.max(collectgarbage("count")*1024, maxmem)
-  lcd.drawNumber(480,LCD_H-14,maxmem,SMLSIZE+CUSTOM_COLOR+RIGHT)
 end
 
 -- are we full screen? if
