@@ -280,11 +280,11 @@ local function updateMenuItems()
       if value == 1 then        -- GMapCatcher
         menuItems[idx2][4] = -2
         menuItems[idx2][5] = 17
-        menuItems[idx2][3] = -2
+        menuItems[idx2][3] = math.max(value2,-2)
       else                      -- Google
         menuItems[idx2][4] = 1
         menuItems[idx2][5] = 20
-        menuItems[idx2][3] = 1
+        menuItems[idx2][3] = math.max(value2,1)
       end
     end
 
@@ -296,11 +296,11 @@ local function updateMenuItems()
       if value == 1 then        -- GMapCatcher
         menuItems[idx2][4] = -2
         menuItems[idx2][5] = 17
-        menuItems[idx2][3] = 17
+        menuItems[idx2][3] = math.min(value2,17)
       else                      -- Google
         menuItems[idx2][4] = 1
         menuItems[idx2][5] = 20
-        menuItems[idx2][3] = 20
+        menuItems[idx2][3] = math.min(value2,20)
       end
     end
 
@@ -507,7 +507,7 @@ local function drawConfigMenuBars()
   lcd.drawFilledRectangle(0,LCD_H-20, LCD_W, 20, CUSTOM_COLOR)
   lcd.drawRectangle(0, LCD_H-20, LCD_W, 20, CUSTOM_COLOR)
   lcd.setColor(CUSTOM_COLOR,WHITE)
-  lcd.drawText(LCD_W,3,"Yaapu Telemetry Widget 2.0.0 beta2".." ("..'d23ad61'..")",CUSTOM_COLOR+SMLSIZE+RIGHT)
+  lcd.drawText(LCD_W,3,"Yaapu Telemetry Widget 2.0.0 beta2".." ("..'3e285e4'..")",CUSTOM_COLOR+SMLSIZE+RIGHT)
   lcd.drawText(0,0,info.name,CUSTOM_COLOR)
   lcd.drawText(0,LCD_H-20+1,getConfigFilename(),CUSTOM_COLOR)
   lcd.drawText(LCD_W,LCD_H-20+1,itemIdx,CUSTOM_COLOR+RIGHT)

@@ -140,3 +140,14 @@ Horus version 1.9.6 - dev
 - better handling of status text messages
 - added support for CRSF telemetry packets with variable size
 - tuned script for lower cpu with CRSF
+
+Horux version 2.0.0 - beta2
+
+- added option to pause widget from config menu
+- edgetex fixes
+- new maps layout
+- new plot layout
+- new main layout with bigger fonts
+- ethos theme support (same look as ethos version)
+- new wfq scheduler for bg tasks (better CPU usage)
+- removed dependency from gvars
