@@ -1,4 +1,7 @@
+
 # Yaapu Telemetry Script and Widget
+
+### please read the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki) for more info
 
 This is the home of the Yaapu Telemetry Script project, an [ArduPilot](http://ardupilot.org/ardupilot/index.html) [LUA](https://www.lua.org/about.html) telemetry script for radios running [OpenTX](https://www.open-tx.org/) and [EdgeTX](http://www.edgetx.org)
 
@@ -15,8 +18,6 @@ Supports:
 - **the latest release versions are downloadable from the [releases](https://github.com/yaapu/FrskyTelemetryScript/releases) section or from the [clone/download](https://github.com/yaapu/FrskyTelemetryScript/archive/master.zip) button of the [master branch](https://github.com/yaapu/FrskyTelemetryScript/tree/master)** 
 - **the latest versions are downloadable from the [clone/download](https://github.com/yaapu/FrskyTelemetryScript/archive/master.zip) button of the [dev branch](https://github.com/yaapu/FrskyTelemetryScript/tree/dev)** 
 - **the latest dev versions are downloadable from the [clone/download](https://github.com/yaapu/FrskyTelemetryScript/archive/dev.zip) button of the [dev branch](https://github.com/yaapu/FrskyTelemetryScript/tree/dev)** 
-
-### please read the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki) for more info
 
 OpenTX/EdgeTX Color LCD 480x272
 
