@@ -15,8 +15,8 @@ Supports:
  - [MavToPT](https://github.com/zs6buj/MavlinkToPassthru) project
 
 **Downloading**
-- **the latest release versions are downloadable from the [releases](https://github.com/yaapu/FrskyTelemetryScript/releases) section or from the [clone/download](https://github.com/yaapu/FrskyTelemetryScript/archive/master.zip) button of the [master branch](https://github.com/yaapu/FrskyTelemetryScript/tree/master)** 
-- **the latest versions are downloadable from the [clone/download](https://github.com/yaapu/FrskyTelemetryScript/archive/master.zip) button of the [dev branch](https://github.com/yaapu/FrskyTelemetryScript/tree/dev)** 
+- **the latest release versions are downloadable from the [releases](https://github.com/yaapu/FrskyTelemetryScript/releases) section** 
+- **the latest versions are downloadable from the [clone/download](https://github.com/yaapu/FrskyTelemetryScript/archive/master.zip) button of the [master branch](https://github.com/yaapu/FrskyTelemetryScript/tree/master)** 
 - **the latest dev versions are downloadable from the [clone/download](https://github.com/yaapu/FrskyTelemetryScript/archive/dev.zip) button of the [dev branch](https://github.com/yaapu/FrskyTelemetryScript/tree/dev)** 
 
 OpenTX/EdgeTX Color LCD 480x272
