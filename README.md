@@ -1,11 +1,11 @@
-# Yaapu Telemetry Script and Widget (DEV BRANCH)
+# Yaapu Telemetry Script and Widget
 
 This is the home of the Yaapu Telemetry Script project, an [ArduPilot](http://ardupilot.org/ardupilot/index.html) [LUA](https://www.lua.org/about.html) telemetry script for radios running [OpenTX](https://www.open-tx.org/) and [EdgeTX](http://www.edgetx.org)
 
 Supports:
  - [OpenTX](https://www.open-tx.org) 2.3.8 or later
- - [EdgeTX](http://www.edgetx.org) version 2.7 or later with Widget [version 2.0.0 or later](https://github.com/yaapu/FrskyTelemetryScript/archive/dev.zip)
- - [Ethos](https://ethos.frsky-rc.com/) 1.4 or later, download widget [here](https://github.com/yaapu/FrskyTelemetryScript/tree/dev/ETHOS) 
+ - [EdgeTX](http://www.edgetx.org) version 2.7 or later with Widget [version 2.0.0 or later](https://github.com/yaapu/FrskyTelemetryScript/archive/master.zip)
+ - [Ethos](https://ethos.frsky-rc.com/) 1.4 or later, download widget [here](https://github.com/yaapu/FrskyTelemetryScript/tree/master/ETHOS) 
  - FRSKY S.Port (setup info [here](https://ardupilot.org/copter/docs/common-connecting-sport-fport.html))
  - TBS Crossfire (setup info [here](https://github.com/yaapu/FrskyTelemetryScript/wiki/Passthrough-over-CRSF-and-ExpressLRS))
  - [ExpressLRS](https://www.expresslrs.org/) (setup info [here](https://github.com/yaapu/FrskyTelemetryScript/wiki/Passthrough-over-CRSF-and-ExpressLRS))
@@ -13,6 +13,7 @@ Supports:
 
 **Downloading**
 - **the latest release versions are downloadable from the [releases](https://github.com/yaapu/FrskyTelemetryScript/releases) section or from the [clone/download](https://github.com/yaapu/FrskyTelemetryScript/archive/master.zip) button of the [master branch](https://github.com/yaapu/FrskyTelemetryScript/tree/master)** 
+- **the latest versions are downloadable from the [clone/download](https://github.com/yaapu/FrskyTelemetryScript/archive/master.zip) button of the [dev branch](https://github.com/yaapu/FrskyTelemetryScript/tree/dev)** 
 - **the latest dev versions are downloadable from the [clone/download](https://github.com/yaapu/FrskyTelemetryScript/archive/dev.zip) button of the [dev branch](https://github.com/yaapu/FrskyTelemetryScript/tree/dev)** 
 
 ### please read the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki) for more info
