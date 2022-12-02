@@ -507,7 +507,7 @@ local function drawConfigMenuBars()
   lcd.drawFilledRectangle(0,LCD_H-20, LCD_W, 20, CUSTOM_COLOR)
   lcd.drawRectangle(0, LCD_H-20, LCD_W, 20, CUSTOM_COLOR)
   lcd.setColor(CUSTOM_COLOR,WHITE)
-  lcd.drawText(LCD_W,3,"Yaapu Telemetry Widget 2.0.0 beta2".." ("..'3e285e4'..")",CUSTOM_COLOR+SMLSIZE+RIGHT)
+  lcd.drawText(LCD_W,3,"Yaapu Telemetry Widget 2.0.x dev".." ("..'33c7eba'..")",CUSTOM_COLOR+SMLSIZE+RIGHT)
   lcd.drawText(0,0,info.name,CUSTOM_COLOR)
   lcd.drawText(0,LCD_H-20+1,getConfigFilename(),CUSTOM_COLOR)
   lcd.drawText(LCD_W,LCD_H-20+1,itemIdx,CUSTOM_COLOR+RIGHT)
@@ -611,7 +611,7 @@ end
 -- RUN
 --------------------------
 local function run(event)
-  lcd.setColor(CUSTOM_COLOR, lcd.RGB(50,50,50)) -- hex 0x084c7b -- 073f66
+  lcd.setColor(CUSTOM_COLOR, lcd.RGB(50, 50, 50)) -- hex 0x084c7b -- 073f66
   lcd.clear(CUSTOM_COLOR)
   ---------------------
   -- CONFIG MENU

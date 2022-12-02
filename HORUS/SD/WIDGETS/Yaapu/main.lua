@@ -22,6 +22,7 @@ local unitLabel = getGeneralSettings().imperial == 0 and "m" or "ft"
 local unitLongScale = getGeneralSettings().imperial == 0 and 1/1000 or 1/1609.34
 local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 
+
 -----------
 -- CONFIG
 -----------
@@ -85,86 +86,87 @@ local conf = {
 ------------------------------
 -- TELEMETRY DATA
 ------------------------------
-local telemetry = {}
--- STATUS
-telemetry.flightMode = 0
-telemetry.simpleMode = 0
-telemetry.landComplete = 0
-telemetry.statusArmed = 0
-telemetry.battFailsafe = 0
-telemetry.ekfFailsafe = 0
-telemetry.failsafe = 0
-telemetry.imuTemp = 0
-telemetry.fencePresent = 0
-telemetry.fenceBreached = 0
--- GPS
-telemetry.numSats = 0
-telemetry.gpsStatus = 0
-telemetry.gpsHdopC = 100
-telemetry.gpsAlt = 0
--- BATT 1
-telemetry.batt1volt = 0
-telemetry.batt1current = 0
-telemetry.batt1mah = 0
--- BATT 2
-telemetry.batt2volt = 0
-telemetry.batt2current = 0
-telemetry.batt2mah = 0
--- HOME
-telemetry.homeDist = 0
-telemetry.homeAlt = 0
-telemetry.homeAngle = -1
--- VELANDYAW
-telemetry.vSpeed = 0
-telemetry.hSpeed = 0
-telemetry.yaw = 0
--- ROLLPITCH
-telemetry.roll = 0
-telemetry.pitch = 0
-telemetry.range = 0
--- PARAMS
-telemetry.frameType = -1
-telemetry.batt1Capacity = 0
-telemetry.batt2Capacity = 0
--- GPS
-telemetry.lat = nil
-telemetry.lon = nil
-telemetry.homeLat = nil
-telemetry.homeLon = nil
-telemetry.strLat = "N/A"
-telemetry.strLon = "N/A"
--- WP
-telemetry.wpNumber = 0
-telemetry.wpDistance = 0
-telemetry.wpXTError = 0
-telemetry.wpBearing = 0
-telemetry.wpCommands = 0
-telemetry.wpOffsetFromCog = 0
--- RC channels
-telemetry.rcchannels = {}
--- VFR
-telemetry.airspeed = 0
-telemetry.throttle = 0
-telemetry.baroAlt = 0
--- Total distance
-telemetry.totalDist = 0
--- RPM
-telemetry.rpm1 = 0
-telemetry.rpm2 = 0
--- TERRAIN
-telemetry.heightAboveTerrain = 0
-telemetry.terrainUnhealthy = 0
--- WIND
-telemetry.trueWindSpeed = 0
-telemetry.trueWindAngle = 0
-telemetry.apparentWindSpeed = 0
-telemetry.apparentWindAngle = 0
--- RSSI
-telemetry.rssi = 0
-telemetry.rssiCRSF = 0
--- PARAMS
-telemetry.paramId = nil
-telemetry.paramValue = nil
+local telemetry = {
+  -- STATUS
+  flightMode = 0,
+  simpleMode = 0,
+  landComplete = 0,
+  statusArmed = 0,
+  battFailsafe = 0,
+  ekfFailsafe = 0,
+  failsafe = 0,
+  imuTemp = 0,
+  fencePresent = 0,
+  fenceBreached = 0,
+  -- GPS
+  numSats = 0,
+  gpsStatus = 0,
+  gpsHdopC = 100,
+  gpsAlt = 0,
+  -- BATT 1
+  batt1volt = 0,
+  batt1current = 0,
+  batt1mah = 0,
+  -- BATT 2
+  batt2volt = 0,
+  batt2current = 0,
+  batt2mah = 0,
+  -- HOME
+  homeDist = 0,
+  homeAlt = 0,
+  homeAngle = -1,
+  -- VELANDYAW
+  vSpeed = 0,
+  hSpeed = 0,
+  yaw = 0,
+  -- ROLLPITCH
+  roll = 0,
+  pitch = 0,
+  range = 0,
+  -- PARAMS
+  frameType = -1,
+  batt1Capacity = 0,
+  batt2Capacity = 0,
+  -- GPS
+  lat = nil,
+  lon = nil,
+  homeLat = nil,
+  homeLon = nil,
+  strLat = "N/A",
+  strLon = "N/A",
+  -- WP
+  wpNumber = 0,
+  wpDistance = 0,
+  wpXTError = 0,
+  wpBearing = 0,
+  wpCommands = 0,
+  wpOffsetFromCog = 0,
+  -- RC channels
+  rcchannels = {},
+  -- VFR
+  airspeed = 0,
+  throttle = 0,
+  baroAlt = 0,
+  -- Total distance
+  totalDist = 0,
+  -- RPM
+  rpm1 = 0,
+  rpm2 = 0,
+  -- TERRAIN
+  heightAboveTerrain = 0,
+  terrainUnhealthy = 0,
+  -- WIND
+  trueWindSpeed = 0,
+  trueWindAngle = 0,
+  apparentWindSpeed = 0,
+  apparentWindAngle = 0,
+  -- RSSI
+  rssi = 0,
+  rssiCRSF = 0,
+  -- PARAMS
+  paramId = nil,
+  paramValue = nil,
+}
 
 --------------------------------
 -- STATUS DATA
@@ -572,6 +574,21 @@ local function triggerReset()
   modelChangePending = true
 end
 
+local function getConfigTriggerFilename()
+  local info = model.getInfo()
+  return "/WIDGETS/Yaapu/cfg/" .. string.lower(string.gsub(info.name, "[%c%p%s%z]", "")..".reload")
+end
+
+local function triggerConfigReload()
+  local cfg = assert(io.open(getConfigTriggerFilename(),"w"))
+  if cfg ~= nil then
+    io.write(cfg, "1")
+    io.close(cfg)
+  end
+  collectgarbage()
+  collectgarbage()
+end
+
 utils.failsafeActive = function(telemetry)
   if telemetry.ekfFailsafe == 0 and telemetry.battFailsafe == 0 and telemetry.failsafe == 0 then
     return false
@@ -803,6 +820,20 @@ utils.pushMessage = function(severity, msg)
   msg = nil
 end
 
+utils.haversine = function(lat1, lon1, lat2, lon2)
+    lat1 = lat1 * math.pi / 180
+    lon1 = lon1 * math.pi / 180
+    lat2 = lat2 * math.pi / 180
+    lon2 = lon2 * math.pi / 180
+
+    lat_dist = lat2-lat1
+    lon_dist = lon2-lon1
+    lat_hsin = math.pow(math.sin(lat_dist/2),2)
+    lon_hsin = math.pow(math.sin(lon_dist/2),2)
+
+    a = lat_hsin + math.cos(lat1) * math.cos(lat2) * lon_hsin
+    return 2 * 6372.8 * math.asin(math.sqrt(a)) * 1000
+end
 
 utils.getAngleFromLatLon = function(lat1, lon1, lat2, lon2)
   local la1 = math.rad(lat1)
@@ -854,17 +885,36 @@ utils.decToDMSFull = function(dec,lat)
 	return D .. string.format("%s%d'%04.1f", conf.degSymbol, M, S) .. (lat and (dec >= 0 and "E" or "W") or (dec >= 0 and "N" or "S"))
 end
 
+--[[
+--]]
+
+status.travelLat = nil
+status.travelLon = nil
+status.lastTravelLatLonSampleTime = nil
+
 utils.updateTotalDist = function()
+  local now = getTime()
   if telemetry.armingStatus == 0 then
-    status.lastUpdateTotDist = getTime()
+    status.lastUpdateTotDist = now
     return
   end
-  local delta = getTime() - status.lastUpdateTotDist
-  local avgSpeed = (telemetry.hSpeed + status.lastSpeed)/2
-  status.lastUpdateTotDist = getTime()
-  status.lastSpeed = telemetry.hSpeed
-  if avgSpeed * 0.1 > 1 then
-    telemetry.totalDist = telemetry.totalDist + (avgSpeed * 0.1 * delta * 0.01) --hSpeed dm/s, getTime()/100 secs
+  if telemetry.lat ~= nil and telemetry.lon ~= nil then
+    if status.travelLat == nil or status.travelLon == nil then
+      status.travelLat = telemetry.lat
+      status.travelLon = telemetry.lon
+      status.lastTravelLatLonSampleTime = now
+    end
+
+    if now - status.lastTravelLatLonSampleTime > 50 then
+      local travelDist = utils.haversine(telemetry.lat, telemetry.lon, status.travelLat, status.travelLon)
+      -- discard sampling errors
+      if travelDist < 10000 then
+        telemetry.totalDist = telemetry.totalDist + travelDist
+      end
+      status.travelLat = telemetry.lat
+      status.travelLon = telemetry.lon
+      status.lastTravelLatLonSampleTime = now
+    end
   end
 end
 
@@ -1663,13 +1713,14 @@ local function reset()
       -- done
       resetPhase = 7
     elseif resetPhase == 7 then
-      utils.pushMessage(7,"Yaapu Telemetry Widget 2.0.0 beta2")
+      utils.pushMessage(7,"Yaapu Telemetry Widget 2.0.x dev")
       utils.playSound("yaapu")
       -- on model change reload config!
       if modelChangePending == true then
         -- force load model config
         loadConfigPending = true
-        model.setGlobalVariable(8, 8, 99)
+        triggerConfigReload()
+        --model.setGlobalVariable(8, 8, 99)
       end
       resetPhase = 0
       resetPending = false
@@ -2119,11 +2170,6 @@ local function crossfirePop()
     return nil, nil ,nil ,nil
 end
 
-local function getConfigTriggerFilename()
-  local info = model.getInfo()
-  return "/WIDGETS/Yaapu/cfg/" .. string.lower(string.gsub(info.name, "[%c%p%s%z]", "")..".reload")
-end
-
 local function loadConfig(init)
   -- load menu library
   local menuLib = utils.doLibrary("../menu")
@@ -2176,9 +2222,6 @@ local timerWheel = getTime()
 local updateCog = 0
 
 local function task5HzA(widget, now)
-  -- update total distance as often as po
-  utils.updateTotalDist()
-
   -- handle page emulation
   if now - timerPage > 50 then
     local chValue = getValue(conf.screenWheelChannelId)
@@ -2187,7 +2230,7 @@ local function task5HzA(widget, now)
     status.screenTogglePage = utils.getScreenTogglePage(widget,conf,status)
     timerPage = now
   end
-
+  utils.updateTotalDist()
   telemetry.rssi = getRSSI()
 end
 
@@ -2309,8 +2352,8 @@ local function task05HzA(widget, now)
 end
 
 
-local tasks = {
-  {0, 20, task5HzA},     -- 5.0Hz
+local bgTasks = {
+  {0, 35, task5HzA},     -- 3.0Hz
   {0, 50, task2HzA},     -- 2.0Hz
   {0, 50, task2HzB},     -- 2.0Hz
   {0, 50, task2HzC},     -- 2.0Hz
@@ -2318,7 +2361,7 @@ local tasks = {
   {0, 200, task05HzA},   -- 0.5Hz
 }
 
-local function checkTaskTimeConstraints(now, task_id)
+local function checkTaskTimeConstraints(now, tasks, task_id)
   return (now - tasks[task_id][1]) >= tasks[task_id][2]
 end
 
@@ -2331,7 +2374,7 @@ utils.runScheduler = function(widget, tasks)
   for taskId=1,#tasks
   do
     delay = (now - (tasks[taskId][1]))/tasks[taskId][2]
-    if (delay >= maxDelay and checkTaskTimeConstraints(now, taskId)) then
+    if (delay >= maxDelay and checkTaskTimeConstraints(now, tasks, taskId)) then
       maxDelay = delay
       maxDelayTaskId = taskId
     end
@@ -2360,7 +2403,10 @@ local function backgroundTasks(widget,telemetryLoops)
     end
   end
 
-  utils.runScheduler(widget, tasks)
+  for i=1,3
+  do
+    utils.runScheduler(widget, bgTasks)
+  end
 
   -- blinking support
   if now - blinktime > 65 then
@@ -2392,7 +2438,7 @@ local function init()
   -- load battery config
   utils.loadBatteryConfigFile()
   -- ok done
-  utils.pushMessage(7,"Yaapu Telemetry Widget 2.0.0 beta2".." ("..'d23ad61'..")")
+  utils.pushMessage(7,"Yaapu Telemetry Widget 2.0.x dev".." ("..'33c7eba'..")")
   utils.playSound("yaapu")
   -- fix for generalsettings lazy loading...
   unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
@@ -2406,16 +2452,6 @@ local function init()
   status.unitConversion[4] = conf.vertSpeedMultiplier
   status.unitConversion[5] = 1
 
-  --[[
-  if ( not type(model.getGlobalVariable(BACKLIGHT_GV,0)) == 'number' ) then
-    model.setGlobalVariable(BACKLIGHT_GV, 0, 0)
-  end
-
-  if ( not type(model.getGlobalVariable(CONF_GV,CONF_FM_GV)) == 'number') then
-    model.setGlobalVariable(CONF_GV, CONF_FM_GV, 0 )
-    print('luaDebug CFG')
-  end
-  --]]
   -- check if EdgeTx >= 2.8
   local ver, radio, maj, minor, rev, osname = getVersion()
   if osname == 'EdgeTX' and maj >= 2 and minor >= 8 then
@@ -2667,6 +2703,39 @@ local fgclock = 0
 
 local screenByPageMapping = {1,1,1,1,1,1,2,3}
 
+local function taskResetLayout(widget, now)
+  -- reset phase 2 if reset pending
+  if resetLayoutPending == true then
+    resetLayouts()
+  elseif resetPending == true then
+    reset()
+  end
+end
+
+local function taskScreenChange(widget, now)
+  if currentPage ~= widget.options["Screen Type"] then
+    currentPage = widget.options["Screen Type"]
+    onChangePage(widget)
+  end
+end
+
+local function taskModelChange(widget, now)
+  -- frametype and model name
+  local info = model.getInfo()
+  -- model change event
+  if status.currentModel ~= info.name then
+    status.currentModel = info.name
+    -- trigger reset
+    triggerReset()
+  end
+end
+
+local fgTasks = {
+  {0, 100, taskModelChange},    -- 1.0Hz
+  {0, 50, taskScreenChange},    -- 2.0Hz
+  {0, 50, taskResetLayout},     -- 2.0Hz
+}
+
 -- Called when script is visible
 local function drawFullScreen(widget)
   -- when page 1 goes to foreground run bg tasks
@@ -2728,33 +2797,7 @@ local function drawFullScreen(widget)
     drawInitialingMsg()
   end
 
-  if fgclock % 2 == 1 then
-    -- reset phase 2 if reset pending
-    if resetLayoutPending == true then
-      resetLayouts()
-    elseif resetPending == true then
-      reset()
-    end
-  end
-
-  if fgclock % 4 == 0 then
-    if currentPage ~= widget.options["Screen Type"] then
-      currentPage = widget.options["Screen Type"]
-      onChangePage(widget)
-    end
-  end
-
-  if fgclock % 8 == 2 then
-    -- frametype and model name
-    local info = model.getInfo()
-    -- model change event
-    if status.currentModel ~= info.name then
-      status.currentModel = info.name
-      -- trigger reset
-      triggerReset()
-    end
-  end
-  fgclock = (fgclock % 8) + 1
+  utils.runScheduler(widget, fgTasks)
 
   if conf.pauseTelemetry == true then
     libs.drawLib.drawWidgetPaused()
@@ -2771,9 +2814,8 @@ local function drawFullScreen(widget)
         utils.drawBlinkBitmap("minmax",0,0)
       end
     end
+    libs.drawLib.drawFailsafe();
   end
-
-  libs.drawLib.drawFailsafe();
 
   loadCycle=(loadCycle+1)%8
 end

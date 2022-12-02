@@ -90,6 +90,74 @@ function drawLib.computeOutCode(x,y,xmin,ymin,xmax,ymax)
     return code;
 end
 
+--[[
+// x1, y1, x2, y2, xmin, ymax, xmax, ymin //
+if not(x1<xmin and x2<xmin) and not(x1>xmax and x2>xmax) then
+  if not(y1<ymin and y2<ymin) and not(y1>ymax and y2>ymax) then
+    x[1]=x1
+    y[1]=y1
+    x[2]=x2
+    y[2]=y2
+    i=1
+    repeat
+      if x[i] < xmin then
+        x[i] = xmin
+        y[i] = ((y2-y1)/(x2-x1))*(xmin-x1)+y1
+      else if x[i] > xmax then
+        x[i] = xmax
+        y[i] = ((y2-y1)/(x2-x1))*(xmax-x1)+y1
+      end if
+      if y[i] < ymin then
+        y[i] = ymin
+        x[i] = ((x2-x1)/(y2-y1))*(ymin-y1)+x1
+        else if y[i] > ymax then
+        y[i] = ymax
+        x[i] = ((x2-x1)/(y2-y1))*(ymax-y1)+x1
+      end if
+        i = i + 1
+    until i>2
+    if not(x[1]<xmin and x[2]<xmin) and not(x[1]>xmax and x[2]>xmax) then
+        drawLine(x[1],y[1],x[2],y[2])
+    end if
+  end if
+end if
+--]]
+
+function drawLib.drawLineWithClipping(x1,y1,x2,y2,style,xmin,xmax,ymin,ymax,color)
+  local x= {}
+  local y = {}
+  if not(x1 < xmin and x2 < xmin) and not(x1 > xmax and x2 > xmax) then
+    if not(y1 < ymin and y2 < ymin) and not(y1 > ymax and y2 > ymax) then
+      x[1]=x1
+      y[1]=y1
+      x[2]=x2
+      y[2]=y2
+      for i=1,2
+      do
+        if x[i] < xmin then
+          x[i] = xmin
+          y[i] = ((y2-y1)/(x2-x1))*(xmin-x1)+y1
+        elseif x[i] > xmax then
+          x[i] = xmax
+          y[i] = ((y2-y1)/(x2-x1))*(xmax-x1)+y1
+        end
+
+        if y[i] < ymin then
+          y[i] = ymin
+          x[i] = ((x2-x1)/(y2-y1))*(ymin-y1)+x1
+        elseif y[i] > ymax then
+          y[i] = ymax
+          x[i] = ((x2-x1)/(y2-y1))*(ymax-y1)+x1
+        end
+      end
+      if not(x[1] < xmin and x[2] < xmin) and not(x[1] > xmax and x[2] > xmax) then
+        drawLib.drawLine(x[1],y[1],x[2],y[2], style,color)
+      end
+    end
+  end
+end
+
+--[[
 -- Cohen–Sutherland clipping algorithm
 -- https://en.wikipedia.org/wiki/Cohen%E2%80%93Sutherland_algorithm
 function drawLib.drawLineWithClipping(x0,y0,x1,y1,style,xmin,xmax,ymin,ymax,color)
@@ -99,11 +167,11 @@ function drawLib.drawLineWithClipping(x0,y0,x1,y1,style,xmin,xmax,ymin,ymax,colo
   local accept = false;
 
   while (true) do
-    if ( bit32.bor(outcode0,outcode1) == 0) then
+    if ( bit32.bor(outcode0,outcode1) == CS_INSIDE) then
       -- bitwise OR is 0: both points inside window; trivially accept and exit loop
       accept = true;
       break;
-    elseif (bit32.band(outcode0,outcode1) ~= 0) then
+    elseif (bit32.band(outcode0,outcode1) ~= CS_INSIDE) then
       -- bitwise AND is not 0: both points share an outside zone (LEFT, RIGHT, TOP, BOTTOM)
       -- both must be outside window; exit loop (accept is false)
       break;
@@ -113,19 +181,19 @@ function drawLib.drawLineWithClipping(x0,y0,x1,y1,style,xmin,xmax,ymin,ymax,colo
       local x = 0
       local y = 0
       -- At least one endpoint is outside the clip rectangle; pick it.
-      local outcodeOut = outcode0 ~= 0 and outcode0 or outcode1
+      local outcodeOut = outcode0 ~= CS_INSIDE and outcode0 or outcode1
       -- No need to worry about divide-by-zero because, in each case, the
       -- outcode bit being tested guarantees the denominator is non-zero
-      if bit32.band(outcodeOut,4) ~= 0 then --point is above the clip window
+      if bit32.band(outcodeOut,CS_BOTTOM) ~= CS_INSIDE then --point is above the clip window
         x = x0 + (x1 - x0) * (ymax - y0) / (y1 - y0)
         y = ymax
-      elseif bit32.band(outcodeOut,8) ~= 0 then --point is below the clip window
+      elseif bit32.band(outcodeOut,CS_TOP) ~= CS_INSIDE then --point is below the clip window
         x = x0 + (x1 - x0) * (ymin - y0) / (y1 - y0)
         y = ymin
-      elseif bit32.band(outcodeOut,2) ~= 0 then --point is to the right of clip window
+      elseif bit32.band(outcodeOut,CS_RIGHT) ~= CS_INSIDE then --point is to the right of clip window
         y = y0 + (y1 - y0) * (xmax - x0) / (x1 - x0)
         x = xmax
-      elseif bit32.band(outcodeOut,1) ~= 0 then --point is to the left of clip window
+      elseif bit32.band(outcodeOut,CS_LEFT) ~= CS_INSIDE then --point is to the left of clip window
         y = y0 + (y1 - y0) * (xmin - x0) / (x1 - x0)
         x = xmin
       end
@@ -143,9 +211,14 @@ function drawLib.drawLineWithClipping(x0,y0,x1,y1,style,xmin,xmax,ymin,ymax,colo
     end
   end
   if accept then
+#ifdef X10_OPENTX_221
     drawLib.drawLine(x0,y0,x1,y1, style, color)
+#else
+    lcd.drawLine(x0,y0,x1,y1, style, color)
+#endif
   end
 end
+--]]
 
 function drawLib.drawLineByOriginAndAngle(ox,oy,angle,len,style,xmin,xmax,ymin,ymax,color,drawDiameter)
   local xx = math.cos(math.rad(angle)) * len * 0.5
@@ -478,7 +551,7 @@ function drawLib.drawNoTelemetryData(telemetryEnabled)
     lcd.drawFilledRectangle(90,76, 300, 80, CUSTOM_COLOR)
     lcd.setColor(CUSTOM_COLOR,utils.colors.white)
     lcd.drawText(110, 85, "no telemetry data", DBLSIZE+CUSTOM_COLOR)
-    lcd.drawText(130, 125, "Yaapu Telemetry Widget 2.0.0 beta2", SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(130, 125, "Yaapu Telemetry Widget 2.0.x dev", SMLSIZE+CUSTOM_COLOR)
     utils.drawTopBar()
     local info = model.getInfo()
     lcd.setColor(CUSTOM_COLOR,WHITE)
@@ -494,7 +567,7 @@ function drawLib.drawWidgetPaused()
     lcd.drawFilledRectangle(90,76, 300, 80, CUSTOM_COLOR)
     lcd.setColor(CUSTOM_COLOR,BLACK)
     lcd.drawText(110, 85, "WIDGET PAUSED", DBLSIZE+CUSTOM_COLOR)
-    lcd.drawText(95, 125, "Yaapu Telemetry Widget 2.0.0 beta2".."("..'d23ad61'..")", SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(95, 125, "Yaapu Telemetry Widget 2.0.x dev".."("..'33c7eba'..")", SMLSIZE+CUSTOM_COLOR)
   end
 end
 
