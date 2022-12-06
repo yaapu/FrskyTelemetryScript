@@ -19,6 +19,15 @@ Supports:
 - **the latest versions are downloadable from the [clone/download](https://github.com/yaapu/FrskyTelemetryScript/archive/master.zip) button of the [master branch](https://github.com/yaapu/FrskyTelemetryScript/tree/master)** 
 - **the latest dev/experimental versions are downloadable from the [clone/download](https://github.com/yaapu/FrskyTelemetryScript/archive/dev.zip) button of the [dev branch](https://github.com/yaapu/FrskyTelemetryScript/tree/dev)** 
 
+## Support this project!
+
+This project is free and will always be.
+
+If you like it you can support it by making a donation!
+
+[![donate](https://user-images.githubusercontent.com/30294218/61724877-16fa7a80-ad6f-11e9-80de-9771e0b820ae.png)](https://paypal.me/yaapu)
+
+
 OpenTX/EdgeTX Color LCD 480x272
 
 ![image](https://user-images.githubusercontent.com/30294218/198382377-cb48032f-ea5c-4f8d-aa12-f592c1e09358.png)
@@ -49,14 +58,3 @@ Ethos Color LCD 480x320 (X18)
 Ethos Color LCD 800x480 (X20)
 
 ![Ethos X20](https://user-images.githubusercontent.com/30294218/194421598-be8c3dbd-9ac4-494a-bad9-9bd668f105ce.png)
-
-
-
-
-## Donation
-
-This project is free and will always be.
-
-If you like it you can support it by making a donation!
-
-[![donate](https://user-images.githubusercontent.com/30294218/61724877-16fa7a80-ad6f-11e9-80de-9771e0b820ae.png)](https://paypal.me/yaapu)
