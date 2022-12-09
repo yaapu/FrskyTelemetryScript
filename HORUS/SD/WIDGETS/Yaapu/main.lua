@@ -497,6 +497,7 @@ local opentx = tonumber(maj..minor..rev)
 -- battery % by voltage
 local battPercByVoltage = {}
 
+local maxmem = 0
 
 -- for better performance we cache lcd.RGB()
 utils.initColors = function()
@@ -681,6 +682,7 @@ utils.clearTable = function(t)
   t = nil
   collectgarbage()
   collectgarbage()
+  maxmem = 0
 end
 
 local function resetLayouts()
@@ -738,6 +740,7 @@ utils.unloadBitmap = function(name)
     -- force call to luaDestroyBitmap()
     collectgarbage()
     collectgarbage()
+    maxmem = 0
   end
 end
 
@@ -767,7 +770,7 @@ utils.playSoundByFlightMode = function(flightMode)
     if status.currentFrameType.flightModes[flightMode] ~= nil then
       utils.lcdBacklightOn()
       -- rover sound files differ because they lack "flight" word
-      playFile(soundFileBasePath.."/"..conf.language.."/".. string.lower(status.currentFrameType.flightModes[flightMode]) .. ((status.frameTypes[telemetry.frameType]=="r" or status.frameTypes[telemetry.frameType]=="b") and "_r.wav" or ".wav"))
+      playFile(soundFileBasePath.."/"..conf.language.."/".. status.currentFrameType.flightModes[flightMode] .. ((status.frameTypes[telemetry.frameType]=="r" or status.frameTypes[telemetry.frameType]=="b") and "_r.wav" or ".wav"))
     end
   end
 end
@@ -782,20 +785,27 @@ end
 
 local lastMsgTime = getTime()
 
+--[[
+{"disable incoming msg beep:", "S2", 1, { "no", "only for INF severity", "always" }, { 1, 2, 3 } },
+  utils.mavSeverity[0] = {"EMR", utils.colors.orange}
+  utils.mavSeverity[1] = {"ALR", utils.colors.orange}
+  utils.mavSeverity[2] = {"CRT", utils.colors.orange}
+  utils.mavSeverity[3] = {"ERR", utils.colors.orange}
+  utils.mavSeverity[4] = {"WRN", utils.colors.orange}
+  utils.mavSeverity[5] = {"NTC", utils.colors.green}
+  utils.mavSeverity[6] = {"INF", WHITE}
+  utils.mavSeverity[7] = {"DBG", WHITE}
+
+--]]
 utils.pushMessage = function(severity, msg)
   if conf.enableHaptic then
     playHaptic(15,0)
   end
   local now = getTime()
   if now - lastMsgTime > 50 then
-    if conf.disableAllSounds == false then
-      if ( severity < 5 and conf.disableMsgBeep < 3) then
-        utils.playSound("../err",true)
-      else
-        if conf.disableMsgBeep < 2 then
-          utils.playSound("../inf",true)
-        end
-      end
+    local silence = conf.disableMsgBeep == 3 or (severity >=5 and conf.disableMsgBeep == 2)
+    if silence == false then
+      utils.playSound("../"..utils.mavSeverity[severity][1],true)
     end
     lastMsgTime = now
   end
@@ -1891,7 +1901,6 @@ local function drawMessageScreen()
   local maxPages = tonumber(math.ceil((#status.messages+1)/19))
   local currentPage = 1+tonumber(maxPages - (status.messageCount - status.messageOffset)/19)
 
-  lcd.drawText(LCD_W-2, LCD_H-16, string.format("%d/%d",currentPage,maxPages), SMLSIZE+CUSTOM_COLOR+RIGHT)
   lcd.setColor(CUSTOM_COLOR,utils.colors.grey)
   lcd.drawLine(0,LCD_H-20,405,LCD_H-20,SOLID,CUSTOM_COLOR)
 
@@ -2438,7 +2447,7 @@ local function init()
   -- load battery config
   utils.loadBatteryConfigFile()
   -- ok done
-  utils.pushMessage(7,"Yaapu Telemetry Widget 2.0.x dev".." ("..'33c7eba'..")")
+  utils.pushMessage(7,"Yaapu Telemetry Widget 2.0.x dev".." ("..'c48a83e'..")")
   utils.playSound("yaapu")
   -- fix for generalsettings lazy loading...
   unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
@@ -2477,6 +2486,9 @@ local initDone = 0
 local function create(zone, options)
   -- this vars are widget scoped, each instance has its own set
   local vars = {
+    hudcounter = 0,
+    hudrate = 0,
+    hudstart = 0,
   }
   -- all local vars are shared between widget instances
   -- init() needs to be called only once!
@@ -2648,6 +2660,24 @@ local function fullScreenRequired(widget)
   lcd.drawText(widget.zone.x,widget.zone.y+16,"required",SMLSIZE+CUSTOM_COLOR)
 end
 
+------------------------
+-- CALC HUD REFRESH RATE
+------------------------
+local function calcHudRate(widget)
+  local hudnow = getTime()
+
+  if widget.vars.hudcounter == 0 then
+    widget.vars.hudstart = hudnow
+  else
+    widget.vars.hudrate = widget.vars.hudrate*0.8 + 100*(widget.vars.hudcounter/(hudnow - widget.vars.hudstart + 1))*0.2
+  end
+  --
+  widget.vars.hudcounter=widget.vars.hudcounter+1
+
+  if hudnow - widget.vars.hudstart + 1 > 1000 then
+    widget.vars.hudcounter = 0
+  end
+end
 
 local function loadLayout()
   -- Layout start
@@ -2738,6 +2768,7 @@ local fgTasks = {
 
 -- Called when script is visible
 local function drawFullScreen(widget)
+  calcHudRate(widget)
   -- when page 1 goes to foreground run bg tasks
   if math.max(1,widget.options["Screen Type"]) == 1 then
     -- run bg tasks only if we are not resetting, this prevent cpu limit kill
@@ -2818,6 +2849,12 @@ local function drawFullScreen(widget)
   end
 
   loadCycle=(loadCycle+1)%8
+  lcd.setColor(CUSTOM_COLOR,utils.colors.darkyellow)
+  local hudrateTxt = string.format("%.1ffps",widget.vars.hudrate)
+  lcd.drawText(480,LCD_H-28,hudrateTxt,SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.setColor(CUSTOM_COLOR,lcd.RGB(255,0,0))
+  maxmem = math.max(collectgarbage("count")*1024, maxmem)
+  lcd.drawNumber(480,LCD_H-14,maxmem,SMLSIZE+CUSTOM_COLOR+RIGHT)
 end
 
 -- are we full screen? if

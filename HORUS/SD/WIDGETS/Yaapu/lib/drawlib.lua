@@ -567,7 +567,7 @@ function drawLib.drawWidgetPaused()
     lcd.drawFilledRectangle(90,76, 300, 80, CUSTOM_COLOR)
     lcd.setColor(CUSTOM_COLOR,BLACK)
     lcd.drawText(110, 85, "WIDGET PAUSED", DBLSIZE+CUSTOM_COLOR)
-    lcd.drawText(95, 125, "Yaapu Telemetry Widget 2.0.x dev".."("..'33c7eba'..")", SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(95, 125, "Yaapu Telemetry Widget 2.0.x dev".."("..'c48a83e'..")", SMLSIZE+CUSTOM_COLOR)
   end
 end
 
