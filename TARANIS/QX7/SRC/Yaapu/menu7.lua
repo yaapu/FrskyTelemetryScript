@@ -36,6 +36,11 @@ local unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
 local unitLabel = getGeneralSettings().imperial == 0 and "m" or "ft"
 local unitLongScale = getGeneralSettings().imperial == 0 and 1/1000 or 1/1609.34
 local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
+local function doGarbageCollect()
+    collectgarbage()
+    collectgarbage()
+end
+
 local menuItems = {
   {"voice language:", "L1", 1, { "eng", "ita", "fre", "ger" } , {"en","it","fr","de"} },
   {"batt alert level 1:", "V1", 375, 0,5000,"V",PREC2,5 },
@@ -98,7 +103,7 @@ end
 
 local function getConfigFilename()
   local info = model.getInfo()
-  return "/MODELS/yaapu/" .. string.lower(string.gsub(info.name, "[%c%p%s%z]", "")..".cfg")
+  return "/MODELS/yaapu/" .. string.gsub(info.name, "[%c%p%s%z]", "")..".cfg"
 end
 
 local function applyConfigValues(items,conf)
@@ -134,14 +139,12 @@ local function applyConfigValues(items,conf)
 
   conf.enableHaptic = getMenuItemByName(items,"VIBR")
   menu.editSelected = false
-  collectgarbage()
-  collectgarbage()
+  doGarbageCollect()
 end
 
 local function loadConfig(conf)
   local cfg = io.open(getConfigFilename(),"r")
-  collectgarbage()
-  collectgarbage()
+  doGarbageCollect()
   if cfg ~= nil then
     local str = io.read(cfg,200)
     io.close(cfg)
@@ -161,8 +164,7 @@ local function loadConfig(conf)
       end
     end
   end
-  collectgarbage()
-  collectgarbage()
+  doGarbageCollect()
   applyConfigValues(menuItems,conf)
 end
 
@@ -176,22 +178,20 @@ local function saveConfig(conf)
     end
   end
   local cfg = assert(io.open(getConfigFilename(),"w"))
-  collectgarbage()
-  collectgarbage()
+  doGarbageCollect()
   if cfg ~= nil then
     io.write(cfg,myConfig)
     io.close(cfg)
   end
   myConfig = nil
-  collectgarbage()
-  collectgarbage()
+  doGarbageCollect()
   applyConfigValues(menuItems,conf)
 end
 
 local function drawConfigMenuBars()
   local itemIdx = string.format("%d/%d",menu.selectedItem,#menuItems)
   lcd.drawFilledRectangle(0,0, 128, 7, SOLID)
-  lcd.drawText(0,0,"Yaapu 2.0.0-dev".." ("..'d5cce31'..")",SMLSIZE+INVERS)
+  lcd.drawText(0,0,"Yaapu 2.0.0-dev".." ("..'ae68d48'..")",SMLSIZE+INVERS)
   lcd.drawFilledRectangle(0,LCD_H-8, 128, 8, SOLID)
   lcd.drawText(0,57-1,string.sub(getConfigFilename(),8),SMLSIZE+INVERS)
   lcd.drawText(128,57+1,itemIdx,SMLSIZE+INVERS+RIGHT)
@@ -243,9 +243,9 @@ local function drawConfigMenu(event)
   if event == EVT_ENTER_BREAK or event == 34 then
     menu.editSelected = not menu.editSelected
     menu.updated = true
-  elseif menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_LEFT or event == EVT_PLUS_REPT or event == 36) then
+  elseif menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT or event == EVT_PLUS_REPT or event == 36) then
     incMenuItem(menu.selectedItem)
-  elseif menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_RIGHT or event == EVT_MINUS_REPT or event == 35) then
+  elseif menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_LEFT or event == EVT_MINUS_REPT or event == 35) then
     decMenuItem(menu.selectedItem)
   elseif not menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_LEFT or event == 36) then
     menu.selectedItem = (menu.selectedItem - 1)

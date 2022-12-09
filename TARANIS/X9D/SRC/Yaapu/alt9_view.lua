@@ -36,6 +36,11 @@ local unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
 local unitLabel = getGeneralSettings().imperial == 0 and "m" or "ft"
 local unitLongScale = getGeneralSettings().imperial == 0 and 1/1000 or 1/1609.34
 local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
+local function doGarbageCollect()
+    collectgarbage()
+    collectgarbage()
+end
+
 local initSensors = true
 local gpsLat = nil
 local gpsLon = nil
@@ -88,8 +93,7 @@ local function drawLeftPane(x,drawLib,conf,telemetry,status,battery,battId,getMa
   lcd.drawText(70, 8, unitLongLabel, RIGHT+SMLSIZE)
   lcd.drawNumber(lcd.getLastLeftPos(), 8, telemetry.totalDist*unitLongScale*10, RIGHT+SMLSIZE+PREC1)
   -- needs to be called often for strings created by decToDMSFull() fragment memory
-  collectgarbage()
-  collectgarbage()
+  doGarbageCollect()
 end
 
 -- max 6 extra sensors
@@ -98,7 +102,7 @@ local customSensors = nil
 
 local function getSensorsConfigFilename()
   local info = model.getInfo()
-  return "/MODELS/yaapu/" .. string.lower(string.gsub(info.name, "[%c%p%s%z]", "").."_sensors.lua")
+  return "/MODELS/yaapu/" .. string.gsub(info.name, "[%c%p%s%z]", "").."_sensors.lua"
 end
 
 local function loadSensors()
@@ -111,8 +115,7 @@ local function loadSensors()
   local sensorScript = loadScript(getSensorsConfigFilename())
   customSensors = sensorScript()
   sensorScript = nil
-  collectgarbage()
-  collectgarbage()
+  doGarbageCollect()
   -- handle nil values for warning and critical levels
   for i=1,6
   do
@@ -126,8 +129,7 @@ local function loadSensors()
       end
     end
   end
-  collectgarbage()
-  collectgarbage()
+  doGarbageCollect()
 end
 
 
@@ -193,8 +195,7 @@ local function drawCustomSensors(x,status)
           lcd.drawNumber(x+customSensorXY[i][1], voffset+customSensorXY[i][2], value, flags+prec+color)
         end
         lcd.drawText(lcd.getLastRightPos()-(sensorConfig[7]==MIDSIZE and 1 or 0), customSensorXY[i][2]+(i>2 and 5 or 1),sensorConfig[4],labelColor+SMLSIZE)
-      collectgarbage()
-      collectgarbage()
+        doGarbageCollect()
       end
     end
 end
@@ -398,8 +399,7 @@ local function drawView(drawLib,conf,telemetry,status,battery,battId,getMaxValue
       -- deallocate unused code
       loadSensors = nil
       getSensorsConfigFilename = nil
-      collectgarbage()
-      collectgarbage()
+      doGarbageCollect()
     end
   end
 
