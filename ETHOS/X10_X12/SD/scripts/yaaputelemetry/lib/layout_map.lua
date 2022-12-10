@@ -29,35 +29,17 @@ local function getTime()
 end
 
 
+
 local panel = {}
 local status = nil
 local libs = nil
 
 function panel.draw(widget)
-  libs.mapLib.drawMap(widget, 0, 0, status.mapZoomLevel, 5, 3, status.telemetry.yaw)
-  local alpha = 0.3
-  lcd.color(lcd.RGB(0,0,0,alpha))
-  lcd.pen(SOLID)
-  lcd.drawFilledRectangle(0, 0, 480, 22)
-
+  libs.drawLib.drawTopBar(widget)
+  libs.mapLib.drawMap(widget, 0, 18, 480, 400-18, status.mapZoomLevel, 5, 3, status.telemetry.yaw)
   lcd.color(BLACK)
   lcd.pen(SOLID)
-  lcd.drawFilledRectangle(0, 272-22, 480, 22)
   libs.drawLib.drawStatusBar(widget,nil,2)
-
-  lcd.font(FONT_STD)
-  lcd.color(status.colors.white)
-  lcd.drawText(480, 0, status.telemetry.strLat.."  "..status.telemetry.strLon, RIGHT)
-
-  lcd.font(FONT_STD)
-  lcd.drawText(0, 0, string.format("zoom: %d", status.mapZoomLevel))
-  --lcd.drawText(0, 20, string.format("cog: %.0f", status.cog == nil and 0 or status.cog))
-
-  --[[
-  lcd.font(FONT_XS)
-  lcd.color(status.colors.green)
-  lcd.drawText(LCD_W, 302, "map", RIGHT)
-  --]]
 end
 
 function panel.background(widget)

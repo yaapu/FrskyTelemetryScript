@@ -844,20 +844,44 @@ function utils.decToDMSFull(dec,lat)
 	return D .. string.format("°%d'%04.1f", M, S) .. (lat and (dec >= 0 and "E" or "W") or (dec >= 0 and "N" or "S"))
 end
 
+function utils.haversine(lat1, lon1, lat2, lon2)
+    lat1 = lat1 * math.pi / 180
+    lon1 = lon1 * math.pi / 180
+    lat2 = lat2 * math.pi / 180
+    lon2 = lon2 * math.pi / 180
+
+    lat_dist = lat2-lat1
+    lon_dist = lon2-lon1
+    lat_hsin = math.sin(lat_dist/2)^2
+    lon_hsin = math.sin(lon_dist/2)^2
+
+    a = lat_hsin + math.cos(lat1) * math.cos(lat2) * lon_hsin
+    return 2 * 6372.8 * math.asin(math.sqrt(a)) * 1000
+end
+
 function utils.updateTotalDist()
+  local now = getTime()
   if status.telemetry.armingStatus == 0 then
-    status.lastUpdateTotDist = getTime()
+    status.lastUpdateTotDist = now
     return
   end
-  if status.avgSpeed == 0 then
-    status.avgSpeed = status.telemetry.hSpeed * 0.1 -- m/s
-  end
-  status.avgSpeed = status.avgSpeed*0.5 + status.telemetry.hSpeed*0.5*0.1 -- m/s
-  local delta = getTime() - status.lastUpdateTotDist
-  status.lastUpdateTotDist = getTime()
-  -- check if avgSpeed > 1m/s
-  if status.avgSpeed > 1 then
-    status.telemetry.totalDist = status.telemetry.totalDist + (status.avgSpeed * delta * 0.01) --hSpeed dm/s, getTime()/100 secs
+  if status.telemetry.lat ~= nil and status.telemetry.lon ~= nil then
+    if status.travelLat == nil or status.travelLon == nil then
+      status.travelLat = status.telemetry.lat
+      status.travelLon = status.telemetry.lon
+      status.lastUpdateTotDist = now
+    end
+
+    if now - status.lastUpdateTotDist > 50 then
+      local travelDist = utils.haversine(status.telemetry.lat, status.telemetry.lon, status.travelLat, status.travelLon)
+      -- discard sampling errors
+      if travelDist < 10000 then
+        status.telemetry.totalDist = status.telemetry.totalDist + travelDist
+      end
+      status.travelLat = status.telemetry.lat
+      status.travelLon = status.telemetry.lon
+      status.lastUpdateTotDist = now
+    end
   end
 end
 
@@ -880,16 +904,15 @@ function utils.pushMessage(severity, msg)
   if status.conf.enableHaptic then
     system.playHaptic(15,0)
   end
-  if status.conf.disableAllSounds == false then
-    if ( severity < 5 and status.conf.disableMsgBeep < 3) then
-      utils.playSound("../err", true)
-    else
-      if status.conf.disableMsgBeep < 2 then
-        utils.playSound("../inf", true)
-      end
+  local now = getTime()
+  if now - status.lastMsgTime > 50 then
+    local silence = status.conf.disableMsgBeep == 3 or (severity >=5 and status.conf.disableMsgBeep == 2)
+    if silence == false then
+      utils.playSound("../" .. status.mavSeverity[severity][1], true)
     end
+    status.lastMsgTime = now
   end
-
+  
   if msg == status.lastMessage then
     status.lastMessageCount = status.lastMessageCount + 1
   else
