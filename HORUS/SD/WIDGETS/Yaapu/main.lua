@@ -2447,7 +2447,7 @@ local function init()
   -- load battery config
   utils.loadBatteryConfigFile()
   -- ok done
-  utils.pushMessage(7,"Yaapu Telemetry Widget 2.0.x dev".." ("..'c48a83e'..")")
+  utils.pushMessage(7,"Yaapu Telemetry Widget 2.0.x dev".." ("..'08df216'..")")
   utils.playSound("yaapu")
   -- fix for generalsettings lazy loading...
   unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
@@ -2507,7 +2507,7 @@ local function update(widget, options)
 end
 
 utils.getScreenTogglePage = function(widget,conf,status)
-  local screenChValue = status.hideNoTelemetry == false and 0 or getValue(conf.screenToggleChannelId)
+  local screenChValue = getValue(conf.screenToggleChannelId)
   if conf.screenToggleChannelId > -1 then
     if screenChValue < -600 then
       -- message history
@@ -2718,6 +2718,14 @@ local function loadPlotLayout()
     plotLayout = utils.doLibrary("layout_plot")
   end
 end
+
+local function loadStatsLayout()
+  -- Layout start
+  if loadCycle == 3 then
+    plotLayout = utils.doLibrary("layout_stats")
+  end
+end
+
 
 local function drawInitialingMsg()
   lcd.clear(CUSTOM_COLOR)
