@@ -93,6 +93,8 @@ local status = {
     baroAlt = 0,
     -- Total distance
     totalDist = 0,
+    travelLat = nil,
+    travelLon = nil,
     -- RPM
     rpm1 = 0,
     rpm2 = 0,
@@ -682,7 +684,7 @@ local function createOnce(widget)
   status.currentModel = model.name()
   widget.runBgTasks = true
   libs.utils.playSound("yaapu")
-  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.0.0 beta1".. " ("..'141293d'..")")
+  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.0.0 dev".. " ("..'119fb15'..")")
   -- create the YaapuTimer if missing
   if model.getTimer("Yaapu") == nil then
     local timer = model.createTimer()
@@ -1223,7 +1225,6 @@ end
 local function storageToConfig(name, defaultValue, lookup)
   local storageValue = storage.read(name)
   local value = applyDefault(storageValue, defaultValue, lookup)
-  print("storageToConfig()", name, storageValue, value)
   return value
 end
 
@@ -1242,7 +1243,10 @@ end
 
 local function configure(widget)
   local f
-  local line = form.addLine("Link quality source")
+  local line = form.addLine("Widget version")
+  form.addStaticText(line, nil, "1.0.0 dev".." ("..'119fb15'..")")
+
+  line = form.addLine("Link quality source")
   form.addSourceField(line, nil, function() return status.conf.linkQualitySource end, function(value) status.conf.linkQualitySource = value end)
 
   line = form.addLine("Link status source 2")

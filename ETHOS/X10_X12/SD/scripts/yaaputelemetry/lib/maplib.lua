@@ -39,9 +39,9 @@ local libs = nil
 --------------------------
 local MAP_X = 0
 local MAP_Y = 0
-local HOME_R = 20
 local VEHICLE_R = 20
-local TILE_BORDER = 50
+local TILE_BORDER = 25
+
 local DIST_SAMPLES = 10
 
 -- map support
@@ -50,7 +50,9 @@ local myScreenX, myScreenY
 local homeScreenX, homeScreenY
 local estimatedHomeScreenX, estimatedHomeScreenY
 local tile_x,tile_y,offset_x,offset_y
+local home_tile_x,home_tile_y,home_offset_x,home_offset_y
 local tiles = {}
+local tilesXYByPath = {}
 local tiles_path_to_idx = {} -- path to idx cache
 local mapBitmapByPath = {}
 local nomap = nil
@@ -99,6 +101,8 @@ local TILES_IDX_PATH  = 2
 
 local zoomUpdateTimer = getTime()
 local zoomUpdate = false
+
+local n1,n2
 
 function mapLib.clip(n, min, max)
   return math.min(math.max(n, min), max)
@@ -197,6 +201,7 @@ function mapLib.loadAndCenterTiles(tile_x,tile_y,offset_x,offset_y,width,level)
           tiles_path_to_idx[tile_path] =  { idx, x, y }
         end
       end
+      tilesXYByPath[tile_path] = {x,y}      
     end
   end
   -- release unused cached images
@@ -211,12 +216,14 @@ function mapLib.loadAndCenterTiles(tile_x,tile_y,offset_x,offset_y,width,level)
     if remove then
       mapBitmapByPath[path]=nil
       tiles_path_to_idx[path]=nil
+      tilesXYByPath[path] = nil
     end
   end
   -- force a call to destroyBitmap()
   collectgarbage()
   collectgarbage()
 end
+
 
 function mapLib.drawTiles(width,xmin,xmax,ymin,ymax,color,level)
   for x=1,TILES_X
@@ -243,13 +250,19 @@ function mapLib.drawTiles(width,xmin,xmax,ymin,ymax,color,level)
       lcd.drawLine(xmin,ymin+y*TILES_SIZE,xmax,ymin+y*TILES_SIZE)
     end
   end
+  local x = xmin
+  local y = ymax
   -- map overlay
-  libs.drawLib.drawBitmap(5, ymin+TILES_Y*TILES_SIZE-20, "maps_box_380x20") --160x90
+  lcd.pen(SOLID)
+  local alpha = 0.25
+  lcd.color(lcd.RGB(0,0,0,alpha))
+  lcd.drawFilledRectangle(3, y-25, x+5+scaleLen, 22)
+  --libs.drawLib.drawBitmap(5, y-8, "maps_box_380x20") --160x90
   -- draw 50m or 150ft line at max zoom
   lcd.color(WHITE)
   lcd.font(FONT_STD)
-  lcd.drawLine(xmin+5,ymin+TILES_Y*TILES_SIZE-20,xmin+5+scaleLen,ymin+TILES_Y*TILES_SIZE-20)
-  lcd.drawText(xmin+5,ymin+TILES_Y*TILES_SIZE-50,scaleLabel)
+  lcd.drawLine(x+5,y-8,x+5+scaleLen,y-8)
+  lcd.drawText(x+5,y-25,string.format("%s (%d)", scaleLabel, status.mapZoomLevel))
 end
 
 function mapLib.getScreenCoordinates(minX,minY,tile_x,tile_y,offset_x,offset_y,level)
@@ -266,18 +279,20 @@ function mapLib.getScreenCoordinates(minX,minY,tile_x,tile_y,offset_x,offset_y,l
   return 480/2, -10
 end
 
-function mapLib.drawMap(widget, x, y, level, tiles_x, tiles_y, heading)
-  setupMaps(x, y, level, tiles_x, tiles_y)
+function mapLib.drawMap(widget, x, y, w, h, level, tiles_x, tiles_y, heading)
+  lcd.setClipping(x,y,w,h)
+  setupMaps(x, y, w, h, level, tiles_x, tiles_y)
 
   if mapLib.tiles_to_path == nil or mapLib.coord_to_tiles == nil then
     return
   end
 
-  local minY = MAP_Y
-  local maxY = minY+TILES_Y*TILES_SIZE
+  local minX = math.max(0, MAP_X)
+  local minY = math.max(0, MAP_Y)
 
-  local minX = MAP_X
-  local maxX = minX+TILES_X*TILES_SIZE
+  local maxX = math.min(minX+w, minX+TILES_X*TILES_SIZE)
+  local maxY = math.min(minY+h, minY+TILES_Y*TILES_SIZE)
+
 
   if status.telemetry.lat ~= nil and status.telemetry.lon ~= nil then
     -- position update
@@ -300,26 +315,20 @@ function mapLib.drawMap(widget, x, y, level, tiles_x, tiles_y, heading)
       end
     end
     -- home position update
-    if getTime() - lastHomePosUpdate > 50 and posUpdated then
+    if getTime() - lastHomePosUpdate > 30 and posUpdated then
       lastHomePosUpdate = getTime()
       if homeNeedsRefresh then
         -- update home, schedule estimated home update
         homeNeedsRefresh = false
         if status.telemetry.homeLat ~= nil then
           -- current vehicle tile coordinates
-          tile_x,tile_y,offset_x,offset_y = mapLib.coord_to_tiles(status.telemetry.homeLat, status.telemetry.homeLon, level)
+          home_tile_x,home_tile_y,home_offset_x,home_offset_y = mapLib.coord_to_tiles(status.telemetry.homeLat, status.telemetry.homeLon, level)
           -- viewport relative coordinates
-          homeScreenX,homeScreenY = mapLib.getScreenCoordinates(minX,minY,tile_x,tile_y,offset_x,offset_y,level)
+          homeScreenX,homeScreenY = mapLib.getScreenCoordinates(minX,minY,home_tile_x,home_tile_y,home_offset_x,home_offset_y,level)
         end
       else
         -- update estimated home, schedule home update
         homeNeedsRefresh = true
-        estimatedHomeGps.lat,estimatedHomeGps.lon = libs.utils.getLatLonFromAngleAndDistance(status.telemetry.homeAngle, status.telemetry.homeDist)
-        if estimatedHomeGps.lat ~= nil then
-          local t_x,t_y,o_x,o_y = mapLib.coord_to_tiles(estimatedHomeGps.lat,estimatedHomeGps.lon,level)
-          -- viewport relative coordinates
-          estimatedHomeScreenX,estimatedHomeScreenY = mapLib.getScreenCoordinates(minX,minY,t_x,t_y,o_x,o_y,level)
-        end
       end
       collectgarbage()
       collectgarbage()
@@ -349,17 +358,6 @@ function mapLib.drawMap(widget, x, y, level, tiles_x, tiles_y, heading)
       end
     end
 
-    --[[
-    -- draw estimated home (debug info)
-    if estimatedHomeGps.lat ~= nil and estimatedHomeGps.lon ~= nil and estimatedHomeScreenX ~= nil then
-      local homeCode = drawLib.computeOutCode(estimatedHomeScreenX, estimatedHomeScreenY, minX+11, minY+10, maxX-11, maxY-10);
-      if homeCode == 0 then
-        lcd.setColor(CUSTOM_COLOR,COLOR_RED)
-        lcd.drawRectangle(estimatedHomeScreenX-11,estimatedHomeScreenY-11,20,20,CUSTOM_COLOR)
-      end
-    end
-    --]]
-
     -- draw vehicle
     if myScreenX ~= nil then
       if heading ~= nil then
@@ -373,13 +371,6 @@ function mapLib.drawMap(widget, x, y, level, tiles_x, tiles_y, heading)
       end
       -- wp support
       if status.wpEnabledMode == 1 and status.wpEnabled == 1 and status.telemetry.wpNumber > 0 then
-        -- wp number and distance
-        --[[
-        lcd.color(WHITE)
-        lcd.drawText(MAP_X+MAP_W-2, MAP_Y+2, string.format("#%d",status.telemetry.wpNumber),SMLSIZE+CUSTOM_COLOR+RIGHT)
-        lcd.drawText(MAP_X+MAP_W-2, MAP_Y+20, string.format("%d%s",status.telemetry.wpDistance * UNIT_DIST_SCALE,UNIT_DIST_LABEL),SMLSIZE+CUSTOM_COLOR+RIGHT)
-        lcd.drawText(MAP_X+MAP_W-2, MAP_Y+40, string.format("%d",status.telemetry.wpBearing),SMLSIZE+CUSTOM_COLOR+RIGHT)
-        --]]
         -- draw current waypoint info in white
         -- calc new position on odd cycles
         if status.wpLat ~= nil and status.wpLon ~= nil then
@@ -407,29 +398,30 @@ function mapLib.drawMap(widget, x, y, level, tiles_x, tiles_y, heading)
     for p=0, math.min(sampleCount-1,status.conf.mapTrailDots-1)
     do
       if p ~= (sampleCount-1)%status.conf.mapTrailDots then
-        local tcache = tiles_path_to_idx[posHistory[p][1]]
-        if tcache ~= nil then
-          if tiles[tcache[1]] ~= nil then
-            -- ok it's on screen
-            lcd.drawFilledRectangle(minX + (tcache[2]-1)*TILES_SIZE + posHistory[p][2], minY + (tcache[3]-1)*TILES_SIZE + posHistory[p][3],3,3)
-          end
+        -- check if on screen
+        if tilesXYByPath[posHistory[p][1]] ~= nil then
+          local x = tilesXYByPath[posHistory[p][1]][1]
+          local y = tilesXYByPath[posHistory[p][1]][2]
+          lcd.drawFilledRectangle(minX + (x-1)*TILES_SIZE + posHistory[p][2]-1, minY + (y-1)*TILES_SIZE + posHistory[p][3]-1,3,3)
         end
       end
     end
   end
 
+
   if zoomUpdate == true then
     lcd.color(WHITE)
-    lcd.font(FONT_XL)
-    lcd.drawText((TILES_X*TILES_SIZE)/2, (TILES_Y*TILES_SIZE)/2 - 15, string.format("ZOOM %d", level), CENTERED)
+    lcd.font(FONT_XXL)
+    lcd.drawText(480/2, 272/2 - 15, string.format("ZOOM %d", level), CENTERED)
 
-    if getTime() - zoomUpdateTimer > 60 then
+    if getTime() - zoomUpdateTimer > 100 then
       zoomUpdate = false
     end
   end
+  lcd.setClipping()
 end
 
-function setupMaps(x, y, level, tiles_x, tiles_y)
+function setupMaps(x, y, w, h, level, tiles_x, tiles_y)
   if level == nil or tiles_x == nil or tiles_y == nil or x == nil or y == nil then
     return
   end

@@ -36,6 +36,11 @@ local unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
 local unitLabel = getGeneralSettings().imperial == 0 and "m" or "ft"
 local unitLongScale = getGeneralSettings().imperial == 0 and 1/1000 or 1/1609.34
 local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
+local function doGarbageCollect()
+    collectgarbage()
+    collectgarbage()
+end
+
 
 local frameTypes = {}
 -- copter
@@ -183,6 +188,7 @@ local msgBuffer = ""
 local lastMsgValue = 0
 local lastMsgTime = 0
 local lastMessage
+local statusBarMsg
 local lastMessageSeverity = 0
 local lastMessageCount = 1
 local messageCount = 0
@@ -346,20 +352,18 @@ local function clearTable(t)
   end
   t = nil
   -- call collectgarbage twice
-  collectgarbage()
-  collectgarbage()
+  doGarbageCollect()
 end
+
 
 local function doLibrary(filename)
     local success,f = pcall(loadScript,libBasePath..filename..".lua")
   if success then
     local ret = f()
-    collectgarbage()
-    collectgarbage()
+    doGarbageCollect()
     return ret
   else
-    collectgarbage()
-    collectgarbage()
+    doGarbageCollect()
     return nil
   end
 end
@@ -373,8 +377,7 @@ local function unloadPanels()
   rightPanel = nil
   leftPanel = nil
 
-  collectgarbage()
-  collectgarbage()
+  doGarbageCollect()
 end
 
 local function loadPanels()
@@ -390,8 +393,7 @@ local function loadPanels()
     leftPanel = doLibrary(conf.leftPanel)
   end
 
-  collectgarbage()
-  collectgarbage()
+  doGarbageCollect()
 end
 
 -- prevent same file from beeing played too fast
@@ -428,9 +430,24 @@ local function playFlightMode(flightMode)
   end
   if frame.flightModes then
     if frame.flightModes[flightMode] ~= nil then
-      playFile(soundFileBasePath.."/"..conf.language.."/".. string.lower(frame.flightModes[flightMode]) .. ((frameType=="r" or frameType=="b") and "_r.wav" or ".wav"))
+      playFile(soundFileBasePath.."/"..conf.language.."/".. frame.flightModes[flightMode] .. ((frameType=="r" or frameType=="b") and "_r.wav" or ".wav"))
     end
   end
+end
+
+local function haversine(lat1, lon1, lat2, lon2)
+    lat1 = lat1 * math.pi / 180
+    lon1 = lon1 * math.pi / 180
+    lat2 = lat2 * math.pi / 180
+    lon2 = lon2 * math.pi / 180
+
+    lat_dist = lat2-lat1
+    lon_dist = lon2-lon1
+    lat_hsin = math.pow(math.sin(lat_dist/2),2)
+    lon_hsin = math.pow(math.sin(lon_dist/2),2)
+
+    a = lat_hsin + math.cos(lat1) * math.cos(lat2) * lon_hsin
+    return 2 * 6372.8 * math.asin(math.sqrt(a)) * 1000
 end
 
 local function formatMessage(severity, msg)
@@ -463,16 +480,10 @@ local function pushMessage(severity, msg)
     playHaptic(12,0)
   end
   local now = getTime()
-  -- keep the queue small and allow 2 msg/sec
   if now - lastMsgTime > 50 then
-    if conf.disableAllSounds  == false then
-      if ( severity < 5 and conf.disableMsgBeep < 3 ) then
-        playSound("../err",true)
-      else
-        if conf.disableMsgBeep < 2 then
-            playSound("../inf",true)
-        end
-      end
+    local silence = conf.disableMsgBeep == 3 or (severity >=5 and conf.disableMsgBeep == 2)
+    if silence == false then
+      playSound("../" .. mavSeverity[severity],true)
     end
     lastMsgTime = now
   end
@@ -485,24 +496,24 @@ local function pushMessage(severity, msg)
     messageRow = messageRow + 1
   end
   local longMsg = formatMessage(severity,msg)
-  collectgarbage()
-  collectgarbage()
+  doGarbageCollect()
 
   if #longMsg > 45 then
     if msg == lastMessage then
       messageRow = messageRow - 1
     end
     messages[(messageRow-1) % 9] = string.sub(longMsg, 1, 45)
+    statusBarMsg = messages[(messageRow-1) % 9]
     messageRow = messageRow + 1
     messages[(messageRow-1) % 9] = "    "..string.sub(longMsg, 45+1, 60)
   else
     messages[(messageRow-1) % 9] = longMsg
+    statusBarMsg = longMsg
   end
   lastMessage = msg
   lastMessageSeverity = severity
   msg = nil
-  collectgarbage()
-  collectgarbage()
+  doGarbageCollect()
 end
 
 local function startTimer()
@@ -583,8 +594,7 @@ local function reset()
   clearTable(resetLib)
   resetLib = nil
   -- recover memory
-  collectgarbage()
-  collectgarbage()
+  doGarbageCollect()
   -- done
   pushMessage(6,"Telemetry reset done.")
   playSound("yaapu")
@@ -625,77 +635,77 @@ local function resetHash()
   hashByteIndex = 0
 end
 
-local function processTelemetry(DATA_ID, VALUE,now)
-  if DATA_ID == 0x5006 then -- ROLLPITCH
+local function processTelemetry(appId, value, now)
+  if appId == 0x5006 then -- ROLLPITCH
     -- roll [0,1800] ==> [-180,180]
-    telemetry.roll = (math.min(bit32.extract(VALUE,0,11),1800) - 900) * 0.2
+    telemetry.roll = (math.min(bit32.extract(value,0,11),1800) - 900) * 0.2
     -- pitch [0,900] ==> [-90,90]
-    telemetry.pitch = (math.min(bit32.extract(VALUE,11,10),900) - 450) * 0.2
+    telemetry.pitch = (math.min(bit32.extract(value,11,10),900) - 450) * 0.2
     -- #define ATTIANDRNG_RNGFND_OFFSET    21
     -- number encoded on 11 bits: 10 bits for digits + 1 for 10^power
-    telemetry.range = bit32.extract(VALUE,22,10) * (10^bit32.extract(VALUE,21,1)) -- cm
-  elseif DATA_ID == 0x5005 then -- VELANDYAW
-    telemetry.vSpeed = bit32.extract(VALUE,1,7) * (10^bit32.extract(VALUE,0,1)) * (bit32.extract(VALUE,8,1) == 1 and -1 or 1)
-    telemetry.yaw = bit32.extract(VALUE,17,11) * 0.2
+    telemetry.range = bit32.extract(value,22,10) * (10^bit32.extract(value,21,1)) -- cm
+  elseif appId == 0x5005 then -- VELANDYAW
+    telemetry.vSpeed = bit32.extract(value,1,7) * (10^bit32.extract(value,0,1)) * (bit32.extract(value,8,1) == 1 and -1 or 1)
+    telemetry.yaw = bit32.extract(value,17,11) * 0.2
     -- once detected it's sticky
-    if bit32.extract(VALUE,28,1) == 1 then
-      telemetry.airspeed = bit32.extract(VALUE,10,7) * (10^bit32.extract(VALUE,9,1)) -- dm/s
+    if bit32.extract(value,28,1) == 1 then
+      telemetry.airspeed = bit32.extract(value,10,7) * (10^bit32.extract(value,9,1)) -- dm/s
     else
-      telemetry.hSpeed = bit32.extract(VALUE,10,7) * (10^bit32.extract(VALUE,9,1)) -- dm/s
+      telemetry.hSpeed = bit32.extract(value,10,7) * (10^bit32.extract(value,9,1)) -- dm/s
     end
     if status.airspeedEnabled == 0 then
-      status.airspeedEnabled = bit32.extract(VALUE,28,1)
+      status.airspeedEnabled = bit32.extract(value,28,1)
     end
-  elseif DATA_ID == 0x5001 then -- AP STATUS
-    telemetry.flightMode = bit32.extract(VALUE,0,5)
-    telemetry.simpleMode = bit32.extract(VALUE,5,2)
-    telemetry.landComplete = bit32.extract(VALUE,7,1)
-    telemetry.statusArmed = bit32.extract(VALUE,8,1)
-    telemetry.battFailsafe = bit32.extract(VALUE,9,1)
-    telemetry.ekfFailsafe = bit32.extract(VALUE,10,2)
-    telemetry.failsafe = bit32.extract(VALUE,12,1)
-    telemetry.throttle = math.floor(0.5 + (bit32.extract(VALUE,19,6) * (bit32.extract(VALUE,25,1) == 1 and -1 or 1) * 1.58)) -- signed throttle [-63,63] -> [-100,100]
+  elseif appId == 0x5001 then -- AP STATUS
+    telemetry.flightMode = bit32.extract(value,0,5)
+    telemetry.simpleMode = bit32.extract(value,5,2)
+    telemetry.landComplete = bit32.extract(value,7,1)
+    telemetry.statusArmed = bit32.extract(value,8,1)
+    telemetry.battFailsafe = bit32.extract(value,9,1)
+    telemetry.ekfFailsafe = bit32.extract(value,10,2)
+    telemetry.failsafe = bit32.extract(value,12,1)
+    telemetry.throttle = math.floor(0.5 + (bit32.extract(value,19,6) * (bit32.extract(value,25,1) == 1 and -1 or 1) * 1.58)) -- signed throttle [-63,63] -> [-100,100]
     -- IMU temperature: 0 means temp =< 19°, 63 means temp => 82°
-    telemetry.imuTemp = bit32.extract(VALUE,26,6) + 19 -- C°
-  elseif DATA_ID == 0x5002 then -- GPS STATUS
-    telemetry.numSats = bit32.extract(VALUE,0,4)
+    telemetry.imuTemp = bit32.extract(value,26,6) + 19 -- C°
+  elseif appId == 0x5002 then -- GPS STATUS
+    telemetry.numSats = bit32.extract(value,0,4)
     -- offset  4: NO_GPS = 0, NO_FIX = 1, GPS_OK_FIX_2D = 2, GPS_OK_FIX_3D or GPS_OK_FIX_3D_DGPS or GPS_OK_FIX_3D_RTK_FLOAT or GPS_OK_FIX_3D_RTK_FIXED = 3
     -- offset 14: 0: no advanced fix, 1: GPS_OK_FIX_3D_DGPS, 2: GPS_OK_FIX_3D_RTK_FLOAT, 3: GPS_OK_FIX_3D_RTK_FIXED
-    telemetry.gpsStatus = bit32.extract(VALUE,4,2) + bit32.extract(VALUE,14,2)
-    telemetry.gpsHdopC = bit32.extract(VALUE,7,7) * (10^bit32.extract(VALUE,6,1)) -- dm
-    telemetry.gpsAlt = bit32.extract(VALUE,24,7) * (10^bit32.extract(VALUE,22,2)) * (bit32.extract(VALUE,31,1) == 1 and -1 or 1) -- dm
-  elseif DATA_ID == 0x5003 then -- BATT
-    telemetry.batt1volt = bit32.extract(VALUE,0,9) -- dV
+    telemetry.gpsStatus = bit32.extract(value,4,2) + bit32.extract(value,14,2)
+    telemetry.gpsHdopC = bit32.extract(value,7,7) * (10^bit32.extract(value,6,1)) -- dm
+    telemetry.gpsAlt = bit32.extract(value,24,7) * (10^bit32.extract(value,22,2)) * (bit32.extract(value,31,1) == 1 and -1 or 1) -- dm
+  elseif appId == 0x5003 then -- BATT
+    telemetry.batt1volt = bit32.extract(value,0,9) -- dV
     -- telemetry max is 51.1V, 51.2 is reported as 0.0, 52.3 is 0.1...60 is 88
     -- if >= 12S and V > 51.1 ==> Vreal = 51.2 + telemetry.batt1volt
     if conf.cell1Count >= 12 and telemetry.batt1volt < conf.cell1Count*20 then
       -- assume a 2V as minimum acceptable "real" voltage
       telemetry.batt1volt = 512 + telemetry.batt1volt
     end
-    telemetry.batt1current = bit32.extract(VALUE,10,7) * (10^bit32.extract(VALUE,9,1)) --dA
-    telemetry.batt1mah = bit32.extract(VALUE,17,15)
-  elseif DATA_ID == 0x5008 then -- BATT2
-    telemetry.batt2volt = bit32.extract(VALUE,0,9)
+    telemetry.batt1current = bit32.extract(value,10,7) * (10^bit32.extract(value,9,1)) --dA
+    telemetry.batt1mah = bit32.extract(value,17,15)
+  elseif appId == 0x5008 then -- BATT2
+    telemetry.batt2volt = bit32.extract(value,0,9)
     -- telemetry max is 51.1V, 51.2 is reported as 0.0, 52.3 is 0.1...60 is 88
     -- if >= 12S and V > 51.1 ==> Vreal = 51.2 + telemetry.batt1volt
     if conf.cell2Count >= 12 and telemetry.batt2volt < conf.cell2Count*20 then
       -- assume a 2Vx12 as minimum acceptable "real" voltage
       telemetry.batt2volt = 512 + telemetry.batt2volt
     end
-    telemetry.batt2current = bit32.extract(VALUE,10,7) * (10^bit32.extract(VALUE,9,1))
-    telemetry.batt2mah = bit32.extract(VALUE,17,15)
-  elseif DATA_ID == 0x5004 then -- HOME
-    telemetry.homeDist = bit32.extract(VALUE,2,10) * (10^bit32.extract(VALUE,0,2))
-    telemetry.homeAlt = bit32.extract(VALUE,14,10) * (10^bit32.extract(VALUE,12,2)) * 0.1 * (bit32.extract(VALUE,24,1) == 1 and -1 or 1) --m
-    telemetry.homeAngle = bit32.extract(VALUE, 25,  7) * 3
-  elseif DATA_ID == 0x5000 then -- MESSAGES
-    if VALUE ~= lastMsgValue then
-      lastMsgValue = VALUE
+    telemetry.batt2current = bit32.extract(value,10,7) * (10^bit32.extract(value,9,1))
+    telemetry.batt2mah = bit32.extract(value,17,15)
+  elseif appId == 0x5004 then -- HOME
+    telemetry.homeDist = bit32.extract(value,2,10) * (10^bit32.extract(value,0,2))
+    telemetry.homeAlt = bit32.extract(value,14,10) * (10^bit32.extract(value,12,2)) * 0.1 * (bit32.extract(value,24,1) == 1 and -1 or 1) --m
+    telemetry.homeAngle = bit32.extract(value, 25,  7) * 3
+  elseif appId == 0x5000 then -- MESSAGES
+    if value ~= lastMsgValue then
+      lastMsgValue = value
       local c
       local msgEnd = false
       for i=3,0,-1
       do
-        c = bit32.extract(VALUE,i*8,7)
+        c = bit32.extract(value,i*8,7)
         if c ~= 0 then
           msgBuffer = msgBuffer .. string.char(c)
           updateHash(c)
@@ -704,24 +714,22 @@ local function processTelemetry(DATA_ID, VALUE,now)
           break;
         end
       end
-      collectgarbage()
-      collectgarbage()
+      doGarbageCollect()
       if msgEnd then
         -- push and display message
-        local severity = (bit32.extract(VALUE,7,1) * 1) + (bit32.extract(VALUE,15,1) * 2) + (bit32.extract(VALUE,23,1) * 4)
+        local severity = (bit32.extract(value,7,1) * 1) + (bit32.extract(value,15,1) * 2) + (bit32.extract(value,23,1) * 4)
         pushMessage( severity, msgBuffer)
         playHash()
         resetHash()
         msgBuffer = nil
         -- recover memory
-        collectgarbage()
-        collectgarbage()
+        doGarbageCollect()
         msgBuffer = ""
       end
     end
-  elseif DATA_ID == 0x5007 then -- PARAMS
-    local paramId = bit32.extract(VALUE,24,4)
-    local paramValue = bit32.extract(VALUE,0,24)
+  elseif appId == 0x5007 then -- PARAMS
+    local paramId = bit32.extract(value,24,4)
+    local paramValue = bit32.extract(value,0,24)
     if paramId == 1 then
       telemetry.frameType = paramValue
     elseif paramId == 4 then
@@ -729,11 +737,11 @@ local function processTelemetry(DATA_ID, VALUE,now)
     elseif paramId == 5 then
       telemetry.batt2Capacity = paramValue
     end
-  elseif DATA_ID == 0x5009 then -- WAYPOINTS @1Hz
-    telemetry.wpNumber = bit32.extract(VALUE,0,10) -- wp index
-    telemetry.wpDistance = bit32.extract(VALUE,12,10) * (10^bit32.extract(VALUE,10,2)) -- meters
-    telemetry.wpXTError = bit32.extract(VALUE,23,4) * (10^bit32.extract(VALUE,22,1)) * (bit32.extract(VALUE,27,1) == 1 and -1 or 1)-- meters
-    telemetry.wpBearing = bit32.extract(VALUE,29,3) -- offset from cog with 45° resolution
+  elseif appId == 0x5009 then -- WAYPOINTS @1Hz
+    telemetry.wpNumber = bit32.extract(value,0,10) -- wp index
+    telemetry.wpDistance = bit32.extract(value,12,10) * (10^bit32.extract(value,10,2)) -- meters
+    telemetry.wpXTError = bit32.extract(value,23,4) * (10^bit32.extract(value,22,1)) * (bit32.extract(value,27,1) == 1 and -1 or 1)-- meters
+    telemetry.wpBearing = bit32.extract(value,29,3) -- offset from cog with 45° resolution
 --[[
   elseif DATA_ID == 0x50F1 then -- RC CHANNELS
     -- channels 1 - 32
@@ -743,10 +751,10 @@ local function processTelemetry(DATA_ID, VALUE,now)
     rcchannels[3 + offset] = 100 * (bit32.extract(VALUE,18,6)/63) * (bit32.extract(VALUE,24,1) == 1 and -1 or 1)
     rcchannels[4 + offset] = 100 * (bit32.extract(VALUE,25,6)/63) * (bit32.extract(VALUE,31,1) == 1 and -1 or 1)
 --]]
-  elseif DATA_ID == 0x50F2 then -- VFR
-    telemetry.airspeed = bit32.extract(VALUE,1,7) * (10^bit32.extract(VALUE,0,1)) -- dm/s
-    telemetry.throttle = bit32.extract(VALUE,8,7)
-    telemetry.baroAlt = bit32.extract(VALUE,17,10) * (10^bit32.extract(VALUE,15,2)) * 0.1 * (bit32.extract(VALUE,27,1) == 1 and -1 or 1)
+  elseif appId == 0x50F2 then -- VFR
+    telemetry.airspeed = bit32.extract(value,1,7) * (10^bit32.extract(value,0,1)) -- dm/s
+    telemetry.throttle = bit32.extract(value,8,7)
+    telemetry.baroAlt = bit32.extract(value,17,10) * (10^bit32.extract(value,15,2)) * 0.1 * (bit32.extract(value,27,1) == 1 and -1 or 1)
     status.airspeedEnabled = 1
   end
 end
@@ -778,8 +786,7 @@ local function crossfirePop()
         -- hash reset
         resetHash()
         msgBuffer = nil
-        collectgarbage()
-        collectgarbage()
+        doGarbageCollect()
         msgBuffer = ""
       elseif #data >= 8 and data[1] == 0xF2 then
         -- passthrough array
@@ -798,6 +805,7 @@ local function crossfirePop()
     return nil, nil ,nil ,nil
 end
 
+
 local function telemetryEnabled()
   if getRSSI() == 0 then
     noTelemetryData = 1
@@ -807,7 +815,6 @@ end
 
 local function getMaxValue(value,idx)
   minmaxValues[idx] = math.max(value,minmaxValues[idx])
-  print("luaDebug MINMAX", value, minmaxValues[idx], idx)
   return status.showMinMaxValues and minmaxValues[idx] or value
 end
 
@@ -1072,28 +1079,18 @@ local function calcFlightTime()
 end
 
 local function setSensorValues()
-  if (not telemetryEnabled()) then
+  if not telemetryEnabled() then
     return
-  end
-  local battmah = telemetry.batt1mah
-  local battcapacity = getBatt1Capacity()
-  if telemetry.batt2mah > 0 then
-    battcapacity =  getBatt1Capacity() + getBatt2Capacity()
-    battmah = telemetry.batt1mah + telemetry.batt2mah
-  end
-  local perc = 0
-  if (battcapacity > 0) then
-    perc = math.min(math.max((1 - (battmah/battcapacity))*100,0),99)
   end
   -- CRSF
   if not conf.enableCRSF then
-    setTelemetryValue(0x060F, 0, 0, perc, 13 , 0 , "Fuel")
-    setTelemetryValue(0x020F, 0, 0, telemetry.batt1current+telemetry.batt2current, 2 , 1 , "CURR")
+    setTelemetryValue(0x060F, 0, 0, battery[16], 13 , 0 , "Fuel")
+    setTelemetryValue(0x020F, 0, 0, battery[7], 2 , 1 , "CURR")
     setTelemetryValue(0x084F, 0, 0, math.floor(telemetry.yaw), 20 , 0 , "Hdg")
     setTelemetryValue(0x010F, 0, 0, telemetry.homeAlt*10, 9 , 1 , "Alt")
     setTelemetryValue(0x083F, 0, 0, telemetry.hSpeed*0.1, 4 , 0 , "GSpd")
   end
-  setTelemetryValue(0x021F, 0, 0, getNonZeroMin(telemetry.batt1volt,telemetry.batt2volt)*10, 1 , 2 , "VFAS")
+  setTelemetryValue(0x021F, 0, 0, battery[4]*10, 1 , 2 , "VFAS")
   setTelemetryValue(0x011F, 0, 0, telemetry.vSpeed, 5 , 1 , "VSpd")
   setTelemetryValue(0x082F, 0, 0, math.floor(telemetry.gpsAlt*0.1), 9 , 0 , "GAlt")
   setTelemetryValue(0x041F, 0, 0, telemetry.imuTemp, 11 , 0 , "IMUt")
@@ -1245,8 +1242,8 @@ local function checkEvents()
   checkAlarm(1,2*telemetry.battFailsafe,5,1,"lowbat",conf.repeatAlertsPeriod)
   checkAlarm(math.floor(conf.timerAlert),status.flightTime,6,1,"timealert",math.floor(conf.timerAlert))
   checkAlarm(1,2*telemetry.failsafe,9,1,"failsafe",conf.repeatAlertsPeriod)
-  if (battery[13] > 0) then
-    batLevel = (1 - (battery[10]/battery[13]))*100
+  if battery[13] > 0 then
+    batLevel = (1 - battery[10]/battery[13])*100
   else
     batLevel = 99
   end
@@ -1305,7 +1302,7 @@ local function checkCellVoltage()
   if status.battAlertLevel1 == false then status.battAlertLevel1 = alarms[7][1] end
   if status.battAlertLevel2 == false then status.battAlertLevel2 = alarms[8][1] end
 end
-
+--[[
 local function updateTotalDist()
   if telemetry.armingStatus == 0 then
     lastUpdateTotDist = getTime()
@@ -1319,6 +1316,35 @@ local function updateTotalDist()
     telemetry.totalDist = telemetry.totalDist + (avgSpeed * 0.1 * delta * 0.01) --hSpeed dm/s, getTime()/100 secs
   end
 end
+--]]
+
+local travelLat = nil
+local travelLon = nil
+
+local function updateTotalDist(now)
+  if telemetry.armingStatus == 0 then
+    lastUpdateTotDist = getTime()
+    return
+  end
+  if telemetry.lat ~= nil and telemetry.lon ~= nil then
+    if travelLat == nil or travelLon == nil then
+      travelLat = telemetry.lat
+      travelLon = telemetry.lon
+      lastUpdateTotDist = now
+    end
+
+    if now - lastUpdateTotDist > 50 then
+      local travelDist = haversine(telemetry.lat, telemetry.lon, travelLat, travelLon)
+      -- discard sampling errors
+      if travelDist < 10000 then
+        telemetry.totalDist = telemetry.totalDist + travelDist
+      end
+      travelLat = telemetry.lat
+      travelLon = telemetry.lon
+      lastUpdateTotDist = now
+    end
+  end
+end
 
 --------------------------------------------------------------------------------
 -- MAIN LOOP
@@ -1329,6 +1355,7 @@ local bgclock = 0
 -------------------------------
 local function background()
   local now = getTime()
+   
   -- FAST: this runs at 60Hz (every 16ms)
   for i=1,7
   do
@@ -1343,7 +1370,7 @@ local function background()
   -- SLOW: this runs at 4Hz (every 250ms)
   if (bgclock % 4 == 0) then
     setSensorValues()
-    updateTotalDist()
+    updateTotalDist(now)
   end
 
   -- SLOWER: this runs at 2Hz (every 500ms)
@@ -1374,8 +1401,7 @@ local function background()
     blinktime = now
   end
   bgclock = bgclock+1
-  collectgarbage()
-  collectgarbage()
+  doGarbageCollect()
 end
 
 local function run(event)
@@ -1403,8 +1429,7 @@ local function run(event)
         showAltView = false
       end
       showMessages = false
-      collectgarbage()
-      collectgarbage()
+      doGarbageCollect()
     elseif event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT or event == 36 then
       showMessages = false
     end
@@ -1421,8 +1446,7 @@ local function run(event)
       menuLib = doLibrary(menuLibFile)
       if menuLib ~= nil then
         menuLib.loadConfig(conf)
-        collectgarbage()
-        collectgarbage()
+        doGarbageCollect()
       end
     end
 
@@ -1437,8 +1461,7 @@ local function run(event)
       menuLib.saveConfig(conf)
       clearTable(menuLib)
       menuLib = nil
-      collectgarbage()
-      collectgarbage()
+      doGarbageCollect()
     end
   else
     ---------------------
@@ -1455,8 +1478,7 @@ local function run(event)
     if drawLib == nil and loadCycle == 0 then
       -- load draw library
       drawLib = doLibrary(drawLibFile)
-      collectgarbage()
-      collectgarbage()
+      doGarbageCollect()
     end
 
       -- top bars
@@ -1466,8 +1488,7 @@ local function run(event)
       if altView == nil and loadCycle == 2 then
         -- load ALTVIEW
         altView = doLibrary(conf.altView)
-        collectgarbage()
-        collectgarbage()
+        doGarbageCollect()
       end
 
       if drawLib ~= nil and altView ~= nil then
@@ -1480,8 +1501,7 @@ local function run(event)
 
         clearTable(altView)
         altView = nil
-        collectgarbage()
-        collectgarbage()
+        doGarbageCollect()
       elseif event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT or event == 36 then
         showMessages = true
       end
@@ -1523,7 +1543,7 @@ local function run(event)
 
     if drawLib ~= nil then
       drawLib.drawTopBar(getFlightMode(), telemetry.simpleMode, status.flightTime, telemetryEnabled, conf.enableCRSF and rssiCRSF or getRSSI())
-      drawLib.drawBottomBar(messages[(messageRow + #messages) % (#messages+1)],lastMsgTime)
+      drawLib.drawBottomBar(statusBarMsg, lastMsgTime)
       drawLib.drawNoTelemetry(telemetryEnabled, hideNoTelemetry)
     end
 
@@ -1542,8 +1562,7 @@ local function run(event)
       unloadPanels()
       altView = nil
       drawLib = nil
-      collectgarbage()
-      collectgarbage()
+      doGarbageCollect()
       showConfigMenu = true
     end
   end
@@ -1552,8 +1571,7 @@ local function run(event)
     lcd.drawRectangle(0,0,212,LCD_H,showMessages and SOLID or ERASE)
   end
   loadCycle=(loadCycle+1)%8
-  collectgarbage()
-  collectgarbage()
+  doGarbageCollect()
 end
 
 local function init()
@@ -1563,8 +1581,7 @@ local function init()
   -- load menu library
   menuLib = doLibrary(menuLibFile)
   menuLib.loadConfig(conf)
-  collectgarbage()
-  collectgarbage()
+  doGarbageCollect()
   -- ok configuration loaded
   status.battsource = conf.defaultBattSource
   -- CRSF or SPORT?
@@ -1576,9 +1593,8 @@ local function init()
   clearTable(menuLib)
   menuLib = nil
 
-  pushMessage(7,"Yaapu 2.0.0-dev".." ("..'d5cce31'..")")
-  collectgarbage()
-  collectgarbage()
+  pushMessage(7,"Yaapu 2.0.0-dev".." ("..'ae68d48'..")")
+  doGarbageCollect()
   playSound("yaapu")
 end
 
