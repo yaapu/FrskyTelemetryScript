@@ -1,4 +1,4 @@
-Taranis 1.2.3 (first public release)
+BW LCD 1.2.3 (first public release)
 
 - flight modes based on frame type:copter,plane or rover with vocal sound support
 - artificial horizon with roll,pitch and yaw with numeric compass heading
@@ -24,7 +24,7 @@ Taranis 1.2.3 (first public release)
 - mavlink messages with history 
 - english vocal sounds
 
-Taranis version 1.4.1
+BW LCD version 1.4.1
 
 - added configuration menu
 - added per model configuration
@@ -34,21 +34,21 @@ Taranis version 1.4.1
 - added vocal fence (min/max distance and max altitude alerts)
 - sensors VFAS,CURR,Alt,VSpd,GAlt,Hdg,GSpd,Fuel,Tmp1,Tmp2 exposed to OpenTX
 
-Taranis version 1.5.0
+BW LCD version 1.5.0
 
 - new hud layout with black ground in artificial horizon
 - telemetry processing moved to background thread
 - added TTS Automate profile file for sound file customization
 - memory optimizations
 
-Taranis version 1.5.1
+BW LCD version 1.5.1
 
 - optimized compass ribbon
 - vertical variometer gauge on left side of hud 
 - cell detection override from menu up to 12s
 - memory optimizations
 
-Taranis version 1.6.0
+BW LCD version 1.6.0
 
 - rangefinder support with max range from config menu
 - "synthetic vspeed" calculated from altitude changes with menu option to enable/disable (needs testing)
@@ -56,7 +56,7 @@ Taranis version 1.6.0
 - new QX7 layout
 - many small fixes
 
-Taranis version 1.6.2
+BW LCD version 1.6.2
 
 - moved flight modes to separate files to optimize memory
 - added support for FlowHold and Follow new copter flight modes
@@ -72,7 +72,7 @@ Taranis version 1.6.2
 - added german language support
 - many memory optimizations
 
-Taranis version 1.7.0
+BW LCD version 1.7.0
 
 - units settings for distance and altitude inherited from radio settings (imperial/metric)
 - units settings for horizontal and vertical speed selectable from config menu (m/s,km/h,mph,ft/s,ft/min)
@@ -87,20 +87,20 @@ Taranis version 1.7.0
 - X9D: removed power from left panel
 - X9D: added efficiency on left panel as mAh/speed
 
-Taranis version 1.7.1
+BW LCD version 1.7.1
 
 - fix for battery levels alerts, now voltage needs to stay below level for 4 seconds before triggering alerts
 - fix for limited battery alert voltage range, now from 0 to 50V
 - fix for IMU temp decoding
 - fix for landing complete alert, now played only if motors are armed
 
-Taranis version 1.7.2
+BW LCD version 1.7.2
 
 - fix for battery level2 alerts not repeating after being triggered
 - fix for OpenTX GSpd sensor unit, now m/s
 - fix for consumed battery mAh greater than battery capacity
 
-Taranis version 1.8.0
+BW LCD version 1.8.0
 
 - new hud layout, speed on left, alt on right VSI on bottom
 - added support for up to 6 frsky sensors on dedicated second screen
@@ -116,14 +116,14 @@ Taranis version 1.8.0
 - fix for quick flight mode switch
 - fix for rover modes vocal playback
 
-Taranis version 1.9.1
+BW LCD version 1.9.1
 
 - added support for crossfire
 - added support for THERMAL flight mode
 - fixed boat flight modes
 - fixed PX4 flight modes
 
-Taranis version 1.9.4 beta1
+BW LCD version 1.9.4 beta1
 
 - added git hash to version string
 - added support for fence status and alarms
@@ -134,12 +134,19 @@ Taranis version 1.9.4 beta1
 - added support for RPM1 and RPM2 telemetry exported as sensors
 - added heli specific right panel (select "heli" in the config menu)
 
-Taranis version 1.9.5
+BW LCD version 1.9.5
 - fix terrain error in CRSF RF Mode 1
 - fix altitude repoting with unhealthy terrain data
 - added support for TURTLE flight mode
 - added support for BLIMP vehicle
 
-Taranis version 1.9.6-dev
+BW LCD version 1.9.6-dev
 - new release folder structure with versions dedicated to X9D,X9D-2019 and QX7
 - added support for CRSF telemetry packets with variable size
+
+BW LCD version 2.0.0
+- individual sounds for each severity level
+- faster line clipping algo
+- fix status bar text message truncation
+- switch to haversine for travel distance calculation
+	

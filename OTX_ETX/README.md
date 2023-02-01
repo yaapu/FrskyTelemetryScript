@@ -1,10 +1,6 @@
 # Yaapu Telemetry SD Card Contents
 
-This repo contains the SD Card contents for all supported Radios.
-
-### Platforms
-
-The contents of this repository are organised by color type and screen size
+SD card content is organized by screen color and resolution
 
 - **color lcd radios**
     - **color_common** files in this folder are common to all color lcd radios
