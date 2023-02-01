@@ -49,11 +49,11 @@ EdgeTX Color LCD 320x480
 
 OpenTX/EdgeTX BW LCD 212x64
 
-![X9D](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x9d.png)
+![x9d](https://user-images.githubusercontent.com/30294218/215983189-06106fe8-b0d8-47f5-8e3f-e8d2472028ee.png)
 
 OpenTX/EdgeTX BW LCD 128x64
 
-![X7](https://github.com/yaapu/FrskyTelemetryScript/raw/master/TARANIS/IMAGES/x7.png)
+![x7](https://user-images.githubusercontent.com/30294218/215983214-b11f53a6-90f4-40ba-a29d-90a58cf6f1ff.png)
 
 Ethos Color LCD 480x272 (X10/X12)
 
