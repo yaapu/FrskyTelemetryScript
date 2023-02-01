@@ -1,0 +1,1 @@
+hash_generator.lua tool to generate psv speech files for selected mavlink status text messages
