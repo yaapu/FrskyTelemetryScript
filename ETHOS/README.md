@@ -2,7 +2,7 @@
 
 SD card content is organized by screen color and resolution
 
-- **common** files in this folder are common to radios
+- **common** files in this folder are common to all radios
 - **c800x480** (800x480 pixel landscape orientation color screen radios)
     - x20/S/HD
 - **c480x320** (480x320 pixel landscape orientation color screen radios)
