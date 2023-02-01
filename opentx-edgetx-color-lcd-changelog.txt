@@ -1,8 +1,8 @@
-Horus version 1.5.1 (first public release)
+Color LCD version 1.5.1 (first public release)
 
 - features aligned with Taranis version 1.5.1
 
-Horus version 1.6.0
+Color LCD version 1.6.0
 
 - rangefinder support with max range from config menu
 - "synthetic vspeed" calculated from altitude changes with menu option to enable/disable
@@ -10,7 +10,7 @@ Horus version 1.6.0
 - larger HUD
 - many small fixes
 
-Horus Widget Version 1.6.2
+Color LCD version 1.6.2
 
 - no more latency on HUD
 - added support for FlowHold and Follow new copter flight modes
@@ -26,7 +26,7 @@ Horus Widget Version 1.6.2
 - added german language support
 - added IMU temp support as custom IMUt sensor (experimental)
 
-Horus Widget Version 1.7.0
+Color LCD version 1.7.0
 
 - flightmodes loaded at runtime based on detected frametype
 - units settings for distance and altitude inherited from radio settings
@@ -39,7 +39,7 @@ Horus Widget Version 1.7.0
 - removed power from left panel
 - added efficiency on left panel as mAh/speed
 
-Horus Widget Version 1.7.1
+Color LCD version 1.7.1
 
 - fix for telemetry reset on model change
 - added script reset on timer 3 reset (motors have to be disarmed)
@@ -47,24 +47,24 @@ Horus Widget Version 1.7.1
 - new lcd panel backlight control from script for messages/alerts/events
 - fix for limited battery alert voltage range, now from 0 to 50V (broken)
 
-Horus Widget Version 1.7.2
+Color LCD version 1.7.2
 
 - fix for IMU temp decoding
 - fix for landing complete alert, now played only if motors are armed
 - fix for limited battery alert voltage range, now from 0 to 50V (was missing from 1.7.1)
 - changed min alert interval from 10s to 5s
 
-Horus version 1.7.3
+Color LCD version 1.7.3
 
 - fix for battery level2 alerts not repeating after being triggered
 - fix for OpenTX GSpd sensor unit, now m/s
 - fix for consumed battery mAh greater than battery capacity
 
-Horus version 1.7.4
+Color LCD version 1.7.4
 
 - fix for imperial settings not being picked up at widget start (OpenTX 2.2.3)
 
-Horus version 1.8.0
+Color LCD version 1.8.0
 
 - removed dependency from blue theme
 - added new hud layout, speed on left, alt on right VSI on bottom
@@ -83,7 +83,7 @@ Horus version 1.8.0
 - fix for quick flight mode switch
 - fix for rover modes vocal playback
 
-Horus version 1.8.1
+Color LCD version 1.8.1
 
 - added widget page with offline GPS mapping
 - added support for map zoom toggle via radio channel
@@ -95,7 +95,7 @@ Horus version 1.8.1
 - fix for custom sensor min/max nil support
 
 
-Horus version 1.9.1 (beta)
+Color LCD version 1.9.1 (beta)
 
 - added support for crossfire
 - added new dual battery modes
@@ -104,7 +104,7 @@ Horus version 1.9.1 (beta)
 - fixed boat flight modes
 - fixed PX4 flight modes
 
-Horus version 1.9.3 (beta)
+Color LCD version 1.9.3 (beta)
 
 - added support for google maps downloaded via MissionPlanner
 - new tiles resize tool for google maps supporting sat and hybrid maps
@@ -115,7 +115,7 @@ Horus version 1.9.3 (beta)
 - improved mini HUD in maps view
 - many memory and speed optimizations
 
-Horus version 1.9.4 beta1
+Color LCD version 1.9.4 beta1
 
 - added git hash to version string
 - added support for fence status and alarms
@@ -126,7 +126,7 @@ Horus version 1.9.4 beta1
 - improved status text colors
 - added altitude graph in map page of last 20 secs
 
-Horus version 1.9.5
+Color LCD version 1.9.5
 
 - fixed terrain error in CRSF RF Mode 1
 - added support for TURTLE flight mode
@@ -135,13 +135,13 @@ Horus version 1.9.5
 - added airspeed option on the hud above groundspeed FRSKY_OPTION = current value + 1
 - added plotting page with selectable sensors to plot (configure as widget page 6)
 
-Horus version 1.9.6 - dev
+Color LCD version 1.9.6 - dev
 
 - better handling of status text messages
 - added support for CRSF telemetry packets with variable size
 - tuned script for lower cpu with CRSF
 
-Horus version 2.0.0 - beta2
+Color LCD version 2.0.0 - beta2
 
 - added option to pause widget from config menu
 - edgetex fixes
@@ -152,7 +152,7 @@ Horus version 2.0.0 - beta2
 - new wfq scheduler for bg tasks (better CPU usage)
 - removed dependency from gvars
 
-Horus version 2.0.0 dev 01/2023
+Color LCD version 2.0.0 dev 01/2023
 - added support for FlySKY NV14 and EL18 radios
 - added support for QGIS maps
 - added support for ArduPilot aerobatics lua scripts
