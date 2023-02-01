@@ -1,4 +1,4 @@
-# Yaapu Telemetry SD Card Contents for radios running OpenTX and EdgeTX
+# Yaapu Telemetry for radios running OpenTX and EdgeTX
 
 SD card content is organized by screen color and resolution
 
