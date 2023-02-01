@@ -1,0 +1,158 @@
+Horus version 1.5.1 (first public release)
+
+- features aligned with Taranis version 1.5.1
+
+Horus version 1.6.0
+
+- rangefinder support with max range from config menu
+- "synthetic vspeed" calculated from altitude changes with menu option to enable/disable
+- air/groundspeed unit selectable from menu (m/s or km/h)
+- larger HUD
+- many small fixes
+
+Horus Widget Version 1.6.2
+
+- no more latency on HUD
+- added support for FlowHold and Follow new copter flight modes
+- added groundspeed/airspeed unit configuration as menu option
+- moved flight timer to OpenTX timer 3
+- added spoken flight time to flight timer alert
+- added support for dual FLVSS + single power monitor with split load in dual battery view
+- fixed mavlink message severity unpacking
+- fixed first timer alert would not play
+- added dedicated sounds for critical/non critical messages
+- added simple/supersimple support with vocal alerts
+- improved cell count detection with new algorythm
+- added german language support
+- added IMU temp support as custom IMUt sensor (experimental)
+
+Horus Widget Version 1.7.0
+
+- flightmodes loaded at runtime based on detected frametype
+- units settings for distance and altitude inherited from radio settings
+- units settings for horizontal and vertical speed selectable from config menu
+- implemented cohen-sutherland algorythm for hud line clipping
+- fix for roll and pitch clipping
+- removed Tmp1 and Tmp2 OpenTX sensors
+- moved all sensors to last instance 0xF of the respective frsky sensor ID (requires a new sensor discovery)
+- added ARM sensor to expose to OpenTX arming status
+- removed power from left panel
+- added efficiency on left panel as mAh/speed
+
+Horus Widget Version 1.7.1
+
+- fix for telemetry reset on model change
+- added script reset on timer 3 reset (motors have to be disarmed)
+- fix for battery levels alerts, now voltage needs to stay below level for 4 seconds before triggering alerts
+- new lcd panel backlight control from script for messages/alerts/events
+- fix for limited battery alert voltage range, now from 0 to 50V (broken)
+
+Horus Widget Version 1.7.2
+
+- fix for IMU temp decoding
+- fix for landing complete alert, now played only if motors are armed
+- fix for limited battery alert voltage range, now from 0 to 50V (was missing from 1.7.1)
+- changed min alert interval from 10s to 5s
+
+Horus version 1.7.3
+
+- fix for battery level2 alerts not repeating after being triggered
+- fix for OpenTX GSpd sensor unit, now m/s
+- fix for consumed battery mAh greater than battery capacity
+
+Horus version 1.7.4
+
+- fix for imperial settings not being picked up at widget start (OpenTX 2.2.3)
+
+Horus version 1.8.0
+
+- removed dependency from blue theme
+- added new hud layout, speed on left, alt on right VSI on bottom
+- new message history screen with telemetry info
+- added support for up to 6 user selectable frsky sensors
+- added haptic feedback support
+- added total flown distance (calculated from speed)
+- added PX4 flight modes support
+- added support for mavlinkToPassthru firmware
+- added vocal playback of selected mavlink messages
+- added support fot series and independent battery configurations with individual cell count override
+- added support for battery voltage > 51.1V
+- added new message alert silencing options
+- added menu option to define a channel to toggle between main screen and message history
+- added support for boat frametype
+- fix for quick flight mode switch
+- fix for rover modes vocal playback
+
+Horus version 1.8.1
+
+- added widget page with offline GPS mapping
+- added support for map zoom toggle via radio channel
+- added qacro and takeoff flight modes
+- moved all battery calculations to background
+- fix for OpenTX 2.3.1 on Horus X10
+- fix for reset on model change
+- fix for broken rangefinder menu option
+- fix for custom sensor min/max nil support
+
+
+Horus version 1.9.1 (beta)
+
+- added support for crossfire
+- added new dual battery modes
+- added new right pane layouts
+- added support for THERMAL flight mode
+- fixed boat flight modes
+- fixed PX4 flight modes
+
+Horus version 1.9.3 (beta)
+
+- added support for google maps downloaded via MissionPlanner
+- new tiles resize tool for google maps supporting sat and hybrid maps
+- new zoom control using a switch as up/down wheel emulator
+- added scrollable status message history (up to 200 messages) using the emulated wheel
+- added flight time to message history
+- added a status bar in message view with flight mode and flight time
+- improved mini HUD in maps view
+- many memory and speed optimizations
+
+Horus version 1.9.4 beta1
+
+- added git hash to version string
+- added support for fence status and alarms
+- added support for height above terrain
+- added no terrain data alarms
+- added generic failsafe alarm
+- added support for RPM1 and RPM2 (enable in the config menu)
+- improved status text colors
+- added altitude graph in map page of last 20 secs
+
+Horus version 1.9.5
+
+- fixed terrain error in CRSF RF Mode 1
+- added support for TURTLE flight mode
+- added support for BLIMP vehicle
+- added WIND rendering
+- added airspeed option on the hud above groundspeed FRSKY_OPTION = current value + 1
+- added plotting page with selectable sensors to plot (configure as widget page 6)
+
+Horus version 1.9.6 - dev
+
+- better handling of status text messages
+- added support for CRSF telemetry packets with variable size
+- tuned script for lower cpu with CRSF
+
+Horus version 2.0.0 - beta2
+
+- added option to pause widget from config menu
+- edgetex fixes
+- new maps layout
+- new plot layout
+- new main layout with bigger fonts
+- ethos theme support (same look as ethos version)
+- new wfq scheduler for bg tasks (better CPU usage)
+- removed dependency from gvars
+
+Horus version 2.0.0 dev 01/2023
+- added support for FlySKY NV14 and EL18 radios
+- added support for QGIS maps
+- added support for ArduPilot aerobatics lua scripts
