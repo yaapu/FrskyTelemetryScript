@@ -1,4 +1,4 @@
-# Yaapu Telemetry SD Card Contents
+# Yaapu Telemetry for radios running Ethos
 
 SD card content is organized by screen color and resolution
 
