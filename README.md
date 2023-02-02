@@ -3,7 +3,7 @@
 
 ### please read the [wiki](https://github.com/yaapu/FrskyTelemetryScript/wiki) for more info
 
-This is the home of the Yaapu Telemetry project, an [ArduPilot](http://ardupilot.org/ardupilot/index.html) [LUA](https://www.lua.org/about.html) telemetry script for radios running [OpenTX](https://www.open-tx.org/) and [EdgeTX](http://www.edgetx.org)
+This is the home of the Yaapu Telemetry project, an [ArduPilot](http://ardupilot.org/ardupilot/index.html) [LUA](https://www.lua.org/about.html) telemetry script and widget for radios running [OpenTX](https://www.open-tx.org/), [EdgeTX](http://www.edgetx.org) and [Ethos](https://ethos.frsky-rc.com/)
 
 Supports:
  - [OpenTX](https://www.open-tx.org) 2.3.8 or later
