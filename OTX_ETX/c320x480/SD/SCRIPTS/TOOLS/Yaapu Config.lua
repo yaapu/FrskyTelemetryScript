@@ -514,7 +514,7 @@ local function drawConfigMenuBars()
   lcd.drawFilledRectangle(0,LCD_H-20, LCD_W, 20, CUSTOM_COLOR)
   lcd.drawRectangle(0, LCD_H-20, LCD_W, 20, CUSTOM_COLOR)
   lcd.setColor(CUSTOM_COLOR,WHITE)
-  lcd.drawText(LCD_W,3,"Yaapu Telemery 2.0.x dev".." ("..'77042a5'..")",CUSTOM_COLOR+SMLSIZE+RIGHT)
+  lcd.drawText(LCD_W,3,"Yaapu Telemery 2.0.x dev".." ("..'a758adc'..")",CUSTOM_COLOR+SMLSIZE+RIGHT)
   lcd.drawText(0,0,info.name,CUSTOM_COLOR)
   lcd.drawText(0,LCD_H-20+1,getConfigFilename(),CUSTOM_COLOR)
   lcd.drawText(LCD_W,LCD_H-20+1,itemIdx,CUSTOM_COLOR+RIGHT)
@@ -576,7 +576,7 @@ end
 local function drawConfigMenu(event)
   lcd.drawBitmap(getBitmap("menubar"),0,LCD_H-46-18)
   drawConfigMenuBars()
-  
+
   updateMenuItems()
   if event == EVT_ENTER_BREAK or event == EVT_VIRTUAL_ENTER then
     if menu.editSelected == true then
@@ -585,16 +585,16 @@ local function drawConfigMenu(event)
     end
     menu.editSelected = not menu.editSelected
     menu.updated = true
-  elseif menu.editSelected and (event == EVT_VIRTUAL_PREV or event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT or event == EVT_PLUS_REPT) then
+  elseif menu.editSelected and (event == EVT_VIRTUAL_NEXT or event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT or event == EVT_PLUS_REPT) then
     incMenuItem(menu.selectedItem)
-  elseif menu.editSelected and (event == EVT_VIRTUAL_NEXT or event == EVT_MINUS_BREAK or event == EVT_ROT_LEFT or event == EVT_MINUS_REPT) then
+  elseif menu.editSelected and (event == EVT_VIRTUAL_PREV or event == EVT_MINUS_BREAK or event == EVT_ROT_LEFT or event == EVT_MINUS_REPT) then
     decMenuItem(menu.selectedItem)
-  elseif not menu.editSelected and (event == EVT_VIRTUAL_PREV or event == EVT_PLUS_BREAK or event == EVT_ROT_LEFT) then
+  elseif not menu.editSelected and (event == EVT_VIRTUAL_PREV or event == EVT_MINUS_BREAK or event == EVT_ROT_LEFT) then
     menu.selectedItem = (menu.selectedItem - 1)
     if menu.offset >=  menu.selectedItem then
       menu.offset = menu.offset - 1
     end
-  elseif not menu.editSelected and (event == EVT_VIRTUAL_NEXT or event == EVT_MINUS_BREAK or event == EVT_ROT_RIGHT) then
+  elseif not menu.editSelected and (event == EVT_VIRTUAL_NEXT or event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT) then
     menu.selectedItem = (menu.selectedItem + 1)
     if menu.selectedItem - 19 > menu.offset then
       menu.offset = menu.offset + 1
