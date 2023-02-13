@@ -857,7 +857,6 @@ utils.pushMessage = function(severity, msg)
   end
 
   local longMsg = formatMessage(severity,msg)
-  longMsg = formatMessage(severity,msg)
 
   if #longMsg > 65 then
     -- search for the first blank before max length
@@ -1688,6 +1687,7 @@ local function resetMessages()
   status.lastMessageSeverity = 0
   status.lastMessageCount = 1
   status.messageCount = 0
+  status.messageRow = 0
   status.messages = {}
 end
 
@@ -1750,7 +1750,7 @@ local function reset()
       -- done
       resetPhase = 7
     elseif resetPhase == 7 then
-      utils.pushMessage(7,"Yaapu Telemetry Widget 2.0.x dev".." ("..'77042a5'..")")
+      utils.pushMessage(7,"Yaapu Telemetry Widget 2.0.x dev".." ("..'6cccb30'..")")
       utils.playSound("yaapu")
       -- on model change reload config!
       if modelChangePending == true then
@@ -2448,7 +2448,7 @@ local function init()
   -- load battery config
   utils.loadBatteryConfigFile()
   -- ok done
-  utils.pushMessage(7,"Yaapu Telemetry Widget 2.0.x dev".." ("..'77042a5'..")")
+  utils.pushMessage(7,"Yaapu Telemetry Widget 2.0.x dev".." ("..'6cccb30'..")")
 
   utils.playSound("yaapu")
   -- fix for generalsettings lazy loading...
