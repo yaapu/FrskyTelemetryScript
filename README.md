@@ -6,7 +6,7 @@
 This is the home of the Yaapu Telemetry project, an [ArduPilot](http://ardupilot.org/ardupilot/index.html) [LUA](https://www.lua.org/about.html) telemetry script and widget for radios running [OpenTX](https://www.open-tx.org/), [EdgeTX](http://www.edgetx.org) and [Ethos](https://ethos.frsky-rc.com/)
 
 Supports:
- - [OpenTX](https://www.open-tx.org) 2.3.8 or later
+ - [OpenTX](https://www.open-tx.org) 2.3.8 or later with Widget [version 2.0.0 or later](https://github.com/yaapu/FrskyTelemetryScript/archive/master.zip)
  - [EdgeTX](http://www.edgetx.org) version 2.7 or later with Widget [version 2.0.0 or later](https://github.com/yaapu/FrskyTelemetryScript/archive/master.zip)
  - [Ethos](https://ethos.frsky-rc.com/) 1.4 or later, download widget [here](https://github.com/yaapu/FrskyTelemetryScript/tree/master/ETHOS) 
  - FRSKY S.Port (setup info [here](https://ardupilot.org/copter/docs/common-connecting-sport-fport.html))
