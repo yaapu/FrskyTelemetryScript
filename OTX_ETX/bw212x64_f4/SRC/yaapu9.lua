@@ -730,10 +730,26 @@ local function processTelemetry(appId, value, now)
       end
       doGarbageCollect()
       if msgEnd then
-        -- push and display message
-        local severity = (bit32.extract(value,7,1) * 1) + (bit32.extract(value,15,1) * 2) + (bit32.extract(value,23,1) * 4)
-        pushMessage( severity, msgBuffer)
-        playHash()
+        -- check, if special sequence ##S: and/or ##N: in message
+          -- CAUTION: If both, in every case first Sound then Number will be announced!!
+        local patternfound = false
+        local param = string.match(msgBuffer, ".*##S:([a-zA-Z_]+).*")-- e.g. ##SSelectedMission
+        if param then
+          patternfound = true
+          playSound(param)
+        end
+        param = string.match(msgBuffer, ".*##N:([0-9]+).*") -- e.g. ##N002
+        if param then
+          patternfound = true
+          playNumber(tonumber(param),0)
+        end
+        if patternfound == false then
+          -- push and display message
+          local severity = (bit32.extract(value,7,1) * 1) + (bit32.extract(value,15,1) * 2) + (bit32.extract(value,23,1) * 4)
+          pushMessage( severity, msgBuffer)
+          playHash()
+        end
+
         resetHash()
         msgBuffer = nil
         -- recover memory
@@ -1391,7 +1407,7 @@ local bgclock = 0
 -------------------------------
 local function background()
   local now = getTime()
-   
+  
   -- FAST: this runs at 60Hz (every 16ms)
   for i=1,7
   do
@@ -1634,7 +1650,7 @@ local function init()
   clearTable(menuLib)
   menuLib = nil
 
-  pushMessage(7,"Yaapu 2.0.0-dev".." ("..'ae68d48'..")")
+  pushMessage(7,"Yaapu 2.0.0-devW".." ("..'ae68d48'..")")
   doGarbageCollect()
   playSound("yaapu")
 end
