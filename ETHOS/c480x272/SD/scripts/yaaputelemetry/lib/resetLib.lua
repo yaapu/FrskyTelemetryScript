@@ -148,8 +148,6 @@ function resetLib.resetStatus(widget)
   status.hideEfficiency = 0
   -- blinking suppport
   status.blinkon = false
-  -- top bar
-  status.linkQualitySource = nil
   -- traveled distance support
   status.avgSpeed = 0
   status.lastUpdateTotDist = 0
@@ -282,7 +280,7 @@ function resetLib.reset(widget)
   resetLib.resetStatus(widget)
   libs.utils.resetTimer()
   libs.utils.playSound("yaapu")
-  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.0.0 dev".. " ("..'119fb15'..")")
+  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.0.0 dev".. " ("..'b674e4f'..")")
   collectgarbage()
   collectgarbage()
 end

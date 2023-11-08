@@ -181,6 +181,13 @@ local status = {
     telemetrySource = 1,
     -- test only
     num = 0, -- test da rimuovere
+    -- top bar
+    linkQualitySource = nil,
+    linkStatusSource2 = nil,
+    linkStatusSource3 = nil,
+    linkStatusSource4 = nil,
+    -- gps
+    gpsSource = nil,
   },
 
   -- gps fix status
@@ -307,11 +314,6 @@ local status = {
   hideEfficiency = 0,
   -- blinking suppport
   blinkon = false,
-  -- top bar
-  linkQualitySource = nil,
-  linkStatusSource2 = nil,
-  linkStatusSource3 = nil,
-  linkStatusSource4 = nil,
   -- traveled distance support
   avgSpeed = 0,
   lastUpdateTotDist = 0,
@@ -683,7 +685,7 @@ local function createOnce(widget)
   status.currentModel = model.name()
   widget.runBgTasks = true
   libs.utils.playSound("yaapu")
-  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.0.0 dev".. " ("..'119fb15'..")")
+  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.0.0 dev".. " ("..'b674e4f'..")")
   -- create the YaapuTimer if missing
   if model.getTimer("Yaapu") == nil then
     local timer = model.createTimer()
@@ -757,6 +759,20 @@ local sportPacket = {
 
 -- 5Hz
 local function task1(now)
+  -- update GPS coordinates
+  -- update gps telemetry data
+  local gpsData = {}
+
+  if status.conf.gpsSource ~= nil then
+    gpsData.lat = status.conf.gpsSource:value(OPTION_LATITUDE)
+    gpsData.lon = status.conf.gpsSource:value(OPTION_LONGITUDE)
+  end
+
+  if gpsData.lat ~= nil and gpsData.lon ~= nil then
+    status.telemetry.lat = gpsData.lat
+    status.telemetry.lon = gpsData.lon
+  end
+
   -- update total distance as often as po
   libs.utils.updateTotalDist()
 end
@@ -940,18 +956,7 @@ local function bgtasks(widget)
   local now = getTime()
   status.counter = status.counter + 1
   ------------------------------
-  if status.conf.telemetrySource == 1 and status.pauseTelemetry == false then
-    for i=1,10
-    do
-      local physId, primId, appId, data = libs.utils.telemetryPop()
-      if primId == 0x10 then
-        status.noTelemetryData = 0
-        -- no telemetry dialog only shown once
-        status.hideNoTelemetry = true
-        libs.utils.processTelemetry(appId, data, now)
-      end
-    end
-  elseif status.conf.telemetrySource == 2 then
+  if status.conf.telemetrySource == 2 then
     if sportConn == nil then
       sportConn = serial.open("sport")
     else
@@ -973,6 +978,17 @@ local function bgtasks(widget)
             libs.utils.processTelemetry(sportPacket.appId, sportPacket.data, now)
           end
         end
+      end
+    end
+  elseif status.pauseTelemetry == false then
+    for i=1,10
+    do
+      local physId, primId, appId, data = libs.utils.telemetryPop()
+      if primId == 0x10 then
+        status.noTelemetryData = 0
+        -- no telemetry dialog only shown once
+        status.hideNoTelemetry = true
+        libs.utils.processTelemetry(appId, data, now)
       end
     end
   end
@@ -1211,6 +1227,7 @@ local function create()
       centerPanel = nil,
       leftPanel = nil,
       rightPanel = nil,
+      name = "yaaputelemetry",
     }
 end
 
@@ -1244,7 +1261,10 @@ end
 local function configure(widget)
   local f
   local line = form.addLine("Widget version")
-  form.addStaticText(line, nil, "1.0.0 dev".." ("..'119fb15'..")")
+  form.addStaticText(line, nil, "1.0.0 dev".." ("..'b674e4f'..")")
+
+  line = form.addLine("GPS source")
+  form.addSourceField(line, nil, function() return status.conf.gpsSource end, function(value) status.conf.gpsSource = value end)
 
   line = form.addLine("Link quality source")
   form.addSourceField(line, nil, function() return status.conf.linkQualitySource end, function(value) status.conf.linkQualitySource = value end)
@@ -1258,7 +1278,7 @@ local function configure(widget)
   line = form.addLine("Link status source 4")
   form.addSourceField(line, nil, function() return status.conf.linkStatusSource4 end, function(value) status.conf.linkStatusSource4 = value end)
     line = form.addLine("Telemetry source")
-    widget.screenField = form.addChoiceField(line, form.getFieldSlots(line)[0],  {{"default",1}, {"external sport", 2}}, function() return status.conf.telemetrySource end, function(value) status.conf.telemetrySource = value end);
+    widget.screenField = form.addChoiceField(line, form.getFieldSlots(line)[0],  {{"internal module", 1}, {"external serial port", 2}, {"external module", 3}}, function() return status.conf.telemetrySource end, function(value) status.conf.telemetrySource = value end);
   line = form.addLine("Screen Type")
   widget.screenField = form.addChoiceField(line, form.getFieldSlots(line)[0],
       {
@@ -1529,15 +1549,16 @@ local function applyConfig()
   end
 
   -- CRSF or SPORT?
-  -- utils.drawRssi = drawRssi
-  libs.utils.telemetryPop = libs.utils.passthroughTelemetryPop
-
   if status.conf.enableCRSF then
     libs.utils.telemetryPop = libs.utils.crossfireTelemetryPop
     --utils.drawRssi = drawRssiCRSF
     -- we need a lower value here to prevent CPU Kill
     -- when decoding multiple packet frames
     -- telemetryPopLoops = 8
+  else
+    -- utils.drawRssi = drawRssi
+    libs.utils.telemetryPop = libs.utils.passthroughTelemetryPop
+    libs.utils.setupTelemetrySource()
   end
 end
 --------------------------------------------------------------------
@@ -1592,6 +1613,7 @@ local function read(widget)
   status.conf.linkStatusSource2 = storageToConfig("linkStatusSource2", nil)
   status.conf.linkStatusSource3 = storageToConfig("linkStatusSource3", nil)
   status.conf.linkStatusSource4 = storageToConfig("linkStatusSource4", nil)
+  status.conf.gpsSource = storageToConfig("gpsSource", nil)
   -- apply config
   applyConfig()
 end
@@ -1644,6 +1666,7 @@ local function write(widget)
   storage.write("linkStatusSource2", status.conf.linkStatusSource2)
   storage.write("linkStatusSource3", status.conf.linkStatusSource3)
   storage.write("linkStatusSource4", status.conf.linkStatusSource4)
+  storage.write("gpsSource", status.conf.gpsSource)
   -- apply config
   applyConfig()
 

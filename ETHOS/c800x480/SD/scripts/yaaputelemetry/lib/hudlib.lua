@@ -91,7 +91,8 @@ function hudLib.drawHud(widget,x,y,w,h)
       yy = startY + (ii*step) + offset - step
       if yy >= startY and yy < endY then
         lcd.drawLine(x, yy+9, x+6, yy+9)
-        lcd.drawNumber(x+9,  yy, j)
+        libs.drawLib.drawNumber(x+9,  yy, j, 0, FONT_S, status.colors.hudDashes, LEFT)
+        --lcd.drawNumber(x+9,  yy, j)
       end
       ii=ii+1;
   end

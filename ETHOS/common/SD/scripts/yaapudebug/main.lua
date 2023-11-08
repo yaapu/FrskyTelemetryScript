@@ -4,7 +4,7 @@ local CRSF_CUSTOM_TELEM_PASSTHROUGH = 0xF0
 local CRSF_CUSTOM_TELEM_STATUS_TEXT = 0xF1
 local CRSF_CUSTOM_TELEM_PASSTHROUGH_ARRAY = 0xF2
 
-local passthroughSensor = sport.getSensor({appIdStart=0x800, appIdEnd=0x51FF})
+local passthroughSensor = sport.getSensor({module=0xFFFF, appIdStart=0x800, appIdEnd=0x51FF})
 
 local translations = {en="Yaapu Debug"}
 local telemetryPop = nil

@@ -248,17 +248,6 @@ function utils.processTelemetry(appId, data, now)
     status.telemetry.throttle = libs.utils.bitExtract(data,8,7) -- unsigned throttle
     status.telemetry.baroAlt = libs.utils.bitExtract(data,17,10) * (10^libs.utils.bitExtract(data,15,2)) * 0.1 * (libs.utils.bitExtract(data,27,1) == 1 and -1 or 1)
     status.airspeedEnabled = 1
-  elseif appId == 0x800 then
-    local value = data & 0x3fffffff
-    if data & (1 << 30) == (1 << 30) then
-      value = -value
-    end
-    value = (value * 5) / 3;
-    if data & (1 << 31) == (1 << 31) then
-      status.telemetry.lon = value*0.000001
-    else
-      status.telemetry.lat = value*0.000001
-    end
   end
 end
 
@@ -912,7 +901,7 @@ function utils.pushMessage(severity, msg)
     end
     status.lastMsgTime = now
   end
-  
+
   if msg == status.lastMessage then
     status.lastMessageCount = status.lastMessageCount + 1
   else
@@ -981,6 +970,14 @@ function utils.init(param_status, param_libs)
   status = param_status
   libs = param_libs
   return utils
+end
+
+function utils.setupTelemetrySource()
+  if status.conf.telemetrySource == 3 then
+    passthroughSensor = sport.getSensor({module=1, appIdStart=0x800, appIdEnd=0x51FF})
+  else
+    passthroughSensor = sport.getSensor({appIdStart=0x800, appIdEnd=0x51FF})
+  end
 end
 
 -- default is to use frsky telemetry
