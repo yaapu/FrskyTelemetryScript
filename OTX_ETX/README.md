@@ -29,6 +29,6 @@ SD card content is organized by screen color and resolution
     - **bw212x64_f2.zip** (212x64 pixel "wide screen" black and white screen radios with an STM32F2 mcu)
         - X9D
         - X9D Plus
-        - X9E
     - **bw212x64_f4.zip** (212x64 pixel "wide screen" black and white screen radios with an STM32F4 mcu)
         - X9D Plus 2019
+        - X9E
