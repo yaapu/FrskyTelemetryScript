@@ -44,6 +44,11 @@ local bitmaskCache = {}
 local sources = {}
 local passthroughSensor = sport.getSensor({appIdStart=0x800, appIdEnd=0x51FF})
 
+local alwaysOn = system.getSource({category=CATEGORY_ALWAYS_ON}) -- {category=CATEGORY_ALWAYS_ON, member=1, options=0}
+local alwaysOff = system.getSource({category=CATEGORY_NONE})
+
+local ethosVersion = system.getVersion()
+
 local function loadLib(name)
   local lib = dofile("/scripts/yaaputelemetry/lib/"..name..".lua")
   if lib.init ~= nil then
@@ -319,20 +324,32 @@ end
 
 function utils.resetTimer()
   local timer = model.getTimer("Yaapu")
-  timer:activeCondition( system.getSource(nil) )
+  if ethosVersion.major == 1 and ethosVersion.minor <= 4 then
+    timer:activeCondition({category=CATEGORY_NONE})
+  else
+    timer:startCondition({category=CATEGORY_NONE})
+  end
   timer:value(0)
 end
 
 function utils.startTimer()
   status.lastTimerStart = getTime()/100
   local timer = model.getTimer("Yaapu")
-  timer:activeCondition( {category=CATEGORY_ALWAYS_ON, member=1, options=0} )
+  if ethosVersion.major == 1 and ethosVersion.minor <= 4 then
+    timer:activeCondition({category=CATEGORY_ALWAYS_ON})
+  else
+    timer:startCondition({category=CATEGORY_ALWAYS_ON})
+  end
 end
 
 function utils.stopTimer()
   status.lastTimerStart = 0
   local timer = model.getTimer("Yaapu")
-  timer:activeCondition(  system.getSource(nil))
+  if ethosVersion.major == 1 and ethosVersion.minor <= 4 then
+    timer:activeCondition({category=CATEGORY_NONE})
+  else
+    timer:startCondition({category=CATEGORY_NONE})
+  end
 end
 
 function utils.telemetryEnabled(widget)

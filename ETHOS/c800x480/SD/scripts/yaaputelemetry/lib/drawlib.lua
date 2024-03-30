@@ -198,7 +198,7 @@ function drawLib.drawNoTelemetryData(widget)
     lcd.font(FONT_XXL)
     lcd.drawText(392, 115, "NO TELEMETRY", CENTERED)
     lcd.font(FONT_STD)
-    lcd.drawText(392, 180, "Yaapu Telemetry Widget 1.0.0 dev".."("..'b674e4f'..")", CENTERED)
+    lcd.drawText(392, 180, "Yaapu Telemetry Widget 1.1.0".."("..'b2f1c6f'..")", CENTERED)
   end
 end
 
@@ -210,7 +210,7 @@ function drawLib.drawWidgetPaused(widget)
   lcd.font(FONT_XXL)
   lcd.drawText(392, 115, "WIDGET PAUSED", CENTERED)
   lcd.font(FONT_STD)
-  lcd.drawText(392, 180, "Yaapu Telemetry Widget 1.0.0 dev".."("..'b674e4f'..")", CENTERED)
+  lcd.drawText(392, 180, "Yaapu Telemetry Widget 1.1.0".."("..'b2f1c6f'..")", CENTERED)
 end
 
 function drawLib.drawFenceStatus(x,y)
@@ -476,7 +476,8 @@ end
 function drawLib.drawLineWithClipping(x0, y0, x1, y1, xmin, ymin, xmax, ymax)
   lcd.setClipping(xmin, ymin, xmax-xmin, ymax-ymin)
   lcd.drawLine(x0,y0,x1,y1)
-  lcd.setClipping()
+  local w,h = lcd.getWindowSize()
+  lcd.setClipping(0,0,w,h)
 end
 
 -- draw a line centered on (ox,oy) with angle and len, clipped

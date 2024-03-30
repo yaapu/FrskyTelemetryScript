@@ -30,6 +30,8 @@ end
 
 
 
+local ethosVersion = system.getVersion()
+
 local status = {
   -- telemetry
   telemetry = {
@@ -685,14 +687,23 @@ local function createOnce(widget)
   status.currentModel = model.name()
   widget.runBgTasks = true
   libs.utils.playSound("yaapu")
-  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.0.0 dev".. " ("..'b674e4f'..")")
+  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.1.0".. " ("..'b2f1c6f'..")")
   -- create the YaapuTimer if missing
-  if model.getTimer("Yaapu") == nil then
-    local timer = model.createTimer()
+  local timer = model.getTimer("Yaapu")
+  if timer == nil then
+    print("TIMER CREATED")
+    timer = model.createTimer()
     timer:name("Yaapu")
-    timer:countdownStart(0)
-    timer:audioMode(AUDIO_MUTE)
+    if ethosVersion.major == 1 and ethosVersion.minor <= 4 then
+      timer:countdownStart(0)
+      timer:audioMode(AUDIO_MUTE)
+      timer:activeCondition({category=CATEGORY_NONE})
+    else
+      timer:countdownStart(0)
+      timer:startCondition({category=CATEGORY_NONE})
+    end
   end
+
   libs.utils.stopTimer()
   -- get a reference to the plotSources table
   --status.plotSources = menuLib.plotSources
@@ -1261,7 +1272,7 @@ end
 local function configure(widget)
   local f
   local line = form.addLine("Widget version")
-  form.addStaticText(line, nil, "1.0.0 dev".." ("..'b674e4f'..")")
+  form.addStaticText(line, nil, "1.1.0".." ("..'b2f1c6f'..")")
 
   line = form.addLine("GPS source")
   form.addSourceField(line, nil, function() return status.conf.gpsSource end, function(value) status.conf.gpsSource = value end)

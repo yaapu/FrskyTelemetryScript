@@ -49,7 +49,8 @@ local hudLib = {}
 local R2 = 11
 
 local function unclip()
-  lcd.setClipping()
+  local w,h = lcd.getWindowSize()
+  lcd.setClipping(0,0,w,h)
 end
 
 local function clipHud(x,y,w,h)
