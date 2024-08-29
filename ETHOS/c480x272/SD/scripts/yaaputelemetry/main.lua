@@ -776,8 +776,8 @@ local function task1(now)
   local gpsData = {}
 
   if status.conf.gpsSource ~= nil then
-    gpsData.lat = status.conf.gpsSource:value(OPTION_LATITUDE)
-    gpsData.lon = status.conf.gpsSource:value(OPTION_LONGITUDE)
+    gpsData.lat = system.getSource({name=status.conf.gpsSource:name(),options=OPTION_LATITUDE}):value()
+    gpsData.lon = system.getSource({name=status.conf.gpsSource:name(),options=OPTION_LONGITUDE}):value()
   end
 
   if gpsData.lat ~= nil and gpsData.lon ~= nil then
