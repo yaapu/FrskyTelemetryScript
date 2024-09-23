@@ -17,6 +17,15 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program; if not, see <http://www.gnu.org/licenses>.
 --
+
+-----------------------
+-- UNIT SCALING
+-----------------------
+local unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
+local unitLabel = getGeneralSettings().imperial == 0 and "m" or "ft"
+local unitLongScale = getGeneralSettings().imperial == 0 and 1/1000 or 1/1609.34
+local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
+
 local function doGarbageCollect()
     collectgarbage()
     collectgarbage()
