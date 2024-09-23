@@ -22,7 +22,6 @@ local unitLabel = getGeneralSettings().imperial == 0 and "m" or "ft"
 local unitLongScale = getGeneralSettings().imperial == 0 and 1/1000 or 1/1609.34
 local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 
-
 -----------
 -- CONFIG
 -----------
@@ -858,11 +857,11 @@ utils.pushMessage = function(severity, msg)
 
   local longMsg = formatMessage(severity,msg)
 
-  if #longMsg > 52 then
+  if #longMsg > 65 then
     -- search for the first blank before max length
-    local splitPos = #longMsg - string.find(string.reverse(longMsg)," ",#longMsg-52)
+    local splitPos = #longMsg - string.find(string.reverse(longMsg)," ",#longMsg-65)
     if splitPos == nil then
-      splitPos = 52
+      splitPos = 65
     end
     if msg == status.lastMessage then
       status.messageRow = status.messageRow - 1
@@ -1750,7 +1749,7 @@ local function reset()
       -- done
       resetPhase = 7
     elseif resetPhase == 7 then
-      utils.pushMessage(7,"Yaapu Telemetry Widget 2.0.x dev".." ("..'86ff4a6'..")")
+      utils.pushMessage(7,"Yaapu Telemetry Widget 2.0.x dev".." ("..'1997425'..")")
       utils.playSound("yaapu")
       -- on model change reload config!
       if modelChangePending == true then
@@ -1780,33 +1779,45 @@ local function setSensorValues()
   if not utils.telemetryEnabled() then
     return
   end
-  -- CRSF
-  if not conf.enableCRSF then
+  if conf.enableCRSF then
+    -- CRSF
+    setTelemetryValue(0x07, 0, 0, telemetry.vSpeed, 5 , 2 , "VSpd")
+
+    if conf.enableRPM == 2  or conf.enableRPM == 3 then
+      setTelemetryValue(0, 0, 1, telemetry.rpm1, 18 , 0 , "RPM1")
+    end
+    if conf.enableRPM == 3 then
+      setTelemetryValue(0, 0, 2, telemetry.rpm2, 18 , 0 , "RPM2")
+    end
+    if status.airspeedEnabled == 1 then
+      setTelemetryValue(0, 0, 3, telemetry.airspeed*0.1, 4 , 0 , "ASPD")
+    end
+  else
+    -- FRSKY
     setTelemetryValue(0x060F, 0, 0, status.battery[16], 13 , 0 , "Fuel")
     setTelemetryValue(0x020F, 0, 0, status.battery[7], 2 , 1 , "CURR")
     setTelemetryValue(0x084F, 0, 0, math.floor(telemetry.yaw), 20 , 0 , "Hdg")
     setTelemetryValue(0x010F, 0, 0, telemetry.homeAlt*10, 9 , 1 , "Alt")
     setTelemetryValue(0x083F, 0, 0, telemetry.hSpeed*0.1, 5 , 0 , "GSpd")
-  end
+    setTelemetryValue(0x021F, 0, 0, status.battery[4]*10, 1 , 2 , "VFAS")
+    setTelemetryValue(0x011F, 0, 0, telemetry.vSpeed, 5 , 1 , "VSpd")
+    setTelemetryValue(0x082F, 0, 0, math.floor(telemetry.gpsAlt*0.1), 9 , 0 , "GAlt")
+    setTelemetryValue(0x041F, 0, 0, telemetry.imuTemp, 11 , 0 , "IMUt")
+    setTelemetryValue(0x060F, 0, 1, telemetry.statusArmed*100, 0 , 0 , "ARM")
+    setTelemetryValue(0x050D, 0, 0, telemetry.throttle, 13 , 0 , "Thr")
 
-  setTelemetryValue(0x021F, 0, 0, status.battery[4]*10, 1 , 2 , "VFAS")
-  setTelemetryValue(0x011F, 0, 0, telemetry.vSpeed, 5 , 1 , "VSpd")
-  setTelemetryValue(0x082F, 0, 0, math.floor(telemetry.gpsAlt*0.1), 9 , 0 , "GAlt")
-  setTelemetryValue(0x041F, 0, 0, telemetry.imuTemp, 11 , 0 , "IMUt")
-  setTelemetryValue(0x060F, 0, 1, telemetry.statusArmed*100, 0 , 0 , "ARM")
-  setTelemetryValue(0x050D, 0, 0, telemetry.throttle, 13 , 0 , "Thr")
-
-  if conf.enableRPM == 2  or conf.enableRPM == 3 then
-    setTelemetryValue(0x050E, 0, 0, telemetry.rpm1, 18 , 0 , "RPM1")
+    if conf.enableRPM == 2  or conf.enableRPM == 3 then
+      setTelemetryValue(0x050E, 0, 0, telemetry.rpm1, 18 , 0 , "RPM1")
+    end
+    if conf.enableRPM == 3 then
+      setTelemetryValue(0x050F, 0, 0, telemetry.rpm2, 18 , 0 , "RPM2")
+    end
+    if status.airspeedEnabled == 1 then
+      setTelemetryValue(0x0AF, 0, 0, telemetry.airspeed*0.1, 4 , 0 , "ASpd")
+    end
+    --setTelemetryValue(0x070F, 0, 0, telemetry.roll, 20 , 0 , "ROLL")
+    --setTelemetryValue(0x071F, 0, 0, telemetry.pitch, 20 , 0 , "PTCH")
   end
-  if conf.enableRPM == 3 then
-    setTelemetryValue(0x050F, 0, 0, telemetry.rpm2, 18 , 0 , "RPM2")
-  end
-  if status.airspeedEnabled == 1 then
-    setTelemetryValue(0x0AF, 0, 0, telemetry.airspeed*0.1, 4 , 0 , "ASpd")
-  end
-  --setTelemetryValue(0x070F, 0, 0, telemetry.roll, 20 , 0 , "ROLL")
-  --setTelemetryValue(0x071F, 0, 0, telemetry.pitch, 20 , 0 , "PTCH")
 end
 
 local function drawMessagesTelemetryBar()
@@ -1870,12 +1881,12 @@ local function drawMessageScreen()
   libs.layoutLib.drawTopBar()
   -- each new message scrolls all messages to the end (offset is absolute)
   if status.messageAutoScroll == true then
-    status.messageOffset = math.max(0, status.messageCount - 30)
+    status.messageOffset = math.max(0, status.messageCount - 19)
   end
 
   local row = 0
   local offsetStart = status.messageOffset
-  local offsetEnd = math.min(status.messageCount-1, status.messageOffset + 30 - 1)
+  local offsetEnd = math.min(status.messageCount-1, status.messageOffset + 19 - 1)
 
   for i=offsetStart,offsetEnd  do
     lcd.setColor(CUSTOM_COLOR,utils.mavSeverity[status.messages[i % 200][2]][2])
@@ -1893,8 +1904,8 @@ local function drawMessageScreen()
     lcd.setColor(CUSTOM_COLOR,utils.colors.darkyellow)
   end
 
-  local maxPages = tonumber(math.ceil((#status.messages+1)/30))
-  local currentPage = 1+tonumber(maxPages - (status.messageCount - status.messageOffset)/30)
+  local maxPages = tonumber(math.ceil((#status.messages+1)/19))
+  local currentPage = 1+tonumber(maxPages - (status.messageCount - status.messageOffset)/19)
 
   lcd.drawText(LCD_W-2, LCD_H-16, string.format("%d/%d",currentPage,maxPages), SMLSIZE+CUSTOM_COLOR+RIGHT)
   lcd.setColor(CUSTOM_COLOR,utils.colors.grey)
@@ -2441,7 +2452,7 @@ local function init()
   -- load battery config
   utils.loadBatteryConfigFile()
   -- ok done
-  utils.pushMessage(7,"Yaapu Telemetry Widget 2.0.x dev".." ("..'86ff4a6'..")")
+  utils.pushMessage(7,"Yaapu Telemetry Widget 2.0.x dev".." ("..'1997425'..")")
 
   utils.playSound("yaapu")
   -- fix for generalsettings lazy loading...
@@ -2532,8 +2543,8 @@ utils.getMessageOffset = function(widget,conf,status,chValue)
   if conf.screenWheelChannelId > -1 then
     -- SW up
     if chValue < -600 then
-      local offset = math.min(status.messageOffset + 30, math.max(0,status.messageCount - 30))
-      if offset >= (status.messageCount - 30) then
+      local offset = math.min(status.messageOffset + 19, math.max(0,status.messageCount - 19))
+      if offset >= (status.messageCount - 19) then
         status.messageAutoScroll = true
       else
         status.messageAutoScroll = false
@@ -2543,7 +2554,7 @@ utils.getMessageOffset = function(widget,conf,status,chValue)
     -- SW down
     if chValue > 600 then
       status.messageAutoScroll = false
-      return math.max(0,math.max(status.messageCount - 200,status.messageOffset - 30))
+      return math.max(0,math.max(status.messageCount - 200,status.messageOffset - 19))
     end
     -- switch is idle, force timer expire
     zoomDelayStart = now - conf.screenWheelChannelDelay*10

@@ -22,7 +22,6 @@ local unitLabel = getGeneralSettings().imperial == 0 and "m" or "ft"
 local unitLongScale = getGeneralSettings().imperial == 0 and 1/1000 or 1/1609.34
 local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 
-
 local mapLib = {}
 
 local status
@@ -31,7 +30,7 @@ local conf
 local utils
 local libs
 
-local MAP_X = (LCD_W-300)/2
+local MAP_X = (LCD_W-320)/2
 local MAP_Y = 18
 local TILES_X = 3
 local TILES_Y = 2
@@ -454,7 +453,7 @@ function mapLib.drawMap(widget, x, y, w, h, level, tiles_x, tiles_y)
             lcd.drawRectangle(wpScreenX-2,wpScreenY-2,4,4,CUSTOM_COLOR)
             lcd.drawText(wpScreenX,wpScreenY,telemetry.wpNumber,SMLSIZE+CUSTOM_COLOR)
           else
-            libs.drawLib.drawLineByOriginAndAngle(myScreenX, myScreenY, telemetry.wpBearing-90, 2*300, DOTTED, minX, maxX, minY, maxY, CUSTOM_COLOR, false)
+            libs.drawLib.drawLineByOriginAndAngle(myScreenX, myScreenY, telemetry.wpBearing-90, 2*320, DOTTED, minX, maxX, minY, maxY, CUSTOM_COLOR, false)
           end
         end
       end

@@ -22,7 +22,6 @@ local unitLabel = getGeneralSettings().imperial == 0 and "m" or "ft"
 local unitLongScale = getGeneralSettings().imperial == 0 and 1/1000 or 1/1609.34
 local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 
-
 local layoutLib = {}
 
 local status
@@ -78,7 +77,7 @@ function layoutLib.drawNoTelemetryData(telemetryEnabled)
     lcd.drawFilledRectangle(30,46, 260, 80, CUSTOM_COLOR)
     lcd.setColor(CUSTOM_COLOR,utils.colors.white)
     lcd.drawText(160, 55, "no telemetry", DBLSIZE+CUSTOM_COLOR+CENTER)
-    lcd.drawText(160, 95, "Yaapu Telemery 2.0.x dev".." ("..'86ff4a6'..")", SMLSIZE+CUSTOM_COLOR+CENTER)
+    lcd.drawText(160, 95, "Yaapu Telemery 2.0.x dev".." ("..'1997425'..")", SMLSIZE+CUSTOM_COLOR+CENTER)
     libs.layoutLib.drawTopBar()
     local info = model.getInfo()
     lcd.setColor(CUSTOM_COLOR,WHITE)
@@ -94,7 +93,7 @@ function layoutLib.drawWidgetPaused()
     lcd.drawFilledRectangle(90,46, 300, 80, CUSTOM_COLOR)
     lcd.setColor(CUSTOM_COLOR,BLACK)
     lcd.drawText(160, 55, "WIDGET PAUSED", DBLSIZE+CUSTOM_COLOR+CENTER)
-    lcd.drawText(160, 95, "Yaapu Telemetry Widget 2.0.x dev".." ("..'86ff4a6'..")", SMLSIZE+CUSTOM_COLOR+CENTER)
+    lcd.drawText(160, 95, "Yaapu Telemetry Widget 2.0.x dev".." ("..'1997425'..")", SMLSIZE+CUSTOM_COLOR+CENTER)
   end
 end
 

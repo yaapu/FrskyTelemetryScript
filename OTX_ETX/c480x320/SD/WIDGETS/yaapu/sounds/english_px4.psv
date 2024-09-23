@@ -1,0 +1,10 @@
+WIDGETS/Yaapu/sound/en|altctl|Altitude control mode
+WIDGETS/Yaapu/sound/en|posctl|Position control mode
+WIDGETS/Yaapu/sound/en|ready|ready
+WIDGETS/Yaapu/sound/en|takeoff|Auto takeoff mode
+WIDGETS/Yaapu/sound/en|mission|Auto mission mode
+WIDGETS/Yaapu/sound/en|rtgs|link loss failsafe mode
+WIDGETS/Yaapu/sound/en|precland|Precision landing mode
+WIDGETS/Yaapu/sound/en|offboard|Offboard mode
+WIDGETS/Yaapu/sound/en|rattitude|rate attitude mode
+WIDGETS/Yaapu/sound/en|simple|simple mode

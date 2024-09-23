@@ -22,7 +22,6 @@ local unitLabel = getGeneralSettings().imperial == 0 and "m" or "ft"
 local unitLongScale = getGeneralSettings().imperial == 0 and 1/1000 or 1/1609.34
 local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 
-
 -- model and opentx version
 local ver, radio, maj, minor, rev = getVersion()
 
@@ -139,9 +138,10 @@ function layout.draw(widget)
     lcd.drawText(60+30, 22, string.format("%.01f %s", telemetry.trueWindSpeed*conf.horSpeedMultiplier*0.1,conf.horSpeedLabel),CUSTOM_COLOR)
     libs.drawLib.drawRArrow(60+15,22+11,8,5,45,telemetry.trueWindAngle-180,CUSTOM_COLOR)
   end
-  
+
   local nextX = libs.drawLib.drawTerrainStatus(4, 60)
   libs.drawLib.drawFenceStatus(nextX, 60)
+  --]]
 end
 
 function layout.background(widget)

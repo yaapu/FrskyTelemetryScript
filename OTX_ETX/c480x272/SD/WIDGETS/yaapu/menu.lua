@@ -21,7 +21,6 @@ local unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
 local unitLabel = getGeneralSettings().imperial == 0 and "m" or "ft"
 local unitLongScale = getGeneralSettings().imperial == 0 and 1/1000 or 1/1609.34
 local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
-
 -------------------------------------
 -- UNITS Scales from Ardupilot OSD code /ardupilot/libraries/AP_OSD/AP_OSD_Screen.cpp
 -------------------------------------
@@ -514,7 +513,7 @@ local function drawConfigMenuBars()
   lcd.drawFilledRectangle(0,LCD_H-20, LCD_W, 20, CUSTOM_COLOR)
   lcd.drawRectangle(0, LCD_H-20, LCD_W, 20, CUSTOM_COLOR)
   lcd.setColor(CUSTOM_COLOR,WHITE)
-  lcd.drawText(LCD_W,3,"Yaapu Telemetry Widget 2.0.x dev".." ("..'86ff4a6'..")",CUSTOM_COLOR+SMLSIZE+RIGHT)
+  lcd.drawText(LCD_W,3,"Yaapu Telemetry Widget 2.0.x dev".." ("..'1997425'..")",CUSTOM_COLOR+SMLSIZE+RIGHT)
   lcd.drawText(0,0,info.name,CUSTOM_COLOR)
   lcd.drawText(0,LCD_H-20+1,getConfigFilename(),CUSTOM_COLOR)
   lcd.drawText(LCD_W,LCD_H-20+1,itemIdx,CUSTOM_COLOR+RIGHT)

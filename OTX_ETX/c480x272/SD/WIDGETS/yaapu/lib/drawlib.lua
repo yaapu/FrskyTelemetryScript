@@ -22,7 +22,6 @@ local unitLabel = getGeneralSettings().imperial == 0 and "m" or "ft"
 local unitLongScale = getGeneralSettings().imperial == 0 and 1/1000 or 1/1609.34
 local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
 
-
 local drawLib = {}
 
 local status
@@ -35,18 +34,18 @@ local libs
 local ver, radio, maj, minor, rev = getVersion()
 local yawRibbonPoints = {"N",nil,"NE",nil,"E",nil,"SE",nil,"S",nil,"SW",nil,"W",nil,"NW",nil}
 
+if string.find(radio, "x10") and tonumber(maj..minor..rev) < 222 then
+  drawLib.drawLine = function(x1,y1,x2,y2,flags1,flags2) lcd.drawLine(LCD_W-x1,LCD_H-y1,LCD_W-x2,LCD_H-y2,flags1,flags2) end
+else
+  drawLib.drawLine = function(x1,y1,x2,y2,flags1,flags2) lcd.drawLine(x1,y1,x2,y2,flags1,flags2) end
+end
+
 function drawLib.init(param_status, param_telemetry, param_conf, param_utils, param_libs)
   status = param_status
   telemetry = param_telemetry
   conf = param_conf
   utils = param_utils
   libs = param_libs
-end
-
-if string.find(radio, "x10") and tonumber(maj..minor..rev) < 222 then
-  drawLib.drawLine = function(x1,y1,x2,y2,flags1,flags2) lcd.drawLine(LCD_W-x1,LCD_H-y1,LCD_W-x2,LCD_H-y2,flags1,flags2) end
-else
-  drawLib.drawLine = function(x1,y1,x2,y2,flags1,flags2) lcd.drawLine(x1,y1,x2,y2,flags1,flags2) end
 end
 
 function drawLib.drawHArrow(x,y,width,left,right,drawBlinkBitmap)
@@ -86,44 +85,14 @@ function drawLib.computeOutCode(x,y,xmin,ymin,xmax,ymax)
     elseif y > ymax then --above the hud
         code = bit32.bor(code,4);
     end
-    --
     return code;
 end
 
---[[
-// x1, y1, x2, y2, xmin, ymax, xmax, ymin //
-if not(x1<xmin and x2<xmin) and not(x1>xmax and x2>xmax) then
-  if not(y1<ymin and y2<ymin) and not(y1>ymax and y2>ymax) then
-    x[1]=x1
-    y[1]=y1
-    x[2]=x2
-    y[2]=y2
-    i=1
-    repeat
-      if x[i] < xmin then
-        x[i] = xmin
-        y[i] = ((y2-y1)/(x2-x1))*(xmin-x1)+y1
-      else if x[i] > xmax then
-        x[i] = xmax
-        y[i] = ((y2-y1)/(x2-x1))*(xmax-x1)+y1
-      end if
-      if y[i] < ymin then
-        y[i] = ymin
-        x[i] = ((x2-x1)/(y2-y1))*(ymin-y1)+x1
-        else if y[i] > ymax then
-        y[i] = ymax
-        x[i] = ((x2-x1)/(y2-y1))*(ymax-y1)+x1
-      end if
-        i = i + 1
-    until i>2
-    if not(x[1]<xmin and x[2]<xmin) and not(x[1]>xmax and x[2]>xmax) then
-        drawLine(x[1],y[1],x[2],y[2])
-    end if
-  end if
-end if
---]]
+local function etxDrawLineWithClipping(x1,y1,x2,y2,style,xmin,xmax,ymin,ymax,color)
+  lcd.drawLineWithClipping(x1,y1,x2,y2,xmin,xmax,ymin,ymax,style,color)
+end
 
-function drawLib.drawLineWithClipping(x1,y1,x2,y2,style,xmin,xmax,ymin,ymax,color)
+local function otxDrawLineWithClipping(x1,y1,x2,y2,style,xmin,xmax,ymin,ymax,color)
   local x= {}
   local y = {}
   if not(x1 < xmin and x2 < xmin) and not(x1 > xmax and x2 > xmax) then
@@ -157,6 +126,12 @@ function drawLib.drawLineWithClipping(x1,y1,x2,y2,style,xmin,xmax,ymin,ymax,colo
   end
 end
 
+if lcd.drawLineWithClipping == nil then
+  drawLib.drawLineWithClippingXY = otxDrawLineWithClipping
+else
+  drawLib.drawLineWithClippingXY = etxDrawLineWithClipping
+end
+
 function drawLib.drawLineByOriginAndAngle(ox,oy,angle,len,style,xmin,xmax,ymin,ymax,color,drawDiameter)
   local xx = math.cos(math.rad(angle)) * len * 0.5
   local yy = math.sin(math.rad(angle)) * len * 0.5
@@ -167,9 +142,9 @@ function drawLib.drawLineByOriginAndAngle(ox,oy,angle,len,style,xmin,xmax,ymin,y
   local y1 = oy + yy
 
   if drawDiameter == false then
-    drawLib.drawLineWithClipping(ox,oy,x1,y1,style,xmin,xmax,ymin,ymax,color)
+    drawLib.drawLineWithClippingXY(ox,oy,x1,y1,style,xmin,xmax,ymin,ymax,color)
   else
-    drawLib.drawLineWithClipping(x0,y0,x1,y1,style,xmin,xmax,ymin,ymax,color)
+    drawLib.drawLineWithClippingXY(x0,y0,x1,y1,style,xmin,xmax,ymin,ymax,color)
   end
 end
 
@@ -688,6 +663,68 @@ function drawLib.drawWindArrow(x,y,r1,r2,arrow_angle, angle, skew, color)
   lcd.drawLine(x1,y1,x3,y3,SOLID,color)
 end
 
+local function otxDrawHudRectangle(pitch, roll, minX, maxX, minY, maxY, color, ox, oy, dx, dy, scale)
+  local r = -roll
+  -- angle of the line passing on point(ox,oy)
+  local angle = math.tan(math.rad(-roll))
+  -- prevent divide by zero
+  if roll == 0 then
+    libs.drawLib.drawFilledRectangle(minX,math.max(minY,dy+minY+(maxY-minY)/2),maxX-minX,math.max(0,math.min(maxY-minY,(maxY-minY)/2-dy+(math.abs(dy) > 0 and 1 or 0))),CUSTOM_COLOR)
+  elseif math.abs(roll) >= 180 then
+    libs.drawLib.drawFilledRectangle(minX,minY,maxX-minX,math.min(maxY-minY,(maxY-minY)/2+dy),CUSTOM_COLOR)
+  else  -- true if flying inverted
+    local inverted = math.abs(roll) > 90
+    -- true if part of the hud can be filled in one pass with a rectangle
+    local fillNeeded = false
+    local yRect = inverted and 0 or LCD_H
+
+    local step = 2
+    local steps = (maxY - minY)/step - 1
+    local yy = 0
+
+    if 0 < roll and roll < 180 then
+      for s=0,steps
+      do
+        yy = minY + s*step
+        xx = ox + (yy-oy)/angle
+        if xx >= minX and xx <= maxX then
+          lcd.drawFilledRectangle(xx, yy, maxX-xx+1, step,CUSTOM_COLOR)
+        elseif xx < minX then
+          yRect = inverted and math.max(yy,yRect)+step or math.min(yy,yRect)
+          fillNeeded = true
+        end
+      end
+    elseif -180 < roll and roll < 0 then
+      for s=0,steps
+      do
+        yy = minY + s*step
+        xx = ox + (yy-oy)/angle
+        if xx >= minX and xx <= maxX then
+          lcd.drawFilledRectangle(minX, yy, xx-minX, step,CUSTOM_COLOR)
+        elseif xx > maxX then
+          yRect = inverted and math.max(yy,yRect)+step or math.min(yy,yRect)
+          fillNeeded = true
+        end
+      end
+    end
+
+    if fillNeeded then
+      local yMin = inverted and minY or yRect
+      local height = inverted and yRect - minY or maxY-yRect
+      lcd.drawFilledRectangle(minX, yMin, maxX-minX, height ,CUSTOM_COLOR)
+    end
+  end
+end
+
+local function etxDrawHudRectangle(pitch, roll, minX, maxX, minY, maxY, color, ox, oy, dx, dy, scale)
+  lcd.drawHudRectangle(pitch, roll+0.001, minX, maxX, minY, maxY, color)
+end
+
+local drawHudRectangle = etxDrawHudRectangle
+if lcd.drawHudRectangle == nil then
+  drawHudRectangle = otxDrawHudRectangle
+end
+
 function drawLib.drawArtificialHorizon(x, y, w, h, bgBitmapName, colorSky, colorTerrain, lineCount, lineOffset, scale)
   local r = -telemetry.roll
   local cx,cy,dx,dy
@@ -728,56 +765,7 @@ function drawLib.drawArtificialHorizon(x, y, w, h, bgBitmapName, colorSky, color
 
   -- HUD drawn using horizontal bars of height 2
   lcd.setColor(CUSTOM_COLOR,colorTerrain)
-  -- angle of the line passing on point(ox,oy)
-  local angle = math.tan(math.rad(-telemetry.roll))
-  -- prevent divide by zero
-  if telemetry.roll == 0 then
-    libs.drawLib.drawFilledRectangle(minX,math.max(minY,dy+minY+(maxY-minY)/2),maxX-minX,math.max(0,math.min(maxY-minY,(maxY-minY)/2-dy+(math.abs(dy) > 0 and 1 or 0))),CUSTOM_COLOR)
-  elseif math.abs(telemetry.roll) >= 180 then
-    libs.drawLib.drawFilledRectangle(minX,minY,maxX-minX,math.min(maxY-minY,(maxY-minY)/2+dy),CUSTOM_COLOR)
-  else  -- true if flying inverted
-    local inverted = math.abs(telemetry.roll) > 90
-    -- true if part of the hud can be filled in one pass with a rectangle
-    local fillNeeded = false
-    local yRect = inverted and 0 or LCD_H
-
-    local step = 2
-    local steps = (maxY - minY)/step - 1
-    local yy = 0
-
-    if 0 < telemetry.roll and telemetry.roll < 180 then
-      for s=0,steps
-      do
-        yy = minY + s*step
-        xx = ox + (yy-oy)/angle
-        if xx >= minX and xx <= maxX then
-          lcd.drawFilledRectangle(xx, yy, maxX-xx+1, step,CUSTOM_COLOR)
-        elseif xx < minX then
-          yRect = inverted and math.max(yy,yRect)+step or math.min(yy,yRect)
-          fillNeeded = true
-        end
-      end
-    elseif -180 < telemetry.roll and telemetry.roll < 0 then
-      for s=0,steps
-      do
-        yy = minY + s*step
-        xx = ox + (yy-oy)/angle
-        if xx >= minX and xx <= maxX then
-          lcd.drawFilledRectangle(minX, yy, xx-minX, step,CUSTOM_COLOR)
-        elseif xx > maxX then
-          yRect = inverted and math.max(yy,yRect)+step or math.min(yy,yRect)
-          fillNeeded = true
-        end
-      end
-    end
-
-    if fillNeeded then
-      local yMin = inverted and minY or yRect
-      local height = inverted and yRect - minY or maxY-yRect
-      lcd.drawFilledRectangle(minX, yMin, maxX-minX, height ,CUSTOM_COLOR)
-    end
-  end
-
+  drawHudRectangle(telemetry.pitch, telemetry.roll, minX, maxX, minY, maxY, CUSTOM_COLOR, ox, oy, dx, dy, scale)
   -- parallel lines above and below horizon
   lcd.setColor(CUSTOM_COLOR, WHITE)
   -- +/- 90 deg

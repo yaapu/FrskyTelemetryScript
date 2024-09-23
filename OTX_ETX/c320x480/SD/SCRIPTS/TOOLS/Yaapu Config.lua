@@ -21,7 +21,6 @@ local unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
 local unitLabel = getGeneralSettings().imperial == 0 and "m" or "ft"
 local unitLongScale = getGeneralSettings().imperial == 0 and 1/1000 or 1/1609.34
 local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
-
 -------------------------------------
 -- UNITS Scales from Ardupilot OSD code /ardupilot/libraries/AP_OSD/AP_OSD_Screen.cpp
 -------------------------------------
@@ -514,7 +513,7 @@ local function drawConfigMenuBars()
   lcd.drawFilledRectangle(0,LCD_H-20, LCD_W, 20, CUSTOM_COLOR)
   lcd.drawRectangle(0, LCD_H-20, LCD_W, 20, CUSTOM_COLOR)
   lcd.setColor(CUSTOM_COLOR,WHITE)
-  lcd.drawText(LCD_W,3,"Yaapu Telemery 2.0.x dev".." ("..'86ff4a6'..")",CUSTOM_COLOR+SMLSIZE+RIGHT)
+  lcd.drawText(LCD_W,3,"Yaapu Telemery 2.0.x dev".." ("..'1997425'..")",CUSTOM_COLOR+SMLSIZE+RIGHT)
   lcd.drawText(0,0,info.name,CUSTOM_COLOR)
   lcd.drawText(0,LCD_H-20+1,getConfigFilename(),CUSTOM_COLOR)
   lcd.drawText(LCD_W,LCD_H-20+1,itemIdx,CUSTOM_COLOR+RIGHT)
@@ -551,14 +550,14 @@ end
 local function drawItem(idx,flags)
   lcd.setColor(CUSTOM_COLOR,WHITE)
   if type(menuItems[idx][4]) == "table" then
-    lcd.drawText(215,25 + (idx-menu.offset-1)*20, menuItems[idx][4][menuItems[idx][3]],flags+CUSTOM_COLOR)
+    lcd.drawText(280,25 + (idx-menu.offset-1)*20, menuItems[idx][4][menuItems[idx][3]],flags+CUSTOM_COLOR)
   else
     if menuItems[idx][3] == 0 and menuItems[idx][4] >= 0 then
-      lcd.drawText(215,25 + (idx-menu.offset-1)*20, "---",flags+CUSTOM_COLOR)
+      lcd.drawText(280,25 + (idx-menu.offset-1)*20, "---",flags+CUSTOM_COLOR)
     else
-      lcd.drawNumber(215,25 + (idx-menu.offset-1)*20, menuItems[idx][3],flags+menuItems[idx][7]+CUSTOM_COLOR)
+      lcd.drawNumber(280,25 + (idx-menu.offset-1)*20, menuItems[idx][3],flags+menuItems[idx][7]+CUSTOM_COLOR)
       if menuItems[idx][6] ~= nil then
-        lcd.drawText(215 + 50,25 + (idx-menu.offset-1)*20, menuItems[idx][6],flags+CUSTOM_COLOR)
+        lcd.drawText(280 + 50,25 + (idx-menu.offset-1)*20, menuItems[idx][6],flags+CUSTOM_COLOR)
       end
     end
   end
@@ -596,7 +595,7 @@ local function drawConfigMenu(event)
     end
   elseif not menu.editSelected and (event == EVT_VIRTUAL_NEXT or event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT) then
     menu.selectedItem = (menu.selectedItem + 1)
-    if menu.selectedItem - 19 > menu.offset then
+    if menu.selectedItem - 11 > menu.offset then
       menu.offset = menu.offset + 1
     end
   end
@@ -606,10 +605,10 @@ local function drawConfigMenu(event)
     menu.offset = 0
   elseif menu.selectedItem  < 1 then
     menu.selectedItem = #menuItems
-    menu.offset =  #menuItems - 19
+    menu.offset =  #menuItems - 11
   end
   --
-  for m=1+menu.offset,math.min(#menuItems,19+menu.offset) do
+  for m=1+menu.offset,math.min(#menuItems,11+menu.offset) do
     lcd.setColor(CUSTOM_COLOR,WHITE)
     lcd.drawText(2,25 + (m-menu.offset-1)*20, menuItems[m][1],CUSTOM_COLOR)
     if m == menu.selectedItem then
