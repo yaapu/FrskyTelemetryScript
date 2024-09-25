@@ -687,7 +687,7 @@ local function createOnce(widget)
   status.currentModel = model.name()
   widget.runBgTasks = true
   libs.utils.playSound("yaapu")
-  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.1.0".. " ("..'b2f1c6f'..")")
+  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.1.0".. " ("..'e7fc869'..")")
   -- create the YaapuTimer if missing
   local timer = model.getTimer("Yaapu")
   if timer == nil then
@@ -991,7 +991,7 @@ local function bgtasks(widget)
         end
       end
     end
-  elseif status.pauseTelemetry == false then
+  elseif status.pauseTelemetry == false or CRSF_PAUSE_TELEMETRY == false or ELRS_PAUSE_TELEMETRY == false then
     for i=1,10
     do
       local physId, primId, appId, data = libs.utils.telemetryPop()
@@ -1272,7 +1272,7 @@ end
 local function configure(widget)
   local f
   local line = form.addLine("Widget version")
-  form.addStaticText(line, nil, "1.1.0".." ("..'b2f1c6f'..")")
+  form.addStaticText(line, nil, "1.1.0".." ("..'e7fc869'..")")
 
   line = form.addLine("GPS source")
   form.addSourceField(line, nil, function() return status.conf.gpsSource end, function(value) status.conf.gpsSource = value end)
