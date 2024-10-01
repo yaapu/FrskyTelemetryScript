@@ -17,25 +17,15 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program; if not, see <http://www.gnu.org/licenses>.
 --
---[[
- ALARM_TYPE_MIN needs arming (min has to be reached first), value below level for grace, once armed is periodic, reset on landing
- ALARM_TYPE_MAX no arming, value above level for grace, once armed is periodic, reset on landing
- ALARM_TYPE_TIMER no arming, fired periodically, spoken time, reset on landing
- ALARM_TYPE_BATT needs arming (min has to be reached first), value below level for grace, no reset on landing
-{
-  1 = notified,
-  2 = alarm start,
-  3 = armed,
-  4 = type(0=min,1=max,2=timer,3=batt),
-  5 = grace duration
-  6 = ready
-  7 = last alarm
-}
---]]
+
+-----------------------
+-- UNIT SCALING
+-----------------------
 local unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
 local unitLabel = getGeneralSettings().imperial == 0 and "m" or "ft"
 local unitLongScale = getGeneralSettings().imperial == 0 and 1/1000 or 1/1609.34
 local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
+
 local function doGarbageCollect()
     collectgarbage()
     collectgarbage()

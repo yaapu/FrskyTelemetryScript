@@ -17,25 +17,15 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program; if not, see <http://www.gnu.org/licenses>.
 --
---[[
- ALARM_TYPE_MIN needs arming (min has to be reached first), value below level for grace, once armed is periodic, reset on landing
- ALARM_TYPE_MAX no arming, value above level for grace, once armed is periodic, reset on landing
- ALARM_TYPE_TIMER no arming, fired periodically, spoken time, reset on landing
- ALARM_TYPE_BATT needs arming (min has to be reached first), value below level for grace, no reset on landing
-{
-  1 = notified,
-  2 = alarm start,
-  3 = armed,
-  4 = type(0=min,1=max,2=timer,3=batt),
-  5 = grace duration
-  6 = ready
-  7 = last alarm
-}
---]]
+
+-----------------------
+-- UNIT SCALING
+-----------------------
 local unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
 local unitLabel = getGeneralSettings().imperial == 0 and "m" or "ft"
 local unitLongScale = getGeneralSettings().imperial == 0 and 1/1000 or 1/1609.34
 local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
+
 local function doGarbageCollect()
     collectgarbage()
     collectgarbage()
@@ -243,16 +233,16 @@ local function drawConfigMenu(event)
   if event == EVT_ENTER_BREAK or event == 34 then
     menu.editSelected = not menu.editSelected
     menu.updated = true
-  elseif menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT or event == EVT_PLUS_REPT or event == 36) then
+  elseif menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT or event == EVT_PLUS_REPT or event == 36 or event == EVT_VIRTUAL_NEXT) then
     incMenuItem(menu.selectedItem)
-  elseif menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_LEFT or event == EVT_MINUS_REPT or event == 35) then
+  elseif menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_LEFT or event == EVT_MINUS_REPT or event == 35 or event == EVT_VIRTUAL_PREV) then
     decMenuItem(menu.selectedItem)
-  elseif not menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_LEFT or event == 36) then
+  elseif not menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_LEFT or event == 36  or event == EVT_VIRTUAL_PREV) then
     menu.selectedItem = (menu.selectedItem - 1)
     if menu.offset >=  menu.selectedItem then
       menu.offset = menu.offset - 1
     end
-  elseif not menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_RIGHT or event == 35) then
+  elseif not menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_RIGHT or event == 35  or event == EVT_VIRTUAL_NEXT) then
     menu.selectedItem = (menu.selectedItem + 1)
     if menu.selectedItem - 7 > menu.offset then
       menu.offset = menu.offset + 1

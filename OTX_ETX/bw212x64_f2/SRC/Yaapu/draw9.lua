@@ -17,25 +17,15 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program; if not, see <http://www.gnu.org/licenses>.
 --
---[[
- ALARM_TYPE_MIN needs arming (min has to be reached first), value below level for grace, once armed is periodic, reset on landing
- ALARM_TYPE_MAX no arming, value above level for grace, once armed is periodic, reset on landing
- ALARM_TYPE_TIMER no arming, fired periodically, spoken time, reset on landing
- ALARM_TYPE_BATT needs arming (min has to be reached first), value below level for grace, no reset on landing
-{
-  1 = notified,
-  2 = alarm start,
-  3 = armed,
-  4 = type(0=min,1=max,2=timer,3=batt),
-  5 = grace duration
-  6 = ready
-  7 = last alarm
-}
---]]
+
+-----------------------
+-- UNIT SCALING
+-----------------------
 local unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
 local unitLabel = getGeneralSettings().imperial == 0 and "m" or "ft"
 local unitLongScale = getGeneralSettings().imperial == 0 and 1/1000 or 1/1609.34
 local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
+
 local function doGarbageCollect()
     collectgarbage()
     collectgarbage()
@@ -75,45 +65,84 @@ local function drawHomeIcon(x,y)
   lcd.drawLine(x+5,y+1,x+3,y-1,SOLID, FORCE)
 end
 
+
+local function computeOutCode(x,y,xmin,ymin,xmax,ymax)
+    local code = 0; --initialised as being inside of hud
+    --
+    if x < xmin then --to the left of hud
+        code = bit32.bor(code,1);
+    elseif x > xmax then --to the right of hud
+        code = bit32.bor(code,2);
+    end
+    if y < ymin then --below the hud
+        code = bit32.bor(code,4);
+    elseif y > ymax then --above the hud
+        code = bit32.bor(code,8);
+    end
+    --
+    return code;
+end
+-- Cohen–Sutherland clipping algorithm
+-- https://en.wikipedia.org/wiki/Cohen%E2%80%93Sutherland_algorithm
 local function drawLineWithClipping(ox,oy,angle,len,style,xmin,xmax,ymin,ymax)
+  --
   local xx = math.cos(math.rad(angle)) * len * 0.5
   local yy = math.sin(math.rad(angle)) * len * 0.5
-  
-  local x1 = ox - xx
-  local x2 = ox + xx
-  local y1 = oy - yy
-  local y2 = oy + yy
-  
-  local x= {}
-  local y = {}
-  if not(x1 < xmin and x2 < xmin) and not(x1 > xmax and x2 > xmax) then
-    if not(y1 < ymin and y2 < ymin) and not(y1 > ymax and y2 > ymax) then
-      x[1]=x1
-      y[1]=y1
-      x[2]=x2
-      y[2]=y2
-      for i=1,2
-      do
-        if x[i] < xmin then
-          x[i] = xmin
-          y[i] = ((y2-y1)/(x2-x1))*(xmin-x1)+y1
-        elseif x[i] > xmax then
-          x[i] = xmax
-          y[i] = ((y2-y1)/(x2-x1))*(xmax-x1)+y1
-        end
-
-        if y[i] < ymin then
-          y[i] = ymin
-          x[i] = ((x2-x1)/(y2-y1))*(ymin-y1)+x1
-        elseif y[i] > ymax then
-          y[i] = ymax
-          x[i] = ((x2-x1)/(y2-y1))*(ymax-y1)+x1
-        end
+  --
+  local x0 = ox - xx
+  local x1 = ox + xx
+  local y0 = oy - yy
+  local y1 = oy + yy
+  -- compute outcodes for P0, P1, and whatever point lies outside the clip rectangle
+  local outcode0 = computeOutCode(x0, y0, xmin, ymin, xmax, ymax);
+  local outcode1 = computeOutCode(x1, y1, xmin, ymin, xmax, ymax);
+  local accept = false;
+  while (true) do
+    if ( bit32.bor(outcode0,outcode1) == 0) then
+      -- bitwise OR is 0: both points inside window; trivially accept and exit loop
+      accept = true;
+      break;
+    elseif (bit32.band(outcode0,outcode1) ~= 0) then
+      -- bitwise AND is not 0: both points share an outside zone (LEFT, RIGHT, TOP, BOTTOM)
+      -- both must be outside window; exit loop (accept is false)
+      break;
+    else
+      -- failed both tests, so calculate the line segment to clip
+      -- from an outside point to an intersection with clip edge
+      local x = 0
+      local y = 0
+      -- At least one endpoint is outside the clip rectangle; pick it.
+      local outcodeOut = outcode0 ~= 0 and outcode0 or outcode1
+      -- No need to worry about divide-by-zero because, in each case, the
+      -- outcode bit being tested guarantees the denominator is non-zero
+      if bit32.band(outcodeOut,8) ~= 0 then --point is above the clip window
+        x = x0 + (x1 - x0) * (ymax - y0) / (y1 - y0)
+        y = ymax
+      elseif bit32.band(outcodeOut,4) ~= 0 then --point is below the clip window
+        x = x0 + (x1 - x0) * (ymin - y0) / (y1 - y0)
+        y = ymin
+      elseif bit32.band(outcodeOut,2) ~= 0 then --point is to the right of clip window
+        y = y0 + (y1 - y0) * (xmax - x0) / (x1 - x0)
+        x = xmax
+      elseif bit32.band(outcodeOut,1) ~= 0 then --point is to the left of clip window
+        y = y0 + (y1 - y0) * (xmin - x0) / (x1 - x0)
+        x = xmin
       end
-      if not(x[1] < xmin and x[2] < xmin) and not(x[1] > xmax and x[2] > xmax) then
-        lcd.drawLine(x[1],y[1],x[2],y[2], style, 0)
+      -- Now we move outside point to intersection point to clip
+      -- and get ready for next pass.
+      if outcodeOut == outcode0 then
+        x0 = x
+        y0 = y
+        outcode0 = computeOutCode(x0, y0, xmin, ymin, xmax, ymax)
+      else
+        x1 = x
+        y1 = y
+        outcode1 = computeOutCode(x1, y1, xmin, ymin, xmax, ymax)
       end
     end
+  end
+  if accept then
+    lcd.drawLine(x0,y0,x1,y1, style,0)
   end
 end
 
