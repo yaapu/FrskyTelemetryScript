@@ -1345,7 +1345,7 @@ local bgclock = 0
 -------------------------------
 local function background()
   local now = getTime()
-   
+
   -- FAST: this runs at 60Hz (every 16ms)
   for i=1,7
   do
@@ -1394,6 +1394,15 @@ local function background()
   doGarbageCollect()
 end
 
+local function checkKeyEvent(event, keys)
+  for i=1,#keys do
+    if event == keys[i] then
+      return true
+    end
+  end
+  return false
+end
+
 local function run(event)
   lcd.clear()
 
@@ -1405,9 +1414,9 @@ local function run(event)
     ---------------------
     drawAllMessages()
 
-    if event == EVT_MINUS_BREAK or event == EVT_ROT_LEFT or event == 35 or event == EVT_EXIT_BREAK or event == 33 then
+    if checkKeyEvent(event, {EVT_MINUS_BREAK, EVT_ROT_LEFT, 35, EVT_EXIT_BREAK, 33}) then
       showMessages = false
-    elseif event == EVT_ENTER_BREAK or event == 34 then
+    elseif checkKeyEvent(event, {EVT_ENTER_BREAK, 34, EVT_VIRTUAL_ENTER}) then
       if showAltView == false then
         -- main --> altview
         unloadPanels()
@@ -1420,7 +1429,7 @@ local function run(event)
       end
       showMessages = false
       doGarbageCollect()
-    elseif event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT or event == 36 then
+    elseif checkKeyEvent(event, {EVT_PLUS_BREAK, EVT_ROT_RIGHT, 36}) then
       showMessages = false
     end
   elseif showConfigMenu then
@@ -1457,11 +1466,11 @@ local function run(event)
     ---------------------
     -- MAIN VIEW
     ---------------------
-    if event == EVT_MENU_BREAK or event == 32 then
+    if checkKeyEvent(event, {EVT_MENU_BREAK, 32, EVT_VIRTUAL_MENU}) then
       status.showMinMaxValues = not status.showMinMaxValues
     end
 
-    if status.showDualBattery == true and (event == EVT_EXIT_BREAK or event == 33) then
+    if status.showDualBattery == true and (checkKeyEvent(event, {EVT_EXIT_BREAK,33})) then
       status.showDualBattery = false
     end
 
@@ -1485,14 +1494,14 @@ local function run(event)
         altView.drawView(drawLib,conf,telemetry,status,battery,(batt2sources.fc or batt2sources.vs) and 0 or 1,getMaxValue,gpsStatuses)
       end
 
-      if event == EVT_EXIT_BREAK or event == 33 then
+      if checkKeyEvent(event, {EVT_EXIT_BREAK, 33}) then
         showMessages = false
         showAltView = false
 
         clearTable(altView)
         altView = nil
         doGarbageCollect()
-      elseif event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT or event == 36 then
+      elseif checkKeyEvent(event, {EVT_PLUS_BREAK, EVT_ROT_RIGHT, 36}) then
         showMessages = true
       end
     else
@@ -1538,12 +1547,12 @@ local function run(event)
     end
 
     -- event handler
-    if event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT or event == 36 then
+    if checkKeyEvent(event, {EVT_PLUS_BREAK, EVT_ROT_RIGHT, 36, EVT_VIRTUAL_NEXT}) then
       ---------------------
       -- SHOW MESSAGES
       ---------------------
       showMessages = true
-    elseif event == EVT_MENU_LONG or event == 128 then
+    elseif checkKeyEvent(event, {EVT_MENU_LONG, 128, EVT_VIRTUAL_MENU_LONG}) then
       ---------------------
       -- SHOW CONFIG MENU
       ---------------------
@@ -1583,7 +1592,7 @@ local function init()
   clearTable(menuLib)
   menuLib = nil
 
-  pushMessage(7,"Yaapu 2.0.0-dev".." ("..'7e82d4a'..")")
+  pushMessage(7,"Yaapu 2.1.0-dev".." ("..'54bcb2d'..")")
   doGarbageCollect()
   playSound("yaapu")
 end

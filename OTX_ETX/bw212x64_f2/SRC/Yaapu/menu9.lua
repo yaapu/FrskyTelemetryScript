@@ -181,7 +181,7 @@ end
 local function drawConfigMenuBars()
   local itemIdx = string.format("%d/%d",menu.selectedItem,#menuItems)
   lcd.drawFilledRectangle(0,0, 212, 7, SOLID)
-  lcd.drawText(0,0,"Yaapu 2.0.0-dev",SMLSIZE+INVERS)
+  lcd.drawText(0,0,"Yaapu 2.1.0-dev",SMLSIZE+INVERS)
   lcd.drawFilledRectangle(0,56, 212, 8, SOLID)
   lcd.drawText(0,56+1,getConfigFilename(),SMLSIZE+INVERS)
   lcd.drawText(212,56+1,itemIdx,SMLSIZE+INVERS+RIGHT)
