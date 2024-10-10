@@ -1466,7 +1466,7 @@ local function run(event)
     ---------------------
     -- MAIN VIEW
     ---------------------
-    if checkKeyEvent(event, {EVT_MENU_BREAK, 32, EVT_VIRTUAL_MENU}) then
+    if checkKeyEvent(event, {EVT_MENU_BREAK, EVT_VIRTUAL_MENU}) then
       status.showMinMaxValues = not status.showMinMaxValues
     end
 
@@ -1592,7 +1592,7 @@ local function init()
   clearTable(menuLib)
   menuLib = nil
 
-  pushMessage(7,"Yaapu 2.1.0-dev".." ("..'54bcb2d'..")")
+  pushMessage(7,"Yaapu 2.1.0-dev".." ("..'6cf4cbc'..")")
   doGarbageCollect()
   playSound("yaapu")
 end

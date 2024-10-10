@@ -37,8 +37,8 @@ local menuItems = {
   {"batt alert level 2:", "V2", 350, 0,5000,"V",PREC2,5 },
   {"batt[1] capacity override:", "B1", 0, 0,5000,"Ah",PREC2,10 },
   {"batt[2] capacity override:", "B2", 0, 0,5000,"Ah",PREC2,10 },
-  {"batt[1] cell count override:", "CC", 0, 0,12," cells",0,1 },
-  {"batt[2] cell count override:", "CC2", 0, 0,12," cells",0,1 },
+  {"batt[1] cell count override:", "CC", 0, 0,16," cells",0,1 },
+  {"batt[2] cell count override:", "CC2", 0, 0,16," cells",0,1 },
   {"dual battery config:", "BC", 1, { "par", "ser", "other-1", "other-2" }, { 1, 2, 3, 4 } },
   {"default voltage source:", "VS", 1, { "auto", "FLVSS", "fc" }, { nil, "vs", "fc" } },
   {"disable all sounds:", "S1", 1, { "no", "yes" }, { false, true } },
@@ -71,6 +71,15 @@ local rightPanelFiles = {"right9","right9_min","right9_heli"}
 local leftPanelFiles = {"left9","left9_m2f"}
 local altViewFiles = {"alt9_view","heli9_view"}
 
+
+local function checkKeyEvent(event, keys)
+  for i=1,#keys do
+    if event == keys[i] then
+      return true
+    end
+  end
+  return false
+end
 ------------------------------------------
 -- returns item's VALUE,LABEL,IDX
 ------------------------------------------
@@ -230,19 +239,19 @@ end
 
 local function drawConfigMenu(event)
   drawConfigMenuBars()
-  if event == EVT_ENTER_BREAK or event == 34 then
+  if checkKeyEvent(event,{EVT_ENTER_BREAK,EVT_VIRTUAL_ENTER}) then
     menu.editSelected = not menu.editSelected
     menu.updated = true
-  elseif menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT or event == EVT_PLUS_REPT or event == 36 or event == EVT_VIRTUAL_NEXT) then
+  elseif menu.editSelected and checkKeyEvent(event,{EVT_ROT_RIGHT,EVT_PLUS_REPT, EVT_VIRTUAL_NEXT,EVT_VIRTUAL_NEXT_REPT}) then
     incMenuItem(menu.selectedItem)
-  elseif menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_LEFT or event == EVT_MINUS_REPT or event == 35 or event == EVT_VIRTUAL_PREV) then
+  elseif menu.editSelected and checkKeyEvent(event,{EVT_ROT_LEFT,EVT_MINUS_REPT, EVT_VIRTUAL_PREV,EVT_VIRTUAL_PREV_REPT}) then
     decMenuItem(menu.selectedItem)
-  elseif not menu.editSelected and (event == EVT_PLUS_BREAK or event == EVT_ROT_LEFT or event == 36  or event == EVT_VIRTUAL_PREV) then
+  elseif not menu.editSelected and checkKeyEvent(event,{EVT_ROT_LEFT,EVT_VIRTUAL_PREV}) then
     menu.selectedItem = (menu.selectedItem - 1)
     if menu.offset >=  menu.selectedItem then
       menu.offset = menu.offset - 1
     end
-  elseif not menu.editSelected and (event == EVT_MINUS_BREAK or event == EVT_ROT_RIGHT or event == 35  or event == EVT_VIRTUAL_NEXT) then
+  elseif not menu.editSelected and checkKeyEvent(event,{EVT_ROT_RIGHT,EVT_VIRTUAL_NEXT}) then
     menu.selectedItem = (menu.selectedItem + 1)
     if menu.selectedItem - 7 > menu.offset then
       menu.offset = menu.offset + 1
