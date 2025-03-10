@@ -17,7 +17,6 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program; if not, see <http://www.gnu.org/licenses>.
 
-
 local HUD_W = 400
 local HUD_H = 240
 local HUD_X = (800 - HUD_W)/2
@@ -26,6 +25,31 @@ local HUD_Y = 36
 local function getTime()
   -- os.clock() resolution is 0.01 secs
   return os.clock()*100 -- 1/100th
+end
+
+local function getBitmapsPath()
+  -- local path from script root
+  return "./../../bitmaps/"
+end
+
+local function getLogsPath()
+  -- local path from script root
+  return "./../../logs/"
+end
+
+local function getYaapuBitmapsPath()
+  -- local path from script root
+  return "./bitmaps/"
+end
+
+local function getYaapuAudioPath()
+  -- local path from script root
+  return "./audio/"
+end
+
+local function getYaapuLibPath()
+  -- local path from script root
+  return "./lib/"
 end
 
 
@@ -191,6 +215,8 @@ local status = {
     linkStatusSource4 = nil,
     -- gps
     gpsSource = nil,
+    mapTilesStorage = 1,
+    mapTilesStoragePathPrefix = "SD:",
   },
 
   -- gps fix status
@@ -320,7 +346,7 @@ local status = {
   -- traveled distance support
   avgSpeed = 0,
   lastUpdateTotDist = 0,
-
+  lastInvalidate = getTime(),
   -- telemetry params
   paramId = nil,
   paramValue = nil,
@@ -524,7 +550,7 @@ local function sourceWakeup(source)
 end
 
 local function loadLib(name)
-  local lib = dofile("/scripts/yaaputelemetry/lib/"..name..".lua")
+  local lib = dofile(getYaapuLibPath()..name..".lua")
   if lib.init ~= nil then
     lib.init(status, libs)
   end
@@ -688,7 +714,7 @@ local function createOnce(widget)
   status.currentModel = model.name()
   widget.runBgTasks = true
   libs.utils.playSound("yaapu")
-  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.3.0".. " ("..'fc8f523'..")")
+  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.4.1".. " ("..'bad9e8b'..")")
   -- create the YaapuTimer if missing
   local timer = model.getTimer("Yaapu")
   if timer == nil then
@@ -1006,11 +1032,6 @@ local function bgtasks(widget)
   end
 
   runScheduler(tasks)
-
-  if now - status.blinkTimer > 60 then
-    status.blinkon = not status.blinkon
-    status.blinkTimer = now
-  end
   status.loadCycle = (status.loadCycle + 1) % 8
 end
 
@@ -1038,14 +1059,14 @@ local function paint(widget)
       return
     end
 
-    if status.showMessages then
-      lcd.color(status.colors.black)
-      lcd.drawFilledRectangle(0,0,800,480)
-      libs.drawLib.drawMessages(widget, 2, 26)
-    else
-      lcd.color(status.colors.background)
-      lcd.drawFilledRectangle(0,0,800,480)
-      if widget.ready == true then
+    if widget.ready == true then
+      if status.showMessages then
+        lcd.color(status.colors.black)
+        lcd.drawFilledRectangle(0,0,800,480)
+        libs.drawLib.drawMessages(widget, 2, 26)
+      else
+        lcd.color(status.colors.background)
+        lcd.drawFilledRectangle(0,0,800,480)
         status.layout[widget.screen].draw(widget)
 
         if status.layout[widget.screen].showArmingStatus == true then
@@ -1056,29 +1077,28 @@ local function paint(widget)
           libs.drawLib.drawFailsafe(widget)
         end
       end
-    end
 
-    -- no telemetry/minmax outer box
-    if status.pauseTelemetry then
-      lcd.color(status.colors.yellow)
-      libs.drawLib.drawBlinkRectangle(0,0,800,480,3)
-      libs.drawLib.drawWidgetPaused()
-    else
-      if libs.utils.telemetryEnabled() == false then
-        -- no telemetry inner box
-        if not status.hideNoTelemetry then
-          libs.drawLib.drawNoTelemetryData(widget)
-        end
-        lcd.color(RED)
+      -- no telemetry/minmax outer box
+      if status.pauseTelemetry then
+        lcd.color(status.colors.yellow)
         libs.drawLib.drawBlinkRectangle(0,0,800,480,3)
+        libs.drawLib.drawWidgetPaused()
       else
-        if status.showMinMaxValues == true then
-          lcd.color(status.colors.yellow)
+        if libs.utils.telemetryEnabled() == false then
+          -- no telemetry inner box
+          if not status.hideNoTelemetry then
+            libs.drawLib.drawNoTelemetryData(widget)
+          end
+          lcd.color(RED)
           libs.drawLib.drawBlinkRectangle(0,0,800,480,3)
+        else
+          if status.showMinMaxValues == true then
+            lcd.color(status.colors.yellow)
+            libs.drawLib.drawBlinkRectangle(0,0,800,480,3)
+          end
         end
       end
     end
-
     -- skip first iteration
     if fg_rate == 0 then
       fg_rate = fg_counter
@@ -1156,11 +1176,24 @@ local function menu(widget)
 end
 
 
-local timer5Hz = getTime()
-local timer10Hz = getTime()
 -- always called @10Hz even when in system menus
 local function wakeup(widget)
   local now = getTime()
+
+  if now - status.blinkTimer > 60 then
+    status.blinkon = not status.blinkon
+    status.blinkTimer = now
+    -- force sync repaint
+    --lcd.invalidate()
+    --status.lastInvalidate = now
+  end
+
+--  if now - status.lastInvalidate > 20 then
+    -- force repaint every 200ms
+--    lcd.invalidate()
+--    status.lastInvalidate = now
+--  end
+
   -- one time init
   -- multiple instances of the same
   -- widget need to call this only once
@@ -1177,21 +1210,7 @@ local function wakeup(widget)
   if not widget.ready or status.layout[widget.screen] == nil then
     loadLayout(widget);
   end
-  if now - timer5Hz > 20 then
-    lcd.invalidate()
-    timer5Hz = now
-  else
-    if widget.screen == 1 then
-      -- artificial horizon @10Hz
-      if now - timer10Hz > 10 then
-        lcd.invalidate(HUD_X, HUD_Y, HUD_W, HUD_H)
-        timer10Hz = now
-      end
-    else
-      -- other screens refresh at full speed
-      lcd.invalidate()
-    end
-  end
+
   --[[
   print("=========================")
   local mem = {}
@@ -1202,6 +1221,9 @@ local function wakeup(widget)
   print("LUA BMP Avail: "..mem["luaBitmapsRamAvailable"])
   print("=========================")
   --]]
+
+  -- force redraw
+  lcd.invalidate()
 end
 
 ------------------------------------------------
@@ -1215,6 +1237,7 @@ local function create()
     end
 
     initLibs()
+
     return {
       ------------------
       -- shared config
@@ -1273,7 +1296,7 @@ end
 local function configure(widget)
   local f
   local line = form.addLine("Widget version")
-  form.addStaticText(line, nil, "1.3.0".." ("..'fc8f523'..")")
+  form.addStaticText(line, nil, "1.4.1".." ("..'bad9e8b'..")")
 
   line = form.addLine("Sound Pack Language")
   widget.soundPackLanguageField = form.addChoiceField(line, form.getFieldSlots(line)[0],  {{"English", 1}, {"Italian", 2}, {"German", 3}, {"French", 4} }, function() return status.conf.languageId end, function(value) status.conf.languageId = value end);
@@ -1401,7 +1424,7 @@ local function configure(widget)
   line = form.addLine("Disable all sounds")
   form.addBooleanField(line, nil, function() return status.conf.disableAllSounds end, function(value) status.conf.disableAllSounds = value end)
 
-  line = form.addLine("Silence incoming message beep")
+  line = form.addLine("Silence status message beep")
   form.addChoiceField(line, form.getFieldSlots(line)[0], {{"Never", 1}, {"All but critical messages", 2}, {"Always", 3}}, function() return status.conf.disableMsgBeep end, function(value) status.conf.disableMsgBeep = value end)
 
   line = form.addLine("Enable haptic feedback")
@@ -1463,6 +1486,9 @@ local function configure(widget)
 
   line = form.addLine("Map type")
   form.addChoiceField(line, form.getFieldSlots(line)[0], {{"Satellite", 1}, {"Hybrid (Google only)", 2}, {"Map", 3}, {"Terrain", 4}}, function() return status.conf.mapTypeId end, function(value) status.conf.mapTypeId = value end)
+
+  line = form.addLine("Map tiles storage device")
+  form.addChoiceField(line, form.getFieldSlots(line)[0], {{"External SD Card", 1}, {"Internal Radio Storage", 2}}, function() return status.conf.mapTilesStorage end, function(value) status.conf.mapTilesStorage = value end)
 
   line = form.addLine("Google zoom")
   widget.googleZoomField = form.addNumberField(line, nil, 1, 20,
@@ -1576,6 +1602,7 @@ local function applyConfig()
     libs.utils.setupTelemetrySource()
   end
   status.conf.language = applyDefault(status.conf.languageId, 1, {"en","it","de","fr"})
+  status.conf.mapTilesStoragePathPrefix = applyDefault(status.conf.mapTilesStorage, 1, {"SD:","RADIO:"})
 end
 --------------------------------------------------------------------
 -- configuration read/write
@@ -1631,6 +1658,7 @@ local function read(widget)
   status.conf.linkStatusSource4 = storageToConfig("linkStatusSource4", nil)
   status.conf.gpsSource = storageToConfig("gpsSource", nil)
   status.conf.languageId = storageToConfig("language", nil)
+  status.conf.mapTilesStorage = storageToConfig("mapTilesStorage", nil)
   -- apply config
   applyConfig()
 end
@@ -1685,6 +1713,7 @@ local function write(widget)
   storage.write("linkStatusSource4", status.conf.linkStatusSource4)
   storage.write("gpsSource", status.conf.gpsSource)
   storage.write("language", status.conf.languageId)
+  storage.write("mapTilesStorage", status.conf.mapTilesStorage)
   -- apply config
   applyConfig()
 

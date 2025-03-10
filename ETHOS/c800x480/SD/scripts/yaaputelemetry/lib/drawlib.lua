@@ -17,7 +17,6 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program; if not, see <http://www.gnu.org/licenses>.
 
-
 local HUD_W = 400
 local HUD_H = 240
 local HUD_X = (800 - HUD_W)/2
@@ -26,6 +25,31 @@ local HUD_Y = 36
 local function getTime()
   -- os.clock() resolution is 0.01 secs
   return os.clock()*100 -- 1/100th
+end
+
+local function getBitmapsPath()
+  -- local path from script root
+  return "./../../bitmaps/"
+end
+
+local function getLogsPath()
+  -- local path from script root
+  return "./../../logs/"
+end
+
+local function getYaapuBitmapsPath()
+  -- local path from script root
+  return "./bitmaps/"
+end
+
+local function getYaapuAudioPath()
+  -- local path from script root
+  return "./audio/"
+end
+
+local function getYaapuLibPath()
+  -- local path from script root
+  return "./lib/"
 end
 
 
@@ -198,7 +222,7 @@ function drawLib.drawNoTelemetryData(widget)
     lcd.font(FONT_XXL)
     lcd.drawText(392, 115, "NO TELEMETRY", CENTERED)
     lcd.font(FONT_STD)
-    lcd.drawText(392, 180, "Yaapu Telemetry Widget 1.3.0".."("..'fc8f523'..")", CENTERED)
+    lcd.drawText(392, 180, "Yaapu Telemetry Widget 1.4.1".."("..'bad9e8b'..")", CENTERED)
   end
 end
 
@@ -210,7 +234,7 @@ function drawLib.drawWidgetPaused(widget)
   lcd.font(FONT_XXL)
   lcd.drawText(392, 115, "WIDGET PAUSED", CENTERED)
   lcd.font(FONT_STD)
-  lcd.drawText(392, 180, "Yaapu Telemetry Widget 1.3.0".."("..'fc8f523'..")", CENTERED)
+  lcd.drawText(392, 180, "Yaapu Telemetry Widget 1.4.1".."("..'bad9e8b'..")", CENTERED)
 end
 
 function drawLib.drawFenceStatus(x,y)
@@ -476,8 +500,7 @@ end
 function drawLib.drawLineWithClipping(x0, y0, x1, y1, xmin, ymin, xmax, ymax)
   lcd.setClipping(xmin, ymin, xmax-xmin, ymax-ymin)
   lcd.drawLine(x0,y0,x1,y1)
-  local w,h = lcd.getWindowSize()
-  lcd.setClipping(0,0,w,h)
+  lcd.setClipping()
 end
 
 -- draw a line centered on (ox,oy) with angle and len, clipped

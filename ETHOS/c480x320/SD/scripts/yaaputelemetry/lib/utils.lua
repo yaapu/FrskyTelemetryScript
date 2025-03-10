@@ -17,7 +17,6 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program; if not, see <http://www.gnu.org/licenses>.
 
-
 local HUD_W = 240
 local HUD_H = 150
 local HUD_X = (480 - HUD_W)/2
@@ -26,6 +25,31 @@ local HUD_Y = 18
 local function getTime()
   -- os.clock() resolution is 0.01 secs
   return os.clock()*100 -- 1/100th
+end
+
+local function getBitmapsPath()
+  -- local path from script root
+  return "./../../bitmaps/"
+end
+
+local function getLogsPath()
+  -- local path from script root
+  return "./../../logs/"
+end
+
+local function getYaapuBitmapsPath()
+  -- local path from script root
+  return "./bitmaps/"
+end
+
+local function getYaapuAudioPath()
+  -- local path from script root
+  return "./audio/"
+end
+
+local function getYaapuLibPath()
+  -- local path from script root
+  return "./lib/"
 end
 
 
@@ -43,6 +67,17 @@ local libs = nil
 local bitmaskCache = {}
 local sources = {}
 local passthroughSensor = sport.getSensor({appIdStart=0x800, appIdEnd=0x51FF})
+local crsfSensor = {}
+
+if crsf.getSensor == nil then
+  --print("crsf.getSensor() == nil")
+  function crsfSensor:popFrame()
+    return crsf.popFrame()
+  end
+else
+  --print("crsf.getSensor() != nil")
+  crsfSensor = crsf.getSensor()
+end
 
 local alwaysOn = system.getSource({category=CATEGORY_ALWAYS_ON}) -- {category=CATEGORY_ALWAYS_ON, member=1, options=0}
 local alwaysOff = system.getSource({category=CATEGORY_NONE})
@@ -50,7 +85,7 @@ local alwaysOff = system.getSource({category=CATEGORY_NONE})
 local ethosVersion = system.getVersion()
 
 local function loadLib(name)
-  local lib = dofile("/scripts/yaaputelemetry/lib/"..name..".lua")
+  local lib = dofile(getYaapuLibPath().."/"..name..".lua")
   if lib.init ~= nil then
     lib.init(status, libs)
   end
@@ -227,10 +262,10 @@ function utils.processTelemetry(appId, data, now)
     status.terrainLastData = now
     status.terrainEnabled = 1
   elseif appId == 0x500C then -- WIND
-    status.telemetry.trueWindSpeed = libs.utils.bitExtract(data,8,7) * (10^libs.utils.bitExtract(data,7,1)) -- dm/s
     status.telemetry.trueWindAngle = libs.utils.bitExtract(data, 0, 7) * 3 -- degrees
+    status.telemetry.trueWindSpeed = libs.utils.bitExtract(data,8,7) * (10^libs.utils.bitExtract(data,7,1)) -- dm/s
+    status.telemetry.apparentWindAngle = libs.utils.bitExtract(data, 15, 6) * (libs.utils.bitExtract(data,21,1) == 1 and -1 or 1) * 3 -- degrees
     status.telemetry.apparentWindSpeed = libs.utils.bitExtract(data,23,7) * (10^libs.utils.bitExtract(data,22,1)) -- dm/s
-    status.telemetry.apparentWindAngle = libs.utils.bitExtract(data, 16, 6) * (libs.utils.bitExtract(data,15,1) == 1 and -1 or 1) * 3 -- degrees
   elseif appId == 0x500D then -- WAYPOINTS @1Hz
     status.telemetry.wpNumber = libs.utils.bitExtract(data,0,11) -- wp index
     status.telemetry.wpDistance = libs.utils.bitExtract(data,13,10) * (10^libs.utils.bitExtract(data,11,2)) -- meters
@@ -258,7 +293,7 @@ end
 
 function utils.crossfireTelemetryPop()
     local now = getTime()
-    local command, data = crsf.popFrame()
+    local command, data = crsfSensor:popFrame()
     if command == nil or data == nil then
       return
     end
@@ -391,7 +426,7 @@ function utils.playSound(soundFile, skipHaptic)
     return
   end
   libs.drawLib.resetBacklightTimeout()
-  system.playFile("/scripts/yaaputelemetry/audio/"..status.conf.language.."/".. soundFile..".wav")
+  system.playFile(getYaapuAudioPath()..status.conf.language.."/".. soundFile..".wav")
 end
 
 function utils.playTime(seconds)
@@ -416,7 +451,7 @@ function utils.playSoundByFlightMode(flightMode)
     if status.frame.flightModes[flightMode] ~= nil then
       libs.drawLib.resetBacklightTimeout()
       -- rover sound files differ because they lack "flight" word
-      system.playFile("/scripts/yaaputelemetry/audio/"..status.conf.language.."/".. string.lower(status.frame.flightModes[flightMode]) .. ((status.frameTypes[status.telemetry.frameType]=="r" or status.frameTypes[status.telemetry.frameType]=="b") and "_r.wav" or ".wav"))
+      system.playFile(getYaapuAudioPath()..status.conf.language.."/".. string.lower(status.frame.flightModes[flightMode]) .. ((status.frameTypes[status.telemetry.frameType]=="r" or status.frameTypes[status.telemetry.frameType]=="b") and "_r.wav" or ".wav"))
     end
   end
 end

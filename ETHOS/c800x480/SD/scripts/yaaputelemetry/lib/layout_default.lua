@@ -17,7 +17,6 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program; if not, see <http://www.gnu.org/licenses>.
 
-
 local HUD_W = 400
 local HUD_H = 240
 local HUD_X = (800 - HUD_W)/2
@@ -26,6 +25,31 @@ local HUD_Y = 36
 local function getTime()
   -- os.clock() resolution is 0.01 secs
   return os.clock()*100 -- 1/100th
+end
+
+local function getBitmapsPath()
+  -- local path from script root
+  return "./../../bitmaps/"
+end
+
+local function getLogsPath()
+  -- local path from script root
+  return "./../../logs/"
+end
+
+local function getYaapuBitmapsPath()
+  -- local path from script root
+  return "./bitmaps/"
+end
+
+local function getYaapuAudioPath()
+  -- local path from script root
+  return "./audio/"
+end
+
+local function getYaapuLibPath()
+  -- local path from script root
+  return "./lib/"
 end
 
 

@@ -17,7 +17,6 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program; if not, see <http://www.gnu.org/licenses>.
 
-
 local HUD_W = 240
 local HUD_H = 130
 local HUD_X = (480 - HUD_W)/2
@@ -26,6 +25,31 @@ local HUD_Y = 18
 local function getTime()
   -- os.clock() resolution is 0.01 secs
   return os.clock()*100 -- 1/100th
+end
+
+local function getBitmapsPath()
+  -- local path from script root
+  return "./../../bitmaps/"
+end
+
+local function getLogsPath()
+  -- local path from script root
+  return "./../../logs/"
+end
+
+local function getYaapuBitmapsPath()
+  -- local path from script root
+  return "./bitmaps/"
+end
+
+local function getYaapuAudioPath()
+  -- local path from script root
+  return "./audio/"
+end
+
+local function getYaapuLibPath()
+  -- local path from script root
+  return "./lib/"
 end
 
 
@@ -104,6 +128,11 @@ local zoomUpdate = false
 
 local n1,n2
 
+local function getMapBitmapsPath()
+  -- local path from script root
+  return status.conf.mapTilesStoragePathPrefix.."/bitmaps/"
+end
+
 function mapLib.clip(n, min, max)
   return math.min(math.max(n, min), max)
 end
@@ -161,7 +190,7 @@ function mapLib.gmapcatcher_tiles_to_path(tile_x, tile_y, level)
 end
 
 function mapLib.getTileBitmap(tilePath)
-  local fullPath = "/bitmaps/yaapu/maps/"..status.conf.mapType..tilePath
+  local fullPath = getMapBitmapsPath().."yaapu/maps/"..status.conf.mapType..tilePath
   -- check cache
   if mapBitmapByPath[tilePath] ~= nil then
     return mapBitmapByPath[tilePath]
@@ -176,7 +205,7 @@ function mapLib.getTileBitmap(tilePath)
   else
     print("ERROR",fullPath)
     if nomap == nil then
-      nomap = lcd.loadBitmap("/bitmaps/yaapu/maps/nomap.png")
+      nomap = lcd.loadBitmap(getMapBitmapsPath().."yaapu/maps/nomap.png")
     end
     mapBitmapByPath[tilePath] = nomap
     return nomap
@@ -201,7 +230,7 @@ function mapLib.loadAndCenterTiles(tile_x,tile_y,offset_x,offset_y,width,level)
           tiles_path_to_idx[tile_path] =  { idx, x, y }
         end
       end
-      tilesXYByPath[tile_path] = {x,y}      
+      tilesXYByPath[tile_path] = {x,y}
     end
   end
   -- release unused cached images

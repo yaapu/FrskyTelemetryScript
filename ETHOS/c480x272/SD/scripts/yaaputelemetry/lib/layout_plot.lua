@@ -17,7 +17,6 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program; if not, see <http://www.gnu.org/licenses>.
 
-
 local HUD_W = 240
 local HUD_H = 130
 local HUD_X = (480 - HUD_W)/2
@@ -28,6 +27,31 @@ local function getTime()
   return os.clock()*100 -- 1/100th
 end
 
+local function getBitmapsPath()
+  -- local path from script root
+  return "./../../bitmaps/"
+end
+
+local function getLogsPath()
+  -- local path from script root
+  return "./../../logs/"
+end
+
+local function getYaapuBitmapsPath()
+  -- local path from script root
+  return "./bitmaps/"
+end
+
+local function getYaapuAudioPath()
+  -- local path from script root
+  return "./audio/"
+end
+
+local function getYaapuLibPath()
+  -- local path from script root
+  return "./lib/"
+end
+
 
 local panel = {}
 local status = nil
@@ -35,7 +59,7 @@ local libs = nil
 
 function panel.draw(widget)
   lcd.color(status.colors.white)
-  local mask = lcd.loadMask("/bitmaps/system/mask_usb.png")
+  local mask = lcd.loadMask(getBitmapsPath().."system/mask_usb.png")
   lcd.drawMask(0, 37, mask)
 
   libs.drawLib.drawMessagesBar(widget,1)
