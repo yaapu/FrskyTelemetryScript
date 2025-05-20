@@ -390,11 +390,11 @@ local function drawView(drawLib,conf,telemetry,status,battery,battId,getMaxValue
   --lcd.drawLine(64, 7 ,64, 31, SOLID, FORCE)
 
   -- arming status, show only if timer is not running, hide otherwise
-  if telemetry.ekfFailsafe == 0 and telemetry.battFailsafe == 0 and status.timerRunning == 0 then
+  if status.timerRunning == 0 then
     if (telemetry.statusArmed == 1) then
-      lcd.drawText(31 + 20, 22, "ARMED", SMLSIZE+INVERS)
+      lcd.drawText(31 + 20, 12, "ARMED", SMLSIZE+INVERS)
     else
-      lcd.drawText(31+12, 22, "DISARMED", SMLSIZE+INVERS+BLINK)
+      lcd.drawText(31+12, 12, "DISARMED", SMLSIZE+INVERS+BLINK)
     end
   end
   if telemetry.ekfFailsafe > 0 then

@@ -229,6 +229,7 @@ local rightPanel = nil
 local leftPanel = nil
 local altView = nil
 
+local maxmem = 0
 ------------------------
 -- CONFIGURATION
 ------------------------
@@ -253,10 +254,10 @@ local conf = {
   vertSpeedMultiplier = 1,
   horSpeedLabel = "m",
   vertSpeedLabel = "m/s",
-  centerPanel = nil,
-  rightPanel = nil,
-  leftPanel = nil,
-  altView = nil,
+  centerPanel = "hud9",
+  rightPanel = "right9",
+  leftPanel = "left9",
+  altView = "alt9_view",
   defaultBattSource = "na",
   enablePX4Modes = false,
   enableHaptic = false,
@@ -306,23 +307,35 @@ local transitions = {
 -------------------------
 local shortHashes = {}
 -- 16 bytes hashes
+--[[
+shortHashes[4091124880] = true  -- "4091124880.wav", "Reached command "
+shortHashes[3311875476] = true  -- "3311875476.wav", "Reached waypoint"
+shortHashes[1997782032] = true  -- "1997782032.wav", "Passed waypoint "
 shortHashes[554623408]  = false  -- "554623408.wav", "Takeoff complete"
 shortHashes[3025044912] = false -- "3025044912.wav", "SmartRTL deactiv"
 shortHashes[3956583920] = false -- "3956583920.wav", "EKF2 IMU0 is usi"
 shortHashes[1309405592] = false -- "1309405592.wav", "EKF3 IMU0 is usi"
-shortHashes[4091124880] = true  -- "4091124880.wav", "Reached command "
-shortHashes[3311875476] = true  -- "3311875476.wav", "Reached waypoint"
-shortHashes[1997782032] = true  -- "1997782032.wav", "Passed waypoint "
+--]]
+shortHashes[2262475] = true -- "2262475.wav" "command: reached "
+shortHashes[3466823] = true -- "3466823.wav" "waypoint: reached"
+shortHashes[4597275] = true -- "4597275.wav" "Passed waypoint"
+shortHashes[3843641] = false -- "3843641.wav" "Takeoff complete"
+shortHashes[1865209] = false -- "1865209.wav" "SmartRTL deactivated"
+shortHashes[4170928] = false -- "4170928.wav" "GPS home acquired"
+shortHashes[4224177] = false -- "4224177.wav" "GPS home acquired"
 
 local shortHash = nil
 local parseShortHash = false
 local hashByteIndex = 0
-local hash = 2166136261
+local hash = 0
+local hash_a = 0
+local hash_b = 0
 
 local showMessages = false
 local showConfigMenu = false
 local showAltView = false
 local loadCycle = 0
+local initDone = false
 
 -- telemetry pop function, either SPort or CRSF
 local telemetryPop = nil
@@ -343,11 +356,12 @@ local function clearTable(t)
   t = nil
   -- call collectgarbage twice
   doGarbageCollect()
+  maxmem = 0
 end
 
 
 local function doLibrary(filename)
-    local success,f = pcall(loadScript,libBasePath..filename..".lua")
+  local success,f = pcall(loadScript,libBasePath..filename..".lua")
   if success then
     local ret = f()
     doGarbageCollect()
@@ -592,12 +606,14 @@ end
 
 
 local function updateHash(c)
-  hash = bit32.bxor(hash, c)
-  hash = (hash * 16777619) % 2^32
+  hash_a = ( hash_a + c ) % 4095
+  hash_b = ( hash_a + hash_b ) % 4095
+  hash = hash_b * 4096 + hash_a
+
   hashByteIndex = hashByteIndex+1
   -- check if this hash matches any 16bytes prefix hash
   if hashByteIndex == 16 then
-  parseShortHash = shortHashes[hash]
+    parseShortHash = shortHashes[hash]
     if parseShortHash ~= nil then
       shortHash = hash
     end
@@ -621,7 +637,9 @@ local function resetHash()
   -- reset hash for next string
   parseShortHash = false
   shortHash = nil
-  hash = 2166136261
+  hash = 0
+  hash_a = 0
+  hash_b = 0
   hashByteIndex = 0
 end
 
@@ -1101,6 +1119,9 @@ end
 -- a warning sound.
 ---------------------------------
 local function checkAlarm(level,value,idx,sign,sound,delay)
+  if delay == 0 then
+    return
+  end
   -- once landed reset all alarms except battery alerts
   if status.timerRunning == 0 then
     if alarms[idx][4] == 0 then
@@ -1403,7 +1424,37 @@ local function checkKeyEvent(event, keys)
   return false
 end
 
+local function loadConfig()
+  clearTable(drawLib)
+  clearTable(altView)
+  unloadPanels()
+  altView = nil
+  drawLib = nil
+  doGarbageCollect()
+
+  -- load menu library
+  menuLib = doLibrary(menuLibFile)
+  menuLib.loadConfig(conf)
+  doGarbageCollect()
+
+  -- ok configuration loaded
+  status.battsource = conf.defaultBattSource
+  -- CRSF or SPORT?
+  telemetryPop = sportTelemetryPop
+  if conf.enableCRSF == true then
+    telemetryPop = crossfirePop
+  end
+  -- configuration loaded, releasing menu library memory
+  clearTable(menuLib)
+  menuLib = nil
+end
+
 local function run(event)
+  if not initDone then
+    loadConfig()
+    initDone = true
+    return
+  end
   lcd.clear()
 
 
@@ -1565,6 +1616,9 @@ local function run(event)
       showConfigMenu = true
     end
   end
+  -- debug info, allocated memory
+  maxmem = math.max(maxmem,collectgarbage("count")*1024)
+  lcd.drawNumber(212,LCD_H-6,maxmem,SMLSIZE+RIGHT+INVERS)
 
   if not telemetryEnabled() and blinkon then
     lcd.drawRectangle(0,0,212,LCD_H,showMessages and SOLID or ERASE)
@@ -1577,22 +1631,8 @@ local function init()
 -- initialize flight timer
   model.setTimer(2,{mode=0})
   model.setTimer(2,{value=0})
-  -- load menu library
-  menuLib = doLibrary(menuLibFile)
-  menuLib.loadConfig(conf)
-  doGarbageCollect()
-  -- ok configuration loaded
-  status.battsource = conf.defaultBattSource
-  -- CRSF or SPORT?
-  telemetryPop = sportTelemetryPop
-  if conf.enableCRSF == true then
-    telemetryPop = crossfirePop
-  end
-  -- configuration loaded, releasing menu library memory
-  clearTable(menuLib)
-  menuLib = nil
 
-  pushMessage(7,"Yaapu 2.1.0-dev".." ("..'6cf4cbc'..")")
+  pushMessage(7,"Yaapu 2.1.0-dev".." ("..'e83a693'..")")
   doGarbageCollect()
   playSound("yaapu")
 end

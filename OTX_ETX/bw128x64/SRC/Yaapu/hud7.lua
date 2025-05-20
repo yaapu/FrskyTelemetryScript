@@ -264,11 +264,11 @@ local function drawHud(drawLib,conf,telemetry,status,battery,getMaxValue)
     drawLib.drawVArrow(32 + 64 - 24, 33 - 4,6,true,false)
   end
   -- arming status, show only if timer is not running, hide otherwise
-  if telemetry.failsafe == 0 and telemetry.ekfFailsafe == 0 and telemetry.battFailsafe == 0 and status.timerRunning == 0 then
+  if status.timerRunning == 0 then
     if telemetry.statusArmed == 1 then
-      lcd.drawText(32 + 64/2 - 15, 20, " ARMED ", SMLSIZE+INVERS)
+      lcd.drawText(32 + 64/2 - 15, 38, " ARMED ", SMLSIZE+INVERS)
     else
-      lcd.drawText(32 + 64/2 - 21, 20, " DISARMED ", SMLSIZE+INVERS+BLINK)
+      lcd.drawText(32 + 64/2 - 18, 38, " DISARM ", SMLSIZE+INVERS+BLINK)
     end
   end
   -- yaw angle box
