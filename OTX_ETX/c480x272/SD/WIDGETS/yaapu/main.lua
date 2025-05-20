@@ -404,7 +404,9 @@ status.minmaxValues = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
 status.prefixHash = nil
 status.parsePrefixHash = false
 status.hashByteIndex = 0
-status.hash = 2166136261
+status.hash = 0
+status.hash_a = 0
+status.hash_b = 0
 status.hashSoundfile = nil
 
 local utils = {}
@@ -756,8 +758,11 @@ local function updateHash(c)
   if status.hashByteIndex >= utils.prefixHashes.maxLength and status.prefixHash ~= nil then
     return
   end
-  status.hash = bit32.bxor(status.hash, c)
-  status.hash = (status.hash * 16777619) % 2^32
+
+  status.hash_a = ( status.hash_a + c ) % 4095
+  status.hash_b = ( status.hash_a + status.hash_b ) % 4095
+  status.hash = status.hash_b * 4096 + status.hash_a
+
   status.hashByteIndex = status.hashByteIndex+1
   -- check if we need to process this prefix and if so
   -- check if we have a prefix hash
@@ -765,6 +770,18 @@ local function updateHash(c)
     status.prefixHash = status.hash
     status.parsePrefixHash = utils.prefixHashes[status.prefixHash][1]
   end
+end
+
+local function resetHash()
+  -- reset hash for next string
+  status.parsePrefixHash = false
+  status.prefixHash = nil
+
+  status.hash = 0
+  status.hash_a = 0
+  status.hash_b = 0
+
+  status.hashByteIndex = 0
 end
 
 local function playHash()
@@ -814,14 +831,6 @@ local function playHash()
   if extra ~= nil and prefix ~= nil and utils.prefixHashes.extraMap[extra] ~= nil then
     utils.playSound(prefix..utils.prefixHashes.extraMap[extra],false)
   end
-end
-
-local function resetHash()
-  -- reset hash for next string
-  status.parsePrefixHash = false
-  status.prefixHash = nil
-  status.hash = 2166136261
-  status.hashByteIndex = 0
 end
 
 local function formatMessage(severity,msg)
@@ -1749,7 +1758,7 @@ local function reset()
       -- done
       resetPhase = 7
     elseif resetPhase == 7 then
-      utils.pushMessage(7,"Yaapu Telemetry Widget 2.0.x dev".." ("..'1997425'..")")
+      utils.pushMessage(7,"Yaapu Telemetry Widget 2.1.x dev".." ("..'7a17b47'..")")
       utils.playSound("yaapu")
       -- on model change reload config!
       if modelChangePending == true then
@@ -1926,6 +1935,9 @@ end
 -- a warning sound.
 ---------------------------------
 utils.checkAlarm = function(level,value,idx,sign,sound,delay)
+  if delay == 0 then
+    return
+  end
   -- once landed reset all alarms except battery alerts
   if status.timerRunning == 0 then
     if status.alarms[idx][4] == 0 then
@@ -2459,7 +2471,7 @@ local function init()
   -- load battery config
   utils.loadBatteryConfigFile()
   -- ok done
-  utils.pushMessage(7,"Yaapu Telemetry Widget 2.0.x dev".." ("..'1997425'..")")
+  utils.pushMessage(7,"Yaapu Telemetry Widget 2.1.x dev".." ("..'7a17b47'..")")
 
   utils.playSound("yaapu")
   -- fix for generalsettings lazy loading...

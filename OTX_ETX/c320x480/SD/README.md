@@ -1,1 +1,0 @@
-copy the content of this folder to your radio SD card

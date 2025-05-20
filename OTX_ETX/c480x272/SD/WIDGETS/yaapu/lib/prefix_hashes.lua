@@ -17,6 +17,8 @@ local prefixHashes = {
     suffixGroup=y -- index of the suffix sound file [1|2|3] will be played as soundfile
     extraGroup=z  -- index of the group used for the lookup in the extraMap table, if found the matching value is appended to prefix and played as soundfile
 --]]
+--[[
+-- FNV32 hashes
 -- size 5
 --shortHashes[158533322] = { true, "trk_", "^.* (%d+) (%a+) %((.*)%).*", paramGroup=1, suffixGroup=2, extraGroup=3 } -- prefixLength size=5, Trick prefixLength
 prefixHashes[158533322] = { true, "trk_", "^.* (%d+) (selected) %((.*)%).*", paramGroup=1, suffixGroup=2, extraGroup=3 } -- prefixLength size=5, Trick prefixLength
@@ -37,8 +39,29 @@ prefixHashes[554623408] = { false } -- prefixLength size=16, Takeoff complete
 prefixHashes[3025044912] = { false } -- prefixLength size=16, Smart RTL deactivated
 prefixHashes[3956583920] = { false } -- prefixLength size=16, GPS home acquired
 prefixHashes[1309405592] = { false } -- prefixLength size=16, GPS home acquired
+--]]
 
---
+-- fletcher24 hashes
+-- size 5
+prefixHashes[6128125] = { true, "trk_", "^.* (%d+) (selected) %((.*)%).*", paramGroup=1, suffixGroup=2, extraGroup=3 } -- prefixLength size=5, Trick prefixLength
+-- size 12
+prefixHashes[13841562] = { false } -- prefix size=12, trick aborted
+-- size 16
+prefixHashes[3020298] = { false } -- prefix size=16, Soaring: Outside MAX RADIUS, RTL
+prefixHashes[2053593] = { false } -- prefix size=16, Soaring: restoring previous mode
+prefixHashes[1475990] = { false } -- prefix size=16, Soaring: Climb below VERTICAL SPEED
+prefixHashes[1865158] = { false } -- prefix size=16, Soaring: Exit via RC switch
+prefixHashes[2573818] = { false } -- prefix size=16, Soaring: Thermal detected
+prefixHashes[1934808] = { false } -- prefix size=16, Soaring: Enabled
+prefixHashes[2074081] = { false } -- prefix size=16, Soaring: Disabled
+prefixHashes[2262475] = { true, nil, "^.* #(%d+).*", paramGroup=1 } -- prefix size=16, reached command:
+prefixHashes[3466823] = { true, nil, "^.* #(%d+).*", paramGroup=1 } -- prefix size=16, reached waypoint:
+prefixHashes[4597275] = { true, nil, "^.* #(%d+).*", paramGroup=1 } -- prefix size=16, Passed waypoint:
+prefixHashes[3843641] = { false } -- prefix size=16, Takeoff complete
+prefixHashes[1865209] = { false } -- prefix size=16, Smart RTL deactivated
+prefixHashes[4170928] = { false } -- prefix size=16, GPS home acquired
+prefixHashes[4224177] = { false } -- prefix size=16, GPS home acquired
+
 prefixHashes.extraMap = {
   -- plane aerobatics
   ["Figure Eight"] = "fig8",

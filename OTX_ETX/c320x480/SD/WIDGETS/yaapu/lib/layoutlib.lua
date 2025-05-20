@@ -77,7 +77,7 @@ function layoutLib.drawNoTelemetryData(telemetryEnabled)
     lcd.drawFilledRectangle(30,46, 260, 80, CUSTOM_COLOR)
     lcd.setColor(CUSTOM_COLOR,utils.colors.white)
     lcd.drawText(160, 55, "no telemetry", DBLSIZE+CUSTOM_COLOR+CENTER)
-    lcd.drawText(160, 95, "Yaapu Telemery 2.0.x dev".." ("..'1997425'..")", SMLSIZE+CUSTOM_COLOR+CENTER)
+    lcd.drawText(160, 95, "Yaapu Telemery 2.1.x dev".." ("..'7a17b47'..")", SMLSIZE+CUSTOM_COLOR+CENTER)
     libs.layoutLib.drawTopBar()
     local info = model.getInfo()
     lcd.setColor(CUSTOM_COLOR,WHITE)
@@ -93,7 +93,7 @@ function layoutLib.drawWidgetPaused()
     lcd.drawFilledRectangle(90,46, 300, 80, CUSTOM_COLOR)
     lcd.setColor(CUSTOM_COLOR,BLACK)
     lcd.drawText(160, 55, "WIDGET PAUSED", DBLSIZE+CUSTOM_COLOR+CENTER)
-    lcd.drawText(160, 95, "Yaapu Telemetry Widget 2.0.x dev".." ("..'1997425'..")", SMLSIZE+CUSTOM_COLOR+CENTER)
+    lcd.drawText(160, 95, "Yaapu Telemetry Widget 2.1.x dev".." ("..'7a17b47'..")", SMLSIZE+CUSTOM_COLOR+CENTER)
   end
 end
 
