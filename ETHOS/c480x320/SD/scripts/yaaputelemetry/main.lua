@@ -802,8 +802,12 @@ local function task1(now)
   local gpsData = {}
 
   if status.conf.gpsSource ~= nil then
-    gpsData.lat = system.getSource({name=status.conf.gpsSource:name(),options=OPTION_LATITUDE}):value()
-    gpsData.lon = system.getSource({name=status.conf.gpsSource:name(),options=OPTION_LONGITUDE}):value()
+    local latSrc = system.getSource({name=status.conf.gpsSource:name(),options=OPTION_LATITUDE})
+    local lonSrc = system.getSource({name=status.conf.gpsSource:name(),options=OPTION_LONGITUDE})
+    if latSrc ~= nil and lonSrc ~= nil then
+      gpsData.lat = latSrc:value()
+      gpsData.lon = lonSrc:value()
+    end
   end
 
   if gpsData.lat ~= nil and gpsData.lon ~= nil then

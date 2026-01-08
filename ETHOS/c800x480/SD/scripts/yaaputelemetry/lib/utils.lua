@@ -668,8 +668,13 @@ function utils.calcFLVSSBatt(battIdx)
     return 0,0,0
   end
 
-  local cellMin = system.getSource({name=batterySource:name(),options=OPTION_CELL_LOWEST}):value()
-  local cellCount = system.getSource({name=batterySource:name(),options=OPTION_CELL_COUNT}):value()
+  local cellMinSrc = system.getSource({name=batterySource:name(),options=OPTION_CELL_LOWEST})
+  local cellCountSrc = system.getSource({name=batterySource:name(),options=OPTION_CELL_COUNT})
+  if cellMinSrc == nil or cellCountSrc == nil then
+    return 0,0,0
+  end
+  local cellMin = cellMinSrc:value()
+  local cellCount = cellCountSrc:value()
   local cellSum = batterySource:value()
   statusBattSources.vs = true
 
@@ -972,7 +977,10 @@ function utils.pushMessage(severity, msg)
 end
 
 function utils.updateFlightTime()
-  status.flightTime = tonumber(model.getTimer("Yaapu"):value())
+  local timer = model.getTimer("Yaapu")
+  if timer ~= nil then
+    status.flightTime = tonumber(timer:value())
+  end
 end
 
 ---------------------------------

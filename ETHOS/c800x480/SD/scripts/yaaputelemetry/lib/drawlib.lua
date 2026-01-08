@@ -134,7 +134,8 @@ function drawLib.drawStatusBar(widget, y, maxRows)
   lcd.drawFilledRectangle(0,y,800,48)
 
   -- flight time
-  local seconds = model.getTimer("Yaapu"):value()
+  local timer = model.getTimer("Yaapu")
+  local seconds = timer ~= nil and timer:value() or 0
   local ss = (seconds%3600)%60
   local hh = math.floor(seconds/3600)
   local mm = math.floor((seconds%3600)/60)
