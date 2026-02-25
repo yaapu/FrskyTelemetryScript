@@ -1,0 +1,199 @@
+--
+-- A FRSKY SPort/FPort/FPort2 and TBS CRSF telemetry widget for the Horus class radios
+-- based on ArduPilot's passthrough telemetry protocol
+--
+-- Author: Alessandro Apostoli, https://github.com/yaapu
+--
+-- This program is free software; you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation; either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program; if not, see <http://www.gnu.org/licenses>.
+--
+local unitScale = getGeneralSettings().imperial == 0 and 1 or 3.28084
+local unitLabel = getGeneralSettings().imperial == 0 and "m" or "ft"
+local unitLongScale = getGeneralSettings().imperial == 0 and 1/1000 or 1/1609.34
+local unitLongLabel = getGeneralSettings().imperial == 0 and "km" or "mi"
+
+-- model and opentx version
+local ver, radio, maj, minor, rev = getVersion()
+
+---------------------------------
+-- Note: Home is absolute origin
+---------------------------------
+
+-- viewport dimensions
+local VP_W = 467
+local VP_H = 237
+
+-- home relative vehicle coordinates
+local myX = 0
+local myY = 0
+
+-- viewport relative vehicle coordinates
+local myScreenX = 0
+local myScreenY = 0
+
+-- absolute viewport home offset
+local originX = (LCD_W-VP_W)/2+VP_W/2
+local originY = 32+VP_H/2
+
+-- zoom factor
+local zoom = 0.5
+-- last n point circulart buffer
+local xPoints = {}
+local yPoints = {}
+
+local sample = 0
+local sampleCount = 0
+local lastSample = getTime()
+
+local panel = {}
+
+local conf
+local telemetry
+local status
+local utils
+local libs
+
+function panel.init(param_status, param_telemetry, param_conf, param_utils, param_libs)
+  status = param_status
+  telemetry = param_telemetry
+  conf = param_conf
+  utils = param_utils
+  libs = param_libs
+end
+
+local function drawVehicle(x,y,r,angle,style,xmin,xmax,ymin,ymax,color)
+  local x1 = x + r * math.cos(math.rad(angle - 90))
+  local y1 = y + r * math.sin(math.rad(angle - 90))
+  local x2 = x + r * math.cos(math.rad(angle - 90 + 150))
+  local y2 = y + r * math.sin(math.rad(angle - 90 + 150))
+  local x3 = x + r * math.cos(math.rad(angle - 90 - 150))
+  local y3 = y + r * math.sin(math.rad(angle - 90 - 150))
+  local x4 = x + r * 0.5 * math.cos(math.rad(angle - 270))
+  local y4 = y + r * 0.5 *math.sin(math.rad(angle - 270))
+  --
+  libs.drawLib.drawLineWithClippingXY(x1,y1,x2,y2,style,xmin,xmax,ymin,ymax,color)
+  libs.drawLib.drawLineWithClippingXY(x1,y1,x3,y3,style,xmin,xmax,ymin,ymax,color)
+  libs.drawLib.drawLineWithClippingXY(x2,y2,x4,y4,style,xmin,xmax,ymin,ymax,color)
+  libs.drawLib.drawLineWithClippingXY(x3,y3,x4,y4,style,xmin,xmax,ymin,ymax,color)
+end
+
+local function updateMyPosition(widget)
+  -- calculate new absolute position
+  if telemetry.homeAngle >= 0 then
+    myX = telemetry.homeDist*math.cos(math.rad(telemetry.homeAngle-270))
+    myY = telemetry.homeDist*math.sin(math.rad(telemetry.homeAngle-270))
+
+    myScreenX = zoom*myX + originX;
+    myScreenY = zoom*myY + originY;
+  end
+
+  -- update last n positioins buffer
+  if getTime() - lastSample > 50 then
+    xPoints[sample] = myX
+    yPoints[sample] = myY
+    sampleCount = sampleCount+1
+    sample = sampleCount%20
+    lastSample = getTime()
+  end
+end
+
+local function dist(x1,y1,x2,y2)
+  return math.sqrt((x2-x1)^2 + (y2-y1)^2)
+end
+
+function panel.draw(widget)
+  local minX = (LCD_W-VP_W)/2
+  local minY = 32
+
+  local maxX = (LCD_W-VP_W)/2 + VP_W
+  local maxY = 32 + VP_H
+
+  lcd.setColor(CUSTOM_COLOR,lcd.RGB(0x63, 0x30, 0x00))
+  lcd.drawFilledRectangle(minX,minY,VP_W,maxY - minY,CUSTOM_COLOR)
+
+  updateMyPosition(widget)
+
+  lcd.setColor(CUSTOM_COLOR,utils.colors.grey)
+
+  -- lets check if vehicle is about to exit viewport
+  local myCode = libs.drawLib.computeOutCode(myScreenX, myScreenY, minX+20, minY+20,maxX-20, maxY-20);
+
+  if bit32.band(myCode,1) == 1 then
+    local newOriginX = (LCD_W-VP_W)/2+VP_W/2 - (zoom*myX*0.5);
+    local homeCode = libs.drawLib.computeOutCode(newOriginX, originY, minX+20, minY+20,maxX-20, maxY-20);
+    if bit32.band(homeCode,2) == 2 then
+      zoom = zoom * 0.95
+    end
+    originX = (LCD_W-VP_W)/2+VP_W/2 - (zoom*myX*0.5);
+  end
+
+  if bit32.band(myCode,2) == 2 then
+    local newOriginX = (LCD_W-VP_W)/2+VP_W/2 - (zoom*myX*0.5);
+    local homeCode = libs.drawLib.computeOutCode(newOriginX, originY, minX+20, minY+20,maxX-20, maxY-20);
+    if bit32.band(homeCode,1)  == 1 then
+      zoom = zoom * 0.95
+    end
+    originX = (LCD_W-VP_W)/2+VP_W/2 - (zoom*myX*0.5);
+  end
+
+  if bit32.band(myCode,8) == 8 then
+    local newOriginY = 32+VP_H/2 - (zoom*myY*0.5);
+    local homeCode = libs.drawLib.computeOutCode(originX, newOriginY, minX+20, minY+20,maxX-20, maxY-20);
+    if bit32.band(homeCode,4) == 4 then
+      zoom = zoom * 0.95
+    end
+    originY = 32+VP_H/2 - (zoom*myY*0.5);
+  end
+
+  if bit32.band(myCode,4) == 4 then
+    local newOriginY = 32+VP_H/2 - (zoom*myY*0.5);
+    local homeCode = libs.drawLib.computeOutCode(originX, newOriginY, minX+20, minY+20,maxX-20, maxY-20);
+    if bit32.band(homeCode,8) == 8 then
+      zoom = zoom * 0.95
+    end
+    originY = 32+VP_H/2 - (zoom*myY*0.5);
+  end
+
+  libs.drawLib.drawHomeIcon(originX-33/2,originY-33/2)
+
+  -- last n points
+  lcd.setColor(CUSTOM_COLOR,utils.colors.darkyellow)
+  for p=0, math.min(sampleCount-1,20-1)
+  do
+    local xx = zoom*xPoints[p] + originX;
+    local yy = zoom*yPoints[p] + originY;
+    if (xx ~= myScreenX or yy ~= myScreenY) and libs.drawLib.computeOutCode(xx, yy, minX+3, minY+3, maxX-3, maxY-3) == 0 then
+        lcd.drawFilledRectangle(xx,yy,2,2,CUSTOM_COLOR)
+    end
+  end
+
+  lcd.setColor(CUSTOM_COLOR,utils.colors.white)
+
+  drawVehicle(myScreenX, myScreenY, 33, telemetry.yaw, SOLID, minX, maxX, minY, maxY, CUSTOM_COLOR)
+
+  lcd.drawText((LCD_W-VP_W)/2,32,string.format("zoom:%.02f",zoom),SMLSIZE+CUSTOM_COLOR)
+  lcd.drawText((LCD_W-VP_W)/2,32+15,string.format("dist:%d",telemetry.homeDist),SMLSIZE+CUSTOM_COLOR)
+
+  lcd.setColor(CUSTOM_COLOR,utils.colors.white)
+
+  if dist(myScreenX, myScreenY, originX, originY) < VP_H/2 then
+    if zoom < 0.5 then
+      zoom = math.min(zoom * 1.1, 0.5)
+    end
+  end
+end
+
+function panel.background(widget)
+end
+
+return panel
