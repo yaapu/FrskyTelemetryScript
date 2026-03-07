@@ -559,21 +559,21 @@ function drawLib.drawCompassRibbon(y,myWidget,width,xMin,xMax,stepWidth,bigFont,
   elseif angle >= 90 and angle < 180 then
     homeOffset = width - 13
   end
-  drawLib.drawHomeIcon(xMin + homeOffset ,minY + (bigFont and 45 or 32),utils)
+  drawLib.drawHomeIcon(xMin + homeOffset ,minY + (bigFont and 28 or 20),utils)
 
   -- text box
   local w = 100 -- 3 digits width
   if heading < 0 then heading = heading + 360 end
   if heading < 10 then
-      w = 33
+      w = 36
   elseif heading < 100 then
-      w = 67
+      w = 68
   end
   local scale = bigFont and 1 or 0.7
   lcd.setColor(CUSTOM_COLOR, BLACK)
-  lcd.drawFilledRectangle(midX - (w/2)*scale, minY-1, w*scale, 45*scale, CUSTOM_COLOR+SOLID)
+  lcd.drawFilledRectangle(midX - (w/2)*scale, minY-1, w*scale, 47*scale, CUSTOM_COLOR+SOLID)
   lcd.setColor(CUSTOM_COLOR, WHITE)
-  lcd.drawNumber(midX, bigFont and minY-6 or minY-2, heading, CUSTOM_COLOR+(bigFont and DBLSIZE or 0)+CENTER)
+  lcd.drawNumber(midX, bigFont and minY-10 or minY-2, heading, CUSTOM_COLOR+(bigFont and DBLSIZE or 0)+CENTER)
 end
 
 
@@ -635,7 +635,7 @@ function drawLib.drawCustomSensors(customSensors, customSensorXY, colorLabel)
           color = ( sensorValue*sign > sensorConfig[9]*sign and lcd.RGB(255,70,0) or (sensorValue*sign > sensorConfig[8]*sign and utils.colors.yellow or utils.colors.white))
         end
         lcd.setColor(CUSTOM_COLOR,color)
-        local voffset = flags==0 and 6 or 0
+        local voffset = flags==0 and 10 or 0
         -- if a lookup table exists use it!
         if customSensors.lookups[i] ~= nil and customSensors.lookups[i][value] ~= nil then
           lcd.drawText(customSensorXY[i][3], customSensorXY[i][4]+voffset, customSensors.lookups[i][value] or value, flags+RIGHT+CUSTOM_COLOR)

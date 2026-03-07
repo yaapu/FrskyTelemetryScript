@@ -10,7 +10,7 @@
 -- (at your option) any later version.
 --
 -- This program is distributed in the hope that it will be useful,
--- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- but WITHOUT ANY WARRANTY, without even the implied warranty of
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 -- GNU General Public License for more details.
 --
@@ -44,76 +44,76 @@ end
 function layoutLib.drawTopBar()
   lcd.setColor(CUSTOM_COLOR, utils.colors.bars)
   -- black bar
-  lcd.drawFilledRectangle(0,0, LCD_W, 32, CUSTOM_COLOR)
+  lcd.drawFilledRectangle(0,0, LCD_W, 30, CUSTOM_COLOR)
   -- frametype and model name
   lcd.setColor(CUSTOM_COLOR,utils.colors.white)
   if status.modelString ~= nil then
     local modelString = status.currentScreen == 1 and status.modelString or string.format("[%d] %s",status.currentScreen, status.modelString)
-    lcd.drawText(2, 6, modelString, CUSTOM_COLOR)
+    lcd.drawText(2, 3, modelString, CUSTOM_COLOR)
   end
   -- flight time
   local time = getDateTime()
   local strtime = string.format("%02d:%02d:%02d",time.hour,time.min,time.sec)
-  lcd.drawText(LCD_W, 10, strtime, SMLSIZE+RIGHT+CUSTOM_COLOR)
+  lcd.drawText(LCD_W, 3, strtime, SMLSIZE+RIGHT+CUSTOM_COLOR)
   -- RSSI
   if utils.telemetryEnabled() == false then
     lcd.setColor(CUSTOM_COLOR,utils.colors.red)
-    lcd.drawText(500, 6, "NO TELEM", 0+CUSTOM_COLOR)
+    lcd.drawText(500, 3, "NO TELEM", 0+CUSTOM_COLOR)
   else
     utils.drawRssi()
   end
   lcd.setColor(CUSTOM_COLOR,utils.colors.white)
   -- tx voltage
   local vtx = string.format("%.1fv",getValue(getFieldInfo("tx-voltage").id))
-  lcd.drawText(652,10, vtx, 0+CUSTOM_COLOR+SMLSIZE)
+  lcd.drawText(652,3, vtx, 0+CUSTOM_COLOR+SMLSIZE)
 end
 
 function layoutLib.drawNoTelemetryData(telemetryEnabled)
   -- no telemetry data
   if (not utils.telemetryEnabled()) then
     lcd.setColor(CUSTOM_COLOR,WHITE)
-    lcd.drawFilledRectangle(147,131, 506, 148, CUSTOM_COLOR)
+    lcd.drawFilledRectangle(147,131, 507, 148, CUSTOM_COLOR)
     lcd.setColor(CUSTOM_COLOR,utils.colors.red)
-    lcd.drawFilledRectangle(149,133, 502, 144, CUSTOM_COLOR)
+    lcd.drawFilledRectangle(150,134, 500, 142, CUSTOM_COLOR)
     lcd.setColor(CUSTOM_COLOR,utils.colors.white)
-    lcd.drawText(400, 150, "no telemetry data", DBLSIZE+CUSTOM_COLOR+CENTER)
-    lcd.drawText(400, 221, "Yaapu Telemetry Widget 2.1.x dev".." ("..'7a17b47'..")", SMLSIZE+CUSTOM_COLOR+CENTER)
+    lcd.drawText(400, 155, "no telemetry data", DBLSIZE+CUSTOM_COLOR+CENTER)
+    lcd.drawText(400, 210, "Yaapu Telemetry Widget 2.1.x dev".." (".."7a17b47"..")", SMLSIZE+CUSTOM_COLOR+CENTER)
     libs.layoutLib.drawTopBar()
     local info = model.getInfo()
     lcd.setColor(CUSTOM_COLOR,WHITE)
-    lcd.drawText(0,6,info.name,CUSTOM_COLOR)
+    lcd.drawText(0,3,info.name,CUSTOM_COLOR)
   end
 end
 
 function layoutLib.drawWidgetPaused()
   if conf.pauseTelemetry == true then
     lcd.setColor(CUSTOM_COLOR,BLACK)
-    lcd.drawFilledRectangle(147,131, 506, 148, CUSTOM_COLOR)
+    lcd.drawFilledRectangle(147,131, 507, 148, CUSTOM_COLOR)
     lcd.setColor(CUSTOM_COLOR,utils.colors.darkyellow)
-    lcd.drawFilledRectangle(149,133, 502, 144, CUSTOM_COLOR)
+    lcd.drawFilledRectangle(150,134, 500, 142, CUSTOM_COLOR)
     lcd.setColor(CUSTOM_COLOR,BLACK)
-    lcd.drawText(400, 150, "WIDGET PAUSED", DBLSIZE+CUSTOM_COLOR+CENTER)
-    lcd.drawText(400, 221, "Yaapu Telemetry Widget 2.1.x dev".." ("..'7a17b47'..")", SMLSIZE+CUSTOM_COLOR+CENTER)
+    lcd.drawText(400, 155, "WIDGET PAUSED", DBLSIZE+CUSTOM_COLOR+CENTER)
+    lcd.drawText(400, 210, "Yaapu Telemetry Widget 2.1.x dev".." (".."7a17b47"..")", SMLSIZE+CUSTOM_COLOR+CENTER)
   end
 end
 
 function layoutLib.drawStatusBar(maxRows)
-  local yDelta = (maxRows-1)*21
+  local yDelta = (maxRows-1)*20
 
   lcd.setColor(CUSTOM_COLOR,utils.colors.bars)
-  lcd.drawFilledRectangle(0,400-yDelta,800,LCD_H-(400-yDelta),CUSTOM_COLOR)
+  lcd.drawFilledRectangle(0,404-yDelta,800,LCD_H-(404-yDelta),CUSTOM_COLOR)
   -- flight time
   lcd.setColor(CUSTOM_COLOR,utils.colors.white)
-  lcd.drawTimer(LCD_W, 390-yDelta, model.getTimer(2).value, DBLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.drawTimer(LCD_W, 396-yDelta, model.getTimer(2).value, DBLSIZE+CUSTOM_COLOR+RIGHT)
   -- flight mode
   lcd.setColor(CUSTOM_COLOR,utils.colors.white)
   if status.strFlightMode ~= nil then
-    lcd.drawText(1,401-yDelta,status.strFlightMode,MIDSIZE+CUSTOM_COLOR)
+    lcd.drawText(1,406-yDelta,status.strFlightMode,MIDSIZE+CUSTOM_COLOR)
   end
   -- gps status, draw coordinates if good at least once
   if telemetry.lon ~= nil and telemetry.lat ~= nil then
-    lcd.drawText(625, 396-yDelta, telemetry.strLat, SMLSIZE+CUSTOM_COLOR+RIGHT)
-    lcd.drawText(625, 422-yDelta, telemetry.strLon, SMLSIZE+CUSTOM_COLOR+RIGHT)
+    lcd.drawText(625, 400-yDelta, telemetry.strLat, SMLSIZE+CUSTOM_COLOR+RIGHT)
+    lcd.drawText(625, 424-yDelta, telemetry.strLon, SMLSIZE+CUSTOM_COLOR+RIGHT)
   end
   -- gps status
   local hdop = telemetry.gpsHdopC
@@ -133,29 +133,29 @@ function layoutLib.drawStatusBar(maxRows)
       flags = 0
       mult=0.1
     end
-    lcd.drawNumber(407,394-yDelta, hdop*mult,DBLSIZE+flags+CUSTOM_COLOR)
+    lcd.drawNumber(407,398-yDelta, hdop*mult,DBLSIZE+flags+CUSTOM_COLOR)
     -- SATS
     lcd.setColor(CUSTOM_COLOR,utils.colors.white)
-    lcd.drawText(343,401-yDelta, utils.gpsStatuses[telemetry.gpsStatus][1], SMLSIZE+CUSTOM_COLOR)
-    lcd.drawText(343,420-yDelta, utils.gpsStatuses[telemetry.gpsStatus][2], SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(343,406-yDelta, utils.gpsStatuses[telemetry.gpsStatus][1], SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(343,426-yDelta, utils.gpsStatuses[telemetry.gpsStatus][2], SMLSIZE+CUSTOM_COLOR)
 
     lcd.setColor(CUSTOM_COLOR,utils.colors.white)
     if telemetry.numSats == 15 then
-      lcd.drawNumber(330,394-yDelta, telemetry.numSats, DBLSIZE+CUSTOM_COLOR+RIGHT)
-      lcd.drawText(330,409-yDelta, "+", SMLSIZE+CUSTOM_COLOR)
+      lcd.drawNumber(330,398-yDelta, telemetry.numSats, DBLSIZE+CUSTOM_COLOR+RIGHT)
+      lcd.drawText(330,412-yDelta, "+", SMLSIZE+CUSTOM_COLOR)
     else
-      lcd.drawNumber(330,394-yDelta,telemetry.numSats, DBLSIZE+CUSTOM_COLOR+RIGHT)
+      lcd.drawNumber(330,398-yDelta,telemetry.numSats, DBLSIZE+CUSTOM_COLOR+RIGHT)
     end
   elseif telemetry.gpsStatus == 0 then
-    utils.drawBlinkBitmap("nogpsicon",250,396-yDelta)
+    utils.drawBlinkBitmap("nogpsicon",250,393-yDelta)
   else
-    utils.drawBlinkBitmap("nolockicon",250,396-yDelta)
+    utils.drawBlinkBitmap("nolockicon",250,393-yDelta)
   end
 
   local offset = math.min(maxRows,#status.messages+1)
   for i=0,offset-1 do
     lcd.setColor(CUSTOM_COLOR,utils.mavSeverity[status.messages[(status.messageCount + i - offset) % (#status.messages+1)][2]][2])
-    lcd.drawText(1,(450-yDelta)+(21*i), status.messages[(status.messageCount + i - offset) % (#status.messages+1)][1],SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(1,(448-yDelta)+(20*i), status.messages[(status.messageCount + i - offset) % (#status.messages+1)][1],SMLSIZE+CUSTOM_COLOR)
   end
 end
 

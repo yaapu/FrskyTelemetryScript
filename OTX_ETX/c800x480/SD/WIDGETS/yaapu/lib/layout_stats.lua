@@ -10,7 +10,7 @@
 -- (at your option) any later version.
 --
 -- This program is distributed in the hope that it will be useful,
--- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- but WITHOUT ANY WARRANTY, without even the implied warranty of
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 -- GNU General Public License for more details.
 --
@@ -52,31 +52,31 @@ local function setup(widget)
 end
 
 local function drawRightBar(widget)
-  local yCell = 34
-  local yPERC = 74
-  local yALT = 114
-  local ySPD = 154
+  local yCell = 35
+  local yPERC = 106
+  local yALT = 176
+  local ySPD = 247
 
-  local yDIST = 74
-  local yHOME = 344
+  local yDIST = 106
+  local yHOME = 342
 
   local colorLabel = lcd.RGB(140,140,140)
   -- CELL
   lcd.setColor(CUSTOM_COLOR,colorLabel)
-  lcd.drawText(LCD_W-2, yCell-3, string.upper(status.battsource).." V", SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.drawText(LCD_W-2, yCell-5, string.upper(status.battsource).." V", SMLSIZE+CUSTOM_COLOR+RIGHT)
   lcd.setColor(CUSTOM_COLOR,WHITE)
   if status.battery[1] * 0.01 < 10 then
-    lcd.drawNumber(LCD_W-2, yCell+7, status.battery[1] + 0.5, PREC2+TXT_ALIGN+MIDSIZE+CUSTOM_COLOR+RIGHT)
+    lcd.drawNumber(LCD_W-2, yCell+15, status.battery[1] + 0.5, PREC2+TXT_ALIGN+MIDSIZE+CUSTOM_COLOR+RIGHT)
   else
-    lcd.drawNumber(LCD_W-2, yCell+7, (status.battery[1] + 0.5)*0.1, PREC1+TXT_ALIGN+MIDSIZE+CUSTOM_COLOR+RIGHT)
+    lcd.drawNumber(LCD_W-2, yCell+15, (status.battery[1] + 0.5)*0.1, PREC1+TXT_ALIGN+MIDSIZE+CUSTOM_COLOR+RIGHT)
   end
   --]]
   -- aggregate batt %
   local strperc = string.format("%2d", status.battery[16])
   lcd.setColor(CUSTOM_COLOR,colorLabel)
-  lcd.drawText(LCD_W-4, yPERC-3, "BATT %", SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.drawText(LCD_W-4, yPERC-5, "BATT %", SMLSIZE+CUSTOM_COLOR+RIGHT)
   lcd.setColor(CUSTOM_COLOR,WHITE)
-  lcd.drawText(LCD_W-4, yPERC+7, strperc, MIDSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.drawText(LCD_W-4, yPERC+15, strperc, MIDSIZE+CUSTOM_COLOR+RIGHT)
 
   -- alt
   local alt = telemetry.homeAlt * unitScale
@@ -86,9 +86,9 @@ local function drawRightBar(widget)
     altLabel = "HAT"
   end
   lcd.setColor(CUSTOM_COLOR,colorLabel)
-  lcd.drawText(LCD_W-2, yALT-3, string.format("%s %s", altLabel, unitLabel), SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.drawText(LCD_W-2, yALT-5, string.format("%s %s", altLabel, unitLabel), SMLSIZE+CUSTOM_COLOR+RIGHT)
   lcd.setColor(CUSTOM_COLOR,WHITE)
-  lcd.drawText(LCD_W-2, yALT+7, string.format("%.0f",alt), MIDSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.drawText(LCD_W-2, yALT+15, string.format("%.0f",alt), MIDSIZE+CUSTOM_COLOR+RIGHT)
 
   -- speed
   local speed = telemetry.hSpeed * 0.1 * conf.horSpeedMultiplier
@@ -98,19 +98,19 @@ local function drawRightBar(widget)
     speedLabel = "ASPD"
   end
   lcd.setColor(CUSTOM_COLOR,colorLabel)
-  lcd.drawText(LCD_W-2, ySPD-3, string.format("%s %s", speedLabel, conf.horSpeedLabel), SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.drawText(LCD_W-2, ySPD-5, string.format("%s %s", speedLabel, conf.horSpeedLabel), SMLSIZE+CUSTOM_COLOR+RIGHT)
   lcd.setColor(CUSTOM_COLOR,WHITE)
-  lcd.drawText(LCD_W-2, ySPD+7, string.format("%.01f",speed), MIDSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.drawText(LCD_W-2, ySPD+15, string.format("%.01f",speed), MIDSIZE+CUSTOM_COLOR+RIGHT)
 
   -- home distance
   lcd.setColor(CUSTOM_COLOR,colorLabel)
-  lcd.drawText(6, yDIST-3, string.format("HOME %s", unitLabel), SMLSIZE+CUSTOM_COLOR)
+  lcd.drawText(6, yDIST-5, string.format("HOME %s", unitLabel), SMLSIZE+CUSTOM_COLOR)
   lcd.setColor(CUSTOM_COLOR,WHITE)
-  lcd.drawText(6, yDIST+7, string.format("%.0f",telemetry.homeDist*unitScale), MIDSIZE+CUSTOM_COLOR)
+  lcd.drawText(6, yDIST+15, string.format("%.0f",telemetry.homeDist*unitScale), MIDSIZE+CUSTOM_COLOR)
 
   -- home angle
   lcd.setColor(CUSTOM_COLOR,utils.colors.darkyellow)
-  libs.drawLib.drawRVehicle(770,430,18,math.floor(telemetry.homeAngle - telemetry.yaw),CUSTOM_COLOR)
+  libs.drawLib.drawRVehicle(733,yHOME,30,math.floor(telemetry.homeAngle - telemetry.yaw),CUSTOM_COLOR)
 end
 
 function layout.draw(widget, customSensors, leftPanel, centerPanel, rightPanel)
@@ -119,11 +119,12 @@ function layout.draw(widget, customSensors, leftPanel, centerPanel, rightPanel)
 
   libs.layoutLib.drawTopBar()
   libs.layoutLib.drawStatusBar(2)
-  local nextX = libs.drawLib.drawTerrainStatus(6,36)
-  libs.drawLib.drawFenceStatus(nextX,36)
+  local nextX = libs.drawLib.drawTerrainStatus(10,37)
+  libs.drawLib.drawFenceStatus(nextX,37)
 end
 
 function layout.background(widget)
 end
 
 return layout
+

@@ -45,9 +45,9 @@ function panel.draw(widget, x, y, battId)
   status.hideEfficiency = 0
 
   local customSensorXY = {
-    { x+197, y+0, x+197, y+25, lcd.RGB(140,140,140)},
-    { x+197, y+74, x+197, y+99, lcd.RGB(140,140,140)},
-    { x+197, y+152, x+197, y+177, lcd.RGB(140,140,140)},
+    { x+197, y+0, x+197, y+23, lcd.RGB(140,140,140)},
+    { x+197, y+70, x+197, y+93, lcd.RGB(140,140,140)},
+    { x+197, y+143, x+197, y+167, lcd.RGB(140,140,140)},
   }
 
   if customSensors ~= nil then

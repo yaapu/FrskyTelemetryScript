@@ -67,27 +67,27 @@ function panel.draw(widget, x, y, battId)
   flags = CUSTOM_COLOR
   -- PREC2 forces a math.floor() whereas a math.round() is required, math.round(f) = math.floor(f+0.5)
   if status.battery[1+1] * 0.01 < 10 then
-    lcd.drawNumber(x+142+2, y+-7, status.battery[1+1] + 0.5, PREC2+DBLSIZE+RIGHT+flags)
+    lcd.drawNumber(x+143, y+-7, status.battery[1+1] + 0.5, PREC2+DBLSIZE+RIGHT+flags)
   else
-    lcd.drawNumber(x+142+2, y+-7, (status.battery[1+1] + 0.5)*0.1, PREC1+DBLSIZE+RIGHT+flags)
+    lcd.drawNumber(x+143, y+-7, (status.battery[1+1] + 0.5)*0.1, PREC1+DBLSIZE+RIGHT+flags)
   end
 
   local lx = x+143
-  lcd.drawText(lx, y+21, "V", flags)
-  lcd.drawText(lx, y+-4, status.battsource, flags)
+  lcd.drawText(lx, y+20, "V", flags)
+  lcd.drawText(lx, y+-3, status.battsource, flags)
 
   lcd.setColor(CUSTOM_COLOR,utils.colors.white) -- white
   -- battery current
   local lowAmp = status.battery[7+1]*0.1 < 10
-  libs.drawLib.drawNumberWithDim(x+142,y+237,x+143,y+264,status.battery[7+1]*(lowAmp and 1 or 0.1),"A",DBLSIZE+RIGHT+CUSTOM_COLOR+(lowAmp and PREC1 or 0),0+CUSTOM_COLOR)
+  libs.drawLib.drawNumberWithDim(x+142,y+223,x+143,y+248,status.battery[7+1]*(lowAmp and 1 or 0.1),"A",DBLSIZE+RIGHT+CUSTOM_COLOR+(lowAmp and PREC1 or 0),0+CUSTOM_COLOR)
   -- battery mah is from battery 2
   -- we display remaining liters vs used liters as usual
   lcd.setColor(CUSTOM_COLOR,utils.colors.white)
   local strmah = string.format("%.01f/%.01fL",(status.battery[13+2]-status.battery[10+2])/1000,status.battery[13+2]/1000)
-  lcd.drawText(x+170, y+200, strmah, 0+RIGHT+CUSTOM_COLOR)
+  lcd.drawText(x+170, y+188, strmah, 0+RIGHT+CUSTOM_COLOR)
   -- fuel gauge from battery 2
   lcd.setColor(CUSTOM_COLOR,utils.colors.red)
-  libs.drawLib.drawGauge(x+33,y+60,"fuelgauge_75x75", 673, 120, 25, 8, status.battery[16+2], 125, CUSTOM_COLOR)
+  libs.drawLib.drawGauge(x+33,y+57,"fuelgauge_75x75", 695, 154, 42, 13, status.battery[16+2], 125, CUSTOM_COLOR)
 end
 
 function panel.background(myWidget)

@@ -47,27 +47,27 @@ function panel.draw(widget, x, y, battId)
   lcd.setColor(CUSTOM_COLOR,utils.colors.white) -- white
   if status.showMinMaxValues == false then
     if status.battLevel2 == false and status.alarms[8][2] > 0 then
-      utils.drawBlinkBitmap("cell_red_blink_86x30",x+52,y+21)
+      utils.drawBlinkBitmap("cell_red_blink_86x30",x+52,y+20)
       utils.lcdBacklightOn()
     elseif status.battLevel2 == true then
-      lcd.drawBitmap(utils.getBitmap("cell_red_86x30"),x+52,y+21)
+      lcd.drawBitmap(utils.getBitmap("cell_red_86x30"),x+52,y+20)
     elseif status.battLevel1 == false and status.alarms[7][2] > 0 then
       --lcd.setColor(CUSTOM_COLOR,utils.colors.black) -- black
-      utils.drawBlinkBitmap("cell_orange_blink_86x30",x+52,y+21)
+      utils.drawBlinkBitmap("cell_orange_blink_86x30",x+52,y+20)
       utils.lcdBacklightOn()
     elseif status.battLevel1 == true then
-      lcd.drawBitmap(utils.getBitmap("cell_orange_86x30"),x+52,y+21)
+      lcd.drawBitmap(utils.getBitmap("cell_orange_86x30"),x+52,y+20)
       lcd.setColor(CUSTOM_COLOR,utils.colors.black) -- black
     end
   end
   -- battery voltage
   flags = CUSTOM_COLOR
-  libs.drawLib.drawNumberWithDim(x+177,y+14,x+180, y+48, status.battery[4+battId],"V",RIGHT+PREC1+DBLSIZE+CUSTOM_COLOR,SMLSIZE+CUSTOM_COLOR)
+  libs.drawLib.drawNumberWithDim(x+177,y+13,x+180, y+45, status.battery[4+battId],"V",RIGHT+PREC1+DBLSIZE+CUSTOM_COLOR,SMLSIZE+CUSTOM_COLOR)
   local lx = x+180
   lcd.setColor(CUSTOM_COLOR,utils.colors.white) -- white
   -- battery current
   local lowAmp = status.battery[7+battId]*0.1 < 10
-  libs.drawLib.drawNumberWithDim(x+180,y+94,x+180,y+127,status.battery[7+battId]*(lowAmp and 1 or 0.1),"A",DBLSIZE+RIGHT+CUSTOM_COLOR+(lowAmp and PREC1 or 0),SMLSIZE+CUSTOM_COLOR)
+  libs.drawLib.drawNumberWithDim(x+180,y+88,x+180,y+120,status.battery[7+battId]*(lowAmp and 1 or 0.1),"A",DBLSIZE+RIGHT+CUSTOM_COLOR+(lowAmp and PREC1 or 0),SMLSIZE+CUSTOM_COLOR)
   -- display capacity bar %
   local color = lcd.RGB(255,0, 0)
   if perc > 50 then
@@ -75,11 +75,11 @@ function panel.draw(widget, x, y, battId)
   elseif perc <= 50 and perc > 25 then
     color = lcd.RGB(255, 204, 0) -- yellow
   end
-  libs.drawLib.drawMinMaxBar(x+8, y+156,183,37,color,perc,0,100,MIDSIZE)
+  libs.drawLib.drawMinMaxBar(x+8, y+147,184,35,color,perc,0,100,MIDSIZE)
   -- battery mah
   lcd.setColor(CUSTOM_COLOR,utils.colors.white)
   local strmah = string.format("%.02f/%.01fAh",status.battery[10+battId]/1000,status.battery[13+battId]/1000)
-  lcd.drawText(x+183, y+195, strmah, 0+RIGHT+CUSTOM_COLOR)
+  lcd.drawText(x+184, y+183, strmah, 0+RIGHT+CUSTOM_COLOR)
 
   lcd.setColor(CUSTOM_COLOR,lcd.RGB(140, 140, 140))
   local battLabel = "B1B2"
@@ -98,14 +98,14 @@ function panel.draw(widget, x, y, battId)
   lcd.drawText(x+2, y+-7, battLabel, SMLSIZE+CUSTOM_COLOR)
 
   if status.showMinMaxValues == true then
-    libs.drawLib.drawVArrow(x+177+18, y+14 + 8,false,true)
-    libs.drawLib.drawVArrow(x+177+18,y+14 + 3, false,true)
-    libs.drawLib.drawVArrow(x+180+18,y+94 + 10,true,false)
+    libs.drawLib.drawVArrow(x+195, y+27,false,true)
+    libs.drawLib.drawVArrow(x+195,y+18, false,true)
+    libs.drawLib.drawVArrow(x+198,y+105,true,false)
   end
 
   lcd.setColor(CUSTOM_COLOR, lcd.RGB(140, 140, 140))
-  lcd.drawText(x+183, y+-7, string.format("%s BATT",string.upper(status.battsource)), SMLSIZE+RIGHT+CUSTOM_COLOR)
-  lcd.drawText(x+183, y+78, "CURR", SMLSIZE+RIGHT+CUSTOM_COLOR)
+  lcd.drawText(x+184, y+-7, string.format("%s BATT",string.upper(status.battsource)), SMLSIZE+RIGHT+CUSTOM_COLOR)
+  lcd.drawText(x+184, y+73, "CURR", SMLSIZE+RIGHT+CUSTOM_COLOR)
 end
 
 function panel.background(myWidget)

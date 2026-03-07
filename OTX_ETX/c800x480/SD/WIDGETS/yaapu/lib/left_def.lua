@@ -57,13 +57,13 @@ function panel.draw(widget, x, y, battId)
     rng = utils.getMaxValue(rng,16)
     lcd.setColor(CUSTOM_COLOR,utils.colors.red)
     if rng > conf.rangeFinderMax and status.showMinMaxValues == false then
-      lcd.drawFilledRectangle(x+13, y+16+7,170,48, CUSTOM_COLOR)
+      lcd.drawFilledRectangle(x+13, y+22,170,45, CUSTOM_COLOR)
     end
     lcd.setColor(CUSTOM_COLOR,colorLabel)
     lcd.drawText(x+17, y+0, string.format("RANGE %s",unitLabel), SMLSIZE+CUSTOM_COLOR)
     --lcd.drawText(100, 9+10, unitLabel, SMLSIZE+CUSTOM_COLOR)
     lcd.setColor(CUSTOM_COLOR,utils.colors.white)
-    lcd.drawText(x+17, y+16, string.format("%.1f",rng*0.01*unitScale), DBLSIZE+CUSTOM_COLOR)
+    lcd.drawText(x+17, y+15, string.format("%.1f",rng*0.01*unitScale), DBLSIZE+CUSTOM_COLOR)
   else
     flags = BLINK
     -- always display gps altitude even without 3d lock
@@ -80,7 +80,7 @@ function panel.draw(widget, x, y, battId)
     lcd.drawText(x+17, y+0, string.format("GALT %s",unitLabel), SMLSIZE+CUSTOM_COLOR)
     local stralt = string.format("%d",alt*unitScale)
     lcd.setColor(CUSTOM_COLOR,utils.colors.white)
-    lcd.drawText(x+17, y+16, stralt, DBLSIZE+flags+CUSTOM_COLOR)
+    lcd.drawText(x+17, y+15, stralt, DBLSIZE+flags+CUSTOM_COLOR)
   end
 
   lcd.setColor(CUSTOM_COLOR,utils.colors.white)
@@ -100,21 +100,21 @@ function panel.draw(widget, x, y, battId)
     label = unitLongLabel
   end
   lcd.setColor(CUSTOM_COLOR,colorLabel)
-  lcd.drawText(x+17, y+74, string.format("HOME %s",label), SMLSIZE+CUSTOM_COLOR)
+  lcd.drawText(x+17, y+70, string.format("HOME %s",label), SMLSIZE+CUSTOM_COLOR)
   lcd.setColor(CUSTOM_COLOR,utils.colors.white)
-  lcd.drawNumber(x+17, y+90, dist, DBLSIZE+flags+CUSTOM_COLOR)
+  lcd.drawNumber(x+17, y+85, dist, DBLSIZE+flags+CUSTOM_COLOR)
 
   -- total distance
   lcd.setColor(CUSTOM_COLOR,colorLabel)
-  lcd.drawText(x+17, y+152, string.format("TRAVEL %s",unitLongLabel), SMLSIZE+CUSTOM_COLOR)
+  lcd.drawText(x+17, y+143, string.format("TRAVEL %s",unitLongLabel), SMLSIZE+CUSTOM_COLOR)
   lcd.setColor(CUSTOM_COLOR,utils.colors.white)
   local mult = telemetry.totalDist*unitLongScale > 99 and 10 or 100
   local prec = telemetry.totalDist*unitLongScale > 99 and PREC1 or PREC2
-  lcd.drawNumber(x+17, y+168, telemetry.totalDist*unitLongScale*mult, prec+DBLSIZE+CUSTOM_COLOR)
+  lcd.drawNumber(x+17, y+158, telemetry.totalDist*unitLongScale*mult, prec+DBLSIZE+CUSTOM_COLOR)
 
   if status.showMinMaxValues == true then
-    libs.drawLib.drawVArrow(x+7, y+16 + 7,true,false)
-    libs.drawLib.drawVArrow(x+7, y+90 + 7 ,true,false)
+    libs.drawLib.drawVArrow(x+7, y+22,true,false)
+    libs.drawLib.drawVArrow(x+7, y+92,true,false)
   end
 end
 

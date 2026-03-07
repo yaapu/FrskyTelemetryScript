@@ -10,7 +10,7 @@
 -- (at your option) any later version.
 --
 -- This program is distributed in the hope that it will be useful,
--- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- but WITHOUT ANY WARRANTY, without even the implied warranty of
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 -- GNU General Public License for more details.
 --
@@ -29,10 +29,6 @@ local ver, radio, maj, minor, rev = getVersion()
 -- Note: Home is absolute origin
 ---------------------------------
 
--- viewport dimensions
-local VP_W = 460
-local VP_H = 230
-
 -- home relative vehicle coordinates
 local myX = 0
 local myY = 0
@@ -42,11 +38,11 @@ local myScreenX = 0
 local myScreenY = 0
 
 -- absolute viewport home offset
-local originX = (LCD_W-VP_W)/2+VP_W/2
-local originY = 32+VP_H/2
+local originX = (LCD_W-467)/2+467/2
+local originY = 30+237/2
 
 -- size of grid in pixel
-local tileSize = 50
+local tileSize = 83
 -- zoom factor
 local zoom = 0.5
 -- last n point circulart buffer
@@ -135,14 +131,15 @@ end
 
 function panel.draw(widget)
 
-  local minY = 32
-  local maxY = 32 + VP_H
+  local minY = 30
+  local maxY = 30 + 237
 
-  local minX = (LCD_W-VP_W)/2
-  local maxX = (LCD_W-VP_W)/2 + VP_W
+  local minX = (LCD_W-467)/2
+  local maxX = (LCD_W-467)/2 + 467
 
-  lcd.setColor(CUSTOM_COLOR,lcd.RGB(0x63, 0x30, 0x00))
-  lcd.drawFilledRectangle(minX,minY,VP_W,maxY - minY,CUSTOM_COLOR)
+  --lcd.setColor(CUSTOM_COLOR,lcd.RGB(0x7b, 0x9d, 0xff)) -- default blue
+  lcd.setColor(CUSTOM_COLOR,lcd.RGB(0x63, 0x30, 0x00)) --623000 old brown
+  lcd.drawFilledRectangle(minX,minY,467,maxY - minY,CUSTOM_COLOR)
   -- angle of the line passing on point(ox,oy)
   local angle = math.tan(math.rad(-telemetry.roll))
   --
@@ -157,23 +154,23 @@ function panel.draw(widget)
 
   -- center vehicle on screen
   if myCode == 1 or myCode == 2 or myCode == 8 or myCode == 4 then
-      originX = (LCD_W-VP_W)/2+VP_W/2 - zoom*myX;
-      originY = 32+VP_H/2 - zoom*myY
+      originX = (LCD_W-467)/2+467/2 - zoom*myX;
+      originY = 30+237/2 - zoom*myY
   end
 
 
   -- round minX to closest tileSize multiple
-  local xStart = (LCD_W-VP_W)/2 + VP_W/2 + 10 - (1+math.floor(VP_W/2/tileSize))*tileSize
+  local xStart = (LCD_W-467)/2 + 467/2 + 10 - (1+math.floor(467/2/tileSize))*tileSize
   local xOffset = xStart + originX%myTileSize
 
-  for v=0,1+VP_W/myTileSize
+  for v=0,1+467/myTileSize
   do
     libs.drawLib.drawLineWithClipping(xOffset+v*myTileSize,minY,xOffset+v*myTileSize,maxY,SOLID,minX+1,maxX-1,minY+1,maxY-1,CUSTOM_COLOR)
   end
 
-  local yStart = 32 + VP_H/2 + 1.5*10 - (1+math.floor(VP_H/2/tileSize))*tileSize
+  local yStart = 30 + 237/2 + 1.5*10 - (1+math.floor(237/2/tileSize))*tileSize
   local yOffset = yStart + originY%myTileSize
-  for h=0,1+VP_H/myTileSize
+  for h=0,1+237/myTileSize
   do
     libs.drawLib.drawLineWithClipping(minX,yOffset+h*myTileSize,maxX,yOffset+h*myTileSize,SOLID,minX+1,maxX-1,minY+1,maxY-1,CUSTOM_COLOR)
   end
@@ -215,10 +212,31 @@ function panel.draw(widget)
 
   lcd.setColor(CUSTOM_COLOR,utils.colors.white)
 
-  drawVehicle(myScreenX, myScreenY, 20, telemetry.yaw, SOLID, minX, maxX, minY, maxY, CUSTOM_COLOR)
+  drawVehicle(myScreenX, myScreenY, 33, telemetry.yaw, SOLID, minX, maxX, minY, maxY, CUSTOM_COLOR)
 
-  lcd.drawNumber((LCD_W-VP_W)/2,32+VP_H+6,avgDist,SMLSIZE+CUSTOM_COLOR)
+  --[[
+  lcd.drawText(HUD_X,HUD_Y,string.format("yaw:%d",telemetry.yaw),SMLSIZE+CUSTOM_COLOR)
+  lcd.drawText(HUD_X,HUD_Y+15,string.format("angle:%d",telemetry.homeAngle),SMLSIZE+CUSTOM_COLOR)
 
+  lcd.drawText(HUD_X,HUD_Y+30,string.format("myX:%d",myX),SMLSIZE+CUSTOM_COLOR)
+  lcd.drawText(HUD_X,HUD_Y+60,string.format("myY:%d",myY),SMLSIZE+CUSTOM_COLOR)
+
+  lcd.drawText(HUD_X,HUD_Y+80,string.format("myScreenX:%d",myScreenX),SMLSIZE+CUSTOM_COLOR)
+  lcd.drawText(HUD_X,HUD_Y+100,string.format("myScreenY:%d",myScreenY),SMLSIZE+CUSTOM_COLOR)
+
+  lcd.drawText(HUD_X,HUD_Y+80,string.format("myScreenX:%d",myScreenX),SMLSIZE+CUSTOM_COLOR)
+  lcd.drawText(HUD_X,HUD_Y+100,string.format("myScreenY:%d",myScreenY),SMLSIZE+CUSTOM_COLOR)
+
+  lcd.drawText(HUD_X,HUD_Y+120,string.format("avgDistSum:%d",avgDistSum),SMLSIZE+CUSTOM_COLOR)
+  --]]
+  lcd.drawNumber((LCD_W-467)/2,30+234,avgDist,SMLSIZE+CUSTOM_COLOR)
+
+  --[[
+  for a=0, math.min(avgDistSampleCount-1,DIST_SAMPLES-1)
+  do
+    lcd.drawNumber(350,20+a*15,avgDistSamples[a] == nil and -1 or avgDistSamples[a],SMLSIZE+CUSTOM_COLOR)
+  end
+  --]]
   lcd.setColor(CUSTOM_COLOR,utils.colors.white)
 end
 

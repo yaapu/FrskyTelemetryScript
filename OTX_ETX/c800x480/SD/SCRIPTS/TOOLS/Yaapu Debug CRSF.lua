@@ -37,7 +37,7 @@ local flushtime = getTime()
 local function drawMessageScreen()
   lcd.setColor(CUSTOM_COLOR,WHITE)
   for i=0,#status.messages do
-    lcd.drawText(0,2+13*i, status.messages[(status.messageCount + i) % (#status.messages+1)],SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(0,2+23*i, status.messages[(status.messageCount + i) % (#status.messages+1)],SMLSIZE+CUSTOM_COLOR)
   end
 end
 
@@ -172,11 +172,11 @@ local function run(event)
       if packetStats[0x5000+i].avg > 0 then
         lcd.setColor(CUSTOM_COLOR, lcd.RGB(0,255,0))
       end
-      lcd.drawText(20,22+(i*28),string.format("0x50%02X: rate: %.01fHz, count: %d, ", i, packetStats[0x5000+i].avg, packetStats[0x5000+i].tot),CUSTOM_COLOR)
+      lcd.drawText(20,37+(i*28),string.format("0x50%02X: rate: %.01fHz, count: %d, ", i, packetStats[0x5000+i].avg, packetStats[0x5000+i].tot),CUSTOM_COLOR)
     end
     lcd.drawText(LCD_W-10, 1,string.format("link rate: %.01fHz", packetStats.link_rate), CUSTOM_COLOR+RIGHT)
 
-    lcd.drawText(1,LCD_H-35,tostring("/LOGS/"..logfilename),CUSTOM_COLOR)
+    lcd.drawText(1,LCD_H-33,tostring("/LOGS/"..logfilename),CUSTOM_COLOR)
 
     if event == 517 then
       showMessageScreen = true

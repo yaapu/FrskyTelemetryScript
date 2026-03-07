@@ -30,8 +30,8 @@ local conf
 local utils
 local libs
 
-local MAP_X = (LCD_W-800)/2
-local MAP_Y = 32
+local MAP_X = (LCD_W-700)/2
+local MAP_Y = 30
 local TILES_X = 7
 local TILES_Y = 3
 
@@ -453,7 +453,7 @@ function mapLib.drawMap(widget, x, y, w, h, level, tiles_x, tiles_y)
             lcd.drawRectangle(wpScreenX-2,wpScreenY-2,4,4,CUSTOM_COLOR)
             lcd.drawText(wpScreenX,wpScreenY,telemetry.wpNumber,SMLSIZE+CUSTOM_COLOR)
           else
-            libs.drawLib.drawLineByOriginAndAngle(myScreenX, myScreenY, telemetry.wpBearing-90, 2*800, DOTTED, minX, maxX, minY, maxY, CUSTOM_COLOR, false)
+            libs.drawLib.drawLineByOriginAndAngle(myScreenX, myScreenY, telemetry.wpBearing-90, 2*300, DOTTED, minX, maxX, minY, maxY, CUSTOM_COLOR, false)
           end
         end
       end

@@ -508,15 +508,15 @@ local function drawConfigMenuBars()
   local info = model.getInfo()
   lcd.setColor(CUSTOM_COLOR,lcd.RGB(16,20,25))
   local itemIdx = string.format("%d/%d",menu.selectedItem,#menuItems)
-  lcd.drawFilledRectangle(0,0, LCD_W, 35, CUSTOM_COLOR)
-  lcd.drawRectangle(0, 0, LCD_W, 35, CUSTOM_COLOR)
-  lcd.drawFilledRectangle(0,LCD_H-35, LCD_W, 35, CUSTOM_COLOR)
-  lcd.drawRectangle(0, LCD_H-35, LCD_W, 35, CUSTOM_COLOR)
+  lcd.drawFilledRectangle(0,0, LCD_W, 33, CUSTOM_COLOR)
+  lcd.drawRectangle(0, 0, LCD_W, 33, CUSTOM_COLOR)
+  lcd.drawFilledRectangle(0,LCD_H-33, LCD_W, 33, CUSTOM_COLOR)
+  lcd.drawRectangle(0, LCD_H-33, LCD_W, 33, CUSTOM_COLOR)
   lcd.setColor(CUSTOM_COLOR,WHITE)
-  lcd.drawText(LCD_W,9,"Yaapu Telemetry Widget 2.1.x dev".." ("..'7a17b47'..")",CUSTOM_COLOR+SMLSIZE+RIGHT)
-  lcd.drawText(0,6,info.name,CUSTOM_COLOR)
-  lcd.drawText(0,LCD_H-29,getConfigFilename(),CUSTOM_COLOR)
-  lcd.drawText(LCD_W,LCD_H-29,itemIdx,CUSTOM_COLOR+RIGHT)
+  lcd.drawText(LCD_W,5,"Yaapu Telemetry Widget 2.1.x dev".." (".."7a17b47"..")",CUSTOM_COLOR+SMLSIZE+RIGHT)
+  lcd.drawText(0,0,info.name,CUSTOM_COLOR)
+  lcd.drawText(0,LCD_H-33+1,getConfigFilename(),CUSTOM_COLOR)
+  lcd.drawText(LCD_W,LCD_H-33+1,itemIdx,CUSTOM_COLOR+RIGHT)
 end
 
 local function incMenuItem(idx)
@@ -550,14 +550,14 @@ end
 local function drawItem(idx,flags)
   lcd.setColor(CUSTOM_COLOR,WHITE)
   if type(menuItems[idx][4]) == "table" then
-    lcd.drawText(450,42 + (idx-menu.offset-1)*23, menuItems[idx][4][menuItems[idx][3]],flags+CUSTOM_COLOR)
+    lcd.drawText(467,42 + (idx-menu.offset-1)*33, menuItems[idx][4][menuItems[idx][3]],flags+CUSTOM_COLOR)
   else
     if menuItems[idx][3] == 0 and menuItems[idx][4] >= 0 then
-      lcd.drawText(450,42 + (idx-menu.offset-1)*23, "---",flags+CUSTOM_COLOR)
+      lcd.drawText(467,42 + (idx-menu.offset-1)*33, "---",flags+CUSTOM_COLOR)
     else
-      lcd.drawNumber(450,42 + (idx-menu.offset-1)*23, menuItems[idx][3],flags+menuItems[idx][7]+CUSTOM_COLOR)
+      lcd.drawNumber(467,42 + (idx-menu.offset-1)*33, menuItems[idx][3],flags+menuItems[idx][7]+CUSTOM_COLOR)
       if menuItems[idx][6] ~= nil then
-        lcd.drawText(450 + 80,42 + (idx-menu.offset-1)*23, menuItems[idx][6],flags+CUSTOM_COLOR)
+        lcd.drawText(467 + 83,42 + (idx-menu.offset-1)*33, menuItems[idx][6],flags+CUSTOM_COLOR)
       end
     end
   end
@@ -594,7 +594,7 @@ local function drawConfigMenu(event)
     end
   elseif not menu.editSelected and (event == EVT_VIRTUAL_NEXT or event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT) then
     menu.selectedItem = (menu.selectedItem + 1)
-    if menu.selectedItem - 17 > menu.offset then
+    if menu.selectedItem - 12 > menu.offset then
       menu.offset = menu.offset + 1
     end
   end
@@ -604,12 +604,12 @@ local function drawConfigMenu(event)
     menu.offset = 0
   elseif menu.selectedItem  < 1 then
     menu.selectedItem = #menuItems
-    menu.offset =  #menuItems - 17
+    menu.offset =  #menuItems - 12
   end
   --
-  for m=1+menu.offset,math.min(#menuItems,17+menu.offset) do
+  for m=1+menu.offset,math.min(#menuItems,12+menu.offset) do
     lcd.setColor(CUSTOM_COLOR,WHITE)
-    lcd.drawText(2,42 + (m-menu.offset-1)*23, menuItems[m][1],CUSTOM_COLOR)
+    lcd.drawText(2,42 + (m-menu.offset-1)*33, menuItems[m][1],CUSTOM_COLOR)
     if m == menu.selectedItem then
       if menu.editSelected then
         drawItem(m,INVERS+BLINK)

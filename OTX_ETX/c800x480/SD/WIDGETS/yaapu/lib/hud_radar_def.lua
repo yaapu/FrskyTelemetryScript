@@ -10,7 +10,7 @@
 -- (at your option) any later version.
 --
 -- This program is distributed in the hope that it will be useful,
--- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- but WITHOUT ANY WARRANTY, without even the implied warranty of
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 -- GNU General Public License for more details.
 --
@@ -29,10 +29,6 @@ local ver, radio, maj, minor, rev = getVersion()
 -- Note: Home is absolute origin
 ---------------------------------
 
--- viewport dimensions
-local VP_W = 467
-local VP_H = 237
-
 -- home relative vehicle coordinates
 local myX = 0
 local myY = 0
@@ -42,8 +38,8 @@ local myScreenX = 0
 local myScreenY = 0
 
 -- absolute viewport home offset
-local originX = (LCD_W-VP_W)/2+VP_W/2
-local originY = 32+VP_H/2
+local originX = (LCD_W-467)/2+467/2
+local originY = 30+237/2
 
 -- zoom factor
 local zoom = 0.5
@@ -112,14 +108,15 @@ local function dist(x1,y1,x2,y2)
 end
 
 function panel.draw(widget)
-  local minX = (LCD_W-VP_W)/2
-  local minY = 32
+  local minX = (LCD_W-467)/2
+  local minY = 30
 
-  local maxX = (LCD_W-VP_W)/2 + VP_W
-  local maxY = 32 + VP_H
+  local maxX = (LCD_W-467)/2 + 467
+  local maxY = 30 + 237
 
-  lcd.setColor(CUSTOM_COLOR,lcd.RGB(0x63, 0x30, 0x00))
-  lcd.drawFilledRectangle(minX,minY,VP_W,maxY - minY,CUSTOM_COLOR)
+  --lcd.setColor(CUSTOM_COLOR,lcd.RGB(0x7b, 0x9d, 0xff)) -- default blue
+  lcd.setColor(CUSTOM_COLOR,lcd.RGB(0x63, 0x30, 0x00)) --623000 old brown
+  lcd.drawFilledRectangle(minX,minY,467,maxY - minY,CUSTOM_COLOR)
 
   updateMyPosition(widget)
 
@@ -129,42 +126,66 @@ function panel.draw(widget)
   local myCode = libs.drawLib.computeOutCode(myScreenX, myScreenY, minX+20, minY+20,maxX-20, maxY-20);
 
   if bit32.band(myCode,1) == 1 then
-    local newOriginX = (LCD_W-VP_W)/2+VP_W/2 - (zoom*myX*0.5);
+    -- vehicle at left border
+    -- can we shift and center or should we lower zoom factor?
+    local newOriginX = (LCD_W-467)/2+467/2 - (zoom*myX*0.5);
+    -- let's check if home would be visible
     local homeCode = libs.drawLib.computeOutCode(newOriginX, originY, minX+20, minY+20,maxX-20, maxY-20);
+    -- vehicle is far left, would home leave viewport on the right?
     if bit32.band(homeCode,2) == 2 then
+      -- yes -> zoom out!
       zoom = zoom * 0.95
     end
-    originX = (LCD_W-VP_W)/2+VP_W/2 - (zoom*myX*0.5);
+    -- center vehicle
+    originX = (LCD_W-467)/2+467/2 - (zoom*myX*0.5);
   end
 
   if bit32.band(myCode,2) == 2 then
-    local newOriginX = (LCD_W-VP_W)/2+VP_W/2 - (zoom*myX*0.5);
+    -- vehicle at right border
+    -- can we shift and center or should we lower zoom factor?
+    local newOriginX = (LCD_W-467)/2+467/2 - (zoom*myX*0.5);
+    -- let's check if home would be visible
     local homeCode = libs.drawLib.computeOutCode(newOriginX, originY, minX+20, minY+20,maxX-20, maxY-20);
+    -- vehicle is far right, would home leave viewport on the left?
     if bit32.band(homeCode,1)  == 1 then
+      -- yes -> zoom out!
       zoom = zoom * 0.95
     end
-    originX = (LCD_W-VP_W)/2+VP_W/2 - (zoom*myX*0.5);
+    -- center vehicle
+    originX = (LCD_W-467)/2+467/2 - (zoom*myX*0.5);
   end
 
   if bit32.band(myCode,8) == 8 then
-    local newOriginY = 32+VP_H/2 - (zoom*myY*0.5);
+    -- vehicle at top border
+    -- can we shift and center or should we lower zoom factor?
+    local newOriginY = 30+237/2 - (zoom*myY*0.5);
+    -- let's check if home would be visible
     local homeCode = libs.drawLib.computeOutCode(originX, newOriginY, minX+20, minY+20,maxX-20, maxY-20);
+    -- vehicle is at the top, would home leave viewport on the bottom?
     if bit32.band(homeCode,4) == 4 then
+      -- yes -> zoom out!
       zoom = zoom * 0.95
     end
-    originY = 32+VP_H/2 - (zoom*myY*0.5);
+    -- center vehicle
+    originY = 30+237/2 - (zoom*myY*0.5);
   end
 
   if bit32.band(myCode,4) == 4 then
-    local newOriginY = 32+VP_H/2 - (zoom*myY*0.5);
+    -- vehicle at bottom border
+    -- can we shift and center or should we lower zoom factor?
+    local newOriginY = 30+237/2 - (zoom*myY*0.5);
+    -- let's check if home would be visible
     local homeCode = libs.drawLib.computeOutCode(originX, newOriginY, minX+20, minY+20,maxX-20, maxY-20);
+    -- vehicle is at the bottom, would home leave viewport at the top?
     if bit32.band(homeCode,8) == 8 then
+      -- yes -> zoom out!
       zoom = zoom * 0.95
     end
-    originY = 32+VP_H/2 - (zoom*myY*0.5);
+    -- center vehicle
+    originY = 30+237/2 - (zoom*myY*0.5);
   end
 
-  libs.drawLib.drawHomeIcon(originX-33/2,originY-33/2)
+  libs.drawLib.drawHomeIcon(originX-20/2,originY-20/2)
 
   -- last n points
   lcd.setColor(CUSTOM_COLOR,utils.colors.darkyellow)
@@ -181,12 +202,29 @@ function panel.draw(widget)
 
   drawVehicle(myScreenX, myScreenY, 33, telemetry.yaw, SOLID, minX, maxX, minY, maxY, CUSTOM_COLOR)
 
-  lcd.drawText((LCD_W-VP_W)/2,32,string.format("zoom:%.02f",zoom),SMLSIZE+CUSTOM_COLOR)
-  lcd.drawText((LCD_W-VP_W)/2,32+15,string.format("dist:%d",telemetry.homeDist),SMLSIZE+CUSTOM_COLOR)
+  lcd.drawText((LCD_W-467)/2,30,string.format("zoom:%.02f",zoom),SMLSIZE+CUSTOM_COLOR)
+  lcd.drawText((LCD_W-467)/2,30+25,string.format("dist:%d",telemetry.homeDist),SMLSIZE+CUSTOM_COLOR)
+  --[[
 
+  lcd.drawText(HUD_X,HUD_Y+30,string.format("myX:%d",myX),SMLSIZE+CUSTOM_COLOR)
+  lcd.drawText(HUD_X,HUD_Y+60,string.format("myY:%d",myY),SMLSIZE+CUSTOM_COLOR)
+
+  lcd.drawText(HUD_X,HUD_Y+80,string.format("myScreenX:%d",myScreenX),SMLSIZE+CUSTOM_COLOR)
+  lcd.drawText(HUD_X,HUD_Y+100,string.format("myScreenY:%d",myScreenY),SMLSIZE+CUSTOM_COLOR)
+
+  lcd.drawText(HUD_X,HUD_Y+80,string.format("myScreenX:%d",myScreenX),SMLSIZE+CUSTOM_COLOR)
+  lcd.drawText(HUD_X,HUD_Y+100,string.format("myScreenY:%d",myScreenY),SMLSIZE+CUSTOM_COLOR)
+
+  lcd.drawText(HUD_X,HUD_Y+120,string.format("avgDistSum:%d",avgDistSum),SMLSIZE+CUSTOM_COLOR)
+
+  for a=0, math.min(avgDistSampleCount-1,DIST_SAMPLES-1)
+  do
+    lcd.drawNumber(350,20+a*15,avgDistSamples[a] == nil and -1 or avgDistSamples[a],SMLSIZE+CUSTOM_COLOR)
+  end
+  --]]
   lcd.setColor(CUSTOM_COLOR,utils.colors.white)
 
-  if dist(myScreenX, myScreenY, originX, originY) < VP_H/2 then
+  if dist(myScreenX, myScreenY, originX, originY) < 237/2 then
     if zoom < 0.5 then
       zoom = math.min(zoom * 1.1, 0.5)
     end

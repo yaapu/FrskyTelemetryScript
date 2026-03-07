@@ -48,10 +48,10 @@ function panel.draw(widget, x, y, battId)
     lcd.drawText(x+17, y+-7, "RNG "..unitLabel, SMLSIZE+CUSTOM_COLOR)
     if rng > conf.rangeFinderMax and status.showMinMaxValues == false then
       lcd.setColor(CUSTOM_COLOR,utils.colors.red)
-      lcd.drawFilledRectangle(x+17-108, y+9+7,108,37,CUSTOM_COLOR)
+      lcd.drawFilledRectangle(x+17-108, y+8+7,108,35,CUSTOM_COLOR)
     end
     lcd.setColor(CUSTOM_COLOR,utils.colors.white)
-    lcd.drawText(x+17, y+9, string.format("%.1f",rng*0.01*unitScale), MIDSIZE+flags+CUSTOM_COLOR)
+    lcd.drawText(x+17, y+8, string.format("%.1f",rng*0.01*unitScale), MIDSIZE+flags+CUSTOM_COLOR)
   else
     flags = BLINK
     -- always display gps altitude even without 3d lock
@@ -67,12 +67,12 @@ function panel.draw(widget, x, y, battId)
     lcd.setColor(CUSTOM_COLOR,colorLabel)
     lcd.drawText(x+17, y+-7, "GALT "..unitLabel, SMLSIZE+CUSTOM_COLOR)
     lcd.setColor(CUSTOM_COLOR,utils.colors.white)
-    lcd.drawNumber(x+17, y+9, alt*unitScale, MIDSIZE+flags+CUSTOM_COLOR)
+    lcd.drawNumber(x+17, y+8, alt*unitScale, MIDSIZE+flags+CUSTOM_COLOR)
   end
   -- LABELS
   lcd.setColor(CUSTOM_COLOR,colorLabel)
-  lcd.drawText(x+17, y+55, "HOME-TRAVEL", SMLSIZE+CUSTOM_COLOR)
-  lcd.drawText(x+17, y+143, "WP "..unitLabel, SMLSIZE+CUSTOM_COLOR)
+  lcd.drawText(x+17, y+52, "HOME-TRAVEL", SMLSIZE+CUSTOM_COLOR)
+  lcd.drawText(x+17, y+135, "WP "..unitLabel, SMLSIZE+CUSTOM_COLOR)
   -- VALUES
   lcd.setColor(CUSTOM_COLOR,utils.colors.white)
   -- home distance
@@ -87,38 +87,38 @@ function panel.draw(widget, x, y, battId)
   local strdist = string.format("%d%s",dist*unitScale,unitLabel)
   lcd.setColor(CUSTOM_COLOR,utils.colors.darkyellow)
   if dist < 999 then
-    lcd.drawText(x+17, y+71, strdist, MIDSIZE+flags+CUSTOM_COLOR)
+    lcd.drawText(x+17, y+67, strdist, MIDSIZE+flags+CUSTOM_COLOR)
   else
-    lcd.drawText(x+17, y+71, string.format("%0.2f%s", dist*unitLongScale, unitLongLabel), MIDSIZE+flags+CUSTOM_COLOR)
+    lcd.drawText(x+17, y+67, string.format("%0.2f%s", dist*unitLongScale, unitLongLabel), MIDSIZE+flags+CUSTOM_COLOR)
   end
   -- total distance
   lcd.setColor(CUSTOM_COLOR,utils.colors.white)
-  lcd.drawText(x+17, y+110, string.format("%0.2f%s", telemetry.totalDist*unitLongScale, unitLongLabel), SMLSIZE+CUSTOM_COLOR+PREC2)
+  lcd.drawText(x+17, y+103, string.format("%0.2f%s", telemetry.totalDist*unitLongScale, unitLongLabel), SMLSIZE+CUSTOM_COLOR+PREC2)
   -- draw WP info only for supported flight modes
   -- AUTO, GUIDED, LOITER, RTL, QRTL, QLOITER, QLAND, FOLLOW, ZIGZAG
   if status.wpEnabledMode == 1 then
     -- wp number
-    lcd.drawText(x+17, y+198, string.format("#%d",telemetry.wpNumber),SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(x+17, y+187, string.format("#%d",telemetry.wpNumber),SMLSIZE+CUSTOM_COLOR)
     -- wp distance
-    lcd.drawNumber(x+17, y+161, telemetry.wpDistance * unitScale,MIDSIZE+CUSTOM_COLOR)
+    lcd.drawNumber(x+17, y+152, telemetry.wpDistance * unitScale,MIDSIZE+CUSTOM_COLOR)
     -- LINES
     lcd.setColor(CUSTOM_COLOR,utils.colors.white) --yellow
     -- wp bearing
-    libs.drawLib.drawRVehicle(x+167,y+198,22,telemetry.wpOffsetFromCog,CUSTOM_COLOR)
+    libs.drawLib.drawRVehicle(x+167,y+187,22,telemetry.wpOffsetFromCog,CUSTOM_COLOR)
   else
     -- wp number
-    lcd.drawText(x+17, y+198, "# ---",SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(x+17, y+187, "# ---",SMLSIZE+CUSTOM_COLOR)
     -- wp distance
-    lcd.drawText(x+17, y+161, "---",MIDSIZE+CUSTOM_COLOR)
+    lcd.drawText(x+17, y+152, "---",MIDSIZE+CUSTOM_COLOR)
     -- LINES
     lcd.setColor(CUSTOM_COLOR,utils.colors.white) --yellow
     -- wp bearing
-    libs.drawLib.drawRVehicle(x+167, y+198, 22, 0, CUSTOM_COLOR)
+    libs.drawLib.drawRVehicle(x+167, y+187, 22, 0, CUSTOM_COLOR)
   end
 
   if status.showMinMaxValues == true then
-    libs.drawLib.drawVArrow(x+5, y+9+7,true,false)
-    libs.drawLib.drawVArrow(x+5, y+71+7 ,true,false)
+    libs.drawLib.drawVArrow(x+5, y+8+7,true,false)
+    libs.drawLib.drawVArrow(x+5, y+67+7 ,true,false)
   end
 end
 

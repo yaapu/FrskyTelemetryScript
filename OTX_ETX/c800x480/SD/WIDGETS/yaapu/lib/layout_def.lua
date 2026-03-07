@@ -10,7 +10,7 @@
 -- (at your option) any later version.
 --
 -- This program is distributed in the hope that it will be useful,
--- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- but WITHOUT ANY WARRANTY, without even the implied warranty of
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 -- GNU General Public License for more details.
 --
@@ -39,17 +39,13 @@ function layout.init(param_status, param_telemetry, param_conf, param_utils, par
 end
 
 local customSensorXY = {
-  { 80, 346, 80, 356},
-  { 160, 346, 160, 356},
-  { 240, 346, 240, 356},
-  { 320, 346, 320, 356},
-  { 400, 346, 400, 356},
-  { 480, 346, 480, 356},
-  { 560, 346, 560, 356},
-  { 640, 346, 640, 356},
-  { 720, 346, 720, 356},
-  { 800, 346, 800, 356},
-  boxY = 346
+  { 133, 335, 133, 355},
+  { 267, 335, 267, 355},
+  { 400, 335, 400, 355},
+  { 533, 335, 533, 355},
+  { 667, 335, 667, 355},
+  { 800, 335, 800, 355},
+  boxY = 335
 }
 
 function layout.draw(widget, customSensors, leftPanel, centerPanel, rightPanel)
@@ -62,54 +58,54 @@ function layout.draw(widget, customSensors, leftPanel, centerPanel, rightPanel)
   centerPanel[status.currentScreen].draw(widget)
   lcd.setColor(CUSTOM_COLOR,utils.colors.darkyellow)
   -- home directory arrow
-  libs.drawLib.drawRVehicle(400,306,32,math.floor(telemetry.homeAngle - telemetry.yaw),CUSTOM_COLOR)
+  libs.drawLib.drawRVehicle(400,305,32,math.floor(telemetry.homeAngle - telemetry.yaw),CUSTOM_COLOR)
   local battIdForPower = 1
   -- with dual battery default is to show aggregate view
   if status.batt2sources.fc or status.batt2sources.vs then
     if status.showDualBattery == false then
       -- dual battery: aggregate view
-      rightPanel[status.currentScreen].draw(widget, 600, 32, 0)
+      rightPanel[status.currentScreen].draw(widget, 600, 30, 0)
       -- left pane info
-      leftPanel[status.currentScreen].draw(widget, 0, 32, 0)
+      leftPanel[status.currentScreen].draw(widget, 0, 30, 0)
       battIdForPower = 0
     else
       -- dual battery:battery 1 right pane
-      rightPanel[status.currentScreen].draw(widget, 600, 32, 1)
+      rightPanel[status.currentScreen].draw(widget, 600, 30, 1)
       -- dual battery:battery 2 left pane
-      rightPanel[status.currentScreen].draw(widget, 600, 32, 2)
+      rightPanel[status.currentScreen].draw(widget, 600, 30, 2)
     end
   else
     -- battery 1 right pane in single battery mode
-    rightPanel[status.currentScreen].draw(widget, 600, 32, 1)
+    rightPanel[status.currentScreen].draw(widget, 600, 30, 1)
     -- left pane info  in single battery mode
-    leftPanel[status.currentScreen].draw(widget, 0, 32, 0)
+    leftPanel[status.currentScreen].draw(widget, 0, 30, 0)
   end
   lcd.setColor(CUSTOM_COLOR,colorLabel)
   -- RPM 1
   if conf.enableRPM == 2  or conf.enableRPM == 3 then
-    lcd.drawText(10, 266, "RPM 1", SMLSIZE+CUSTOM_COLOR)
-    libs.drawLib.drawBar("rpm1", 10, 266+28, 150, 43, utils.colors.darkyellow, math.abs(telemetry.rpm1), MIDSIZE)
+    lcd.drawText(17, 265, "RPM 1", SMLSIZE+CUSTOM_COLOR)
+    libs.drawLib.drawBar("rpm1", 17, 265+25, 150, 40, utils.colors.darkyellow, math.abs(telemetry.rpm1), MIDSIZE)
   end
   -- RPM 2
   lcd.setColor(CUSTOM_COLOR,colorLabel)
   if conf.enableRPM == 3 then
-    lcd.drawText(192, 266, "RPM 2", SMLSIZE+CUSTOM_COLOR+0)
-    libs.drawLib.drawBar("rpm2", 192, 266+28, 150, 43, utils.colors.darkyellow, math.abs(telemetry.rpm2), MIDSIZE)
+    lcd.drawText(192, 265, "RPM 2", SMLSIZE+CUSTOM_COLOR+0)
+    libs.drawLib.drawBar("rpm2", 192, 265+25, 150, 40, utils.colors.darkyellow, math.abs(telemetry.rpm2), MIDSIZE)
   end
   -- throttle %
   lcd.setColor(CUSTOM_COLOR,colorLabel)
-  lcd.drawText(525, 266, "THR %", SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.drawText(525, 265, "THR %", SMLSIZE+CUSTOM_COLOR+RIGHT)
   lcd.setColor(CUSTOM_COLOR,utils.colors.white)
-  lcd.drawNumber(525,294,telemetry.throttle,MIDSIZE+RIGHT+CUSTOM_COLOR)
+  lcd.drawNumber(525,290,telemetry.throttle,MIDSIZE+RIGHT+CUSTOM_COLOR)
   -- efficiency (check if hidden by another panel)
   if status.hideEfficiency == 0 then
     lcd.setColor(CUSTOM_COLOR,colorLabel)
-    lcd.drawText(658, 266, "EFF mAh", SMLSIZE+CUSTOM_COLOR+RIGHT)
+    lcd.drawText(660, 265, "EFF mAh", SMLSIZE+CUSTOM_COLOR+RIGHT)
     local speed = utils.getMaxValue(telemetry.hSpeed,14)
     -- efficiency for indipendent batteries makes sense only for battery 1
     local eff = speed > 2 and status.battery[7+battIdForPower]*1000/(speed*conf.horSpeedMultiplier) or 0
     lcd.setColor(CUSTOM_COLOR,utils.colors.white)
-    lcd.drawNumber(658,294+(eff > 9999 and 7 or 0),eff,(eff > 9999 and 0 or MIDSIZE)+RIGHT+CUSTOM_COLOR)
+    lcd.drawNumber(660,290+(eff > 9999 and 12 or 0),eff,(eff > 9999 and 0 or MIDSIZE)+RIGHT+CUSTOM_COLOR)
   end
   -- power (check if hidden by another panel)
   if status.hidePower == 0 then
@@ -117,9 +113,9 @@ function layout.draw(widget, customSensors, leftPanel, centerPanel, rightPanel)
     local power = status.battery[4+battIdForPower]*status.battery[7+battIdForPower]*0.01
     local powerUnit = (power > 999) and "kW" or "W"
     local flags = (power > 999) and PREC2 or 0
-    lcd.drawText(797, 266, string.format("PWR %s",powerUnit), SMLSIZE+CUSTOM_COLOR+RIGHT)
+    lcd.drawText(797, 265, string.format("PWR %s",powerUnit), SMLSIZE+CUSTOM_COLOR+RIGHT)
     lcd.setColor(CUSTOM_COLOR,utils.colors.white)
-    lcd.drawNumber(797,294,power*(power > 999 and 0.1 or 1),MIDSIZE+RIGHT+CUSTOM_COLOR+flags)
+    lcd.drawNumber(797,290,power*(power > 999 and 0.1 or 1),MIDSIZE+RIGHT+CUSTOM_COLOR+flags)
   end
   libs.layoutLib.drawTopBar()
   local msgRows = 4
@@ -135,3 +131,4 @@ function layout.draw(widget, customSensors, leftPanel, centerPanel, rightPanel)
 end
 
 return layout
+

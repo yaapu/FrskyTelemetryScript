@@ -10,7 +10,7 @@
 -- (at your option) any later version.
 --
 -- This program is distributed in the hope that it will be useful,
--- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- but WITHOUT ANY WARRANTY, without even the implied warranty of
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 -- GNU General Public License for more details.
 --
@@ -50,7 +50,7 @@ local val2Min = math.huge
 local initialized = false
 
 local function drawMiniHud(x,y)
-  libs.drawLib.drawArtificialHorizon(x, y, 48, 36, nil, lcd.RGB(0x7B, 0x9D, 0xFF), lcd.RGB(0x63, 0x30, 0x00), 6, 6.5, 1.3)
+  libs.drawLib.drawArtificialHorizon(x, y, 80, 60, nil, lcd.RGB(0x7B, 0x9D, 0xFF), lcd.RGB(0x63, 0x30, 0x00), 10, 10.8, 2.2)
   lcd.drawBitmap(utils.getBitmap("hud_48x48a"), x-1, y-10)
 end
 
@@ -70,19 +70,19 @@ local function drawTelemetryBar()
   local colorLabel = lcd.RGB(140,140,140)
   -- CELL
   lcd.setColor(CUSTOM_COLOR,colorLabel)
-  lcd.drawText(LCD_W-2, 34-3, string.upper(status.battsource).." V", SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.drawText(LCD_W-2, 35-5, string.upper(status.battsource).." V", SMLSIZE+CUSTOM_COLOR+RIGHT)
   lcd.setColor(CUSTOM_COLOR,WHITE)
   if status.battery[1] * 0.01 < 10 then
-    lcd.drawNumber(LCD_W-2, 34+7, status.battery[1] + 0.5, PREC2+MIDSIZE+CUSTOM_COLOR+RIGHT)
+    lcd.drawNumber(LCD_W-2, 35+15, status.battery[1] + 0.5, PREC2+MIDSIZE+CUSTOM_COLOR+RIGHT)
   else
-    lcd.drawNumber(LCD_W-2, 34+7, (status.battery[1] + 0.5)*0.1, PREC1+MIDSIZE+CUSTOM_COLOR+RIGHT)
+    lcd.drawNumber(LCD_W-2, 35+15, (status.battery[1] + 0.5)*0.1, PREC1+MIDSIZE+CUSTOM_COLOR+RIGHT)
   end
   -- aggregate batt %
   local strperc = string.format("%2d", status.battery[16])
   lcd.setColor(CUSTOM_COLOR,colorLabel)
-  lcd.drawText(LCD_W-4, 74-3, "BATT %", SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.drawText(LCD_W-4, 106-5, "BATT %", SMLSIZE+CUSTOM_COLOR+RIGHT)
   lcd.setColor(CUSTOM_COLOR,WHITE)
-  lcd.drawText(LCD_W-4, 74+7, strperc, MIDSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.drawText(LCD_W-4, 106+15, strperc, MIDSIZE+CUSTOM_COLOR+RIGHT)
 
   -- speed
   local speed = telemetry.hSpeed * 0.1 * conf.horSpeedMultiplier
@@ -92,9 +92,9 @@ local function drawTelemetryBar()
     speedLabel = "ASPD"
   end
   lcd.setColor(CUSTOM_COLOR,colorLabel)
-  lcd.drawText(LCD_W-2, 154-3, string.format("%s %s", speedLabel, conf.horSpeedLabel), SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.drawText(LCD_W-2, 247-5, string.format("%s %s", speedLabel, conf.horSpeedLabel), SMLSIZE+CUSTOM_COLOR+RIGHT)
   lcd.setColor(CUSTOM_COLOR,WHITE)
-  lcd.drawText(LCD_W-2, 154+7, string.format("%.01f",speed), MIDSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.drawText(LCD_W-2, 247+15, string.format("%.01f",speed), MIDSIZE+CUSTOM_COLOR+RIGHT)
   
   -- home distance
   local label = unitLabel
@@ -106,9 +106,9 @@ local function drawTelemetryBar()
     label = unitLongLabel
   end
   lcd.setColor(CUSTOM_COLOR,colorLabel)
-  lcd.drawText(LCD_W-2, 194-3, string.format("HOME %s", label), SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.drawText(LCD_W-2, 317-5, string.format("HOME %s", label), SMLSIZE+CUSTOM_COLOR+RIGHT)
   lcd.setColor(CUSTOM_COLOR,WHITE)
-  lcd.drawNumber(LCD_W-2, 194+7, dist, MIDSIZE+flags+CUSTOM_COLOR+RIGHT)
+  lcd.drawNumber(LCD_W-2, 317+15, dist, MIDSIZE+flags+CUSTOM_COLOR+RIGHT)
 
 
   -- alt
@@ -119,12 +119,12 @@ local function drawTelemetryBar()
     altLabel = "HAT"
   end
   lcd.setColor(CUSTOM_COLOR,colorLabel)
-  lcd.drawText(LCD_W-4, 114-3, string.format("%s %s", altLabel, unitLabel), SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.drawText(LCD_W-4, 176-5, string.format("%s %s", altLabel, unitLabel), SMLSIZE+CUSTOM_COLOR+RIGHT)
   lcd.setColor(CUSTOM_COLOR,WHITE)
-  lcd.drawText(LCD_W-4, 114+7, string.format("%.0f",alt), MIDSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.drawText(LCD_W-4, 176+15, string.format("%.0f",alt), MIDSIZE+CUSTOM_COLOR+RIGHT)
   -- home angle
   lcd.setColor(CUSTOM_COLOR,utils.colors.darkyellow)
-  libs.drawLib.drawRVehicle(770,430,18,math.floor(telemetry.homeAngle - telemetry.yaw),CUSTOM_COLOR)
+  libs.drawLib.drawRVehicle(750,432,30,math.floor(telemetry.homeAngle - telemetry.yaw),CUSTOM_COLOR)
 end
 
 
@@ -134,11 +134,11 @@ function layout.draw(widget, customSensors, leftPanel, centerPanel, rightPanel)
   drawTelemetryBar(widget)
 
   -- plot area
-  local PLOT_X = 80
-  local PLOT1_Y = 36
-  local PLOT2_Y = 214
-  local PLOT_W = 600
-  local PLOT_H = 165
+  local PLOT_X = 133
+  local PLOT1_Y = 39
+  local PLOT2_Y = 212
+  local PLOT_W = 533
+  local PLOT_H = 166
 
   if conf.plotSource1 <= 1 and conf.plotSource2 <= 1 then
     lcd.setColor(CUSTOM_COLOR, lcd.RGB(80,80,80))
@@ -153,9 +153,9 @@ function layout.draw(widget, customSensors, leftPanel, centerPanel, rightPanel)
   else
     local y1,y2,val1,val2
     if conf.plotSource1 <= 1 or conf.plotSource2 <= 1 then
-      PLOT1_Y = 34
-      PLOT2_Y = 34
-      PLOT_H = 341
+      PLOT1_Y = 35
+      PLOT2_Y = 35
+      PLOT_H = 342
     end
     -- val1
     if conf.plotSource1 > 1 then
@@ -194,8 +194,8 @@ function layout.draw(widget, customSensors, leftPanel, centerPanel, rightPanel)
   end
   libs.layoutLib.drawTopBar()
   libs.layoutLib.drawStatusBar(2)
-  local nextX = libs.drawLib.drawTerrainStatus(6,36)
-  libs.drawLib.drawFenceStatus(nextX,36)
+  local nextX = libs.drawLib.drawTerrainStatus(10,37)
+  libs.drawLib.drawFenceStatus(nextX,37)
 end
 
 function layout.background(widget)
@@ -210,3 +210,4 @@ function layout.background(widget)
 end
 
 return layout
+

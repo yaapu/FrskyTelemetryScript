@@ -1535,17 +1535,17 @@ end
 
 local function drawRssi()
   -- RSSI
-  lcd.drawText(543, 6, "RS:", 0+CUSTOM_COLOR)
-  lcd.drawText(543 + 30,6, getRSSI(), 0+CUSTOM_COLOR)
+  lcd.drawText(538, 0, "RS:", 0+CUSTOM_COLOR)
+  lcd.drawText(538 + 50,0, getRSSI(), 0+CUSTOM_COLOR)
 end
 
 local function drawRssiCRSF()
   lcd.setColor(CUSTOM_COLOR,utils.colors.white)
   -- RSSI
-  lcd.drawText(543 - 148, 6, "RTP:", 0+CUSTOM_COLOR+SMLSIZE)
-  lcd.drawText(543, 6, "RS:", 0+CUSTOM_COLOR+SMLSIZE)
-  lcd.drawText(543 - 148 + 30, 6, string.format("%d/%d/%d",getValue("RQly"),getValue("TQly"),getValue("TPWR")), 0+CUSTOM_COLOR+SMLSIZE)
-  lcd.drawText(543 + 22, 6, string.format("%d/%d", telemetry.rssiCRSF, getValue("RFMD")), 0+CUSTOM_COLOR+SMLSIZE)
+  lcd.drawText(538 - 213, 0, "RTP:", 0+CUSTOM_COLOR+SMLSIZE)
+  lcd.drawText(538, 0, "RS:", 0+CUSTOM_COLOR+SMLSIZE)
+  lcd.drawText(538 - 213 + 50, 0, string.format("%d/%d/%d",getValue("RQly"),getValue("TQly"),getValue("TPWR")), 0+CUSTOM_COLOR+SMLSIZE)
+  lcd.drawText(538 + 37, 0, string.format("%d/%d", telemetry.rssiCRSF, getValue("RFMD")), 0+CUSTOM_COLOR+SMLSIZE)
 end
 
 local function resetTelemetry()
@@ -1833,19 +1833,19 @@ local function drawMessagesTelemetryBar()
   local colorLabel = lcd.RGB(140,140,140)
   -- CELL
   lcd.setColor(CUSTOM_COLOR,colorLabel)
-  lcd.drawText(LCD_W-2, 34, string.upper(status.battsource).." V", SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.drawText(LCD_W-2, 35-5, string.upper(status.battsource).." V", SMLSIZE+CUSTOM_COLOR+RIGHT)
   lcd.setColor(CUSTOM_COLOR,WHITE)
   if status.battery[1] * 0.01 < 10 then
-    lcd.drawNumber(LCD_W-2, 34+16, status.battery[1] + 0.5, PREC2+MIDSIZE+CUSTOM_COLOR+RIGHT)
+    lcd.drawNumber(LCD_W-2, 35+15, status.battery[1] + 0.5, PREC2+MIDSIZE+CUSTOM_COLOR+RIGHT)
   else
-    lcd.drawNumber(LCD_W-2, 34+16, (status.battery[1] + 0.5)*0.1, PREC1+MIDSIZE+CUSTOM_COLOR+RIGHT)
+    lcd.drawNumber(LCD_W-2, 35+15, (status.battery[1] + 0.5)*0.1, PREC1+MIDSIZE+CUSTOM_COLOR+RIGHT)
   end
   -- aggregate batt %
   local strperc = string.format("%2d", status.battery[16])
   lcd.setColor(CUSTOM_COLOR,colorLabel)
-  lcd.drawText(LCD_W-4, 74, "BATT %", SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.drawText(LCD_W-4, 106-5, "BATT %", SMLSIZE+CUSTOM_COLOR+RIGHT)
   lcd.setColor(CUSTOM_COLOR,WHITE)
-  lcd.drawText(LCD_W-4, 74+16, strperc, MIDSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.drawText(LCD_W-4, 106+15, strperc, MIDSIZE+CUSTOM_COLOR+RIGHT)
 
   -- speed
   local speed = telemetry.hSpeed * 0.1 * conf.horSpeedMultiplier
@@ -1855,9 +1855,9 @@ local function drawMessagesTelemetryBar()
     speedLabel = "ASPD"
   end
   lcd.setColor(CUSTOM_COLOR,colorLabel)
-  lcd.drawText(LCD_W-2, 154, string.format("%s %s", speedLabel, conf.horSpeedLabel), SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.drawText(LCD_W-2, 247-5, string.format("%s %s", speedLabel, conf.horSpeedLabel), SMLSIZE+CUSTOM_COLOR+RIGHT)
   lcd.setColor(CUSTOM_COLOR,WHITE)
-  lcd.drawText(LCD_W-2, 154+16, string.format("%.01f",speed), MIDSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.drawText(LCD_W-2, 247+15, string.format("%.01f",speed), MIDSIZE+CUSTOM_COLOR+RIGHT)
 
   -- home distance
   local label = unitLabel
@@ -1869,9 +1869,9 @@ local function drawMessagesTelemetryBar()
     label = unitLongLabel
   end
   lcd.setColor(CUSTOM_COLOR,colorLabel)
-  lcd.drawText(LCD_W-2, 194, string.format("HOME %s", label), SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.drawText(LCD_W-2, 317-5, string.format("HOME %s", label), SMLSIZE+CUSTOM_COLOR+RIGHT)
   lcd.setColor(CUSTOM_COLOR,WHITE)
-  lcd.drawNumber(LCD_W-2, 194+16, dist, MIDSIZE+flags+CUSTOM_COLOR+RIGHT)
+  lcd.drawNumber(LCD_W-2, 317+15, dist, MIDSIZE+flags+CUSTOM_COLOR+RIGHT)
 
   -- alt
   local alt = telemetry.homeAlt * unitScale
@@ -1881,32 +1881,32 @@ local function drawMessagesTelemetryBar()
     altLabel = "HAT"
   end
   lcd.setColor(CUSTOM_COLOR,colorLabel)
-  lcd.drawText(LCD_W-4, 114, string.format("%s %s", altLabel, unitLabel), SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.drawText(LCD_W-4, 176-5, string.format("%s %s", altLabel, unitLabel), SMLSIZE+CUSTOM_COLOR+RIGHT)
   lcd.setColor(CUSTOM_COLOR,WHITE)
-  lcd.drawText(LCD_W-4, 114+16, string.format("%.0f",alt), MIDSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.drawText(LCD_W-4, 176+15, string.format("%.0f",alt), MIDSIZE+CUSTOM_COLOR+RIGHT)
   -- home angle
   lcd.setColor(CUSTOM_COLOR,utils.colors.darkyellow)
-  libs.drawLib.drawRVehicle(736,290,18,math.floor(telemetry.homeAngle - telemetry.yaw),CUSTOM_COLOR)
+  libs.drawLib.drawRVehicle(750,432,30,math.floor(telemetry.homeAngle - telemetry.yaw),CUSTOM_COLOR)
 end
 
 local function drawMessageScreen()
   libs.layoutLib.drawTopBar()
   -- each new message scrolls all messages to the end (offset is absolute)
   if status.messageAutoScroll == true then
-    status.messageOffset = math.max(0, status.messageCount - 23)
+    status.messageOffset = math.max(0, status.messageCount - 19)
   end
 
   local row = 0
   local offsetStart = status.messageOffset
-  local offsetEnd = math.min(status.messageCount-1, status.messageOffset + 23 - 1)
+  local offsetEnd = math.min(status.messageCount-1, status.messageOffset + 19 - 1)
 
   for i=offsetStart,offsetEnd  do
     lcd.setColor(CUSTOM_COLOR,utils.mavSeverity[status.messages[i % 200][2]][2])
-    lcd.drawText(0,34+18*row, status.messages[i % 200][1],SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(0,27+20*row, status.messages[i % 200][1],SMLSIZE+CUSTOM_COLOR)
     row = row+1
   end
   lcd.setColor(CUSTOM_COLOR,utils.colors.bg)
-  lcd.drawFilledRectangle(672,32,128,448,CUSTOM_COLOR)
+  lcd.drawFilledRectangle(675,27,125,452,CUSTOM_COLOR)
 
   drawMessagesTelemetryBar()
   -- AUTOSCROLL
@@ -1916,18 +1916,18 @@ local function drawMessageScreen()
     lcd.setColor(CUSTOM_COLOR,utils.colors.darkyellow)
   end
 
-  local maxPages = tonumber(math.ceil((#status.messages+1)/23))
-  local currentPage = 1+tonumber(maxPages - (status.messageCount - status.messageOffset)/23)
+  local maxPages = tonumber(math.ceil((#status.messages+1)/19))
+  local currentPage = 1+tonumber(maxPages - (status.messageCount - status.messageOffset)/19)
 
-  lcd.drawText(LCD_W-2, LCD_H-16, string.format("%d/%d",currentPage,maxPages), SMLSIZE+CUSTOM_COLOR+RIGHT)
+  lcd.drawText(LCD_W-2, LCD_H-28, string.format("%d/%d",currentPage,maxPages), SMLSIZE+CUSTOM_COLOR+RIGHT)
   lcd.setColor(CUSTOM_COLOR,utils.colors.grey)
-  lcd.drawLine(0,LCD_H-20,672,LCD_H-20,SOLID,CUSTOM_COLOR)
+  lcd.drawLine(0,LCD_H-35,675,LCD_H-35,SOLID,CUSTOM_COLOR)
 
   lcd.setColor(CUSTOM_COLOR,WHITE)
   if status.strFlightMode ~= nil then
-    lcd.drawText(0,LCD_H-20,status.strFlightMode,CUSTOM_COLOR)
+    lcd.drawText(0,LCD_H-35,status.strFlightMode,CUSTOM_COLOR)
   end
-  lcd.drawTimer(670, LCD_H-20, model.getTimer(2).value, CUSTOM_COLOR+RIGHT)
+  lcd.drawTimer(672, LCD_H-35, model.getTimer(2).value, CUSTOM_COLOR+RIGHT)
 end
 
 ---------------------------------
@@ -2686,9 +2686,9 @@ end
 local function drawMsgDialog(msg)
   lcd.clear(CUSTOM_COLOR)
   lcd.setColor(CUSTOM_COLOR,WHITE)
-  lcd.drawFilledRectangle(147,131, 506, 148, CUSTOM_COLOR)
+  lcd.drawFilledRectangle(147,131, 507, 148, CUSTOM_COLOR)
   lcd.setColor(CUSTOM_COLOR,utils.colors.bars2)
-  lcd.drawFilledRectangle(147+2,131+2, 506-4, 148-4, CUSTOM_COLOR)
+  lcd.drawFilledRectangle(147+2,131+2, 507-4, 148-4, CUSTOM_COLOR)
   lcd.setColor(CUSTOM_COLOR,utils.colors.white)
   lcd.drawText(math.floor(LCD_W/2), 131+44, msg, DBLSIZE+CUSTOM_COLOR+CENTER)
 end
@@ -2842,8 +2842,8 @@ local function drawFullScreen(widget)
       end
     end
     if drawStatus then
-      libs.drawLib.drawFailsafe(310, 108)
-      libs.drawLib.drawArmStatus(310, 108 + 40)
+      libs.drawLib.drawFailsafe(250, 79)
+      libs.drawLib.drawArmStatus(250, 79 + 67)
     end
   else
     -- not ready to draw yet
@@ -2874,7 +2874,7 @@ end
 
 -- are we full screen? if
 local function drawScreen(widget, event, touchState)
-    if widget.zone.h < 440 then
+    if widget.zone.h < 250 then
       fullScreenRequired(widget)
       return
     end
