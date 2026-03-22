@@ -55,6 +55,8 @@ flightModes[22]="QRTL"
 flightModes[23]="QAutotune"
 flightModes[24]="QAcro"
 flightModes[25]="Thermal"
+flightModes[26]="LoiterAltQLand"
+flightModes[27]="Autoland"
 --
 return {flightModes=flightModes}
 

@@ -222,6 +222,7 @@ local function getTileBitmap(tilePath)
 end
 
 local function loadAndCenterTiles(tile_x,tile_y,offset_x,offset_y,width,level)
+  local xx = math.floor(TILES_X/2 + 0.5)
   -- determine if upper or lower center tile
   local yy = 2
   if offset_y > 100/2 then
@@ -231,7 +232,7 @@ local function loadAndCenterTiles(tile_x,tile_y,offset_x,offset_y,width,level)
   do
     for y=1,TILES_Y
     do
-      local tile_path = tiles_to_path(tile_x+x-2, tile_y+y-yy, level)
+      local tile_path = tiles_to_path(tile_x+x-xx, tile_y+y-yy, level)
       local idx = width*(y-1)+x
 
       if tiles[idx] == nil then

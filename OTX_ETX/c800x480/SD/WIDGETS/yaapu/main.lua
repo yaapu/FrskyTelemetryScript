@@ -2118,7 +2118,8 @@ local function checkEvents()
     -- check if we should enable waypoint plotting for this flight mode
     -- supported modes are AUTO, GUIDED, LOITER, RTL, QRTL, QLOITER, QLAND, FOLLOW, ZIGZAG
     -- see /MAVProxy/modules/mavproxy_map/__init__.py
-    if utils.wpEnabledModeList[string.upper(status.currentFrameType.flightModes[telemetry.flightMode])] == 1 then
+    local flightModeName = status.currentFrameType.flightModes[telemetry.flightMode]
+    if flightModeName ~= nil and utils.wpEnabledModeList[string.upper(flightModeName)] == 1 then
       status.wpEnabledMode = 1
     else
       status.wpEnabledMode = 0
