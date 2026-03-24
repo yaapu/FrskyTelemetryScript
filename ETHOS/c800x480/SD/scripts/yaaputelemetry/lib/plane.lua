@@ -1,34 +1,35 @@
 --[[
-enum FlightMode {
-    MANUAL        = 0,
-    CIRCLE        = 1,
-    STABILIZE     = 2,
-    TRAINING      = 3,
-    ACRO          = 4,
-    FLY_BY_WIRE_A = 5,
-    FLY_BY_WIRE_B = 6,
-    CRUISE        = 7,
-    AUTOTUNE      = 8,
-    AUTO          = 10,
-    RTL           = 11,
-    LOITER        = 12,
-    TAKEOFF       = 13,
-    AVOID_ADSB    = 14,
-    GUIDED        = 15,
-    INITIALISING  = 16,
-    QSTABILIZE    = 17,
-    QHOVER        = 18,
-    QLOITER       = 19,
-    QLAND         = 20,
-    QRTL          = 21,
-    QAUTOTUNE	    = 22,
-    QACRO         = 23,
-    THERMAL       = 24,
-};
+    enum Number : uint8_t {
+        MANUAL        = 0,
+        CIRCLE        = 1,
+        STABILIZE     = 2,
+        TRAINING      = 3,
+        ACRO          = 4,
+        FLY_BY_WIRE_A = 5,
+        FLY_BY_WIRE_B = 6,
+        CRUISE        = 7,
+        AUTOTUNE      = 8,
+        AUTO          = 10,
+        RTL           = 11,
+        LOITER        = 12,
+        TAKEOFF       = 13,
+        AVOID_ADSB    = 14,
+        GUIDED        = 15,
+        INITIALISING  = 16,
+        QSTABILIZE    = 17,
+        QHOVER        = 18,
+        QLOITER       = 19,
+        QLAND         = 20,
+        QRTL          = 21,
+        QAUTOTUNE     = 22,
+        QACRO         = 23,
+        THERMAL       = 24,
+        LOITER_ALT_QLAND = 25,
+        AUTOLAND      = 26,
+    };
 --]]
-
 local flightModes = {}
--- plane flight modes
+
 flightModes[0]=""
 flightModes[1]="Manual"
 flightModes[2]="Circle"
@@ -55,8 +56,8 @@ flightModes[22]="QRTL"
 flightModes[23]="QAutotune"
 flightModes[24]="QAcro"
 flightModes[25]="Thermal"
-flightModes[26]="LoiterAltQLand"
-flightModes[27]="Autoland"
+flightModes[26]="LoiterAltQland"
+flightModes[27]="AutoLand"
 --
 return {flightModes=flightModes}
 

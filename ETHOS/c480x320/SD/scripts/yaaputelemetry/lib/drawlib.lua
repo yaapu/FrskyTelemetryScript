@@ -134,7 +134,8 @@ function drawLib.drawStatusBar(widget, y, maxRows)
   lcd.drawFilledRectangle(0,y,480,27)
 
   -- flight time
-  local seconds = model.getTimer("Yaapu"):value()
+  local timer = model.getTimer("Yaapu")
+  local seconds = timer == nil and 0 or timer:value()
   local ss = (seconds%3600)%60
   local mm = math.floor(seconds/60)
   drawLib.drawText(480, y-4, string.format("%02.0f:%02.0f",mm,ss), FONT_XXL, status.colors.barText, RIGHT)
@@ -220,7 +221,7 @@ function drawLib.drawNoTelemetryData(widget)
     lcd.font(FONT_XXL)
     lcd.drawText(240, 87, "NO TELEMETRY", CENTERED)
     lcd.font(FONT_STD)
-    lcd.drawText(240, 152, "Yaapu Telemetry Widget 1.4.1".."("..'bad9e8b'..")", CENTERED)
+    lcd.drawText(240, 152, "Yaapu Telemetry Widget 1.6.0".."("..'c137d01'..")", CENTERED)
   end
 end
 
@@ -232,7 +233,7 @@ function drawLib.drawWidgetPaused(widget)
   lcd.font(FONT_XXL)
   lcd.drawText(240, 87, "WIDGET PAUSED", CENTERED)
   lcd.font(FONT_STD)
-  lcd.drawText(240, 152, "Yaapu Telemetry Widget 1.4.1".."("..'bad9e8b'..")", CENTERED)
+  lcd.drawText(240, 152, "Yaapu Telemetry Widget 1.6.0".."("..'c137d01'..")", CENTERED)
 end
 
 function drawLib.drawFenceStatus(x,y)
