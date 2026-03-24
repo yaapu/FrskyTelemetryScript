@@ -31,7 +31,7 @@ local frameTypes = {}
 	MAV_TYPE_ADSB=27,                 /* Onboard ADSB peripheral | */
 	MAV_TYPE_PARAFOIL=28,             /* Steerable, nonrigid airfoil | */
 	MAV_TYPE_DODECAROTOR=29,          /* Dodecarotor | */
-]]
+]]--
 
 -- copter
 frameTypes[0]   = "c"

@@ -382,10 +382,10 @@ local status = {
   -- ALARMS
   ---------------------------------
   --[[
-   ALARM_TYPE_MIN needs arming (min has to be reached first), value below level for grace, once armed is periodic, reset on landing
-   ALARM_TYPE_MAX no arming, value above level for grace, once armed is periodic, reset on landing
-   ALARM_TYPE_TIMER no arming, fired periodically, spoken time, reset on landing
-   ALARM_TYPE_BATT needs arming (min has to be reached first), value below level for grace, no reset on landing
+   0 needs arming (min has to be reached first), value below level for grace, once armed is periodic, reset on landing
+   1 no arming, value above level for grace, once armed is periodic, reset on landing
+   2 no arming, fired periodically, spoken time, reset on landing
+   3 needs arming (min has to be reached first), value below level for grace, no reset on landing
   {
     1 = notified,
     2 = alarm start,
@@ -509,7 +509,7 @@ UNIT_RPM
 UNIT_SECOND
 UNIT_VOLT
 UNIT_WATT
-]]
+]]--
 -- { value, decimals, unit}
 status.luaSourcesConfig = {}
 
@@ -714,7 +714,7 @@ local function createOnce(widget)
   status.currentModel = model.name()
   widget.runBgTasks = true
   libs.utils.playSound("yaapu")
-  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.4.1".. " ("..'bad9e8b'..")")
+  libs.utils.pushMessage(7, "Yaapu Telemetry Widget 1.6.0".. " ("..'c137d01'..")")
   -- create the YaapuTimer if missing
   local timer = model.getTimer("Yaapu")
   if timer == nil then
@@ -726,7 +726,6 @@ local function createOnce(widget)
       timer:audioMode(AUDIO_MUTE)
       timer:activeCondition({category=CATEGORY_NONE})
     else
-      timer:countdownStart(0)
       timer:startCondition({category=CATEGORY_NONE})
     end
   end
@@ -802,8 +801,11 @@ local function task1(now)
   local gpsData = {}
 
   if status.conf.gpsSource ~= nil then
-    gpsData.lat = system.getSource({name=status.conf.gpsSource:name(),options=OPTION_LATITUDE}):value()
-    gpsData.lon = system.getSource({name=status.conf.gpsSource:name(),options=OPTION_LONGITUDE}):value()
+    local sourceLat = system.getSource({name=status.conf.gpsSource:name(),options=OPTION_LATITUDE})
+    local sourceLon = system.getSource({name=status.conf.gpsSource:name(),options=OPTION_LONGITUDE})
+    
+    gpsData.lat = sourceLat == nil and nil or sourceLat:value()
+    gpsData.lon = sourceLon == nil and nil or sourceLon:value()
   end
 
   if gpsData.lat ~= nil and gpsData.lon ~= nil then
@@ -1296,7 +1298,7 @@ end
 local function configure(widget)
   local f
   local line = form.addLine("Widget version")
-  form.addStaticText(line, nil, "1.4.1".." ("..'bad9e8b'..")")
+  form.addStaticText(line, nil, "1.6.0".." ("..'c137d01'..")")
 
   line = form.addLine("Sound Pack Language")
   widget.soundPackLanguageField = form.addChoiceField(line, form.getFieldSlots(line)[0],  {{"English", 1}, {"Italian", 2}, {"German", 3}, {"French", 4} }, function() return status.conf.languageId end, function(value) status.conf.languageId = value end);
