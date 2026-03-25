@@ -24,6 +24,8 @@ enum FlightMode {
     QAUTOTUNE     = 22,
     QACRO         = 23,
     THERMAL       = 24,
+    LOITER_ALT_QLAND = 25,
+    AUTOLAND      = 26,
 };
 --]]
 

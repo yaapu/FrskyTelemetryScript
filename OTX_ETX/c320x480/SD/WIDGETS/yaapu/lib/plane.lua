@@ -24,6 +24,8 @@ enum FlightMode {
     QAUTOTUNE	    = 22,
     QACRO         = 23,
     THERMAL       = 24,
+    LOITER_ALT_QLAND = 25,
+    AUTOLAND      = 26,
 };
 --]]
 local flightModes = {}
@@ -52,6 +54,8 @@ flightModes["QRTL"]=22
 flightModes["QATN"]=23
 flightModes["QACR"]=24
 flightModes["THML"]=25
+flightModes["LALT"]=26
+flightModes["ALND"]=27
 
 -- plane flight modes
 flightModes[0]={"",""}
@@ -80,6 +84,8 @@ flightModes[22]={"QRTL","QRTL"}
 flightModes[23]={"QAutotune","QATN"}
 flightModes[24]={"QAcro","QACR"}
 flightModes[25]={"Thermal","THML"}
+flightModes[26]={"LoiterAltQLand","LALT"}
+flightModes[27]={"Autoland","ALND"}
 --]]
 
 flightModes[0]=""
