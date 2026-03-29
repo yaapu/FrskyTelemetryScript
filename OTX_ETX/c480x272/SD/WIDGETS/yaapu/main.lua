@@ -1829,8 +1829,10 @@ local function setSensorValues()
   end
 end
 
+local colorMsgLabel -- initialized in utils.initColors via drawMessagesTelemetryBar first call
 local function drawMessagesTelemetryBar()
-  local colorLabel = lcd.RGB(140,140,140)
+  if colorMsgLabel == nil then colorMsgLabel = lcd.RGB(140,140,140) end
+  local colorLabel = colorMsgLabel
   -- CELL
   lcd.setColor(CUSTOM_COLOR,colorLabel)
   lcd.drawText(LCD_W-2, 20-3, string.upper(status.battsource).." V", SMLSIZE+CUSTOM_COLOR+RIGHT)
@@ -2118,7 +2120,8 @@ local function checkEvents()
     -- check if we should enable waypoint plotting for this flight mode
     -- supported modes are AUTO, GUIDED, LOITER, RTL, QRTL, QLOITER, QLAND, FOLLOW, ZIGZAG
     -- see /MAVProxy/modules/mavproxy_map/__init__.py
-    if utils.wpEnabledModeList[string.upper(status.currentFrameType.flightModes[telemetry.flightMode])] == 1 then
+    local flightModeName = status.currentFrameType.flightModes[telemetry.flightMode]
+    if flightModeName ~= nil and utils.wpEnabledModeList[string.upper(flightModeName)] == 1 then
       status.wpEnabledMode = 1
     else
       status.wpEnabledMode = 0
@@ -2787,7 +2790,7 @@ local function drawFullScreen(widget)
   if math.max(1,widget.options["Screen Type"]) == 1 then
     -- run bg tasks only if we are not resetting, this prevent cpu limit kill
     if not (resetPending or resetLayoutPending) then
-      backgroundTasks(widget,15)
+      backgroundTasks(widget,telemetryPopLoops)
     end
   end
   -- map pages to multiple screens
