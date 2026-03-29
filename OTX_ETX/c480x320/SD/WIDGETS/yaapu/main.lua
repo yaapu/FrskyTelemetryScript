@@ -1829,8 +1829,10 @@ local function setSensorValues()
   end
 end
 
+local colorMsgLabel -- initialized in utils.initColors via drawMessagesTelemetryBar first call
 local function drawMessagesTelemetryBar()
-  local colorLabel = lcd.RGB(140,140,140)
+  if colorMsgLabel == nil then colorMsgLabel = lcd.RGB(140,140,140) end
+  local colorLabel = colorMsgLabel
   -- CELL
   lcd.setColor(CUSTOM_COLOR,colorLabel)
   lcd.drawText(LCD_W-2, 20-3, string.upper(status.battsource).." V", SMLSIZE+CUSTOM_COLOR+RIGHT)
@@ -2788,7 +2790,7 @@ local function drawFullScreen(widget)
   if math.max(1,widget.options["Screen Type"]) == 1 then
     -- run bg tasks only if we are not resetting, this prevent cpu limit kill
     if not (resetPending or resetLayoutPending) then
-      backgroundTasks(widget,15)
+      backgroundTasks(widget,telemetryPopLoops)
     end
   end
   -- map pages to multiple screens

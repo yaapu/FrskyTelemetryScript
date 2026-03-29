@@ -32,6 +32,7 @@ local telemetry
 local status
 local utils
 local libs
+local colorAirspeedBox
 
 function panel.init(param_status, param_telemetry, param_conf, param_utils, param_libs)
   status = param_status
@@ -39,6 +40,7 @@ function panel.init(param_status, param_telemetry, param_conf, param_utils, para
   conf = param_conf
   utils = param_utils
   libs = param_libs
+  colorAirspeedBox = lcd.RGB(10,20,30)
 end
 
 function panel.draw(widget)
@@ -97,6 +99,7 @@ function panel.draw(widget)
   local varioSpeed = math.min(math.abs(0.1*telemetry.vSpeed),5)
   local varioH = varioSpeed/varioMax*50
   --varioH = varioH + (varioH > 0 and 1 or 0)
+  local varioY
   if telemetry.vSpeed > 0 then
     varioY = 18 + (50 - varioH)
     lcd.setColor(CUSTOM_COLOR,utils.colors.darkyellow)
@@ -149,7 +152,7 @@ function panel.draw(widget)
 
   if status.airspeedEnabled == 1 then
     speed = telemetry.airspeed * 0.1 * conf.horSpeedMultiplier
-    lcd.setColor(CUSTOM_COLOR,lcd.RGB(10,20,30))
+    lcd.setColor(CUSTOM_COLOR,colorAirspeedBox)
     lcd.drawRectangle(120, 98, 66, 19, CUSTOM_COLOR)
     lcd.drawFilledRectangle(120, 98, 66, 19, CUSTOM_COLOR+SOLID)
     lcd.setColor(CUSTOM_COLOR,WHITE)

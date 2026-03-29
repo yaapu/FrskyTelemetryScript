@@ -30,6 +30,11 @@ local conf
 local utils
 local libs
 
+-- cached values to avoid per-frame lookups
+local txVoltageFieldId = nil
+local cachedTimeStr = "00:00:00"
+local lastTimeSec = -1
+
 -- model and opentx version
 local ver, radio, maj, minor, rev = getVersion()
 
@@ -53,8 +58,11 @@ function layoutLib.drawTopBar()
   end
   -- flight time
   local time = getDateTime()
-  local strtime = string.format("%02d:%02d:%02d",time.hour,time.min,time.sec)
-  lcd.drawText(LCD_W, 3, strtime, SMLSIZE+RIGHT+CUSTOM_COLOR)
+  if time.sec ~= lastTimeSec then
+    cachedTimeStr = string.format("%02d:%02d:%02d",time.hour,time.min,time.sec)
+    lastTimeSec = time.sec
+  end
+  lcd.drawText(LCD_W, 3, cachedTimeStr, SMLSIZE+RIGHT+CUSTOM_COLOR)
   -- RSSI
   if utils.telemetryEnabled() == false then
     lcd.setColor(CUSTOM_COLOR,utils.colors.red)
@@ -64,7 +72,11 @@ function layoutLib.drawTopBar()
   end
   lcd.setColor(CUSTOM_COLOR,utils.colors.white)
   -- tx voltage
-  local vtx = string.format("%.1fv",getValue(getFieldInfo("tx-voltage").id))
+  if txVoltageFieldId == nil then
+    local fi = getFieldInfo("tx-voltage")
+    if fi then txVoltageFieldId = fi.id end
+  end
+  local vtx = txVoltageFieldId and string.format("%.1fv",getValue(txVoltageFieldId)) or "---"
   lcd.drawText(652,3, vtx, 0+CUSTOM_COLOR+SMLSIZE)
 end
 

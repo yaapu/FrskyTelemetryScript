@@ -32,6 +32,7 @@ local telemetry
 local status
 local utils
 local libs
+local colorAirspeedBox
 
 function panel.init(param_status, param_telemetry, param_conf, param_utils, param_libs)
   status = param_status
@@ -39,6 +40,7 @@ function panel.init(param_status, param_telemetry, param_conf, param_utils, para
   conf = param_conf
   utils = param_utils
   libs = param_libs
+  colorAirspeedBox = lcd.RGB(10,20,30)
 end
 
 function panel.draw(widget)
@@ -48,7 +50,7 @@ function panel.draw(widget)
   local minX = 200 --HUD_X
   local maxX = 600 --HUD_X + HUD_WIDTH
 
-  libs.drawLib.drawArtificialHorizon(minX, minY, 400, 230, "hud_bg", nil, utils.colors.hudTerrain, 8, 30, 3.0)
+  libs.drawLib.drawArtificialHorizon(minX, minY, 400, 230, "hud_bg", nil, utils.colors.hudTerrain, 6, 30, 3.0)
 
   -- hashmarks
   local startY = minY + 1
@@ -97,6 +99,7 @@ function panel.draw(widget)
   local varioSpeed = math.min(math.abs(0.1*telemetry.vSpeed),5)
   local varioH = varioSpeed/varioMax*88
   --varioH = varioH + (varioH > 0 and 1 or 0)
+  local varioY
   if telemetry.vSpeed > 0 then
     varioY = 30 + (88 - varioH)
     lcd.setColor(CUSTOM_COLOR,utils.colors.darkyellow)
@@ -149,7 +152,7 @@ function panel.draw(widget)
 
   if status.airspeedEnabled == 1 then
     speed = telemetry.airspeed * 0.1 * conf.horSpeedMultiplier
-    lcd.setColor(CUSTOM_COLOR,lcd.RGB(10,20,30))
+    lcd.setColor(CUSTOM_COLOR,colorAirspeedBox)
     lcd.drawRectangle(200, 171, 110, 33, CUSTOM_COLOR)
     lcd.drawFilledRectangle(200, 171, 110, 33, CUSTOM_COLOR+SOLID)
     lcd.setColor(CUSTOM_COLOR,WHITE)
