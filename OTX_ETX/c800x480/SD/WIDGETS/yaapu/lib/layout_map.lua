@@ -73,17 +73,17 @@ local function drawTelemetryBar(widget)
     alt = telemetry.heightAboveTerrain * unitScale
     altLabel = "HAT"
   end
-  lcd.drawBitmap(utils.getBitmap("graph_bg_120x48"),278, 192)
+  lcd.drawBitmap(utils.getBitmap("graph_bg_120x48"),550, 300)
   lcd.setColor(CUSTOM_COLOR,utils.colors.white)
-  lcd.drawText(278+118,192-2,altLabel.." "..unitLabel,SMLSIZE+CUSTOM_COLOR+RIGHT)
-  local lastY = libs.drawLib.drawGraph("map_alt", 278-4, 192, 120, 48, utils.colors.darkyellow, alt, false, false, nil, nil)
+  lcd.drawText(550+118,300-2,altLabel.." "..unitLabel,SMLSIZE+CUSTOM_COLOR+RIGHT)
+  local lastY = libs.drawLib.drawGraph("map_alt", 550-4, 300, 120, 48, utils.colors.darkyellow, alt, false, false, nil, nil)
   local altMin = libs.drawLib.getGraphMin("map_alt")
   local altMax = libs.drawLib.getGraphMax("map_alt")
   lcd.setColor(CUSTOM_COLOR, WHITE)
-  lcd.drawText(278,192+9,string.format("%d",alt),MIDSIZE+CUSTOM_COLOR)
+  lcd.drawText(550,300+9,string.format("%d",alt),MIDSIZE+CUSTOM_COLOR)
   lcd.setColor(CUSTOM_COLOR, lcd.RGB(190,190,190))
-  lcd.drawText(278,192+32,string.format("%d",altMin),SMLSIZE+CUSTOM_COLOR)
-  lcd.drawText(278,192-3,string.format("%d",altMax),SMLSIZE+CUSTOM_COLOR)
+  lcd.drawText(550,300+32,string.format("%d",altMin),SMLSIZE+CUSTOM_COLOR)
+  lcd.drawText(550,300-3,string.format("%d",altMax),SMLSIZE+CUSTOM_COLOR)
 
   -- speed
   local speed = telemetry.hSpeed * 0.1 * conf.horSpeedMultiplier
@@ -112,19 +112,19 @@ local function drawTelemetryBar(widget)
 
   -- home angle
   lcd.setColor(CUSTOM_COLOR,utils.colors.darkyellow)
-  libs.drawLib.drawRVehicle(450,194,18,math.floor(telemetry.homeAngle - telemetry.yaw),CUSTOM_COLOR)
+  libs.drawLib.drawRVehicle(750,350,18,math.floor(telemetry.homeAngle - telemetry.yaw),CUSTOM_COLOR)
 end
 
 function layout.draw(widget)
-  libs.mapLib.drawMap(widget, 0, 18, 480, 250, status.mapZoomLevel, 4, 3)
+  libs.mapLib.drawMap(widget, 0, 36, 800, 400-36, status.mapZoomLevel, 8, 4)
   if status.wpEnabledMode == 1 and status.wpEnabled == 1 and telemetry.wpNumber > 0 then
     -- wp number and distance
     lcd.setColor(CUSTOM_COLOR,utils.colors.white)
-    lcd.drawBitmap(utils.getBitmap("maps_box_60x22"),396-58,21-1)
-    lcd.drawBitmap(utils.getBitmap("maps_box_60x22"),396-58,21+23)
+    lcd.drawBitmap(utils.getBitmap("maps_box_60x22"),700-58,21-1)
+    lcd.drawBitmap(utils.getBitmap("maps_box_60x22"),700-58,21+23)
 
-    lcd.drawText(396, 21, string.format("#%d", telemetry.wpNumber),CUSTOM_COLOR+RIGHT)
-    lcd.drawText(396, 21+22, string.format("%d%s", telemetry.wpDistance * unitScale,unitLabel),CUSTOM_COLOR+RIGHT)
+    lcd.drawText(700, 21, string.format("#%d", telemetry.wpNumber),CUSTOM_COLOR+RIGHT)
+    lcd.drawText(700, 21+22, string.format("%d%s", telemetry.wpDistance * unitScale,unitLabel),CUSTOM_COLOR+RIGHT)
   end
   drawTelemetryBar(widget)
   drawMiniHud(3, 22)
@@ -149,4 +149,3 @@ function layout.background(widget)
 end
 
 return layout
-

@@ -561,19 +561,15 @@ function drawLib.drawCompassRibbon(y,myWidget,width,xMin,xMax,stepWidth,bigFont,
   end
   drawLib.drawHomeIcon(xMin + homeOffset ,minY + (bigFont and 28 or 20),utils)
 
-  -- text box
-  local w = 60 -- 3 digits width
+  -- text box (ETHOS: boxWidth=80, boxHeight=40)
+  local boxW = 80
+  local boxH = 40
   if heading < 0 then heading = heading + 360 end
-  if heading < 10 then
-      w = 20
-  elseif heading < 100 then
-      w = 40
-  end
   local scale = bigFont and 1 or 0.7
   lcd.setColor(CUSTOM_COLOR, BLACK)
-  lcd.drawFilledRectangle(midX - (w/2)*scale, minY-1, w*scale, 28*scale, CUSTOM_COLOR+SOLID)
+  lcd.drawFilledRectangle(midX - (boxW/2)*scale, minY-1, boxW*scale, boxH*scale, CUSTOM_COLOR+SOLID)
   lcd.setColor(CUSTOM_COLOR, WHITE)
-  lcd.drawNumber(midX, bigFont and minY-6 or minY-2, heading, CUSTOM_COLOR+(bigFont and DBLSIZE or 0)+CENTER)
+  lcd.drawNumber(midX, bigFont and minY-2 or minY-2, heading, CUSTOM_COLOR+(bigFont and DBLSIZE or 0)+CENTER)
 end
 
 

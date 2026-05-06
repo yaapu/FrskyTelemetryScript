@@ -318,7 +318,7 @@ status.messageOffset = 0
 status.messageAutoScroll = true
 -- LINK STATUS
 status.noTelemetryData = 1
-status.hideNoTelemetry = false
+status.hideNoTelemetry = true
 status.showDualBattery = false
 status.showMinMaxValues = false
 -- MAP
@@ -2686,11 +2686,11 @@ end
 local function drawMsgDialog(msg)
   lcd.clear(CUSTOM_COLOR)
   lcd.setColor(CUSTOM_COLOR,WHITE)
-  lcd.drawFilledRectangle(88,74, 304, 84, CUSTOM_COLOR)
+  lcd.drawFilledRectangle(198,98, 400, 140, CUSTOM_COLOR)
   lcd.setColor(CUSTOM_COLOR,utils.colors.bars2)
-  lcd.drawFilledRectangle(88+2,74+2, 304-4, 84-4, CUSTOM_COLOR)
+  lcd.drawFilledRectangle(198+2,98+2, 400-4, 140-4, CUSTOM_COLOR)
   lcd.setColor(CUSTOM_COLOR,utils.colors.white)
-  lcd.drawText(math.floor(LCD_W/2), 74+25, msg, DBLSIZE+CUSTOM_COLOR+CENTER)
+  lcd.drawText(400, 145, msg, DBLSIZE+CUSTOM_COLOR+CENTER)
 end
 
 local function loadLayout()
@@ -2714,7 +2714,7 @@ local function loadLayout()
   drawMsgDialog("loading layout...")
   --[[
   lcd.setColor(CUSTOM_COLOR,WHITE)
-  lcd.drawFilledRectangle(88,74, 304, 84, CUSTOM_COLOR)
+  lcd.drawFilledRectangle(198,98, 400, 140, CUSTOM_COLOR)
   lcd.setColor(CUSTOM_COLOR,COLOR_BARS_2)
   lcd.drawFilledRectangle(90,76, 300, 80, CUSTOM_COLOR)
   lcd.setColor(CUSTOM_COLOR,COLOR_TEXT)
@@ -2842,8 +2842,8 @@ local function drawFullScreen(widget)
       end
     end
     if drawStatus then
-      libs.drawLib.drawFailsafe(150, 45)
-      libs.drawLib.drawArmStatus(150, 45 + 40)
+      libs.drawLib.drawFailsafe(244, 80)
+      libs.drawLib.drawArmStatus(248, 80)
     end
   else
     -- not ready to draw yet

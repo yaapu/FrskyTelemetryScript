@@ -30,7 +30,7 @@ local conf
 local utils
 local libs
 
-local MAP_X = (LCD_W-480)/2
+local MAP_X = (LCD_W-800)/2
 local MAP_Y = 18
 local TILES_X = 3
 local TILES_Y = 2
@@ -380,7 +380,7 @@ function mapLib.drawMap(widget, x, y, w, h, level, tiles_x, tiles_y)
       -- viewport relative coordinates
       myScreenX,myScreenY = getScreenCoordinates(minX,minY,tile_x,tile_y,offset_x,offset_y,level)
       -- check if offscreen
-      local myCode = libs.drawLib.computeOutCode(myScreenX, myScreenY, minX+17, minY+17, maxX-17, maxY-17);
+      local myCode = libs.drawLib.computeOutCode(myScreenX, myScreenY, minX+50, minY+50, maxX-50, maxY-50);
 
       -- center vehicle on screen
       if myCode > 0 then
@@ -430,12 +430,12 @@ function mapLib.drawMap(widget, x, y, w, h, level, tiles_x, tiles_y)
       end
     end
 
-    -- draw vehicle
+    -- draw vehicle (ETHOS: VEHICLE_R=35)
     if myScreenX ~= nil then
       lcd.setColor(CUSTOM_COLOR,WHITE)
-      libs.drawLib.drawRVehicle(myScreenX,myScreenY,17-5,telemetry.yaw,CUSTOM_COLOR)
+      libs.drawLib.drawRVehicle(myScreenX,myScreenY,30,telemetry.yaw,CUSTOM_COLOR)
       lcd.setColor(CUSTOM_COLOR,BLACK)
-      libs.drawLib.drawRVehicle(myScreenX,myScreenY,17,telemetry.yaw,CUSTOM_COLOR)
+      libs.drawLib.drawRVehicle(myScreenX,myScreenY,35,telemetry.yaw,CUSTOM_COLOR)
       -- WP drawing enabled only for selected flight modes
       -- AUTO, GUIDED, LOITER, RTL, QRTL, QLOITER, QLAND, FOLLOW, ZIGZAG
       if status.wpEnabledMode == 1 and status.wpEnabled == 1 and telemetry.wpNumber > 0 then
@@ -453,7 +453,7 @@ function mapLib.drawMap(widget, x, y, w, h, level, tiles_x, tiles_y)
             lcd.drawRectangle(wpScreenX-2,wpScreenY-2,4,4,CUSTOM_COLOR)
             lcd.drawText(wpScreenX,wpScreenY,telemetry.wpNumber,SMLSIZE+CUSTOM_COLOR)
           else
-            libs.drawLib.drawLineByOriginAndAngle(myScreenX, myScreenY, telemetry.wpBearing-90, 2*480, DOTTED, minX, maxX, minY, maxY, CUSTOM_COLOR, false)
+            libs.drawLib.drawLineByOriginAndAngle(myScreenX, myScreenY, telemetry.wpBearing-90, 2*800, DOTTED, minX, maxX, minY, maxY, CUSTOM_COLOR, false)
           end
         end
       end

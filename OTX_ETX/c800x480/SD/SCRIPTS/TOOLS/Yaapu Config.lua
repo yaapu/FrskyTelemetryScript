@@ -550,14 +550,14 @@ end
 local function drawItem(idx,flags)
   lcd.setColor(CUSTOM_COLOR,WHITE)
   if type(menuItems[idx][4]) == "table" then
-    lcd.drawText(280,25 + (idx-menu.offset-1)*20, menuItems[idx][4][menuItems[idx][3]],flags+CUSTOM_COLOR)
+    lcd.drawText(467,25 + (idx-menu.offset-1)*20, menuItems[idx][4][menuItems[idx][3]],flags+CUSTOM_COLOR)
   else
     if menuItems[idx][3] == 0 and menuItems[idx][4] >= 0 then
-      lcd.drawText(280,25 + (idx-menu.offset-1)*20, "---",flags+CUSTOM_COLOR)
+      lcd.drawText(467,25 + (idx-menu.offset-1)*20, "---",flags+CUSTOM_COLOR)
     else
-      lcd.drawNumber(280,25 + (idx-menu.offset-1)*20, menuItems[idx][3],flags+menuItems[idx][7]+CUSTOM_COLOR)
+      lcd.drawNumber(467,25 + (idx-menu.offset-1)*20, menuItems[idx][3],flags+menuItems[idx][7]+CUSTOM_COLOR)
       if menuItems[idx][6] ~= nil then
-        lcd.drawText(280 + 50,25 + (idx-menu.offset-1)*20, menuItems[idx][6],flags+CUSTOM_COLOR)
+        lcd.drawText(467 + 50,25 + (idx-menu.offset-1)*20, menuItems[idx][6],flags+CUSTOM_COLOR)
       end
     end
   end
@@ -595,7 +595,7 @@ local function drawConfigMenu(event)
     end
   elseif not menu.editSelected and (event == EVT_VIRTUAL_NEXT or event == EVT_PLUS_BREAK or event == EVT_ROT_RIGHT) then
     menu.selectedItem = (menu.selectedItem + 1)
-    if menu.selectedItem - 11 > menu.offset then
+    if menu.selectedItem - 19 > menu.offset then
       menu.offset = menu.offset + 1
     end
   end
@@ -605,10 +605,10 @@ local function drawConfigMenu(event)
     menu.offset = 0
   elseif menu.selectedItem  < 1 then
     menu.selectedItem = #menuItems
-    menu.offset =  #menuItems - 11
+    menu.offset =  #menuItems - 19
   end
   --
-  for m=1+menu.offset,math.min(#menuItems,11+menu.offset) do
+  for m=1+menu.offset,math.min(#menuItems,19+menu.offset) do
     lcd.setColor(CUSTOM_COLOR,WHITE)
     lcd.drawText(2,25 + (m-menu.offset-1)*20, menuItems[m][1],CUSTOM_COLOR)
     if m == menu.selectedItem then
@@ -633,14 +633,14 @@ local function run(event, touchState)
       if touchState.y > (LCD_H-64) and touchState.y < (LCD_H-18) then
         -- A short tap gives TAP instead of BREAK
         -- touchState.tapCount shows number of taps
-        if touchState.x > 3 and touchState.x < 70 then
+        if touchState.x > 5 and touchState.x < 117 then
           event = EVT_VIRTUAL_EXIT
           return 1
-        elseif touchState.x > 90 and touchState.x < 158 then
+        elseif touchState.x > 150 and touchState.x < 263 then
           event = EVT_VIRTUAL_PREV
-        elseif touchState.x > 162 and touchState.x < 230 then
+        elseif touchState.x > 270 and touchState.x < 383 then
           event = EVT_VIRTUAL_NEXT
-        elseif touchState.x > 250 and touchState.x < 315 then
+        elseif touchState.x > 417 and touchState.x < 525 then
           event = EVT_VIRTUAL_ENTER
         end
       end
