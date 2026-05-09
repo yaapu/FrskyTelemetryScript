@@ -194,6 +194,7 @@ local status = {
     mapTrailDots = 10,
     enableMapGrid = true,
     screenToggleChannelId = 0,
+    screenToggleSource = nil,
     screenWheelChannelId = 0,
     screenWheelChannelDelay = 20,
     gpsFormat = 2, -- decimal
@@ -321,6 +322,7 @@ local status = {
   showMinMaxValues = false,
   -- maps
   screenTogglePage = 1,
+  activeScreen = 1,
   mapZoomLevel = 19,
   -- flightmode
   strFlightMode = nil,
@@ -1050,9 +1052,9 @@ local function paint(widget)
     lcd.pen(SOLID)
 
     local now = getTime()
-    if status.lastScreen ~= widget.screen then
+    if status.lastScreen ~= status.activeScreen then
       onScreenChange(widget)
-      status.lastScreen = widget.screen
+      status.lastScreen = status.activeScreen
     end
 
     if not checkSize(widget) then
@@ -1067,13 +1069,13 @@ local function paint(widget)
       else
         lcd.color(status.colors.background)
         lcd.drawFilledRectangle(0,0,800,480)
-        status.layout[widget.screen].draw(widget)
+        status.layout[status.activeScreen].draw(widget)
 
-        if status.layout[widget.screen].showArmingStatus == true then
+        if status.layout[status.activeScreen].showArmingStatus == true then
           libs.drawLib.drawArmingStatus(widget)
         end
 
-        if status.layout[widget.screen].showFailsafe == true then
+        if status.layout[status.activeScreen].showFailsafe == true then
           libs.drawLib.drawFailsafe(widget)
         end
       end
@@ -1124,7 +1126,7 @@ local function event(widget, category, value, x, y)
     local kill = false
     if category == EVT_TOUCH then
       --and value == TOUCH_ENTER
-      if widget.screen == 1 and value == 16641 then
+      if status.activeScreen == 1 and value == 16641 then
         kill = true
         -- main view
         if y < 480*0.73 then
@@ -1137,7 +1139,7 @@ local function event(widget, category, value, x, y)
             status.showMessages = true
           end
         end
-      elseif widget.screen == 2 and value == 16641 then
+      elseif status.activeScreen == 2 and value == 16641 then
         kill = true
         if libs.drawLib.isInside(x, y, 800*0.625, 0,800, 480/2) == true then
           status.mapZoomLevel = math.min(status.conf.mapZoomMax, status.mapZoomLevel+1)
@@ -1146,7 +1148,7 @@ local function event(widget, category, value, x, y)
         else
           kill = false
         end
-      elseif widget.screen == 3 then
+      elseif status.activeScreen == 3 then
       end
     end
     if kill then
@@ -1160,7 +1162,7 @@ end
 local function menu(widget)
   local startStopLabel = "Yaapu: "..(status.pauseTelemetry == false and "Pause widget" or "Start widget")
 
-  if widget.screen == 2 then
+  if status.activeScreen == 2 then
     return {
       { "Yaapu: Zoom in", function() status.mapZoomLevel = math.min(status.conf.mapZoomMax, status.mapZoomLevel+1) end},
       { "Yaapu: Zoom out", function() status.mapZoomLevel = math.max(status.conf.mapZoomMin, status.mapZoomLevel-1) end},
@@ -1206,9 +1208,22 @@ local function wakeup(widget)
     bgtasks(widget)
   end
 
+  if status.conf.screenToggleSource ~= nil then
+    local v = status.conf.screenToggleSource:value()
+    if v ~= nil and v > 600 then
+      status.activeScreen = 2
+    else
+      status.activeScreen = widget.screen
+    end
+  else
+    status.activeScreen = widget.screen
+  end
 
   if not widget.ready or status.layout[widget.screen] == nil then
     loadLayout(widget);
+  end
+  if status.layout[status.activeScreen] == nil then
+    status.layout[status.activeScreen] = loadLib(status.layoutFilenames[status.activeScreen])
   end
 
   --[[
@@ -1331,6 +1346,10 @@ local function configure(widget)
       widget.rightPanelField:enable(widget.screen == 1)
     end
   );
+  line = form.addLine("Screen toggle channel")
+  form.addSourceField(line, form.getFieldSlots(line)[0],
+      function() return status.conf.screenToggleSource end,
+      function(value) status.conf.screenToggleSource = value end)
   -- Center
   line = form.addLine("Center Panel")
   widget.centerPanelField = form.addChoiceField(line, form.getFieldSlots(line)[0], {{"default",1}}, function() return widget.centerPanelIndex end, function(value) widget.centerPanelIndex = value end);
@@ -1659,6 +1678,7 @@ local function read(widget)
   status.conf.gpsSource = storageToConfig("gpsSource", nil)
   status.conf.languageId = storageToConfig("language", nil)
   status.conf.mapTilesStorage = storageToConfig("mapTilesStorage", nil)
+  status.conf.screenToggleSource = storage.read("screenToggleSource")
   -- apply config
   applyConfig()
 end
@@ -1714,6 +1734,7 @@ local function write(widget)
   storage.write("gpsSource", status.conf.gpsSource)
   storage.write("language", status.conf.languageId)
   storage.write("mapTilesStorage", status.conf.mapTilesStorage)
+  storage.write("screenToggleSource", status.conf.screenToggleSource)
   -- apply config
   applyConfig()
 
