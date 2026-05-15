@@ -4,6 +4,8 @@ SD card content is organized by screen color and resolution
 
 - **color lcd radios**
     - **color_common** files in this folder are common to all color lcd radios
+    - **c800x480** (800x480 pixel landscape orientation color screen radios)
+        - TX16s mkIII
     - **c480x272** (480x272 pixel landscape orientation color screen radios)
         - TX16s / TX16s mkII
         - T16

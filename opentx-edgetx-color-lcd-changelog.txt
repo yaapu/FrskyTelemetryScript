@@ -156,3 +156,6 @@ Color LCD version 2.0.0 dev 01/2023
 - added support for FlySKY NV14 and EL18 radios
 - added support for QGIS maps
 - added support for ArduPilot aerobatics lua scripts
+
+Color LCD version 2.2.0 dev 04/2026
+- added support for Radiomaster TX16s MKIII
