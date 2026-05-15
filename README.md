@@ -29,6 +29,13 @@ If you like it you can support it by making a donation!
 [![donate](https://user-images.githubusercontent.com/30294218/61724877-16fa7a80-ad6f-11e9-80de-9771e0b820ae.png)](https://paypal.me/yaapu)
 
 
+EdgeTX Color LCD 800x480
+
+<img width="803" height="481" alt="image" src="https://github.com/user-attachments/assets/f1bb3e0a-3cea-4ece-97a2-34876c7e7ad4" />
+
+<img width="804" height="485" alt="image" src="https://github.com/user-attachments/assets/3d8241fb-1704-4771-a5ac-886768666cbe" />
+
+
 OpenTX/EdgeTX Color LCD 480x272
 
 ![image](https://user-images.githubusercontent.com/30294218/198382377-cb48032f-ea5c-4f8d-aa12-f592c1e09358.png)
