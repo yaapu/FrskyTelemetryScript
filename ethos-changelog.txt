@@ -41,3 +41,11 @@ Ethos Widget version 1.0.0f dev
 
 Ethos Widget version 1.0.0f dev
 - added context menu for zoom control
+
+...
+
+Ethos Widget version 1.6.0
+    - ethos 1.6.5
+    - fix nil calling countdownStart
+    - fix nil for unintialized sources
+    - added latest flight modes (audio files still missing)

@@ -1,0 +1,90 @@
+WIDGETS/Yaapu/sounds/en|acro|Acro flight mode
+WIDGETS/Yaapu/sounds/en|acro_r|Acro mode
+WIDGETS/Yaapu/sounds/en|althold|Altitude hold flight mode
+WIDGETS/Yaapu/sounds/en|armed|Motors armed
+WIDGETS/Yaapu/sounds/en|auto|Auto flight mode
+WIDGETS/Yaapu/sounds/en|auto_r|Auto mode
+WIDGETS/Yaapu/sounds/en|autorotate|autorotate flight mode
+WIDGETS/Yaapu/sounds/en|autortl|Auto RTL flight mode
+WIDGETS/Yaapu/sounds/en|autotune|Autotune enabled
+WIDGETS/Yaapu/sounds/en|avoidadsb|Avoid A D S B flight mode
+WIDGETS/Yaapu/sounds/en|bat10|Battery at 10 percent
+WIDGETS/Yaapu/sounds/en|bat15|Battery at 15 percent
+WIDGETS/Yaapu/sounds/en|bat20|Battery at 20 percent
+WIDGETS/Yaapu/sounds/en|bat25|Battery at 25 percent
+WIDGETS/Yaapu/sounds/en|bat30|Battery at 30 percent
+WIDGETS/Yaapu/sounds/en|bat40|Battery at 40 percent
+WIDGETS/Yaapu/sounds/en|bat50|Battery at 50 percent
+WIDGETS/Yaapu/sounds/en|bat60|Battery at 60 percent
+WIDGETS/Yaapu/sounds/en|bat70|Battery at 70 percent
+WIDGETS/Yaapu/sounds/en|bat80|Battery at 80 percent
+WIDGETS/Yaapu/sounds/en|bat90|Battery at 90 percent
+WIDGETS/Yaapu/sounds/en|batalert|Battery alert
+WIDGETS/Yaapu/sounds/en|batalert1|Battery level 1 alert
+WIDGETS/Yaapu/sounds/en|batalert2|Battery level 2 alert
+WIDGETS/Yaapu/sounds/en|brake|Brake flight mode
+WIDGETS/Yaapu/sounds/en|circle|Circle flight mode
+WIDGETS/Yaapu/sounds/en|cruise|Cruise flight mode
+WIDGETS/Yaapu/sounds/en|disarmed|Motors disarmed
+WIDGETS/Yaapu/sounds/en|drift|Drift flight mode
+WIDGETS/Yaapu/sounds/en|ekf|E K F failsafe
+WIDGETS/Yaapu/sounds/en|failsafe|failsafe
+WIDGETS/Yaapu/sounds/en|fence|fence enabled
+WIDGETS/Yaapu/sounds/en|fencebreach|fence breach
+WIDGETS/Yaapu/sounds/en|flip|Flip flight mode
+WIDGETS/Yaapu/sounds/en|flowhold|flow position hold flight mode
+WIDGETS/Yaapu/sounds/en|flybywirea|Fly by wire a flight mode
+WIDGETS/Yaapu/sounds/en|flybywireb|Fly by wire b flight mode
+WIDGETS/Yaapu/sounds/en|follow|follow flight mode
+WIDGETS/Yaapu/sounds/en|follow_r|follow mode
+WIDGETS/Yaapu/sounds/en|gpsfix|GPS 3D fix lock
+WIDGETS/Yaapu/sounds/en|gpsnofix|No gps
+WIDGETS/Yaapu/sounds/en|guided|Guided flight mode
+WIDGETS/Yaapu/sounds/en|guided_r|Guided mode
+WIDGETS/Yaapu/sounds/en|guidednogps|Guided no gps flight mode
+WIDGETS/Yaapu/sounds/en|hold_r|Hold mode
+WIDGETS/Yaapu/sounds/en|initializing|Initializing
+WIDGETS/Yaapu/sounds/en|initializing_r|Initializing
+WIDGETS/Yaapu/sounds/en|land|Land flight mode
+WIDGETS/Yaapu/sounds/en|landing|Landing complete
+WIDGETS/Yaapu/sounds/en|loiter|Loiter flight mode
+WIDGETS/Yaapu/sounds/en|loiter_r|Loiter mode
+WIDGETS/Yaapu/sounds/en|lowbat|Low battery
+WIDGETS/Yaapu/sounds/en|manual|Manual flight mode
+WIDGETS/Yaapu/sounds/en|manual_r|Manual mode
+WIDGETS/Yaapu/sounds/en|maxalt|Max altitude alert
+WIDGETS/Yaapu/sounds/en|maxdist|Max distance alert
+WIDGETS/Yaapu/sounds/en|minalt|Low altitude alert
+WIDGETS/Yaapu/sounds/en|poshold|Position hold flight mode
+WIDGETS/Yaapu/sounds/en|qacro|Q acro flight mode
+WIDGETS/Yaapu/sounds/en|qautotune|Q autotune flight mode
+WIDGETS/Yaapu/sounds/en|qhover|Q hover flight mode
+WIDGETS/Yaapu/sounds/en|qland|Q land flight mode
+WIDGETS/Yaapu/sounds/en|qloiter|Q loiter flight mode
+WIDGETS/Yaapu/sounds/en|qrtl|Q return to home flight mode
+WIDGETS/Yaapu/sounds/en|qstabilize|Q stabilize flight mode
+WIDGETS/Yaapu/sounds/en|rtl|Return to home
+WIDGETS/Yaapu/sounds/en|rtl_r|Return to home mode
+WIDGETS/Yaapu/sounds/en|selected|selected
+WIDGETS/Yaapu/sounds/en|simple_r|simple mode
+WIDGETS/Yaapu/sounds/en|simpleoff|simple mode disabled
+WIDGETS/Yaapu/sounds/en|simpleon|simple mode enabled
+WIDGETS/Yaapu/sounds/en|smartrtl|Smart return to home flight mode
+WIDGETS/Yaapu/sounds/en|smartrtl_r|Smart return to home mode
+WIDGETS/Yaapu/sounds/en|sport|Sport flight mode
+WIDGETS/Yaapu/sounds/en|ssimpleoff|super simple mode disabled
+WIDGETS/Yaapu/sounds/en|ssimpleon|super simple mode enabled
+WIDGETS/Yaapu/sounds/en|stabilize|Stabilize flight mode
+WIDGETS/Yaapu/sounds/en|started|started
+WIDGETS/Yaapu/sounds/en|steering_r|Steering mode
+WIDGETS/Yaapu/sounds/en|systemid|System I D flight mode
+WIDGETS/Yaapu/sounds/en|takeoff|takeoff flight mode
+WIDGETS/Yaapu/sounds/en|terrainko|no terrain data
+WIDGETS/Yaapu/sounds/en|thermal|Thermal flight mode
+WIDGETS/Yaapu/sounds/en|throw|Throw flight mode
+WIDGETS/Yaapu/sounds/en|timealert|Timer alert
+WIDGETS/Yaapu/sounds/en|training|Training flight mode
+WIDGETS/Yaapu/sounds/en|turtle|turtle mode
+WIDGETS/Yaapu/sounds/en|velocity|velocity flight mode
+WIDGETS/Yaapu/sounds/en|yaapu|Yaapu telemetry ready
+WIDGETS/Yaapu/sounds/en|zigzag|Zigzag flight mode
