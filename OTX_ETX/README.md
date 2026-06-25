@@ -13,9 +13,13 @@ SD card content is organized by screen color and resolution
         - Horus x10s
         - Horus x12s
         - Generally, most color screen radios
+    - **c480x320** (480x320 pixel landscape orientation color screen radios)
+        - TX15
     - **c320x480** (320x480 pixel portrait orientation color screen radios)
         - Flysky Nirvana NV14
         - Flysky Elysium EL18
+    - **c320x240** (320x240 pixel landscape orientation color screen radios)
+        - Flysky PA01
 
 - **black and white lcd radios**
     - **bw_common** files in this folder are common to all black and white lcd radios
