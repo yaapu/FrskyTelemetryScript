@@ -54,6 +54,11 @@ EdgeTX Color LCD 320x480
 
 ![image](https://user-images.githubusercontent.com/30294218/216001171-fc7b3930-efa3-4e40-9c2e-84b022bf73d3.png)
 
+EdgeTX Color LCD 320x240
+
+<img width="329" height="234" alt="image" src="https://github.com/user-attachments/assets/4c1f54bb-629e-47f9-bda1-84e50a143273" />
+<p/>
+<img width="327" height="249" alt="image" src="https://github.com/user-attachments/assets/d8e1f59f-1961-465f-b346-1918a4147bc4" />
 
 OpenTX/EdgeTX BW LCD 212x64
 
