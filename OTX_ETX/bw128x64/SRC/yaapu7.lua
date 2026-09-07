@@ -221,6 +221,9 @@ status.showMinMaxValues = false
 status.terrainLastData = getTime()
 status.terrainEnabled = 0
 status.airspeedEnabled = 0
+-- READY TO ARM (RDY sensor)
+status.readyToArm = false
+status.lastPassthroughTime = 0
 
 -- 00 05 10 15 20 25 30 40 50 60 70 80 90
 -- MIN MAX
@@ -563,6 +566,11 @@ local function reset()
   noTelemetryData = 1
   hideNoTelemetry = false
   ---------------
+  -- READY TO ARM (RDY sensor)
+  ---------------
+  status.readyToArm = false
+  status.lastPassthroughTime = 0
+  ---------------
   -- FLIGHT TIME
   ---------------
   lastTimerStart = 0
@@ -655,7 +663,20 @@ local function resetHash()
   hashByteIndex = 0
 end
 
+-- RDY sensor: the ready to arm evidence is scoped to the current FC power cycle
+local function checkReadyToArmMessage(msg)
+  if string.find(msg, "ArduCopter V", 1, true) ~= nil then
+    -- FC boot banner, a new power cycle invalidates any previous evidence
+    status.readyToArm = false
+  elseif string.find(msg, "using GPS", 1, true) ~= nil then
+    -- "EKF3 IMUx is using GPS", the FC has a GPS aided EKF solution
+    status.readyToArm = true
+  end
+end
+
 local function processTelemetry(appId, value, now)
+  -- RDY sensor: track link freshness, a passthrough frame was just decoded
+  status.lastPassthroughTime = now
   if appId == 0x5006 then -- ROLLPITCH
     -- roll [0,1800] ==> [-180,180]
     telemetry.roll = (math.min(bit32.extract(value,0,11),1800) - 900) * 0.2
@@ -740,6 +761,7 @@ local function processTelemetry(appId, value, now)
       if msgEnd then
         -- push and display message
         local severity = (bit32.extract(value,7,1) * 1) + (bit32.extract(value,15,1) * 2) + (bit32.extract(value,23,1) * 4)
+        checkReadyToArmMessage(msgBuffer)
         pushMessage( severity, msgBuffer)
         playHash()
         resetHash()
@@ -813,6 +835,7 @@ local function crossfirePop()
           -- hash support
           updateHash(data[i])
         end
+        checkReadyToArmMessage(msgBuffer)
         pushMessage(severity, msgBuffer)
         -- hash audio support
         playHash()
@@ -1117,7 +1140,26 @@ local function calcFlightTime()
   status.flightTime = model.getTimer(2).value
 end
 
+-- RDY sensor: 100 when the FC is effectively ready to arm, 0 otherwise
+local function getReadyToArmValue()
+  -- no recent passthrough frame, the FC is powered down or the link is gone
+  if status.lastPassthroughTime == 0 then
+    return 0
+  end
+  -- authoritative, the FC announced a GPS aided EKF solution this power cycle
+  if status.readyToArm == true then
+    return 100
+  end
+  -- fallback composite from the repeating 0x5002 GPS STATUS frame
+  if (telemetry.gpsStatus or 0) >= 3 and (telemetry.gpsHdopC or 100) <= 14 and (telemetry.numSats or 0) >= 10 then
+    return 100
+  end
+  return 0
+end
+
 local function setSensorValues()
+  -- RDY is published even without a live link so it can always fall back to 0
+  setTelemetryValue(0x060F, 0, 2, getReadyToArmValue(), 0 , 0 , "RDY")
   if not telemetryEnabled() then
     return
   end
@@ -1416,6 +1458,14 @@ local function background()
   end
   -- SLOW: this runs at 4Hz (every 250ms)
   if (bgclock % 4 == 0) then
+    -- RDY sensor: expire the ready to arm state 8s after the last passthrough frame
+    if status.lastPassthroughTime ~= 0 then
+      local elapsed = now - status.lastPassthroughTime
+      if elapsed > 800 or elapsed < 0 then
+        status.readyToArm = false
+        status.lastPassthroughTime = 0
+      end
+    end
     setSensorValues()
     updateTotalDist(now)
   end
