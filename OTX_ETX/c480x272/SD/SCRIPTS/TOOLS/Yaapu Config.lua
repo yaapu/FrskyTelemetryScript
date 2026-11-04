@@ -101,6 +101,8 @@ local menuItems = {
   {"emulated wheel channel:", "SWC", 0, 0, 32,nil,0,1 },
   {"emulated wheel delay (secs):", "SWCD", 1, 0, 50,"sec",PREC1, 1 },
   {"GPS coordinates format:", "GPS", 1, { "DMS", "decimal" }, { 1, 2 } },
+  {"status message font:", "MSGF", 1, { "large bold", "normal", "small" }, { 1, 2, 3 } },
+  {"status message time:", "MSGT", 1, { "hidden", "shown" }, { false, true } },
   {"map provider:", "MAPP", 1, { "GMapCatcher", "Google", "QGIS" }, { 1, 2, 3 } },
   {"map type:", "MAPT", 1, { "", "", "", "", "", "" }, { "", "", "", "", "", "" } },
   {"map zoom level def value:", "MAPZ", -2, -2, 17,nil,0,1 },
@@ -428,6 +430,8 @@ local function applyConfigValues(conf)
     conf.defaultBattSource = getMenuItemByName(menuItems,"VS")
   end
   conf.gpsFormat = getMenuItemByName(menuItems,"GPS")
+  conf.msgFontSize = getMenuItemByName(menuItems,"MSGF")
+  conf.showMsgTime = getMenuItemByName(menuItems,"MSGT")
   conf.enableBattPercByVoltage = getMenuItemByName(menuItems,"BPBV")
 
   conf.plotSource1 = getMenuItemByName(menuItems,"PLT1")

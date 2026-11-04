@@ -98,7 +98,11 @@ function layoutLib.drawWidgetPaused()
 end
 
 function layoutLib.drawStatusBar(maxRows)
-  local yDelta = (maxRows-1)*12
+  -- row height and max rows depend on the selected status message font
+  local msgFont = utils.getMsgFont()
+  local rowH = msgFont[3]
+  maxRows = math.min(maxRows, (LCD_H > 300) and msgFont[6] or msgFont[5])
+  local yDelta = (maxRows-1)*rowH
 
   lcd.setColor(CUSTOM_COLOR,utils.colors.bars)
   lcd.drawFilledRectangle(0,277-yDelta-23,480,LCD_H-(277-yDelta-23),CUSTOM_COLOR)
@@ -157,7 +161,7 @@ function layoutLib.drawStatusBar(maxRows)
   local offset = math.min(maxRows,#status.messages+1)
   for i=0,offset-1 do
     lcd.setColor(CUSTOM_COLOR,utils.mavSeverity[status.messages[(status.messageCount + i - offset) % (#status.messages+1)][2]][2])
-    lcd.drawText(1,(304-yDelta)+(12*i), status.messages[(status.messageCount + i - offset) % (#status.messages+1)][1],SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(1,(LCD_H-math.max(rowH,16)-yDelta)+(rowH*i), utils.msgText(status.messages[(status.messageCount + i - offset) % (#status.messages+1)][1]),msgFont[1]+CUSTOM_COLOR)
   end
 end
 
