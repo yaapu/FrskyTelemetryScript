@@ -72,6 +72,8 @@ local conf = {
   screenWheelChannelId = 0,
   screenWheelChannelDelay = 20,
   gpsFormat = 1, -- DMS
+  msgFontSize = 1, -- status messages: 1 large bold, 2 normal, 3 small
+  showMsgTime = false, -- show the flight time in front of each status message
   mapProvider = 1, -- 1 GMapCatcher, 2 Google
   enableRPM = 0,
   enableWIND = 0,
@@ -1829,6 +1831,28 @@ local function setSensorValues()
   end
 end
 
+-- status message font settings, selected by conf.msgFontSize
+-- { flags, messages screen row height, status bar row height, rows per page (computed from the screen height),
+--   max status bar rows on 272px high screens, max status bar rows on taller (320px) screens }
+utils.msgFonts = {
+  { BOLD,    16, 18, 0, 3, 4 }, -- large bold
+  { STDSIZE, 15, 16, 0, 3, 4 }, -- normal
+  { SMLSIZE, 12, 12, 0, 4, 6 }, -- small (original yaapu look)
+}
+utils.getMsgFont = function()
+  local font = utils.msgFonts[conf.msgFontSize] or utils.msgFonts[1]
+  -- the messages screen has a 16px top bar and a 20px bottom bar
+  font[4] = math.floor((LCD_H - 36) / font[2])
+  return font
+end
+-- strips the "mm:ss " flight time from the front of a message unless enabled in the config
+utils.msgText = function(text)
+  if conf.showMsgTime == false and string.find(text, "^%d%d:%d%d ") ~= nil then
+    return string.sub(text, 7)
+  end
+  return text
+end
+
 local function drawMessagesTelemetryBar()
   local colorLabel = lcd.RGB(140,140,140)
   -- CELL
@@ -1893,22 +1917,19 @@ local function drawMessageScreen()
   libs.layoutLib.drawTopBar()
   -- each new message scrolls all messages to the end (offset is absolute)
   if status.messageAutoScroll == true then
-    status.messageOffset = math.max(0, status.messageCount - 19)
+    status.messageOffset = math.max(0, status.messageCount - utils.getMsgFont()[4])
   end
 
   local row = 0
   local offsetStart = status.messageOffset
-  local offsetEnd = math.min(status.messageCount-1, status.messageOffset + 19 - 1)
+  local offsetEnd = math.min(status.messageCount-1, status.messageOffset + utils.getMsgFont()[4] - 1)
 
+  local msgFont = utils.getMsgFont()
   for i=offsetStart,offsetEnd  do
     lcd.setColor(CUSTOM_COLOR,utils.mavSeverity[status.messages[i % 200][2]][2])
-    lcd.drawText(0,16+12*row, status.messages[i % 200][1],SMLSIZE+CUSTOM_COLOR)
+    lcd.drawText(0,16+msgFont[2]*row, utils.msgText(status.messages[i % 200][1]),msgFont[1]+CUSTOM_COLOR)
     row = row+1
   end
-  lcd.setColor(CUSTOM_COLOR,utils.colors.bg)
-  lcd.drawFilledRectangle(405,16,75,256,CUSTOM_COLOR)
-
-  drawMessagesTelemetryBar()
   -- AUTOSCROLL
   if status.messageAutoScroll == true then
     lcd.setColor(CUSTOM_COLOR,WHITE)
@@ -1916,18 +1937,18 @@ local function drawMessageScreen()
     lcd.setColor(CUSTOM_COLOR,utils.colors.darkyellow)
   end
 
-  local maxPages = tonumber(math.ceil((#status.messages+1)/19))
-  local currentPage = 1+tonumber(maxPages - (status.messageCount - status.messageOffset)/19)
+  local maxPages = tonumber(math.ceil((#status.messages+1)/utils.getMsgFont()[4]))
+  local currentPage = 1+tonumber(maxPages - (status.messageCount - status.messageOffset)/utils.getMsgFont()[4])
 
   lcd.drawText(LCD_W-2, LCD_H-16, string.format("%d/%d",currentPage,maxPages), SMLSIZE+CUSTOM_COLOR+RIGHT)
   lcd.setColor(CUSTOM_COLOR,utils.colors.grey)
-  lcd.drawLine(0,LCD_H-20,405,LCD_H-20,SOLID,CUSTOM_COLOR)
+  lcd.drawLine(0,LCD_H-20,LCD_W,LCD_H-20,SOLID,CUSTOM_COLOR)
 
   lcd.setColor(CUSTOM_COLOR,WHITE)
   if status.strFlightMode ~= nil then
     lcd.drawText(0,LCD_H-20,status.strFlightMode,CUSTOM_COLOR)
   end
-  lcd.drawTimer(402, LCD_H-20, model.getTimer(2).value, CUSTOM_COLOR+RIGHT)
+  lcd.drawTimer(LCD_W-50, LCD_H-20, model.getTimer(2).value, CUSTOM_COLOR+RIGHT)
 end
 
 ---------------------------------
@@ -2562,8 +2583,8 @@ utils.getMessageOffset = function(widget,conf,status,chValue)
   if conf.screenWheelChannelId > -1 then
     -- SW up
     if chValue < -600 then
-      local offset = math.min(status.messageOffset + 19, math.max(0,status.messageCount - 19))
-      if offset >= (status.messageCount - 19) then
+      local offset = math.min(status.messageOffset + utils.getMsgFont()[4], math.max(0,status.messageCount - utils.getMsgFont()[4]))
+      if offset >= (status.messageCount - utils.getMsgFont()[4]) then
         status.messageAutoScroll = true
       else
         status.messageAutoScroll = false
@@ -2573,7 +2594,7 @@ utils.getMessageOffset = function(widget,conf,status,chValue)
     -- SW down
     if chValue > 600 then
       status.messageAutoScroll = false
-      return math.max(0,math.max(status.messageCount - 200,status.messageOffset - 19))
+      return math.max(0,math.max(status.messageCount - 200,status.messageOffset - utils.getMsgFont()[4]))
     end
     -- switch is idle, force timer expire
     zoomDelayStart = now - conf.screenWheelChannelDelay*10
